@@ -1,0 +1,149 @@
+I"�D<p>昨天看到了有个大神做出好看的进度条样式，于是我就去抄袭他的代码，但是发现看不懂，于是本文主要翻译就是大神说这个控件如何做。
+<img src="http://image.acmx.xyz/0f822922-f86b-98e3-4682-30bbe3160e6a%2Fenyb.gif" alt="" /></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<p>本文翻译 https://stackoverflow.com/a/46057193/6116637 来这 liu xin 大神的控件。</p>
+
+<p>上面的控件实际就是两个圆，然后 Compositor 让背景显示在里面的圆。因为可以使用下面图片的方式，看起来就是从一个圆里出现背景。实际就是背景移动图片，可以看到图片移动的时候，看里面的圆的背景，就是上面那张图的样子。</p>
+
+<p><img src="http://image.acmx.xyz/0f822922-f86b-98e3-4682-30bbe3160e6a%2Fbrmx.gif" alt="" /></p>
+
+<p>也就是在图片的上移就是进度，可以用 Percent 来知道现在的进度，然后计算显示的高度，很容易就计算出上移。然后图片可以通过 Adobe Illustrator 工具来做，打开 Zig Zag 效果就可以做出这个图片。</p>
+
+<p><img src="http://image.acmx.xyz/0f822922-f86b-98e3-4682-30bbe3160e6a%2F201791016335.jpg" alt="" /></p>
+
+<p>注意图片从左到右播放再重新播放，看起来不会出现断的图片。</p>
+
+<p>下面就是代码，如果现在 UWP 可以做出随意裁剪，就不需要使用 Compositor 为了使用 Compositor 需要使用字段 Compositor ，而且需要一个 double 的属性，用于做进度。</p>
+
+<p>因为使用 LoadedImageSurface 下面的代码需要在 15063 才可以跑，如果你的代码是跑在 14393 那么无法使用。</p>
+
+<p>界面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">UserControl</span> <span class="n">x</span><span class="p">:</span><span class="n">Class</span><span class="p">=</span><span class="s">"WaveProgressControlRepo.WaveProgressControl"</span>
+             <span class="n">Height</span><span class="p">=</span><span class="s">"160"</span>
+             <span class="n">Width</span><span class="p">=</span><span class="s">"160"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Root"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Ellipse</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ClippedImageContainer"</span>
+                 <span class="n">Fill</span><span class="p">=</span><span class="s">"White"</span>
+                 <span class="n">Margin</span><span class="p">=</span><span class="s">"6"</span> <span class="p">/&gt;</span> <span class="err">这个圆白色，里面背景就是放图片</span>
+        <span class="p">&lt;</span><span class="n">Ellipse</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"CircleBorder"</span>
+                 <span class="n">Stroke</span><span class="p">=</span><span class="s">"#FF0289CD"</span>
+                 <span class="n">StrokeThickness</span><span class="p">=</span><span class="s">"3"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Foreground</span><span class="p">=</span><span class="s">"#FF0289CD"</span>
+                   <span class="n">FontSize</span><span class="p">=</span><span class="s">"36"</span>
+                   <span class="n">FontWeight</span><span class="p">=</span><span class="s">"SemiBold"</span>
+                   <span class="n">TextAlignment</span><span class="p">=</span><span class="s">"Right"</span>
+                   <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span>
+                   <span class="n">Width</span><span class="p">=</span><span class="s">"83"</span>
+                   <span class="n">Margin</span><span class="p">=</span><span class="s">"0,0,12,0"</span><span class="p">&gt;</span>
+                   <span class="err">显示现在进度</span>
+            <span class="p">&lt;</span><span class="n">Run</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind Percent, Mode=OneWay}"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">Run</span> <span class="n">Text</span><span class="p">=</span><span class="s">"%"</span>
+                 <span class="n">FontSize</span><span class="p">=</span><span class="s">"22"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">UserControl</span><span class="p">&gt;</span> 
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Numerics</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.UI.Composition</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.UI.Xaml</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.UI.Xaml.Controls</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.UI.Xaml.Hosting</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.UI.Xaml.Media</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">WaveProgressControlRepo</span>
+<span class="p">{</span>
+	<span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">WaveProgressControl</span> <span class="p">:</span> <span class="n">UserControl</span>
+	<span class="p">{</span>
+		<span class="k">private</span> <span class="k">readonly</span> <span class="n">Compositor</span> <span class="n">_compositor</span><span class="p">;</span>
+		<span class="k">private</span> <span class="k">readonly</span> <span class="n">CompositionPropertySet</span> <span class="n">_percentPropertySet</span><span class="p">;</span>
+
+		<span class="k">public</span> <span class="nf">WaveProgressControl</span><span class="p">()</span>
+		<span class="p">{</span>
+			<span class="nf">InitializeComponent</span><span class="p">();</span>
+
+			<span class="n">_compositor</span> <span class="p">=</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Compositor</span><span class="p">;</span>
+
+			<span class="n">_percentPropertySet</span> <span class="p">=</span> <span class="n">_compositor</span><span class="p">.</span><span class="nf">CreatePropertySet</span><span class="p">();</span>
+			<span class="n">_percentPropertySet</span><span class="p">.</span><span class="nf">InsertScalar</span><span class="p">(</span><span class="s">"Value"</span><span class="p">,</span> <span class="m">0.0f</span><span class="p">);</span>
+
+			<span class="n">Loaded</span> <span class="p">+=</span> <span class="n">OnLoaded</span><span class="p">;</span>
+		<span class="p">}</span>
+
+		<span class="k">public</span> <span class="kt">double</span> <span class="n">Percent</span>
+		<span class="p">{</span>
+			<span class="k">get</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">PercentProperty</span><span class="p">);</span>
+			<span class="k">set</span> <span class="p">=&gt;</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">PercentProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+		<span class="p">}</span>
+		<span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">PercentProperty</span> <span class="p">=</span>
+			<span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="s">"Percent"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">WaveProgressControl</span><span class="p">),</span>
+				<span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="m">0.0d</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+				<span class="p">{</span>
+					<span class="kt">var</span> <span class="n">self</span> <span class="p">=</span> <span class="p">(</span><span class="n">WaveProgressControl</span><span class="p">)</span><span class="n">s</span><span class="p">;</span>
+					<span class="kt">var</span> <span class="n">propertySet</span> <span class="p">=</span> <span class="n">self</span><span class="p">.</span><span class="n">_percentPropertySet</span><span class="p">;</span>
+					<span class="n">propertySet</span><span class="p">.</span><span class="nf">InsertScalar</span><span class="p">(</span><span class="s">"Value"</span><span class="p">,</span> <span class="n">Convert</span><span class="p">.</span><span class="nf">ToSingle</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">NewValue</span><span class="p">)</span> <span class="p">/</span> <span class="m">100</span><span class="p">);</span>
+				<span class="p">}));</span>
+
+		<span class="k">private</span> <span class="k">void</span> <span class="nf">OnLoaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+		<span class="p">{</span>
+			<span class="n">CompositionSurfaceBrush</span> <span class="n">imageSurfaceBrush</span><span class="p">;</span>
+
+			<span class="nf">SetupClippedWaveImage</span><span class="p">();</span><span class="c1">//裁剪图片，显示圆</span>
+			<span class="nf">SetupEndlessWaveAnimationOnXAxis</span><span class="p">();</span><span class="c1">//图片从左到右，这样看起来就不会断</span>
+			<span class="nf">SetupExpressionAnimationOnYAxisBasedOnPercentValue</span><span class="p">();</span><span class="c1">//如果进度修改了，那么移动图片</span>
+
+            <span class="c1">//把背景设置到控件</span>
+			<span class="k">void</span> <span class="nf">SetupClippedWaveImage</span><span class="p">()</span><span class="c1">//</span>
+            <span class="p">{</span>
+				<span class="c1">// Note LoadedImageSurface is only available in 15063 onward.</span>
+				<span class="kt">var</span> <span class="n">imageSurface</span> <span class="p">=</span> <span class="n">LoadedImageSurface</span><span class="p">.</span><span class="nf">StartLoadFromUri</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">BaseUri</span><span class="p">,</span> <span class="s">"ms-appx:///Assets/wave.png"</span><span class="p">));</span>
+                <span class="c1">//LoadedImageSurface 在 15063 所以如果代码在 14393 无法使用</span>
+                <span class="n">imageSurfaceBrush</span> <span class="p">=</span> <span class="n">_compositor</span><span class="p">.</span><span class="nf">CreateSurfaceBrush</span><span class="p">(</span><span class="n">imageSurface</span><span class="p">);</span>
+				<span class="n">imageSurfaceBrush</span><span class="p">.</span><span class="n">Stretch</span> <span class="p">=</span> <span class="n">CompositionStretch</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+				<span class="n">imageSurfaceBrush</span><span class="p">.</span><span class="n">Offset</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">(</span><span class="m">120</span><span class="p">,</span> <span class="m">248</span><span class="p">);</span>
+
+				<span class="kt">var</span> <span class="n">maskBrush</span> <span class="p">=</span> <span class="n">_compositor</span><span class="p">.</span><span class="nf">CreateMaskBrush</span><span class="p">();</span>
+				<span class="kt">var</span> <span class="n">maskSurfaceBrush</span> <span class="p">=</span> <span class="n">ClippedImageContainer</span><span class="p">.</span><span class="nf">GetAlphaMask</span><span class="p">();</span> <span class="c1">// CompositionSurfaceBrush</span>
+				<span class="n">maskBrush</span><span class="p">.</span><span class="n">Mask</span> <span class="p">=</span> <span class="n">maskSurfaceBrush</span><span class="p">;</span>
+				<span class="n">maskBrush</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">imageSurfaceBrush</span><span class="p">;</span>
+
+				<span class="kt">var</span> <span class="n">imageVisual</span> <span class="p">=</span> <span class="n">_compositor</span><span class="p">.</span><span class="nf">CreateSpriteVisual</span><span class="p">();</span>
+				<span class="n">imageVisual</span><span class="p">.</span><span class="n">RelativeSizeAdjustment</span> <span class="p">=</span> <span class="n">Vector2</span><span class="p">.</span><span class="n">One</span><span class="p">;</span>
+				<span class="n">ElementCompositionPreview</span><span class="p">.</span><span class="nf">SetElementChildVisual</span><span class="p">(</span><span class="n">ClippedImageContainer</span><span class="p">,</span> <span class="n">imageVisual</span><span class="p">);</span>
+
+				<span class="n">imageVisual</span><span class="p">.</span><span class="n">Brush</span> <span class="p">=</span> <span class="n">maskBrush</span><span class="p">;</span>
+			<span class="p">}</span>
+
+			<span class="k">void</span> <span class="nf">SetupEndlessWaveAnimationOnXAxis</span><span class="p">()</span>
+			<span class="p">{</span>
+                <span class="c1">//水平动画</span>
+				<span class="kt">var</span> <span class="n">waveOffsetXAnimation</span> <span class="p">=</span> <span class="n">_compositor</span><span class="p">.</span><span class="nf">CreateScalarKeyFrameAnimation</span><span class="p">();</span>
+				<span class="n">waveOffsetXAnimation</span><span class="p">.</span><span class="nf">InsertKeyFrame</span><span class="p">(</span><span class="m">1.0f</span><span class="p">,</span> <span class="p">-</span><span class="m">80.0f</span><span class="p">,</span> <span class="n">_compositor</span><span class="p">.</span><span class="nf">CreateLinearEasingFunction</span><span class="p">());</span>
+				<span class="n">waveOffsetXAnimation</span><span class="p">.</span><span class="n">Duration</span> <span class="p">=</span> <span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">);</span><span class="c1">//一秒重复一次</span>
+				<span class="n">waveOffsetXAnimation</span><span class="p">.</span><span class="n">IterationBehavior</span> <span class="p">=</span> <span class="n">AnimationIterationBehavior</span><span class="p">.</span><span class="n">Forever</span><span class="p">;</span>
+				<span class="n">imageSurfaceBrush</span><span class="p">.</span><span class="nf">StartAnimation</span><span class="p">(</span><span class="s">"Offset.X"</span><span class="p">,</span> <span class="n">waveOffsetXAnimation</span><span class="p">);</span>
+			<span class="p">}</span>
+
+			<span class="k">void</span> <span class="nf">SetupExpressionAnimationOnYAxisBasedOnPercentValue</span><span class="p">()</span>
+			<span class="p">{</span>
+                <span class="c1">//_percentPropertySet 可以拿到 进度 变化，移动背景</span>
+                <span class="kt">var</span> <span class="n">waveOffsetYExpressionAnimation</span> <span class="p">=</span> <span class="n">_compositor</span><span class="p">.</span><span class="nf">CreateExpressionAnimation</span><span class="p">(</span><span class="s">"Lerp(248.0f, 120.0f, Percent.Value)"</span><span class="p">);</span>
+				<span class="n">waveOffsetYExpressionAnimation</span><span class="p">.</span><span class="nf">SetReferenceParameter</span><span class="p">(</span><span class="s">"Percent"</span><span class="p">,</span> <span class="n">_percentPropertySet</span><span class="p">);</span>
+				<span class="n">imageSurfaceBrush</span><span class="p">.</span><span class="nf">StartAnimation</span><span class="p">(</span><span class="s">"Offset.Y"</span><span class="p">,</span> <span class="n">waveOffsetYExpressionAnimation</span><span class="p">);</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>如果觉得上面的代码还是不懂，那么从 github 下载代码来运行 https://github.com/JustinXinLiu/WaveProgressControlRepo</p>
+
+:ET

@@ -1,0 +1,28 @@
+I"g<p>如果在vs扩展开发中出现</p>
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="err">严重性</span> <span class="err">代码</span>  <span class="err">说明</span>  <span class="err">项目</span>  <span class="err">文件</span>  <span class="err">行</span>   <span class="err">禁止显示状态</span>
+<span class="err">错误</span>      <span class="n">Failed</span> <span class="n">to</span> <span class="n">load</span> <span class="err">'</span><span class="n">C</span><span class="p">:</span><span class="err">\程序\</span><span class="n">EncodingNormalior</span><span class="err">\</span><span class="n">packages</span><span class="err">\</span><span class="n">Microsoft</span><span class="p">.</span><span class="n">VSSDK</span><span class="p">.</span><span class="n">BuildTools</span><span class="p">.</span><span class="m">15.0</span><span class="p">.</span><span class="m">26201</span><span class="err">\</span><span class="n">tools</span><span class="err">\</span><span class="n">VSSDK</span><span class="err">\</span><span class="n">bin</span><span class="err">\</span><span class="n">VSCT</span><span class="p">.</span><span class="n">exe</span><span class="err">'</span> <span class="n">Assembly</span><span class="p">.</span> <span class="err">未能加载文件或程序集“</span><span class="n">file</span><span class="p">:</span><span class="c1">///C:\程序\EncodingNormalior\packages\Microsoft.VSSDK.BuildTools.15.0.26201\tools\VSSDK\bin\VSCT.exe”或它的某一个依赖项。系统找不到指定的文件。   EncodingNormalizerVsx</span>
+</code></pre></div></div>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:52 -->
+
+<p>找不到一个 packages 的文件，或程序集，那么一般就是 nuget 的坑。</p>
+
+<p>可以打开 EncodingNormalior\packages 文件夹，删除所有的文件，然后重新编译。</p>
+
+<p>如果无法删除，那么关闭 vs 就可以删除，注意看 nuget 是否添加了源，有一些是本地的，需要自己看好。</p>
+
+<p>国内比较好的源： <a href="http://www.cnblogs.com/cmt/p/nuget-mirror.html">NuGet镜像上线试运行 - 博客园团队 - 博客园</a></p>
+
+<p>如果在开发vs扩展，参见：VisualStudio 扩展开发，在我的博客 lindexi.oschina.io</p>
+
+<p>现在我的插件放在 <a href="https://marketplace.visualstudio.com/items?itemName=lindexigd.vs-extension-18109">https://marketplace.visualstudio.com/items?itemName=lindexigd.vs-extension-18109</a>，可以下载，功能：检查项目是否存在编码格式错误的文件，保存一个项目为自己需要格式。</p>
+
+<p>可以使用之前的vs的高级保存，保存当前文件编码。</p>
+
+<p>也可以点击工具选择扩展，搜索 Encoding 找到</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201766173231.jpg" alt="" /></p>
+
+:ET

@@ -1,0 +1,31 @@
+I"�<!-- CreateTime:2018/2/13 17:23:03 -->
+<div id="toc"></div>
+<p>一路追着win10
+从预览版到今天10240.16384
+昨晚是中国区第一批下载win10的，不过不是第一批安装的。
+早上才安装成功。</p>
+<h2 id="win10预览版更新-7月29-1024016384">win10预览版更新 7月29 10240.16384##</h2>
+<p>win10更新出现C盘 <code class="language-plaintext highlighter-rouge">$~windows.BT</code> 
+把<code class="language-plaintext highlighter-rouge">$~windows.BT</code> 复制文件到别的分区的根目录
+检查<code class="language-plaintext highlighter-rouge">$~windows.BT</code> 有6G大小
+运行/Sources/setupprep.exe
+选择不更新，因为我复制过去只有很少文件失败
+开始是选择保存app、file结果失败了。
+如果电脑有安装viusal studio 2015就不要选择保留，那样失败很多。
+我选择不保存，经过半个钟就安装好了，重启两次。
+输入我的insider账号就激活成功。</p>
+<ul>
+  <li>安装不需要安装密钥</li>
+  <li>
+    <p>如果$~windows.BT 没有下载完成，运行setupprep.exe选择更新</p>
+  </li>
+  <li>
+    <p>直接使用setup.exe出现找不到boot</p>
+  </li>
+  <li>
+    <p>不需要格式Ｃ盘</p>
+  </li>
+  <li>安装复制有些慢，不过你�</li>
+</ul>
+
+:ET

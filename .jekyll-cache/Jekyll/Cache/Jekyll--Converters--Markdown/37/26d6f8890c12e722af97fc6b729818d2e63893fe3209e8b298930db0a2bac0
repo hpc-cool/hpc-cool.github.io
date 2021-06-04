@@ -1,0 +1,16 @@
+I"G<p>本文告诉大家如何修复使用Release正常，debug编译正常，手机正常，就是 上传应用商店关联后，release就出现错误 未给任务“GenerateAppxPackageRecipe”的必需参数“AppxManifestXml”赋值</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/6/23 10:57:03 -->
+
+<!-- csdn -->
+
+<p>在点击编译的时候也提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">error</span> <span class="n">MSB4131</span><span class="p">:</span> <span class="err">“</span><span class="n">CreatePriFilesForPortableLibraries</span><span class="err">”任务不支持“</span><span class="n">UnprocessedReswFiles</span><span class="err">”</span>
+</code></pre></div></div>
+
+<p>修复方法是创建一个应用，把原有的所有东西导入</p>
+
+:ET

@@ -1,0 +1,61 @@
+I"\<p>CSV是一种通用的、相对简单的文件格式，被用户、商业和科学广泛应用。最广泛的应用是在程序之间转移表格数据，而这些程序本身是在不兼容的格式上进行操作的（往往是私有的和/或无规范的格式）。因为大量程序都支持某种CSV变体，至少是作为一种可选择的输入/输出格式。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<h2 id="使用库-chilkat">使用库 Chilkat</h2>
+
+<h3 id="nuget-安装">Nuget 安装</h3>
+
+<p>进入 https://www.nuget.org/packages/Chilkat.uwp/ 安装，或右击项目管理 Nuget 搜索 Chilkat 安装。</p>
+
+<h3 id="创建-csv">创建 CSV</h3>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Chilkat</span><span class="p">.</span><span class="n">Csv</span> <span class="n">csv</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Chilkat</span><span class="p">.</span><span class="nf">Csv</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>创建标题，有些csv不需要标题，有些需要，如果需要标题，使用<code class="language-plaintext highlighter-rouge">csv.HasColumnNames = true;</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">csv</span><span class="p">.</span><span class="n">HasColumnNames</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+<span class="kt">bool</span> <span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetColumnName</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="s">"标题1"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetColumnName</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="s">"标题2 lindexi"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetColumnName</span><span class="p">(</span><span class="m">2</span><span class="p">,</span><span class="s">"标题3 标题是列标题"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetColumnName</span><span class="p">(</span><span class="m">3</span><span class="p">,</span><span class="s">"有些叫head的东西"</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>设置完列标题，我们需要放入数据，注意我们有多少列标题，就可以写多少列，如果我们只有3个标题，和一个没有标题的列，那么直接添加一个 SetColumnName 为<code class="language-plaintext highlighter-rouge">(3,"")</code> 。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//假如数据有 两行，一开始是从0行开始，同样从0列开始</span>
+
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="s">"2001"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">1</span><span class="p">,</span><span class="s">"red"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">2</span><span class="p">,</span><span class="s">"France"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">3</span><span class="p">,</span><span class="s">"cheese"</span><span class="p">);</span>
+
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="s">"2005"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">1</span><span class="p">,</span><span class="s">"blue"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">2</span><span class="p">,</span><span class="s">"United States"</span><span class="p">);</span>
+<span class="n">success</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SetCell</span><span class="p">(</span><span class="m">1</span><span class="p">,</span><span class="m">3</span><span class="p">,</span><span class="s">"hamburger"</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>写完我们把它保存在文件，在文件保存之前，保存为字符串</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">string</span> <span class="n">csvDoc</span><span class="p">;</span>
+<span class="n">csvDoc</span> <span class="p">=</span> <span class="n">csv</span><span class="p">.</span><span class="nf">SaveToString</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>写到了字符串，之后如何做我就不多说啦。</p>
+
+<p>如果不知道文件读写，请看<a href="http://blog.csdn.net/lindexi_gd/article/details/49007841">win10 uwp 读写文件</a></p>
+
+<p>https://www.example-code.com/csharp_winrt/csv_create.asp</p>
+:ET

@@ -1,0 +1,50 @@
+I"<<p>有时候需要获得一个元素，相对窗口的坐标，在修改他的位置可以使用。
+那么 UWP 如何获得元素坐标？
+我提供了一个方法，可以获得元素的坐标。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<div id="toc"></div>
+
+<p>首先需要获得元素，如果没有获得元素，那么如何得到他的坐标？</p>
+
+<p>假如 xaml 是这样，而我需要获得 MainTextBlock 相对窗口的坐标</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"MainTextBlock"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"Hello"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>那么获得元素绝对坐标可以这样写，绝对坐标的意思就是元素相对窗口的坐标。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">MainTextBlock</span><span class="p">.</span><span class="nf">TransformToVisual</span><span class="p">(</span><span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Content</span><span class="p">);</span>
+            <span class="n">Point</span> <span class="n">screenCoords</span> <span class="p">=</span> <span class="n">t</span><span class="p">.</span><span class="nf">TransformPoint</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">));</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码就可以获得元素坐标，坐标相对于窗口</p>
+
+<p>那么如何获得他相对其他元素的坐标？</p>
+
+<p>假如需要获得元素相对他的上坐标，这时可以看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">MainTextBlock</span><span class="p">.</span><span class="nf">TransformToVisual</span><span class="p">((</span><span class="n">UIElement</span><span class="p">)</span><span class="n">MainTextBlock</span><span class="p">.</span><span class="n">Parent</span><span class="p">);</span>
+            <span class="n">Point</span> <span class="n">screenCoords</span> <span class="p">=</span> <span class="n">t</span><span class="p">.</span><span class="nf">TransformPoint</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>于是可以看到 <code class="language-plaintext highlighter-rouge">TransformToVisual</code> 传入的是哪个元素，就是获得相对于这个元素的坐标。</p>
+
+<p>获得元素的坐标有什么用？可以用在如 Flyout的定位，如果使用了  ToggleButton ，他没有自己 Flyout ，所以就需要在其他地方定义一个 Flyout 然后通过获得控件位置显示出来。如何指定 Flyout 的位置参见 <a href="http://blog.csdn.net/lindexi_gd/article/details/52724410">win10 uwp 右击浮出窗在点击位置 </a></p>
+
+<p>所以就可以让浮出窗在需要显示的按钮上显示，下面的图片是我偷一个大神的，他就是使用这个方法做出来。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017627974.jpg" alt="" /></p>
+
+<p>参见：http://stackoverflow.com/questions/12387449/how-to-get-the-absolute-position-of-an-element/12388558#12388558</p>
+
+:ET

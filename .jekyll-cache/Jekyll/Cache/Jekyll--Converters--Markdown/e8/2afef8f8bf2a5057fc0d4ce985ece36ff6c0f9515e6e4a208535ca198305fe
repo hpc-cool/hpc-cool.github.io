@@ -1,0 +1,651 @@
+I"�=<p>在 WPF 中，如果是鼠标点击拖动窗口坐标，可以调用 Window 的 DragMove 方法，但是如果是触摸，就需要自己调用 Win32 的方法实现</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/11/26 10:07:10 -->
+
+<p>在 WPF 中，调用 Window 的 DragMove 方法要求鼠标的左键（主键）按下，否则将会抛出如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">InvalidOperationException</span><span class="p">:</span><span class="err">“只能在按下主鼠标按钮时调用</span> <span class="n">DragMove</span><span class="err">。”</span>
+</code></pre></div></div>
+
+<p>或英文版的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">InvalidOperationException</span><span class="p">:</span><span class="s">"Can only call DragMove when primary mouse button is down"</span>
+</code></pre></div></div>
+
+<p>因此想要在 WPF 中使用手指 finger 进行 Touch 触摸拖拽窗口，拖动修改窗口坐标就需要用到 Win32 的方法了。相信大家都知道，在修改某个容器的坐标的时候，不能使用这个容器内的坐标做参考，所以在 Touch 拖动修改窗口坐标的时候，就不能使用监听窗口的事件拿到的坐标来作为参考</p>
+
+<p>想要能平滑的移动窗口，就需要获取相对于屏幕的坐标，而如果此时处理多指的 Manipulation 的动作，那么整个逻辑将会非常复杂。本文仅仅支持使用一个手指的移动，因为使用了 GetCursorPos 的方法</p>
+
+<p>当然了，此时假装是支持多指拖动也是可以的，只需要在进行多指触摸的时候开启拖动就可以了，此时用户的交互上不会有很大的差别</p>
+
+<p>在开始之前，咱来封装一个类 DragMoveWindowHelper 用来在触摸下拖动窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">DragMoveWindowHelper</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">DragMove</span><span class="p">(</span><span class="n">Window</span> <span class="n">window</span><span class="p">)</span>
+        <span class="p">{</span>
+        	<span class="c1">// 这里的 DragMoveMode 在下文实现</span>
+            <span class="kt">var</span> <span class="n">dragMoveMode</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DragMoveMode</span><span class="p">(</span><span class="n">window</span><span class="p">);</span>
+            <span class="n">dragMoveMode</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码的 DragMoveMode 类放在下文实现。在封装完成了 DragMoveWindowHelper 类就可以尝试在拖动的时候使用，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainWindow</span> <span class="p">:</span> <span class="n">Window</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">TouchDown</span> <span class="p">+=</span> <span class="n">MainWindow_TouchDown</span><span class="p">;</span>
+            <span class="n">TouchUp</span> <span class="p">+=</span> <span class="n">MainWindow_TouchUp</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_TouchUp</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">TouchEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_currentTouchCount</span><span class="p">--;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_TouchDown</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">TouchEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">CaptureTouch</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">TouchDevice</span><span class="p">);</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">_currentTouchCount</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">DragMoveWindowHelper</span><span class="p">.</span><span class="nf">DragMove</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">_currentTouchCount</span><span class="p">++;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">uint</span> <span class="n">_currentTouchCount</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码有一点需要小心就是 CaptureTouch 是必备的，否则你会发现拖动的时候，拖动太快了，就丢失触摸设备了，触摸设备被你窗口后面的其他软件抓了</p>
+
+<p>下面开始实现 DragMoveMode 也就是核心的通过触摸拖动窗口的逻辑</p>
+
+<p>大概对外的接口方法实现请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">class</span> <span class="nc">DragMoveMode</span>
+        <span class="p">{</span>
+            <span class="k">public</span> <span class="nf">DragMoveMode</span><span class="p">(</span><span class="n">Window</span> <span class="n">window</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">_window</span> <span class="p">=</span> <span class="n">window</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">public</span> <span class="k">void</span> <span class="nf">Start</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">window</span> <span class="p">=</span> <span class="n">_window</span><span class="p">;</span>
+
+                <span class="n">window</span><span class="p">.</span><span class="n">PreviewMouseMove</span> <span class="p">+=</span> <span class="n">Window_PreviewMouseMove</span><span class="p">;</span>
+                <span class="n">window</span><span class="p">.</span><span class="n">PreviewMouseUp</span> <span class="p">+=</span> <span class="n">Window_PreviewMouseUp</span><span class="p">;</span>
+                <span class="n">window</span><span class="p">.</span><span class="n">LostMouseCapture</span> <span class="p">+=</span> <span class="n">Window_LostMouseCapture</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">public</span> <span class="k">void</span> <span class="nf">Stop</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Window</span> <span class="n">window</span> <span class="p">=</span> <span class="n">_window</span><span class="p">;</span>
+
+                <span class="n">window</span><span class="p">.</span><span class="n">PreviewMouseMove</span> <span class="p">-=</span> <span class="n">Window_PreviewMouseMove</span><span class="p">;</span>
+                <span class="n">window</span><span class="p">.</span><span class="n">PreviewMouseUp</span> <span class="p">-=</span> <span class="n">Window_PreviewMouseUp</span><span class="p">;</span>
+                <span class="n">window</span><span class="p">.</span><span class="n">LostMouseCapture</span> <span class="p">-=</span> <span class="n">Window_LostMouseCapture</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">private</span> <span class="k">readonly</span> <span class="n">Window</span> <span class="n">_window</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在上面代码里面监听 PreviewMouseMove 是为了获取移动的时机，而不是为了获取相对的坐标。而 PreviewMouseUp 可以用来了解啥时候结束。当然了 LostMouseCapture 也需要监听，和 PreviewMouseUp 一样用来了解啥时候结束</p>
+
+<p>在 Window_PreviewMouseMove 方法需要先判断是否第一次进入移动，因此咱没有监听 MouseDown 方法。为什么没有监听 MouseDown 方法，是因为在上层业务此时业务调用 MoseDown 完成</p>
+
+<p>判断是否第一次进入移动需要一个辅助的字段，咱定义一个叫上一次点击的坐标字段</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">private</span> <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="n">Point</span><span class="p">?</span> <span class="n">_lastPoint</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面代码的 Win32.User32 是我定义的代码，这些定义将会放在本文最后</p>
+
+<p>判断是第一次进入移动可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">private</span> <span class="k">void</span> <span class="nf">Window_PreviewMouseMove</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">MouseEventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetCursorPos</span><span class="p">(</span><span class="k">out</span> <span class="kt">var</span> <span class="n">lpPoint</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">_lastPoint</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">_lastPoint</span> <span class="p">=</span> <span class="n">lpPoint</span><span class="p">;</span>
+                    <span class="n">_window</span><span class="p">.</span><span class="nf">CaptureMouse</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过 GetCursorPos 的 Win32 方法可以拿到相对于屏幕坐标的鼠标坐标，而触摸默认会将第一个触摸点转换为鼠标坐标，因此拿到的坐标点不是相对于窗口内的，这样就能做到在移动的时候不会抖</p>
+
+<p>接下来判断相对上一次的移动距离，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">dx</span> <span class="p">=</span> <span class="n">lpPoint</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">_lastPoint</span><span class="p">.</span><span class="n">Value</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">dy</span> <span class="p">=</span> <span class="n">lpPoint</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">_lastPoint</span><span class="p">.</span><span class="n">Value</span><span class="p">.</span><span class="n">Y</span><span class="p">;</span>
+
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"dx=</span><span class="p">{</span><span class="n">dx</span><span class="p">}</span><span class="s"> dy=</span><span class="p">{</span><span class="n">dy</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>拿到的 dx 和 dy 就可以用来设置窗口的左上角坐标了。而此时不能通过 Window 的 Top 和 Left 属性获取，这两个属性的值使用的是 WPF 单位和坐标，而咱计算的 dx 和 dy 是相对于屏幕的坐标，因此需要调用 GetWindowRect 这个 win32 方法获取窗口所在屏幕的坐标</p>
+
+<p>设置窗口坐标也需要使用屏幕坐标来设置，需要调用 SetWindowPos 方法，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="kt">var</span> <span class="n">handle</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="n">_window</span><span class="p">).</span><span class="n">Handle</span><span class="p">;</span>
+
+     <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetWindowRect</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">lpRect</span><span class="p">);</span>
+
+     <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">SetWindowPos</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="n">lpRect</span><span class="p">.</span><span class="n">Left</span> <span class="p">+</span> <span class="n">dx</span><span class="p">,</span> <span class="n">lpRect</span><span class="p">.</span><span class="n">Top</span> <span class="p">+</span> <span class="n">dy</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span>
+                        <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="n">WindowPositionFlags</span><span class="p">.</span><span class="n">SWP_NOSIZE</span> <span class="p">|</span>
+                               <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="n">WindowPositionFlags</span><span class="p">.</span><span class="n">SWP_NOZORDER</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>这个 Window_PreviewMouseMove 方法代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">private</span> <span class="k">void</span> <span class="nf">Window_PreviewMouseMove</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">MouseEventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetCursorPos</span><span class="p">(</span><span class="k">out</span> <span class="kt">var</span> <span class="n">lpPoint</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">_lastPoint</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">_lastPoint</span> <span class="p">=</span> <span class="n">lpPoint</span><span class="p">;</span>
+                    <span class="n">_window</span><span class="p">.</span><span class="nf">CaptureMouse</span><span class="p">();</span>
+                <span class="p">}</span>
+
+                <span class="kt">var</span> <span class="n">dx</span> <span class="p">=</span> <span class="n">lpPoint</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">_lastPoint</span><span class="p">.</span><span class="n">Value</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">dy</span> <span class="p">=</span> <span class="n">lpPoint</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">_lastPoint</span><span class="p">.</span><span class="n">Value</span><span class="p">.</span><span class="n">Y</span><span class="p">;</span>
+
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"dx=</span><span class="p">{</span><span class="n">dx</span><span class="p">}</span><span class="s"> dy=</span><span class="p">{</span><span class="n">dy</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+
+                <span class="c1">// 以下的 60 是表示最大移动速度</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">Math</span><span class="p">.</span><span class="nf">Abs</span><span class="p">(</span><span class="n">dx</span><span class="p">)</span> <span class="p">&lt;</span> <span class="m">60</span> <span class="p">&amp;&amp;</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Abs</span><span class="p">(</span><span class="n">dy</span><span class="p">)</span> <span class="p">&lt;</span> <span class="m">60</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">handle</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="n">_window</span><span class="p">).</span><span class="n">Handle</span><span class="p">;</span>
+
+                    <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetWindowRect</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">lpRect</span><span class="p">);</span>
+
+                    <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">SetWindowPos</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="n">lpRect</span><span class="p">.</span><span class="n">Left</span> <span class="p">+</span> <span class="n">dx</span><span class="p">,</span> <span class="n">lpRect</span><span class="p">.</span><span class="n">Top</span> <span class="p">+</span> <span class="n">dy</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span>
+                        <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="n">WindowPositionFlags</span><span class="p">.</span><span class="n">SWP_NOSIZE</span> <span class="p">|</span>
+                               <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="n">WindowPositionFlags</span><span class="p">.</span><span class="n">SWP_NOZORDER</span><span class="p">));</span>
+                <span class="p">}</span>
+
+                <span class="n">_lastPoint</span> <span class="p">=</span> <span class="n">lpPoint</span><span class="p">;</span>
+            <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>在 Window_PreviewMouseUp 和 Window_LostMouseCapture 方法调用的是清理的代码，解决内存泄露</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">private</span> <span class="k">void</span> <span class="nf">Window_LostMouseCapture</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">MouseEventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">Stop</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="k">private</span> <span class="k">void</span> <span class="nf">Window_PreviewMouseUp</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">MouseButtonEventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">Stop</span><span class="p">();</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>大概就完成了触摸拖动窗口的逻辑，下面代码是 Win32 的代码，需要加到你的代码里面，这样才能构建通过</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">Win32</span>
+        <span class="p">{</span>
+            <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">User32</span>
+            <span class="p">{</span>
+                <span class="c1">/// &lt;summary&gt;</span>
+                <span class="c1">/// 改变一个子窗口、弹出式窗口和顶层窗口的尺寸、位置和 Z 序。</span>
+                <span class="c1">/// &lt;/summary&gt;</span>
+                <span class="c1">/// &lt;param name="hWnd"&gt;窗口句柄。&lt;/param&gt;</span>
+                <span class="c1">/// &lt;param name="hWndInsertAfter"&gt;</span>
+                <span class="c1">/// 在z序中的位于被置位的窗口前的窗口句柄。该参数必须为一个窗口句柄，或下列值之一：</span>
+                <span class="c1">/// &lt;para&gt;HWND_BOTTOM：将窗口置于 Z 序的底部。如果参数hWnd标识了一个顶层窗口，则窗口失去顶级位置，并且被置在其他窗口的底部。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;HWND_NOTOPMOST：将窗口置于所有非顶层窗口之上（即在所有顶层窗口之后）。如果窗口已经是非顶层窗口则该标志不起作用。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;HWND_TOP：将窗口置于Z序的顶部。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;HWND_TOPMOST：将窗口置于所有非顶层窗口之上。即使窗口未被激活窗口也将保持顶级位置。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;/param&gt;</span>
+                <span class="c1">/// &lt;param name="x"&gt;以客户坐标指定窗口新位置的左边界。&lt;/param&gt;</span>
+                <span class="c1">/// &lt;param name="y"&gt;以客户坐标指定窗口新位置的顶边界。&lt;/param&gt;</span>
+                <span class="c1">/// &lt;param name="cx"&gt;以像素指定窗口的新的宽度。&lt;/param&gt;</span>
+                <span class="c1">/// &lt;param name="cy"&gt;以像素指定窗口的新的高度。&lt;/param&gt;</span>
+                <span class="c1">/// &lt;param name="wFlagslong"&gt;</span>
+                <span class="c1">/// 窗口尺寸和定位的标志。该参数可以是下列值的组合：</span>
+                <span class="c1">/// &lt;para&gt;SWP_ASYNCWINDOWPOS：如果调用进程不拥有窗口，系统会向拥有窗口的线程发出需求。这就防止调用线程在其他线程处理需求的时候发生死锁。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_DEFERERASE：防止产生 WM_SYNCPAINT 消息。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_DRAWFRAME：在窗口周围画一个边框（定义在窗口类描述中）。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_FRAMECHANGED：给窗口发送 WM_NCCALCSIZE 消息，即使窗口尺寸没有改变也会发送该消息。如果未指定这个标志，只有在改变了窗口尺寸时才发送 WM_NCCALCSIZE。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_HIDEWINDOW：隐藏窗口。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOACTIVATE：不激活窗口。如果未设置标志，则窗口被激活，并被设置到其他最高级窗口或非最高级组的顶部（根据参数hWndlnsertAfter设置）。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOCOPYBITS：清除客户区的所有内容。如果未设置该标志，客户区的有效内容被保存并且在窗口尺寸更新和重定位后拷贝回客户区。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOMOVE：维持当前位置（忽略X和Y参数）。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOOWNERZORDER：不改变 Z 序中的所有者窗口的位置。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOREDRAW：不重画改变的内容。如果设置了这个标志，则不发生任何重画动作。适用于客户区和非客户区（包括标题栏和滚动条）和任何由于窗回移动而露出的父窗口的所有部分。如果设置了这个标志，应用程序必须明确地使窗口无效并区重画窗口的任何部分和父窗口需要重画的部分。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOREPOSITION：与 SWP_NOOWNERZORDER 标志相同。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOSENDCHANGING：防止窗口接收 WM_WINDOWPOSCHANGING 消息。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOSIZE：维持当前尺寸（忽略 cx 和 cy 参数）。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_NOZORDER：维持当前 Z 序（忽略 hWndlnsertAfter 参数）。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;para&gt;SWP_SHOWWINDOW：显示窗口。&lt;/para&gt;</span>
+                <span class="c1">/// &lt;/param&gt;</span>
+                <span class="c1">/// &lt;returns&gt;如果函数成功，返回值为非零；如果函数失败，返回值为零。若想获得更多错误消息，请调用 GetLastError 函数。&lt;/returns&gt;</span>
+                <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">LibraryName</span><span class="p">,</span> <span class="n">ExactSpelling</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+                <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">Int32</span> <span class="nf">SetWindowPos</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">hWndInsertAfter</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">x</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">y</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">cx</span><span class="p">,</span>
+                    <span class="n">Int32</span> <span class="n">cy</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">wFlagslong</span><span class="p">);</span>
+
+                <span class="p">[</span><span class="n">Flags</span><span class="p">]</span>
+                <span class="k">public</span> <span class="k">enum</span> <span class="n">WindowPositionFlags</span>
+                <span class="p">{</span>
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     If the calling thread and the thread that owns the window are attached to different input queues, the system posts</span>
+                    <span class="c1">///     the request to the thread that owns the window. This prevents the calling thread from blocking its execution while</span>
+                    <span class="c1">///     other threads process the request.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_ASYNCWINDOWPOS</span> <span class="p">=</span> <span class="m">0x4000</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Prevents generation of the WM_SYNCPAINT message.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_DEFERERASE</span> <span class="p">=</span> <span class="m">0x2000</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Draws a frame (defined in the window's class description) around the window.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_DRAWFRAME</span> <span class="p">=</span> <span class="m">0x0020</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Applies new frame styles set using the SetWindowLong function. Sends a WM_NCCALCSIZE message to the window, even if</span>
+                    <span class="c1">///     the window's size is not being changed. If this flag is not specified, WM_NCCALCSIZE is sent only when the window's</span>
+                    <span class="c1">///     size is being changed.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_FRAMECHANGED</span> <span class="p">=</span> <span class="m">0x0020</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Hides the window.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_HIDEWINDOW</span> <span class="p">=</span> <span class="m">0x0080</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Does not activate the window. If this flag is not set, the window is activated and moved to the top of either the</span>
+                    <span class="c1">///     topmost or non-topmost group (depending on the setting of the hWndInsertAfter parameter).</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOACTIVATE</span> <span class="p">=</span> <span class="m">0x0010</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Discards the entire contents of the client area. If this flag is not specified, the valid contents of the client</span>
+                    <span class="c1">///     area are saved and copied back into the client area after the window is sized or repositioned.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOCOPYBITS</span> <span class="p">=</span> <span class="m">0x0100</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Retains the current position (ignores X and Y parameters).</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOMOVE</span> <span class="p">=</span> <span class="m">0x0002</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Does not change the owner window's position in the Z order.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOOWNERZORDER</span> <span class="p">=</span> <span class="m">0x0200</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Does not redraw changes. If this flag is set, no repainting of any kind occurs. This applies to the client area,</span>
+                    <span class="c1">///     the nonclient area (including the title bar and scroll bars), and any part of the parent window uncovered as a</span>
+                    <span class="c1">///     result of the window being moved. When this flag is set, the application must explicitly invalidate or redraw any</span>
+                    <span class="c1">///     parts of the window and parent window that need redrawing.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOREDRAW</span> <span class="p">=</span> <span class="m">0x0008</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Same as the SWP_NOOWNERZORDER flag.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOREPOSITION</span> <span class="p">=</span> <span class="m">0x0200</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Prevents the window from receiving the WM_WINDOWPOSCHANGING message.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOSENDCHANGING</span> <span class="p">=</span> <span class="m">0x0400</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Retains the current size (ignores the cx and cy parameters).</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOSIZE</span> <span class="p">=</span> <span class="m">0x0001</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Retains the current Z order (ignores the hWndInsertAfter parameter).</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_NOZORDER</span> <span class="p">=</span> <span class="m">0x0004</span><span class="p">,</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///     Displays the window.</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="n">SWP_SHOWWINDOW</span> <span class="p">=</span> <span class="m">0x0040</span>
+                <span class="p">}</span>
+
+
+                <span class="k">public</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">LibraryName</span> <span class="p">=</span> <span class="s">"user32"</span><span class="p">;</span>
+
+                <span class="c1">/// &lt;summary&gt;</span>
+                <span class="c1">/// 获取的是以屏幕为坐标轴窗口坐标</span>
+                <span class="c1">/// &lt;/summary&gt;</span>
+                <span class="c1">/// &lt;param name="hWnd"&gt;&lt;/param&gt;</span>
+                <span class="c1">/// &lt;param name="lpRect"&gt;&lt;/param&gt;</span>
+                <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+                <span class="p">[</span><span class="k">return</span><span class="p">:</span> <span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">Bool</span><span class="p">)]</span>
+                <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">LibraryName</span><span class="p">,</span> <span class="n">ExactSpelling</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+                <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetWindowRect</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="k">out</span> <span class="n">Rectangle</span> <span class="n">lpRect</span><span class="p">);</span>
+
+                <span class="c1">/// &lt;summary&gt;</span>
+                <span class="c1">/// 在 Win32 函数使用的矩形</span>
+                <span class="c1">/// &lt;/summary&gt;</span>
+                <span class="p">[</span><span class="nf">StructLayout</span><span class="p">(</span><span class="n">LayoutKind</span><span class="p">.</span><span class="n">Sequential</span><span class="p">)]</span>
+                <span class="k">public</span> <span class="k">partial</span> <span class="k">struct</span> <span class="nc">Rectangle</span> <span class="p">:</span> <span class="n">IEquatable</span><span class="p">&lt;</span><span class="n">Rectangle</span><span class="p">&gt;</span>
+                <span class="p">{</span>
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">///  创建在 Win32 函数使用的矩形</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="c1">/// &lt;param name="left"&gt;&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;param name="top"&gt;&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;param name="right"&gt;&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;param name="bottom"&gt;&lt;/param&gt;</span>
+                    <span class="k">public</span> <span class="nf">Rectangle</span><span class="p">(</span><span class="kt">int</span> <span class="n">left</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">top</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">right</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">bottom</span> <span class="p">=</span> <span class="m">0</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">Left</span> <span class="p">=</span> <span class="n">left</span><span class="p">;</span>
+                        <span class="n">Top</span> <span class="p">=</span> <span class="n">top</span><span class="p">;</span>
+                        <span class="n">Right</span> <span class="p">=</span> <span class="n">right</span><span class="p">;</span>
+                        <span class="n">Bottom</span> <span class="p">=</span> <span class="n">bottom</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">/// 创建在 Win32 函数使用的矩形</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="c1">/// &lt;param name="width"&gt;矩形的宽度&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;param name="height"&gt;矩形的高度&lt;/param&gt;</span>
+                    <span class="k">public</span> <span class="nf">Rectangle</span><span class="p">(</span><span class="kt">int</span> <span class="n">width</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span> <span class="p">=</span> <span class="m">0</span><span class="p">)</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="p">{</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">Left</span><span class="p">;</span>
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">Top</span><span class="p">;</span>
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">Right</span><span class="p">;</span>
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">Bottom</span><span class="p">;</span>
+
+                    <span class="k">public</span> <span class="kt">bool</span> <span class="nf">Equals</span><span class="p">(</span><span class="n">Rectangle</span> <span class="n">other</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="p">(</span><span class="n">Left</span> <span class="p">==</span> <span class="n">other</span><span class="p">.</span><span class="n">Left</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="p">(</span><span class="n">Right</span> <span class="p">==</span> <span class="n">other</span><span class="p">.</span><span class="n">Right</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="p">(</span><span class="n">Top</span> <span class="p">==</span> <span class="n">other</span><span class="p">.</span><span class="n">Top</span><span class="p">)</span> <span class="p">&amp;&amp;</span>
+                               <span class="p">(</span><span class="n">Bottom</span> <span class="p">==</span> <span class="n">other</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">override</span> <span class="kt">bool</span> <span class="nf">Equals</span><span class="p">(</span><span class="kt">object</span> <span class="n">obj</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="n">obj</span> <span class="k">is</span> <span class="n">Rectangle</span> <span class="p">&amp;&amp;</span> <span class="nf">Equals</span><span class="p">((</span><span class="n">Rectangle</span><span class="p">)</span> <span class="n">obj</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="k">operator</span> <span class="p">==(</span><span class="n">Rectangle</span> <span class="n">left</span><span class="p">,</span> <span class="n">Rectangle</span> <span class="n">right</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="n">left</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">right</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="k">operator</span> <span class="p">!=(</span><span class="n">Rectangle</span> <span class="n">left</span><span class="p">,</span> <span class="n">Rectangle</span> <span class="n">right</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="p">!(</span><span class="n">left</span> <span class="p">==</span> <span class="n">right</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">override</span> <span class="kt">int</span> <span class="nf">GetHashCode</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="k">unchecked</span>
+                        <span class="p">{</span>
+                            <span class="kt">var</span> <span class="n">hashCode</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Left</span><span class="p">;</span>
+                            <span class="n">hashCode</span> <span class="p">=</span> <span class="p">(</span><span class="n">hashCode</span> <span class="p">*</span> <span class="m">397</span><span class="p">)</span> <span class="p">^</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Top</span><span class="p">;</span>
+                            <span class="n">hashCode</span> <span class="p">=</span> <span class="p">(</span><span class="n">hashCode</span> <span class="p">*</span> <span class="m">397</span><span class="p">)</span> <span class="p">^</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Right</span><span class="p">;</span>
+                            <span class="n">hashCode</span> <span class="p">=</span> <span class="p">(</span><span class="n">hashCode</span> <span class="p">*</span> <span class="m">397</span><span class="p">)</span> <span class="p">^</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Bottom</span><span class="p">;</span>
+                            <span class="k">return</span> <span class="n">hashCode</span><span class="p">;</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">/// 获取当前矩形是否空矩形</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="k">public</span> <span class="kt">bool</span> <span class="n">IsEmpty</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">.</span><span class="n">Left</span> <span class="p">==</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="n">Top</span> <span class="p">==</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="n">Right</span> <span class="p">==</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">==</span> <span class="m">0</span><span class="p">;</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">/// 矩形的宽度</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">Width</span>
+                    <span class="p">{</span>
+                        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">unchecked</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">Right</span> <span class="p">-</span> <span class="n">Left</span><span class="p">));</span> <span class="p">}</span>
+                        <span class="k">set</span> <span class="p">{</span> <span class="n">Right</span> <span class="p">=</span> <span class="k">unchecked</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">Left</span> <span class="p">+</span> <span class="k">value</span><span class="p">));</span> <span class="p">}</span>
+                    <span class="p">}</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">/// 矩形的高度</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">Height</span>
+                    <span class="p">{</span>
+                        <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="k">unchecked</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">Bottom</span> <span class="p">-</span> <span class="n">Top</span><span class="p">));</span> <span class="p">}</span>
+                        <span class="k">set</span> <span class="p">{</span> <span class="n">Bottom</span> <span class="p">=</span> <span class="k">unchecked</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">Top</span> <span class="p">+</span> <span class="k">value</span><span class="p">));</span> <span class="p">}</span>
+                    <span class="p">}</span>
+
+                    <span class="c1">/// &lt;summary&gt;</span>
+                    <span class="c1">/// 通过 x、y 坐标和宽度高度创建矩形</span>
+                    <span class="c1">/// &lt;/summary&gt;</span>
+                    <span class="c1">/// &lt;param name="x"&gt;&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;param name="y"&gt;&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;param name="width"&gt;&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;param name="height"&gt;&lt;/param&gt;</span>
+                    <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+                    <span class="k">public</span> <span class="k">static</span> <span class="n">Rectangle</span> <span class="nf">Create</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">,</span> <span class="kt">int</span> <span class="n">width</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">unchecked</span>
+                        <span class="p">{</span>
+                            <span class="k">return</span> <span class="k">new</span> <span class="nf">Rectangle</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">width</span> <span class="p">+</span> <span class="n">x</span><span class="p">),</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">height</span> <span class="p">+</span> <span class="n">y</span><span class="p">));</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="n">Rectangle</span> <span class="nf">From</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">lvalue</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">rvalue</span><span class="p">,</span>
+                        <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;</span> <span class="n">leftTopOperation</span><span class="p">,</span>
+                        <span class="n">Func</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;</span> <span class="n">rightBottomOperation</span> <span class="p">=</span> <span class="k">null</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">rightBottomOperation</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                            <span class="n">rightBottomOperation</span> <span class="p">=</span> <span class="n">leftTopOperation</span><span class="p">;</span>
+                        <span class="k">return</span> <span class="k">new</span> <span class="nf">Rectangle</span><span class="p">(</span>
+                            <span class="nf">leftTopOperation</span><span class="p">(</span><span class="n">lvalue</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Left</span><span class="p">),</span>
+                            <span class="nf">leftTopOperation</span><span class="p">(</span><span class="n">lvalue</span><span class="p">.</span><span class="n">Top</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Top</span><span class="p">),</span>
+                            <span class="nf">rightBottomOperation</span><span class="p">(</span><span class="n">lvalue</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Right</span><span class="p">),</span>
+                            <span class="nf">rightBottomOperation</span><span class="p">(</span><span class="n">lvalue</span><span class="p">.</span><span class="n">Bottom</span><span class="p">,</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Bottom</span><span class="p">)</span>
+                        <span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">Rectangle</span> <span class="k">value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Add</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="k">ref</span> <span class="k">value</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Subtract</span><span class="p">(</span><span class="n">Rectangle</span> <span class="k">value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Subtract</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="k">ref</span> <span class="k">value</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Multiply</span><span class="p">(</span><span class="n">Rectangle</span> <span class="k">value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Multiply</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="k">ref</span> <span class="k">value</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Divide</span><span class="p">(</span><span class="n">Rectangle</span> <span class="k">value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Divide</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="k">ref</span> <span class="k">value</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Deflate</span><span class="p">(</span><span class="n">Rectangle</span> <span class="k">value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Deflate</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="k">ref</span> <span class="k">value</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Inflate</span><span class="p">(</span><span class="n">Rectangle</span> <span class="k">value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Inflate</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="k">ref</span> <span class="k">value</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Offset</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Offset</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">OffsetTo</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">OffsetTo</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">Scale</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Scale</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">void</span> <span class="nf">ScaleTo</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">ScaleTo</span><span class="p">(</span><span class="k">ref</span> <span class="k">this</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">lvalue</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">rvalue</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Left</span> <span class="p">+=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Left</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Top</span> <span class="p">+=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Top</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Right</span> <span class="p">+=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Right</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">+=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Bottom</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Subtract</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">lvalue</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">rvalue</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Left</span> <span class="p">-=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Left</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Top</span> <span class="p">-=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Top</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Right</span> <span class="p">-=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Right</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">-=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Bottom</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Multiply</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">lvalue</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">rvalue</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Left</span> <span class="p">*=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Left</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Top</span> <span class="p">*=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Top</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Right</span> <span class="p">*=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Right</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">*=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Bottom</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Divide</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">lvalue</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">rvalue</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Left</span> <span class="p">/=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Left</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Top</span> <span class="p">/=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Top</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Right</span> <span class="p">/=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Right</span><span class="p">;</span>
+                        <span class="n">lvalue</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">/=</span> <span class="n">rvalue</span><span class="p">.</span><span class="n">Bottom</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Deflate</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">target</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">deflation</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Top</span> <span class="p">+=</span> <span class="n">deflation</span><span class="p">.</span><span class="n">Top</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Left</span> <span class="p">+=</span> <span class="n">deflation</span><span class="p">.</span><span class="n">Left</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">-=</span> <span class="n">deflation</span><span class="p">.</span><span class="n">Bottom</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Right</span> <span class="p">-=</span> <span class="n">deflation</span><span class="p">.</span><span class="n">Right</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Inflate</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">target</span><span class="p">,</span> <span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">inflation</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Top</span> <span class="p">-=</span> <span class="n">inflation</span><span class="p">.</span><span class="n">Top</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Left</span> <span class="p">-=</span> <span class="n">inflation</span><span class="p">.</span><span class="n">Left</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">+=</span> <span class="n">inflation</span><span class="p">.</span><span class="n">Bottom</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Right</span> <span class="p">+=</span> <span class="n">inflation</span><span class="p">.</span><span class="n">Right</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Offset</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">target</span><span class="p">,</span> <span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Top</span> <span class="p">+=</span> <span class="n">y</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Left</span> <span class="p">+=</span> <span class="n">x</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">+=</span> <span class="n">y</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Right</span> <span class="p">+=</span> <span class="n">x</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">OffsetTo</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">target</span><span class="p">,</span> <span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="kt">var</span> <span class="n">width</span> <span class="p">=</span> <span class="n">target</span><span class="p">.</span><span class="n">Width</span><span class="p">;</span>
+                        <span class="kt">var</span> <span class="n">height</span> <span class="p">=</span> <span class="n">target</span><span class="p">.</span><span class="n">Height</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Left</span> <span class="p">=</span> <span class="n">x</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Top</span> <span class="p">=</span> <span class="n">y</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Right</span> <span class="p">=</span> <span class="n">width</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">=</span> <span class="n">height</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Scale</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">target</span><span class="p">,</span> <span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Top</span> <span class="p">*=</span> <span class="n">y</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Left</span> <span class="p">*=</span> <span class="n">x</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">*=</span> <span class="n">y</span><span class="p">;</span>
+                        <span class="n">target</span><span class="p">.</span><span class="n">Right</span> <span class="p">*=</span> <span class="n">x</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ScaleTo</span><span class="p">(</span><span class="k">ref</span> <span class="n">Rectangle</span> <span class="n">target</span><span class="p">,</span> <span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">unchecked</span>
+                        <span class="p">{</span>
+                            <span class="n">x</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">target</span><span class="p">.</span><span class="n">Left</span> <span class="p">/</span> <span class="n">x</span><span class="p">);</span>
+                            <span class="n">y</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">target</span><span class="p">.</span><span class="n">Top</span> <span class="p">/</span> <span class="n">y</span><span class="p">);</span>
+                        <span class="p">}</span>
+
+                        <span class="nf">Scale</span><span class="p">(</span><span class="k">ref</span> <span class="n">target</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+
+                <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">LibraryName</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+                <span class="p">[</span><span class="k">return</span><span class="p">:</span> <span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">Bool</span><span class="p">)]</span>
+                <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetCursorPos</span><span class="p">(</span><span class="k">out</span> <span class="n">Point</span> <span class="n">lpPoint</span><span class="p">);</span>
+
+                <span class="p">[</span><span class="nf">StructLayout</span><span class="p">(</span><span class="n">LayoutKind</span><span class="p">.</span><span class="n">Sequential</span><span class="p">)]</span>
+                <span class="k">public</span> <span class="k">struct</span> <span class="nc">Point</span>
+                <span class="p">{</span>
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">X</span><span class="p">;</span>
+                    <span class="k">public</span> <span class="kt">int</span> <span class="n">Y</span><span class="p">;</span>
+
+                    <span class="k">public</span> <span class="nf">Point</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">this</span><span class="p">.</span><span class="n">X</span> <span class="p">=</span> <span class="n">x</span><span class="p">;</span>
+                        <span class="k">this</span><span class="p">.</span><span class="n">Y</span> <span class="p">=</span> <span class="n">y</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">implicit</span> <span class="k">operator</span> <span class="n">System</span><span class="p">.</span><span class="n">Drawing</span><span class="p">.</span><span class="nf">Point</span><span class="p">(</span><span class="n">Point</span> <span class="n">p</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="k">new</span> <span class="n">System</span><span class="p">.</span><span class="n">Drawing</span><span class="p">.</span><span class="nf">Point</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">Y</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="k">public</span> <span class="k">static</span> <span class="k">implicit</span> <span class="k">operator</span> <span class="nf">Point</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Drawing</span><span class="p">.</span><span class="n">Point</span> <span class="n">p</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="n">p</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="n">p</span><span class="p">.</span><span class="n">Y</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果发现你的代码依然无法构建通过，还请参阅我的测试代码从里面抄代码解决找不到某个类</p>
+
+<p>本文代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/a4e6bdc2a18cddea7defa4abcf461629e30763d2/BeehijemwaboHaihafobe">github</a>欢迎小伙伴访问</p>
+
+<p>关于 Win32 方法的定义，我推荐使用官方的 <a href="https://github.com/dotnet/pinvoke">dotnet/pinvoke: A library containing all P/Invoke code so you don’t have to import it every time. Maintained and updated to support the latest Windows OS.</a> 库</p>
+
+<p>更多触摸请看 <a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E7%9B%B8%E5%85%B3.html">WPF 触摸相关</a></p>
+
+<p>参考</p>
+
+<p><a href="https://www.codeproject.com/Questions/669512/WPF-Touch-DragMove">WPF Touch DragMove() - CodeProject</a></p>
+
+<p><a href="https://www.codeproject.com/Questions/671379/How-to-drag-window-with-finger-not-mouse">[Solved] How to drag window with finger not mouse - CodeProject</a></p>
+
+<p><a href="https://stackoverflow.com/questions/3274097/way-to-make-a-windowless-wpf-window-draggable-without-getting-invalidoperationex/3275712#3275712">Way to make a Windowless WPF window draggable without getting InvalidOperationException - Stack Overflow</a></p>
+
+<p><a href="https://social.msdn.microsoft.com/Forums/vstudio/en-US/975aa7ec-8558-4dcc-90b5-ca12555faa34/can-only-call-dragmove-when-primary-mouse-button-is-down?forum=wpf">Can only call DragMove when primary mouse button is down.</a></p>
+
+<p><a href="https://github.com/microsoft/XamlBehaviorsWpf">microsoft/XamlBehaviorsWpf: Home for WPF XAML Behaviors on GitHub.</a></p>
+
+:ET

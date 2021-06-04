@@ -1,0 +1,53 @@
+I"�<p>在使用 Blazor 做动态的跳转的时候，如果在 NavLink 的 href 添加了包含 C# 代码，那么将会提示 RZ9986 组件的属性不支持复杂的内容，如混合 C# 代码和标记等。解决方法是通过按钮加上事件代替</p>
+
+<!--more-->
+
+<!-- CreateTime:6/28/2020 8:40:39 AM -->
+
+<p>在使用如下面代码在循环里面写跳转逻辑</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@for (int i = 1; i &lt; PageCount + 1; i++)
+{
+        &lt;li&gt;
+            &lt;NavLink href="/blog/page/@(i)"&gt;@(i)&lt;/NavLink&gt;
+        &lt;/li&gt;
+}
+</code></pre></div></div>
+
+<p>此时尝试运行代码将会提示如下错误</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>严重性	代码	说明	项目	文件	行	禁止显示状态
+错误	RZ9986	Component attributes do not support complex content (mixed C# and markup). Attribute: 'href', text: '/blog/page/i'	StaticBlog	g:\lindexi\Blog\StaticBlog\RAZORGENERATE	1	
+</code></pre></div></div>
+
+<p>如 <code class="language-plaintext highlighter-rouge">RZ9986	Component attributes do not support complex content (mixed C# and markup). Attribute: 'href', text:</code> 所说，这里的坑就是 <code class="language-plaintext highlighter-rouge">NavLink</code> 的 href 只支持静态的字符串，不支持拼接，因此如<a href="https://docs.microsoft.com/zh-CN/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-3.1">官方文档</a> 所说，可以使用 <a href="https://docs.microsoft.com/zh-cn/dotnet/api/microsoft.aspnetcore.components.navigationmanager">NavigationManager</a> 配合按钮解决此问题</p>
+
+<p>在添加按钮之前，需要知道当前是第几次循环进入，此时需要用到再定义一个变量。如果了解闭包问题的小伙伴应该很好理解，如果不了解的话，就请听我吹一下水。咱需要再写一个变量去获取当前是 <code class="language-plaintext highlighter-rouge">for</code> 循环的第几次循环进来，用于传入按钮点击时的事件，如<a href="https://docs.microsoft.com/zh-CN/aspnet/core/blazor/components/event-handling?view=aspnetcore-3.1">官方文档</a>所说，假设咱在事件的表达式里面使用了循环迭代的变量，因此变量只有一个，因此这个变量的值会被变更，因此做不到让每次循环创建的按钮都知道自己是第几个被创建的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">@for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">PageCount</span> <span class="p">+</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+<span class="p">{</span>
+        <span class="c1">// 必须放在标签之前，如下面代码放在标签下面是不对的</span>
+        <span class="kt">var</span> <span class="n">currentPage</span> <span class="p">=</span> <span class="n">i</span><span class="p">;</span>
+        <span class="p">&lt;</span><span class="n">li</span><span class="p">&gt;</span>
+            <span class="err">@</span><span class="p">*</span> <span class="err">下面这一行代码将会显示为</span> <span class="n">HTML</span> <span class="err">内容</span> <span class="p">*</span><span class="err">@</span>
+            <span class="err">@</span><span class="p">*</span><span class="kt">var</span> <span class="n">currentPage</span> <span class="p">=</span> <span class="n">i</span><span class="p">;*</span><span class="err">@</span>
+            <span class="p">&lt;</span><span class="n">button</span> <span class="n">@onclick</span><span class="p">=</span><span class="s">"@(e =&gt; GotoPage(e, currentPage))"</span><span class="p">&gt;</span><span class="n">@i</span><span class="p">&lt;/</span><span class="n">button</span><span class="p">&gt;</span>
+            
+            <span class="err">@</span><span class="p">*&lt;</span><span class="n">NavLink</span> <span class="n">href</span><span class="p">=</span><span class="s">"/blog/page/@(i)"</span><span class="p">&gt;</span><span class="err">@</span><span class="p">(</span><span class="n">i</span><span class="p">)&lt;/</span><span class="n">NavLink</span><span class="p">&gt;*</span><span class="err">@</span>
+        <span class="p">&lt;/</span><span class="n">li</span><span class="p">&gt;</span>
+<span class="p">}</span>
+
+<span class="n">@code</span>
+<span class="p">{</span>
+	<span class="k">private</span> <span class="k">void</span> <span class="nf">GotoPage</span><span class="p">(</span><span class="n">MouseEventArgs</span> <span class="n">e</span><span class="p">,</span> <span class="kt">int</span> <span class="n">currentPage</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">NavigationManager</span><span class="p">.</span><span class="nf">NavigateTo</span><span class="p">(</span><span class="s">$"/blog/page/</span><span class="p">{</span><span class="n">currentPage</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码有两个注意的地方，第一个地方就是需要创建 <code class="language-plaintext highlighter-rouge">currentPage</code> 这个变量，这个变量能固定当前循环进入的值。此外需要将 <code class="language-plaintext highlighter-rouge">currentPage</code> 的定义放在标签之前，如上面代码</p>
+
+<p>这样玩就能做到跳转了，对比使用 <code class="language-plaintext highlighter-rouge">a</code> 的跳转标签的优势在于用此方法依然是单页应用，而不是重新进入一个新的页面。这句话不理解的小伙伴，请自己修改为 <code class="language-plaintext highlighter-rouge">a</code> 跳转对比试试就知道了</p>
+
+:ET

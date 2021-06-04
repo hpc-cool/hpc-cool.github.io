@@ -1,0 +1,49 @@
+I"|<p>在 WPF 经常需要重写一套触摸事件，没有UWP的Pointer那么好用。
+如果一直都觉得 WPF 的触摸做的不好，或想解决 WPF 的触摸问题，但是没有方法，那么请看下面。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/9 15:32:31 -->
+
+<!-- 标签：WPF，触摸 -->
+
+<p>只要新建框架为 .net 4.7 以上，运行的系统是 <code class="language-plaintext highlighter-rouge">Windows 10 Creators Update</code> 1703 10.0.15063 就可以。</p>
+
+<p>打开新建的工程，设置框架。</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFADbzBgABAAQArj4BAGZDAgBo6AkA6Nk%3D%2F2017417165611.jpg" alt="" /></p>
+
+<p>然后打开 App.config，添加支持把触摸和笔到鼠标</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="p">&lt;</span><span class="n">runtime</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">AppContextSwitchOverrides</span> <span class="k">value</span><span class="p">=</span><span class="s">"Switch.System.Windows.Input.Stylus.EnablePointerSupport=true"</span><span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="n">runtime</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>需要知道，这个特性不支持实时的笔迹。</p>
+
+<p>因为笔迹需要运行在UI线程，会导致比较差的性能。</p>
+
+<p>开启了这个属性就可以使用 Pointer 消息。</p>
+
+<p>因为有小伙伴说使用了我上面代码无法打开 Pointer 消息，我看了他代码，发现他写错了，所以我把全部 App.config 代码写出来。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="p">=</span><span class="s">"1.0"</span> <span class="n">encoding</span><span class="p">=</span><span class="s">"utf-8"</span><span class="p">?&gt;</span>
+
+<span class="p">&lt;</span><span class="n">configuration</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">startup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">supportedRuntime</span> <span class="n">version</span><span class="p">=</span><span class="s">"v4.0"</span> <span class="n">sku</span><span class="p">=</span><span class="s">".NETFramework,Version=v4.7"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">startup</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">runtime</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">AppContextSwitchOverrides</span> <span class="k">value</span><span class="p">=</span><span class="s">"Switch.System.Windows.Input.Stylus.EnablePointerSupport=true"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">runtime</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">configuration</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>参见：<a href="https://docs.microsoft.com/en-us/dotnet/framework/migration-guide/mitigation-pointer-based-touch-and-stylus-support?redirectedfrom=MSDN">Mitigation: Pointer-based Touch and Stylus Support</a></p>
+
+<p>在 dotnet core 的 WPF 下，请参阅 <a href="https://blog.lindexi.com/post/WPF-dotnet-core-%E5%A6%82%E4%BD%95%E5%BC%80%E5%90%AF-Pointer-%E6%B6%88%E6%81%AF%E7%9A%84%E6%94%AF%E6%8C%81.html">WPF dotnet core 如何开启 Pointer 消息的支持</a></p>
+
+<p>更多触摸请看 <a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E7%9B%B8%E5%85%B3.html">WPF 触摸相关</a></p>
+
+:ET

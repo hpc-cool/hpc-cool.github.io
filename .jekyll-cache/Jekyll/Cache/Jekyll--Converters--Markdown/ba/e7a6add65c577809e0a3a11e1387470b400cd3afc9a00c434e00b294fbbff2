@@ -1,0 +1,20 @@
+I".<p>When I packaging license within the nupkg, I will using License to replace licentUrl.</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>I using this code to set the license as MIT but it can not pack.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;license type="MIT"/&gt;
+</code></pre></div></div>
+
+<p>Because it is a newest feature.</p>
+
+<p>If your nuget version is 5.0.2 that you should use this code.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;license type="expression"&gt;MIT&lt;/license&gt;
+</code></pre></div></div>
+
+<p><a href="https://github.com/NuGet/Home/wiki/Packaging-License-within-the-nupkg">Packaging License within the nupkg · NuGet/Home Wiki</a></p>
+:ET

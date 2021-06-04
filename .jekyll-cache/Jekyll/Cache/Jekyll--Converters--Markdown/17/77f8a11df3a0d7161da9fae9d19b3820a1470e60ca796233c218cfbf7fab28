@@ -1,0 +1,74 @@
+I"�<p>在 UWP 开发的时候，我做的文档软件需要在文档还没有保存的时候，用户点击关闭按钮的时候告诉用户需要保存。如何在 UWP 阻止用户点击关闭按钮退出软件，如何知道用户点击了关闭按钮</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/7/4 9:28:57 -->
+
+<!-- csdn -->
+
+<p>在 UWP 中有限制的功能，需要在 Package.appxmanifest 中开启，关于限制的功能请看<a href="https://docs.microsoft.com/en-us/windows/uwp/packaging/app-capability-declarations#restricted-capabilities">App capability declarations</a></p>
+
+<p>拿到用户点击事件需要在 Package.appxmanifest 添加 confirmAppClose 功能</p>
+
+<p>添加方法是点击 Package.appxmanifest 右击点查看代码</p>
+
+<p>找到现有的 Capabilities 元素，默认一个空的 UWP 应用里面会添加网络功能，可以看到下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Capabilities</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Capability</span> <span class="n">Name</span><span class="p">=</span><span class="s">"internetClient"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Capabilities</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>在这个元素里面再添加一项，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">rescap</span><span class="p">:</span><span class="n">Capability</span> <span class="n">Name</span><span class="p">=</span><span class="s">"confirmAppClose"</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">rescap</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"</span><span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>这里的 rescap 就是限制的意思，需要添加命名空间，添加之后的代码请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Capabilities</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Capability</span> <span class="n">Name</span><span class="p">=</span><span class="s">"internetClient"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="n">rescap</span><span class="p">:</span><span class="n">Capability</span> <span class="n">Name</span><span class="p">=</span><span class="s">"confirmAppClose"</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">rescap</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"</span><span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Capabilities</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>添加完成之后，就可以在代码里面使用，我在主页面的构造函数监听关闭事件，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">Preview</span><span class="p">.</span><span class="n">SystemNavigationManagerPreview</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">().</span><span class="n">CloseRequested</span> <span class="p">+=</span> <span class="n">MainPage_CloseRequested</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>在 <code class="language-plaintext highlighter-rouge">MainPage_CloseRequested</code> 触发的时候就是用户点击关闭按钮，或者用户在任务栏右击关闭应用</p>
+
+<p>在 <code class="language-plaintext highlighter-rouge">MainPage_CloseRequested</code> 可以让应用延迟关闭或阻止应用关闭，如下面代码，我就不让用户关闭应用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">MainPage_CloseRequested</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">SystemNavigationCloseRequestedPreviewEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 让用户无法关闭</span>
+            <span class="n">e</span><span class="p">.</span><span class="n">Handled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">messageDialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MessageDialog</span><span class="p">(</span><span class="s">"欢迎访问 blog.lindexi.com 大量 UWP 博客"</span><span class="p">,</span> <span class="s">"骚年你确定关闭"</span><span class="p">);</span>
+            <span class="k">await</span> <span class="n">messageDialog</span><span class="p">.</span><span class="nf">ShowAsync</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>只需要通过 <code class="language-plaintext highlighter-rouge">e.Handled = true</code> 就可以阻止用户关闭应用，就这样写出了一个用户无法快速退出的应用，基本上只能通过任务管理器才能退出</p>
+
+<p>在我的软件里面作为文档软件需要在用户退出的时候发现有没有保存的文档就提示用户保存，也就是需要和上面代码差不多，给出提示。但是在 UWP 中的提示是异步的，也就是异步的提示无法阻止事件的继续，可以看到的是在用户点击关闭的时候，软件的提示页面还没显示，软件就关闭了</p>
+
+<p>在 SystemNavigationCloseRequestedPreviewEventArgs 提供了延迟关闭的方法</p>
+
+<p>在开始显示提示页面之前，调用 <code class="language-plaintext highlighter-rouge">e.GetDeferral()</code> 方法拿到返回值，在执行完成方法之后调用完成方法，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">deferral</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetDeferral</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">messageDialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MessageDialog</span><span class="p">(</span><span class="s">"欢迎访问 blog.lindexi.com 大量 UWP 博客"</span><span class="p">,</span> <span class="s">"骚年你确定关闭"</span><span class="p">);</span>
+            <span class="k">await</span> <span class="n">messageDialog</span><span class="p">.</span><span class="nf">ShowAsync</span><span class="p">();</span>
+
+            <span class="n">deferral</span><span class="p">.</span><span class="nf">Complete</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>上面代码的 deferral 可以作为字段保存，这样可以在执行完成更多代码之后才调用完成</p>
+
+<p>本文使用的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/fe9c6c91efbd6a01594a27e7fa2055ba3f8c170c/KemkajardeabalDifeewabaylacurcear">github</a> 欢迎小伙伴访问，如有问题请提 <a href="https://github.com/lindexi/lindexi_gd/issues/new">issus</a> 或评论</p>
+
+:ET

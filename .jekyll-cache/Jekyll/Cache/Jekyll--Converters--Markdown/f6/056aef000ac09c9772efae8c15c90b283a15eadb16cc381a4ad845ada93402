@@ -1,0 +1,271 @@
+I"�c<p>我在本地添加了很多开源项目，我写了一个脚本可以每天自动从开源项目更新代码</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/4 14:44:59 -->
+
+<!-- csdn -->
+
+<p>我在写开源项目的时候，在需要写之前更新项目，但是每次更新都需要等很久，能否可以自动更新开源项目的代码，这样每次需要更新的就很少，提高开发的速度。我找到了 Git 的命令可以更新项目，本文主要就是通过写一个程序自动使用 Git 命令更新</p>
+
+<p>可以通过找到所有 Git 文件夹，执行 <code class="language-plaintext highlighter-rouge">git fetch --all</code> 命令更新项目</p>
+
+<p>所以步骤就是写 cmd 命令行调用，然后写 Git 命令，接着是找到磁盘的所有 Git 文件夹，然后调用 Git 命令更新</p>
+
+<p>写一个类执行 cmd 命令</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">Control</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="nf">Control</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Encoding</span><span class="p">.</span><span class="nf">RegisterProvider</span><span class="p">(</span><span class="n">CodePagesEncodingProvider</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">Command</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// string str = Console.ReadLine();</span>
+            <span class="c1">//System.Console.InputEncoding = System.Text.Encoding.UTF8;//乱码</span>
+
+            <span class="n">Process</span> <span class="n">p</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Process</span>
+            <span class="p">{</span>
+                <span class="n">StartInfo</span> <span class="p">=</span>
+                <span class="p">{</span>
+                    <span class="n">FileName</span> <span class="p">=</span> <span class="s">"cmd.exe"</span><span class="p">,</span>
+                    <span class="n">UseShellExecute</span> <span class="p">=</span> <span class="k">false</span><span class="p">,</span>  <span class="c1">//是否使用操作系统shell启动</span>
+                    <span class="n">RedirectStandardInput</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span>  <span class="c1">//接受来自调用程序的输入信息</span>
+                    <span class="n">RedirectStandardOutput</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span>  <span class="c1">//由调用程序获取输出信息</span>
+                    <span class="n">RedirectStandardError</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="c1">//重定向标准错误输出</span>
+                    <span class="n">CreateNoWindow</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="c1">//不显示程序窗口</span>
+                    <span class="n">StandardOutputEncoding</span> <span class="p">=</span> <span class="n">Encoding</span><span class="p">.</span><span class="nf">GetEncoding</span><span class="p">(</span><span class="s">"GBK"</span><span class="p">)</span> <span class="c1">//Encoding.UTF8</span>
+                    <span class="c1">//Encoding.GetEncoding("GBK");//乱码</span>
+                <span class="p">}</span>
+            <span class="p">};</span>
+           
+            <span class="n">p</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span> <span class="c1">//启动程序</span>
+
+            <span class="c1">//向cmd窗口发送输入信息</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StandardInput</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span> <span class="p">+</span> <span class="s">"&amp;exit"</span><span class="p">);</span>
+
+            <span class="n">p</span><span class="p">.</span><span class="n">StandardInput</span><span class="p">.</span><span class="n">AutoFlush</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="c1">//p.StandardInput.WriteLine("exit");</span>
+            <span class="c1">//向标准输入写入要执行的命令。这里使用&amp;是批处理命令的符号，表示前面一个命令不管是否执行成功都执行后面(exit)命令，如果不执行exit命令，后面调用ReadToEnd()方法会假死</span>
+            <span class="c1">//同类的符号还有&amp;&amp;和||前者表示必须前一个命令执行成功才会执行后面的命令，后者表示必须前一个命令执行失败才会执行后面的命令</span>
+
+            <span class="kt">bool</span> <span class="n">exited</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+
+            <span class="c1">// 超时</span>
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromMinutes</span><span class="p">(</span><span class="m">1</span><span class="p">)).</span><span class="nf">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">exited</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">try</span>
+                    <span class="p">{</span>
+                        <span class="k">if</span> <span class="p">(!</span><span class="n">p</span><span class="p">.</span><span class="n">HasExited</span><span class="p">)</span>
+                        <span class="p">{</span>
+                            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"</span><span class="p">{</span><span class="n">str</span><span class="p">}</span><span class="s"> 超时"</span><span class="p">);</span>
+                            <span class="n">p</span><span class="p">.</span><span class="nf">Kill</span><span class="p">();</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">});</span>
+            <span class="p">});</span>
+
+            <span class="c1">//获取cmd窗口的输出信息</span>
+            <span class="kt">string</span> <span class="n">output</span> <span class="p">=</span> <span class="n">p</span><span class="p">.</span><span class="n">StandardOutput</span><span class="p">.</span><span class="nf">ReadToEnd</span><span class="p">();</span>
+            <span class="c1">//Console.WriteLine(output);</span>
+            <span class="n">output</span> <span class="p">+=</span> <span class="n">p</span><span class="p">.</span><span class="n">StandardError</span><span class="p">.</span><span class="nf">ReadToEnd</span><span class="p">();</span>
+            <span class="c1">//Console.WriteLine(output);</span>
+
+            <span class="c1">//StreamReader reader = p.StandardOutput;</span>
+            <span class="c1">//string line=reader.ReadLine();</span>
+            <span class="c1">//while (!reader.EndOfStream)</span>
+            <span class="c1">//{</span>
+            <span class="c1">//    str += line + "  ";</span>
+            <span class="c1">//    line = reader.ReadLine();</span>
+            <span class="c1">//}</span>
+
+            <span class="n">p</span><span class="p">.</span><span class="nf">WaitForExit</span><span class="p">();</span> <span class="c1">//等待程序执行完退出进程</span>
+            <span class="n">p</span><span class="p">.</span><span class="nf">Close</span><span class="p">();</span>
+
+            <span class="n">exited</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="n">output</span> <span class="p">+</span> <span class="s">"\r\n"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>然后需要有一个类可以用于通过命令行调用 Git 执行代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">GitCommand</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">GitCommand</span><span class="p">(</span><span class="n">DirectoryInfo</span> <span class="n">repo</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Repo</span> <span class="p">=</span> <span class="n">repo</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">DirectoryInfo</span> <span class="n">Repo</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">FetchAll</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">Control</span><span class="p">(</span><span class="s">"fetch --all"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="nf">Control</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">str</span> <span class="p">=</span> <span class="nf">FileStr</span><span class="p">()</span> <span class="p">+</span> <span class="n">str</span><span class="p">;</span>
+            <span class="nf">Log</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="n">str</span> <span class="p">=</span> <span class="n">RegeejairhemFurwhurrahuki</span><span class="p">.</span><span class="n">Control</span><span class="p">.</span><span class="nf">Command</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+            <span class="nf">Log</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">str</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Log</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="nf">FileStr</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="n">GitStr</span><span class="p">,</span> <span class="n">Repo</span><span class="p">.</span><span class="n">FullName</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">GitStr</span> <span class="p">=</span> <span class="s">"git -C {0} "</span><span class="p">;</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>不知道有没小伙伴找到一个好用的执行 Git 命令的库</p>
+
+<p>然后找到磁盘所有 Git 文件夹修改项目</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">List</span><span class="p">&lt;</span><span class="n">DirectoryInfo</span><span class="p">&gt;</span> <span class="n">deviceList</span> <span class="p">=</span> <span class="nf">FindDevice</span><span class="p">();</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">device</span> <span class="k">in</span> <span class="n">deviceList</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">Log</span><span class="p">(</span><span class="s">$"开始读取</span><span class="p">{</span><span class="n">device</span><span class="p">}</span><span class="s">盘符内容"</span><span class="p">);</span>
+                <span class="k">try</span>
+                <span class="p">{</span>
+                    <span class="nf">FindDirectory</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">Log</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 寻找文件夹</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="directory"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="deep"&gt;寻找深度&lt;/param&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">FindDirectory</span><span class="p">(</span><span class="n">DirectoryInfo</span> <span class="n">directory</span><span class="p">,</span> <span class="kt">int</span> <span class="n">deep</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="nf">Log</span><span class="p">(</span><span class="s">$"开始读取 </span><span class="p">{</span><span class="n">directory</span><span class="p">.</span><span class="n">FullName</span><span class="p">}</span><span class="s"> 文件夹，当前递归深度</span><span class="p">{</span><span class="n">deep</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+                <span class="n">deep</span><span class="p">--;</span>
+                <span class="kt">var</span> <span class="n">gitFolder</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DirectoryInfo</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">directory</span><span class="p">.</span><span class="n">FullName</span><span class="p">,</span> <span class="n">GitFolder</span><span class="p">));</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nf">CheckIsGitFolder</span><span class="p">(</span><span class="n">gitFolder</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="nf">Log</span><span class="p">(</span><span class="s">$"找到</span><span class="p">{</span><span class="n">gitFolder</span><span class="p">.</span><span class="n">FullName</span><span class="p">}</span><span class="s">文件夹"</span><span class="p">);</span>
+                    <span class="k">try</span>
+                    <span class="p">{</span>
+                        <span class="nf">UpdateGitFile</span><span class="p">(</span><span class="n">directory</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Log</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="c1">//Log($"因为{directory.FullName}不是");</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">deep</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">Log</span><span class="p">(</span><span class="s">$"达到递归深度</span><span class="p">{</span><span class="n">directory</span><span class="p">.</span><span class="n">FullName</span><span class="p">}</span><span class="s">不再继续寻找子文件夹"</span><span class="p">);</span>
+
+                        <span class="k">return</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="kt">var</span> <span class="n">subDirectoryList</span> <span class="p">=</span> <span class="n">directory</span><span class="p">.</span><span class="nf">GetDirectories</span><span class="p">();</span>
+
+                    <span class="nf">Log</span><span class="p">(</span><span class="s">$"在</span><span class="p">{</span><span class="n">directory</span><span class="p">.</span><span class="n">FullName</span><span class="p">}</span><span class="s">找到</span><span class="p">{</span><span class="n">subDirectoryList</span><span class="p">.</span><span class="n">Length</span><span class="p">}</span><span class="s">个文件夹"</span><span class="p">);</span>
+
+                    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">subDirectoryList</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="nf">FindDirectory</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">deep</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">Log</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">UpdateGitFile</span><span class="p">(</span><span class="n">DirectoryInfo</span> <span class="n">directory</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">gitCommand</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">GitCommand</span><span class="p">(</span><span class="n">directory</span><span class="p">);</span>
+            <span class="n">gitCommand</span><span class="p">.</span><span class="nf">FetchAll</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">GitFolder</span> <span class="p">=</span> <span class="s">".git"</span><span class="p">;</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 判断当前是否一个 git 文件夹</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="directory"&gt;&lt;/param&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">CheckIsGitFolder</span><span class="p">(</span><span class="n">DirectoryInfo</span> <span class="n">directory</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">directory</span><span class="p">.</span><span class="n">Exists</span><span class="p">;</span>
+        <span class="p">}</span>
+
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Log</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+            <span class="c1">//File.AppendAllText("log.txt", str + "\r\n");</span>
+        <span class="p">}</span>
+
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 找到所有驱动器</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">DirectoryInfo</span><span class="p">&gt;</span> <span class="nf">FindDevice</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">deviceList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">DirectoryInfo</span><span class="p">&gt;();</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="sc">'Z'</span> <span class="p">-</span> <span class="sc">'A'</span> <span class="p">+</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">device</span> <span class="p">=</span> <span class="p">(</span><span class="kt">char</span><span class="p">)(</span><span class="sc">'A'</span> <span class="p">+</span> <span class="n">i</span><span class="p">)</span> <span class="p">+</span> <span class="s">":\\"</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">Directory</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="n">deviceList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">DirectoryInfo</span><span class="p">(</span><span class="n">device</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">deviceList</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>代码请看 <a href="https://github.com/lindexi/lindexi_gd/blob/353776a0d7b44c017b1a037a94fbd29718f2303f/RegeejairhemFurwhurrahuki/RegeejairhemFurwhurrahuki/Program.cs">github</a></p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20198414445357" alt="" /></p>
+
+:ET

@@ -1,0 +1,50 @@
+I"�<p>本文告诉大家如何在 WPF 创建空白图片，可以创建1像素图片</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/14 20:11:55 -->
+
+<!-- csdn -->
+
+<p>可以使用 BitmapSource 的 Create 方法创建空白图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">// 限制不能创建小于2x2的图片</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">width</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">height</span> <span class="p">=</span> <span class="n">width</span><span class="p">;</span>
+            
+            <span class="n">BitmapSource</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span>
+                <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Indexed1</span><span class="p">,</span>
+                <span class="k">new</span> <span class="nf">BitmapPalette</span><span class="p">(</span><span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Color</span><span class="p">&gt;</span> <span class="p">{</span> <span class="n">Colors</span><span class="p">.</span><span class="n">Transparent</span> <span class="p">}),</span>
+                <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">width</span> <span class="p">*</span> <span class="n">height</span><span class="p">],</span> <span class="m">1</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>上面这个方法只有创建 2x2 的图片，而创建1像素图片可以使用下面方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">const</span> <span class="kt">int</span> <span class="n">width</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">height</span> <span class="p">=</span> <span class="n">width</span><span class="p">;</span>
+            <span class="k">const</span> <span class="kt">double</span> <span class="n">dpi</span> <span class="p">=</span> <span class="m">96</span><span class="p">;</span>
+            <span class="c1">// R G B 三个像素</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">colorLength</span> <span class="p">=</span> <span class="m">3</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">image</span> <span class="p">=</span> <span class="n">BitmapSource</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Bgr24</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">colorLength</span><span class="p">],</span>
+                <span class="n">colorLength</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>空白图片保存到文件，使用png和jpg等几个格式里面，文件的大小如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.png byte count = 119
+.jpg byte count = 631
+.bmp byte count = 58
+.gif byte count = 41
+</code></pre></div></div>
+
+<p>也就是说存放为 gif 对于这张图片最省文件体积</p>
+
+<p>以下是 bmp 文件的二进制</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="m">0x42</span><span class="p">,</span><span class="m">0x4D</span><span class="p">,</span><span class="m">0x3A</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x36</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x28</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x01</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x01</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x01</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x18</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0xC4</span><span class="p">,</span><span class="m">0x0E</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0xC4</span><span class="p">,</span><span class="m">0x0E</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span><span class="p">,</span><span class="m">0x00</span>
+</code></pre></div></div>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/225bab60/BuceafalfeNelnujellel">github</a> 欢迎小伙伴访问</p>
+
+:ET

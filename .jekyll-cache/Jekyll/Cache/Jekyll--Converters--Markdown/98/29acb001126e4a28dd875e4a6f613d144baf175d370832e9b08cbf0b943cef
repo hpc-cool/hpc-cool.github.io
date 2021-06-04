@@ -1,0 +1,102 @@
+I"#<p>本文告诉大家如何修改 Flyout 的尺寸</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/19 19:04:05 -->
+
+<p>在<a href="https://stackoverflow.com/q/60753124/6116637">堆栈</a>有小伙伴问如何修改 Flyout 的宽度，他看到宽度会使用第一个元素的大小而不是最大的</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;AppBarButton&gt;</span>
+    <span class="nt">&lt;AppBarButton.Flyout&gt;</span>
+        <span class="nt">&lt;Flyout&gt;</span>
+            <span class="nt">&lt;ListView&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Very very very long<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+            <span class="nt">&lt;/ListView&gt;</span>
+        <span class="nt">&lt;/Flyout&gt;</span>
+    <span class="nt">&lt;/AppBarButton.Flyout&gt;</span>
+<span class="nt">&lt;/AppBarButton&gt;</span>
+</code></pre></div></div>
+
+<p>大概他的代码运行的界面如下</p>
+
+<!-- ![](image/win10 uwp 如何修改 Flyout 的宽度或高度/win10 uwp 如何修改 Flyout 的宽度或高度0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020319195303952.jpg" alt="" /></p>
+
+<p>可以通过两个方法修改 Flyout 的宽度或高度</p>
+
+<p>第一个方法是通过修改 Flyout 的里元素宽度和高度的方式，如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;AppBarButton</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;AppBarButton.Flyout&gt;</span>
+            <span class="nt">&lt;Flyout&gt;</span>
+                <span class="nt">&lt;ListView</span> <span class="na">Width=</span><span class="s">"500"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Very very very long<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;/ListView&gt;</span>
+            <span class="nt">&lt;/Flyout&gt;</span>
+        <span class="nt">&lt;/AppBarButton.Flyout&gt;</span>
+    <span class="nt">&lt;/AppBarButton&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码就是将 ListView 设置一个宽度，这样默认就会使用这个元素的宽度作为 Flyout 的宽度，我将代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/bf7171894bf89dffc9689b3e40a1c09e0a1a24f4/KaynufoherHukiwaybicika">github</a> 欢迎小伙伴访问</p>
+
+<p>如果此时的窗口的大小变小了，那么 Flyout 也会自动修改自己的宽度和高度，可以使用FlyoutPresenterStyle属性修改</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;AppBarButton</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;AppBarButton.Flyout&gt;</span>
+            <span class="nt">&lt;Flyout&gt;</span>
+                <span class="nt">&lt;Flyout.FlyoutPresenterStyle&gt;</span>
+                    <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"FlyoutPresenter"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"MinWidth"</span> <span class="na">Value=</span><span class="s">"500"</span><span class="nt">&gt;&lt;/Setter&gt;</span>
+                    <span class="nt">&lt;/Style&gt;</span>
+                <span class="nt">&lt;/Flyout.FlyoutPresenterStyle&gt;</span>
+                <span class="nt">&lt;ListView</span> <span class="nt">&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Very very very long<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                    <span class="nt">&lt;x:String&gt;</span>Short<span class="nt">&lt;/x:String&gt;</span>
+                <span class="nt">&lt;/ListView&gt;</span>
+            <span class="nt">&lt;/Flyout&gt;</span>
+        <span class="nt">&lt;/AppBarButton.Flyout&gt;</span>
+    <span class="nt">&lt;/AppBarButton&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码通过 MinWidth 设置了最小需要的宽度，如果想要设置高度相信小伙伴也知道如何修改</p>
+
+<p>上面代码有一个细节是需要设置 <code class="language-plaintext highlighter-rouge">TargetType="FlyoutPresenter"</code> 才可以</p>
+
+<p>上面代码也放在 <a href="https://github.com/lindexi/lindexi_gd/tree/e2a80dab9092a14fbfc42d283d72a6c773893f8a/KaynufoherHukiwaybicika">github</a> 欢迎小伙伴访问</p>
+
+<p>如果是后台代码写的，也可以设置 FlyoutPresenter 的值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">void</span> <span class="nf">Flyout_Opened</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="kt">object</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>         
+    <span class="n">Flyout</span> <span class="n">f</span> <span class="p">=</span> <span class="n">sender</span> <span class="k">as</span> <span class="n">Flyout</span><span class="p">;</span>
+    <span class="n">Style</span> <span class="n">s</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">Style</span> <span class="p">{</span> <span class="n">TargetType</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">FlyoutPresenter</span><span class="p">)</span> <span class="p">};</span>
+    <span class="n">s</span><span class="p">.</span><span class="n">Setters</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Setter</span><span class="p">(</span><span class="n">MinHeightProperty</span><span class="p">,</span> <span class="s">"200"</span><span class="p">));</span>        
+    <span class="n">s</span><span class="p">.</span><span class="n">Setters</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Setter</span><span class="p">(</span><span class="n">MinWidthProperty</span><span class="p">,</span> <span class="s">"200"</span><span class="p">));</span>
+    <span class="n">f</span><span class="p">.</span><span class="n">FlyoutPresenterStyle</span> <span class="p">=</span> <span class="n">s</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我推荐使用 Flyout 这个控件解决了很多 Popup 的坑</p>
+
+:ET

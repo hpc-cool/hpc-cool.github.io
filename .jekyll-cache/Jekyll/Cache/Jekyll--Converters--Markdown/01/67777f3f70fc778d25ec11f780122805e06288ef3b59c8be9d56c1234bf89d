@@ -1,0 +1,483 @@
+I"F�<p>本文告诉大家去做一个商业游戏，游戏很简单，几乎没有什么技术。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:50 -->
+
+<p>游戏的开始，需要添加框架库，于是引用我自己写的库。</p>
+
+<p>首先是创建一个启动页面，这个页面是显示启动的。</p>
+
+<p>在显示启动的时候，是需要加载游戏需要使用的资源，如果觉得这时需要控制进度条，就需要使用注入的方法，给他知道现在的进度，不过我现在不去做这里，于是就很简单的代码做出来启动页面。</p>
+
+<p>现在的启动页还是空的，但是先不管他。</p>
+
+<p>然后开始写一个欢迎页面，也就是开始游戏、继续、帮助等的页面，暂时先不做。</p>
+
+<p>但是写了这么多，都不需要在 MainPage 写一个代码，现在就到了在 MainPage
+开始写代码，这时的代码就是添加一个 Frame 作为跳转，和一个菜单。当然菜单现在还没东西，只是需要添加到这里。</p>
+
+<p>看下，现在已经创建了两个页面。一个是启动页，一个是欢迎页。</p>
+
+<p>接着开始做游戏的主页面，请注意，在写的时候，一个页面都是对应一个视图。可以看到在写的时候，不需要去管两个页面之间的逻辑。当然现在也无法管。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201792392012.jpg" alt="" /></p>
+
+<p>可以知道游戏的主页面需要有仓库、买东西的店铺、买东西的地方和工厂。</p>
+
+<p>那么需要想游戏是如何玩的。</p>
+
+<p>因为这个游戏是我昨天看到买菜的人说的，我就想去做一个。</p>
+
+<p>首先物品有很多，而且可以通过工厂把低级的物品转为高级的物品。</p>
+
+<p>物品包括</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">种子</span>
+<span class="err">小米</span>
+<span class="err">麦</span>
+<span class="err">面</span>
+<span class="err">面包</span>
+<span class="err">番薯</span>
+<span class="err">矿石</span>
+<span class="err">铁</span>
+<span class="err">铜</span>
+<span class="err">木头</span>
+<span class="err">石</span>
+<span class="err">矿</span>
+<span class="err">碳</span>
+<span class="err">煤</span>
+<span class="err">锄头</span>
+<span class="err">椅子</span>
+<span class="err">桌子</span>
+<span class="err">雕刻刀</span>
+<span class="err">大刀</span>
+<span class="err">弓箭</span>
+
+</code></pre></div></div>
+
+<p>如果还有想到其他的物品，欢迎告诉我。不过在看完之前，请不要很快的告诉我，你希望添加那些物品，请在知道游戏如何玩之后在告诉我，你喜欢的物品。</p>
+
+<p>物品是包括当前价格和市场价格，其中当前价格是不变的，而市场价格是会在 80%-120% 之间波动。</p>
+
+<p>开始说游戏的商店是如何卖东西的，游戏使用的商店是可以通过市场买东西，然后把东西买个买东西的人。商店可以有很多个，当然，现在做的只有一个。商店存在信誉，商店来的客人数是不固定，和商店所在地方和商店信誉有关。如果一个地方人很多那么来商店的人会很多。如果商店信誉很好，来商店的人很多。</p>
+
+<p>一个买东西的人，会告诉商店他买的是有哪些，数量，希望买的价格。买的价格就是市场价格，市场价格总是变化，需要在每个时间决定是否买入。</p>
+
+<p>所以商店的输入按钮现在就有了一个，下一时间，也就是在这个时间是否有买东西的人过来，是否决定要从市场买东西。</p>
+
+<p>所以点击一下按钮，就可以获得当前有多少个买东西的过来，处理完之后在去市场买东西。</p>
+
+<p>买东西的人过来，就会说他现在需要买什么，当然游戏一开始不会立刻就出现高级的人来买比较大的东西。来买东西的人是有分等级的，也就是他有多少钱，于是按照钱判断他现在可以买多少东西。</p>
+
+<p>如果商店存在他可以买的东西，如商店现在有东西</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">种子</span> <span class="m">2</span>
+<span class="err">小米</span> <span class="m">10</span>
+<span class="err">麦</span>   <span class="m">10</span>
+<span class="err">面</span>   <span class="m">2</span>
+</code></pre></div></div>
+
+<p>他想买东西是</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">种子</span> <span class="m">1</span>
+<span class="err">小米</span> <span class="m">2</span>
+<span class="err">麦</span>   <span class="m">3</span>
+</code></pre></div></div>
+
+<p>于是刚好都可以买入，于是顾客就会给满分，因为他想要的商店可以买到所有他想要的东西。于是商店加信誉1。</p>
+
+<p>一个人总的带来信誉 是这样计算，他想要的商品价格可以获得数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="kt">var</span> <span class="n">s</span> <span class="p">=</span> <span class="err">买东西人买东西加起来的所有价值</span> 
+ <span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="err">商店提供商品总价格</span>
+ <span class="err">带来信誉</span> <span class="p">=</span> <span class="m">2</span> <span class="p">*</span> <span class="n">a</span> <span class="p">/</span> <span class="n">s</span> <span class="p">-</span> <span class="m">1</span>
+</code></pre></div></div>
+
+<p>如果只能满足买东西人一半的需要，那么不会带来任何的信誉提升。</p>
+
+<p>于是在点击下一时间，就开始计算有多少买东西的人，他们有多少钱，所以需要物品这个类给出他可以被改变的概率，通过他的钱就可以算出。于是物品需要的属性就可以得到，物品名、物品需要多少钱，物品总量。现在物品的总量可以不计算。</p>
+
+<p>来买东西的人有这些属性，所有的钱，级别。买的东西。级别就是商店有多少信誉在可以吸引这个买东西的人，这里写为一个列表</p>
+
+<p>但是开始先做一个简单的程序，之后在添加比较多功能。</p>
+
+<h2 id="界面">界面</h2>
+
+<p>游戏的界面很重要，但是我就写一个简单的界面。我先给界面的截图，可以看到这个界面很简单，就是一个列表和一些按钮</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201791101021.jpg" alt="" /></p>
+
+<p>列表有个问题，如何做表头，实际我也没办法，于是用了下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{x:Bind View.PropertyStorage}"</span>
+                          <span class="n">SelectedItem</span><span class="p">=</span><span class="s">"{Binding CarloPiperIsaacProperty,Mode=TwoWay}"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"TextBlock"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemContainerStyle</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ListViewItem"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalContentAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Stretch"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemContainerStyle</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">Header</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"30*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"15*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"15*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"15*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"名称"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"价格"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"仓库拥有"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"3"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"买入价钱"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">Header</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">DataTemplate</span> <span class="n">x</span><span class="p">:</span><span class="n">DataType</span><span class="p">=</span><span class="s">"view:Property"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"30*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"15*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"15*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"15*"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                                <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"TextBlock"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+                                <span class="p">&lt;/</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind Name}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind Price,Mode=OneWay}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind Num,Mode=OneWay}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"3"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind AshliLyverGeraldo,Mode=OneWay}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>上面代码为了让列表不压缩宽，于是就需要使用 ItemContainerStyle ，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                 <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemContainerStyle</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ListViewItem"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalContentAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Stretch"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemContainerStyle</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>为了让列表所有文字都居中，不想写给每个文字，但是列表之外的文字就不居中，于是修改列表内文字的居中就可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+
+
+                 <span class="p">&lt;</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"TextBlock"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+                                <span class="p">&lt;/</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>这样在列表内的文字就会居中，而列表外的文字就不会居中。</p>
+
+<p>如果在列表使用 x:bind 那么需要使用 DataType 来告诉绑定的类型，所以需要数据的类型是什么，不然就无法通过。所以在写列表之前还需要定义好数据，于是让我来告诉大家这个游戏需要的数据。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201797183335.jpg" alt="" /></p>
+
+<p>然后就需要开始绑定进去了，不过这时发现游戏需要的数据很简单，暂时我就不继续写代码，如果需要代码，请看 <a href="https://github.com/lindexi/UWP/tree/master/uwp/src/VarietyHiggstGushed">VarietyHiggstGushed</a></p>
+
+<h2 id="添加图标">添加图标</h2>
+
+<p>可以看到，上面的界面没有图标，看起来不好看，所以需要给他添加一些图标。图标可以到 <a href="http://www.iconfont.cn/">http://www.iconfont.cn/</a> 下载，在这里下载需要注意版权问题，不过我的这个在下载的时候就有看了，好像是不需要给钱。</p>
+
+<p>首先把图片放在 Assest 文件夹，然后就可以设置出来了。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201791617817.jpg" alt="" /></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span>
+                            <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Right"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"StackPanel"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"Margin"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"10,10,10,10"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Image</span> <span class="n">Source</span><span class="p">=</span><span class="s">"ms-appx:///Assets/天.png"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"20"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"20"</span><span class="p">&gt;&lt;/</span><span class="n">Image</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"天数"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind View.PinkieDuchesneGeraldo,Mode=OneWay}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Image</span> <span class="n">Source</span><span class="p">=</span><span class="s">"ms-appx:///Assets/仓库.png"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"20"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"20"</span><span class="p">&gt;&lt;/</span><span class="n">Image</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"仓库容量"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind View.JwStorage.Transit,Mode=OneWay}"</span><span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"/"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind View.JwStorage.TransitStorage,Mode=OneWay}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"金钱"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind View.JwStorage.TranStoragePrice,Mode=OneWay}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>可以看到图片的写法 Source 的值是使用<code class="language-plaintext highlighter-rouge">ms-appx</code>，这里就是从资源获得，如果希望知道这个代码是如何写，我有博客<a href="https://blog.lindexi.com/post/win10-uwp-%E8%AE%BF%E9%97%AE%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E6%96%87%E4%BB%B6.html">win10 uwp 访问解决方案文件</a> 里面就告诉大家如何写。</p>
+
+<p>注意需要设置图片的大小，可以运行程序，然后开始设置，这样界面就可以看到修改，但是需要保存才可以看到。</p>
+
+<p>可以看到原来的代码是 <a href="https://github.com/lindexi/UWP/commit/3f58dbee64d0a7b42768c1acdecb6812fc789ac5#diff-e941c1b41207d1fb99a9b5bc32e2d30b">VarietyHiggstGushed</a> 买东西的界面看起来不好</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017916171231.jpg" alt="" /></p>
+
+<p>下面就需要修改这个，修改为一个好看的</p>
+
+<p>可以使用 ContentDialog 弹出一个好看的界面</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201791720859.jpg" alt="" /></p>
+
+<p>那么如何做这个界面，简单的方法是做一个用户控件，这个控件的界面很简单，但是后台需要写一些属性，这个属性就是买入的当前，买入最大值，对应还有卖出的。</p>
+
+<p>于是这个界面的后台代码就是几个属性，还有在设置 ViewModel 时更新属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">JediahPage</span> <span class="p">:</span> <span class="n">UserControl</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">JediahPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">StorageModel</span> <span class="n">ViewModel</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_viewModel</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_viewModel</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="c1">//最大可以买</span>
+                <span class="n">NewLansheehyBrunaSharon</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Floor</span><span class="p">(</span><span class="n">_viewModel</span><span class="p">.</span><span class="n">JwStorage</span><span class="p">.</span><span class="n">TranStoragePrice</span> <span class="p">/</span>
+                                                           <span class="n">_viewModel</span><span class="p">.</span><span class="n">CarloPiperIsaacProperty</span><span class="p">.</span><span class="n">Price</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">sresidue</span> <span class="p">=</span> <span class="n">_viewModel</span><span class="p">.</span><span class="n">JwStorage</span><span class="p">.</span><span class="n">TransitStorage</span> <span class="p">-</span> <span class="n">_viewModel</span><span class="p">.</span><span class="n">JwStorage</span><span class="p">.</span><span class="n">Transit</span><span class="p">;</span>
+                <span class="n">NewLansheehyBrunaSharon</span> <span class="p">=</span> <span class="n">NewLansheehyBrunaSharon</span> <span class="p">&gt;</span> <span class="n">sresidue</span> <span class="p">?</span> <span class="n">sresidue</span> <span class="p">:</span> <span class="n">NewLansheehyBrunaSharon</span><span class="p">;</span>
+                <span class="n">AimeeLansheehyBrunaSharon</span> <span class="p">=</span> <span class="n">_viewModel</span><span class="p">.</span><span class="n">CarloPiperIsaacProperty</span><span class="p">.</span><span class="n">Num</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">NewLansheehyBrunaSharonNumProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"NewLansheehyBrunaSharonNum"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">JediahPage</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">NewLansheehyBrunaSharonNum</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">NewLansheehyBrunaSharonNumProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">NewLansheehyBrunaSharonNumProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">NewLansheehyBrunaSharonProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"NewLansheehyBrunaSharon"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">JediahPage</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">NewLansheehyBrunaSharon</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">NewLansheehyBrunaSharonProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">NewLansheehyBrunaSharonProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">AimeeLansheehyBrunaSharonNumProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"AimeeLansheehyBrunaSharonNum"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">JediahPage</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">AimeeLansheehyBrunaSharonNum</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">AimeeLansheehyBrunaSharonNumProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">AimeeLansheehyBrunaSharonNumProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">AimeeLansheehyBrunaSharonProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"AimeeLansheehyBrunaSharon"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">JediahPage</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">int</span><span class="p">)));</span>
+
+        <span class="k">private</span> <span class="n">StorageModel</span> <span class="n">_viewModel</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">AimeeLansheehyBrunaSharon</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">AimeeLansheehyBrunaSharonProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">AimeeLansheehyBrunaSharonProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">EventHandler</span> <span class="n">Close</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">NewLansheehy</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ViewModel</span><span class="p">.</span><span class="n">LansheehyBrunaSharon</span> <span class="p">=</span> <span class="n">NewLansheehyBrunaSharonNum</span><span class="p">;</span>
+            <span class="n">ViewModel</span><span class="p">.</span><span class="nf">NewLansheehyBrunaSharon</span><span class="p">();</span>
+            <span class="n">Close</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">AimeeLansheehy</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ViewModel</span><span class="p">.</span><span class="n">LansheehyBrunaSharon</span> <span class="p">=</span> <span class="n">AimeeLansheehyBrunaSharonNum</span><span class="p">;</span>
+            <span class="n">ViewModel</span><span class="p">.</span><span class="nf">AimeeLansheehyBrunaSharon</span><span class="p">();</span>
+            <span class="n">Close</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MnewBruna</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">NewLansheehyBrunaSharonNum</span> <span class="p">=</span> <span class="n">NewLansheehyBrunaSharon</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MaimeeBruna</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">AimeeLansheehyBrunaSharonNum</span> <span class="p">=</span> <span class="n">AimeeLansheehyBrunaSharon</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">CloseButton_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Close</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>界面代码很简单</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span> <span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"auto"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"64*"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">FontFamily</span><span class="p">=</span><span class="s">"Segoe MDL2 Assets"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"&amp;#xE10A;"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Right"</span>
+                        <span class="n">Click</span><span class="p">=</span><span class="s">"CloseButton_OnClick"</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span>
+
+                <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"64*"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"auto"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"auto"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100*"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind ViewModel.CarloPiperIsaacProperty.Name}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Image</span> <span class="n">Source</span><span class="p">=</span><span class="s">"ms-appx:///Assets/仓库.png"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"20"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"20"</span><span class="p">&gt;&lt;/</span><span class="n">Image</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"仓库拥有:"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind ViewModel.CarloPiperIsaacProperty.Num}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Width</span><span class="p">=</span><span class="s">"300"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"2"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"$"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"买入价格"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind ViewModel.CarloPiperIsaacProperty.AshliLyverGeraldo,Converter={StaticResource ConverDoubleStr}}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+
+                        <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span>
+                                    <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Right"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"$"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"市场价格"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{x:Bind ViewModel.CarloPiperIsaacProperty.Price}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"3"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"74*"</span> <span class="p">/&gt;</span>
+                            <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"85*"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"307*"</span> <span class="p">/&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"auto"</span> <span class="p">/&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span>
+                                    <span class="n">Value</span><span class="p">=</span><span class="s">"{x:Bind NewLansheehyBrunaSharonNum,Mode=TwoWay,Converter={StaticResource ResourceKey=Convert}}"</span>
+                                    <span class="n">Maximum</span><span class="p">=</span><span class="s">"{x:Bind NewLansheehyBrunaSharon}"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">Slider</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"max"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"MnewBruna"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"买入"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"NewLansheehy"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"59*"</span> <span class="p">/&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"auto"</span> <span class="p">/&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span>
+                                    <span class="n">Value</span><span class="p">=</span><span class="s">"{x:Bind AimeeLansheehyBrunaSharonNum,Mode=TwoWay,Converter={StaticResource Convert}}"</span>
+                                    <span class="n">Maximum</span><span class="p">=</span><span class="s">"{x:Bind AimeeLansheehyBrunaSharon}"</span><span class="p">&gt;</span>
+
+                            <span class="p">&lt;/</span><span class="n">Slider</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"max"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"MaimeeBruna"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"卖出"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"AimeeLansheehy"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>可以看到需要两个转换器，一个是把字符串转 double 一个是显示 double 保留小数后两位，这个实现很简单，我就不说了。那么接下来就是使用这个界面，使用方法请看下面。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">temp</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">JediahPage</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">ViewModel</span> <span class="p">=</span> <span class="n">View</span><span class="p">,</span>
+            <span class="p">};</span>
+            <span class="n">ContentDialog</span> <span class="n">contentDialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ContentDialog</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Content</span> <span class="p">=</span> <span class="n">temp</span><span class="p">,</span>
+                <span class="n">IsPrimaryButtonEnabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">,</span>
+                <span class="n">IsSecondaryButtonEnabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">,</span>
+            <span class="p">};</span>
+
+            <span class="n">temp</span><span class="p">.</span><span class="n">Close</span> <span class="p">+=</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">contentDialog</span><span class="p">.</span><span class="nf">Hide</span><span class="p">();</span>
+
+            <span class="k">await</span> <span class="n">contentDialog</span><span class="p">.</span><span class="nf">ShowAsync</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>主要注意把 close 事件写在显示前，然后去掉默认的按钮。</p>
+
+<p>大概这样就可以运行了，其他的代码不是重要的，所以就不说啦。现在我把游戏发在微软商店，点击<a href="ms-windows-store://pdp/?productid=9pb0286g2ldr">下载</a>。</p>
+
+<p>这就是<a href="ms-windows-store://pdp/?productid=9pb0286g2ldr">商业游戏</a> 1.0.75 ，在这个版本发布之后，还会继续开发，但是就不在这篇文章更新了。</p>
+
+<p>下面是相关文章</p>
+
+<ul>
+  <li>
+    <p><a href="https://lindexi.gitee.io/post/win10-uwp-%E5%95%86%E4%B8%9A%E6%B8%B8%E6%88%8F.html">win10 uwp 商业游戏 </a></p>
+  </li>
+  <li>
+    <p><a href="https://lindexi.gitee.io/post/win10-uwp-%E5%95%86%E4%B8%9A%E6%B8%B8%E6%88%8F-1.1.5.html">win10 uwp 商业游戏 1.1.5</a></p>
+  </li>
+  <li>
+    <p><a href="https://lindexi.gitee.io/post/win10-uwp-%E5%95%86%E4%B8%9A%E6%B8%B8%E6%88%8F-1.2.1.html">win10 uwp 商业游戏 1.2.1 </a></p>
+  </li>
+</ul>
+
+<!--  - [win10 uwp 商业游戏 ](./win10-uwp-%E5%95%86%E4%B8%9A%E6%B8%B8%E6%88%8F.html) 
+
+ - [win10 uwp 商业游戏 1.1.5](./win10-uwp-%E5%95%86%E4%B8%9A%E6%B8%B8%E6%88%8F-1.1.5.html)
+
+ - [win10 uwp 商业游戏 1.2.1 ](./win10-uwp-%E5%95%86%E4%B8%9A%E6%B8%B8%E6%88%8F-1.2.1.html ) -->
+
+<h2 id="感谢">感谢</h2>
+
+<p><a href="https://walterlv.github.io/">walterlv</a></p>
+
+<p><a href="http://niuyanjie.oschina.io/blog/">JAKE</a></p>
+
+<p>落書き  https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=64830430</p>
+
+<p>欢迎大家来我的<a href="https://lindexi.gitee.io">博客</a>，现在csdn的博客文章发布了就不再编辑，如果希望看最新的文章，请到我的<a href="https://lindexi.gitee.io">博客</a>。本文也发在博客园备份，如果大家有什么建议，请在博客下面评论。</p>
+
+:ET

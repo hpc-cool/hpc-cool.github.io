@@ -1,0 +1,33 @@
+I"h<p>I find a ununderstandable behavior in UWP. I make a content with a long width in ScrollViewer and the content will out of the panel.</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/3/15 14:14:24 -->
+
+<!-- csdn -->
+
+<p>I write a xaml with a ScrollViewer and a Grid. And than I set a content to ScrollViewer and the content is a long width Grid.</p>
+
+<pre><code class="language-xaml">    &lt;Grid&gt;
+        &lt;Grid.ColumnDefinitions&gt;
+            &lt;ColumnDefinition /&gt;
+            &lt;ColumnDefinition /&gt;
+        &lt;/Grid.ColumnDefinitions&gt;
+        &lt;ScrollViewer HorizontalScrollBarVisibility="Visible"&gt;
+            &lt;Grid Width="2100000"&gt;
+                &lt;TextBlock Margin="10,10,10,10"
+                    Text="asdasdasdasdasdasdasdasdasdaasdasdasdasdasdasdasdasdasdasdasdasdasdasdaasdasdasdasdasdasdasdasdasdasdasdasdasdasdaasdasdasdasdasdasdasdasdasdasdasdasdasd" /&gt;
+            &lt;/Grid&gt;
+        &lt;/ScrollViewer&gt;
+        &lt;Grid Grid.Column="1" Background="#aa565656" /&gt;
+    &lt;/Grid&gt;
+</code></pre>
+
+<p>Running the code, and the TextBlock will out of the Grid.</p>
+
+<p>After I set the Grid width to 2000000 that work well.</p>
+
+<p>Do not ask why I can find it. I wrote a code <code class="language-plaintext highlighter-rouge">await "lindexi is doubi";</code> and my friend pressed my head to the Keyboard. My head pressed the <code class="language-plaintext highlighter-rouge">0</code> key and set the Grid width. I ran the code and I was surprised to see it.</p>
+
+<p>Code https://github.com/lindexi/lindexi_gd/tree/550373c7ee587980a7ecd56e2c03aa40c6972416/TucasurchasGeldiskaycasoohou</p>
+:ET

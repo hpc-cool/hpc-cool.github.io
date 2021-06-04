@@ -1,0 +1,43 @@
+I"D<p>本文：如何复制一个列表</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>最简单的方法是 foreach</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">foreach</span><span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">a</span><span class="p">)</span>
+   <span class="p">{</span>
+       <span class="n">b</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+
+   <span class="p">}</span>
+</code></pre></div></div>
+
+<p>有没一个简单的方法？</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="nn">System.Linq</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Fex</span><span class="p">&gt;()</span>
+            <span class="p">{</span>
+                <span class="k">new</span> <span class="nf">Fex</span><span class="p">()</span> <span class="p">{</span><span class="n">F</span> <span class="p">=</span> <span class="k">true</span><span class="p">,},</span>
+                <span class="k">new</span> <span class="nf">Fex</span><span class="p">()</span> <span class="p">{</span><span class="n">F</span> <span class="p">=</span> <span class="k">true</span><span class="p">,},</span>
+                <span class="k">new</span> <span class="nf">Fex</span><span class="p">()</span> <span class="p">{</span><span class="n">F</span> <span class="p">=</span> <span class="k">false</span><span class="p">,},</span>
+
+            <span class="p">};</span>
+            <span class="n">List</span><span class="p">&lt;</span><span class="n">Fex</span><span class="p">&gt;</span> <span class="n">b</span> <span class="p">=</span> <span class="n">a</span><span class="p">.</span><span class="nf">ToList</span><span class="p">();</span>
+
+            <span class="n">b</span><span class="p">.</span><span class="nf">RemoveAt</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+
+            <span class="n">b</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Fex</span><span class="p">());</span>
+            <span class="n">b</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Fex</span><span class="p">());</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">List&lt;Fex&gt; b = a.ToList();</code> 可以把列表a到列表b，对b进行删除、添加，不会对a造成元素改变。</p>
+
+:ET

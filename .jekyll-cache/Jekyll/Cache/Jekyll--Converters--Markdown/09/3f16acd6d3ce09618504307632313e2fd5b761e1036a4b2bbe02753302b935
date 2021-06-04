@@ -1,0 +1,3 @@
+I"�<p>在使用 dotnet 构建的时候提示 error : SourceRoot items must include at least one top-level (not nested) item when DeterministicSourcePaths is true 构建失败</p>
+
+:ET

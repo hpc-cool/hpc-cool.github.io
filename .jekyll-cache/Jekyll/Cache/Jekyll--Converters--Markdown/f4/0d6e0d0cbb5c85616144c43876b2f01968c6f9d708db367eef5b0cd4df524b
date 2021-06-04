@@ -1,0 +1,53 @@
+I"�<p>在16299支持在软件自己重启，不需要让用户点击关闭然后启动，虽然我还不知道这个有什么用。本文告诉大家如何让软件关闭重新打开。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<p>首先需要使用的版本是 16299 ，然后使用 RequestRestartAsync 方法就可以关闭软件重新打开。</p>
+
+<p>下面就是简单的软件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    <span class="p">&lt;</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"100"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"点击上面的按钮重启   林德熙"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"重启"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"ButtonBase_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">ButtonBase_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">CoreApplication</span><span class="p">.</span><span class="nf">RequestRestartAsync</span><span class="p">(</span><span class="s">"退出"</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201712151723520171221193314.jpg" alt="" /></p>
+
+<p>这个方法在 CoreApplication ，使用的时候可以传入参数，在软件打开的时候可以拿到这个参数</p>
+
+<p>请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnActivated</span><span class="p">(</span><span class="n">IActivatedEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnActivated</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+            <span class="n">Debugger</span><span class="p">.</span><span class="nf">Launch</span><span class="p">();</span>
+            <span class="n">LaunchActivatedEventArgs</span> <span class="n">launchArgs</span> <span class="p">=</span> <span class="n">args</span> <span class="k">as</span> <span class="n">LaunchActivatedEventArgs</span><span class="p">;</span>
+            <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="n">launchArgs</span><span class="p">?.</span><span class="n">Arguments</span><span class="p">;</span>
+          
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果需要调试点击按钮重新打开，需要点击周期选择挂起，然后才会重新打开</p>
+
+<p>如果需要重新打开的软件进入调试，可以在 OnLaunched 添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Debugger</span><span class="p">.</span><span class="nf">Launch</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>添加了这句代码就可以在软件启动进入调试</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2018228141535.jpg" alt="" /></p>
+
+<p><a href="https://blogs.windows.com/buildingapps/2017/07/28/restart-app-programmatically/#WfIzq58ZwbzmwMMd.97">How to Restart your App Programmatically - Building Apps for WindowsBuilding Apps for Windows</a></p>
+
+:ET

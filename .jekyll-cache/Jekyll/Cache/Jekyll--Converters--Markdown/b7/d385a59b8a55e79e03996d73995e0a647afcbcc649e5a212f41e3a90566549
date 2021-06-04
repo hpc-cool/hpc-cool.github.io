@@ -1,0 +1,193 @@
+I"�H<p>本文告诉大家几个方法从 byte 数组找到对应的相同序列的数组</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>最简单的方法是进行数值判断，但是代码最少是使用Linq ，效率比较高是使用 Boyer-Moore 算法，下面就告诉大家几个算法的代码</p>
+
+<h2 id="判断数值">判断数值</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">ByteArrayRocks</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="nf">IndexOf</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">source</span><span class="p">,</span> <span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">pattern</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nf">IsEmptyLocate</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">pattern</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">yield</span> <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="n">start</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">source</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(!</span><span class="nf">IsMatch</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">pattern</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="k">continue</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="k">yield</span> <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="kt">int</span><span class="p">[]</span> <span class="n">Empty</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsMatch</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">array</span><span class="p">,</span> <span class="kt">int</span> <span class="n">position</span><span class="p">,</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">candidate</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">candidate</span><span class="p">.</span><span class="n">Length</span> <span class="p">&gt;</span> <span class="p">(</span><span class="n">array</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="n">position</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">candidate</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="n">position</span> <span class="p">+</span> <span class="n">i</span><span class="p">]</span> <span class="p">!=</span> <span class="n">candidate</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsEmptyLocate</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">array</span><span class="p">,</span> <span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">candidate</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">array</span> <span class="p">==</span> <span class="k">null</span>
+                   <span class="p">||</span> <span class="n">candidate</span> <span class="p">==</span> <span class="k">null</span>
+                   <span class="p">||</span> <span class="n">array</span><span class="p">.</span><span class="n">Length</span> <span class="p">==</span> <span class="m">0</span>
+                   <span class="p">||</span> <span class="n">array</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;</span> <span class="n">start</span>
+                   <span class="p">||</span> <span class="n">candidate</span><span class="p">.</span><span class="n">Length</span> <span class="p">==</span> <span class="m">0</span>
+                   <span class="p">||</span> <span class="n">candidate</span><span class="p">.</span><span class="n">Length</span> <span class="p">+</span> <span class="n">start</span> <span class="p">&gt;</span> <span class="n">array</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这是最简单的方法，参见 https://stackoverflow.com/a/283648/6116637</p>
+
+<h2 id="linq">linq</h2>
+
+<p>这个方法的代码最少</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">LinqArraySearch</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="nf">IndexOf</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">source</span><span class="p">,</span> <span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">pattern</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="n">start</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">source</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">source</span><span class="p">.</span><span class="nf">Skip</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="nf">Take</span><span class="p">(</span><span class="n">pattern</span><span class="p">.</span><span class="n">Length</span><span class="p">).</span><span class="nf">SequenceEqual</span><span class="p">(</span><span class="n">pattern</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="k">yield</span> <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="boyer-moore-horspool-搜索">Boyer-Moore-Horspool 搜索</h2>
+
+<p>这是最快的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">BoyerMooreHorspool</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">long</span><span class="p">&gt;</span> <span class="nf">IndexesOf</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">source</span><span class="p">,</span> <span class="kt">int</span> <span class="n">start</span><span class="p">,</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">pattern</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">source</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">source</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">pattern</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">pattern</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="kt">long</span> <span class="n">valueLength</span> <span class="p">=</span> <span class="n">source</span><span class="p">.</span><span class="n">LongLength</span><span class="p">;</span>
+            <span class="kt">long</span> <span class="n">patternLength</span> <span class="p">=</span> <span class="n">pattern</span><span class="p">.</span><span class="n">LongLength</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">((</span><span class="n">valueLength</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span> <span class="p">||</span> <span class="p">(</span><span class="n">patternLength</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span> <span class="p">||</span> <span class="p">(</span><span class="n">patternLength</span> <span class="p">&gt;</span> <span class="n">valueLength</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">yield</span> <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">badCharacters</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">long</span><span class="p">[</span><span class="m">256</span><span class="p">];</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">256</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">badCharacters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">patternLength</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">lastPatternByte</span> <span class="p">=</span> <span class="n">patternLength</span> <span class="p">-</span> <span class="m">1</span><span class="p">;</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">long</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">lastPatternByte</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">badCharacters</span><span class="p">[</span><span class="n">pattern</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="p">=</span> <span class="n">lastPatternByte</span> <span class="p">-</span> <span class="n">i</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">long</span> <span class="n">index</span> <span class="p">=</span> <span class="n">start</span><span class="p">;</span>
+
+            <span class="k">while</span> <span class="p">(</span><span class="n">index</span> <span class="p">&lt;=</span> <span class="n">valueLength</span> <span class="p">-</span> <span class="n">patternLength</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="n">lastPatternByte</span><span class="p">;</span> <span class="n">source</span><span class="p">[</span><span class="n">index</span> <span class="p">+</span> <span class="n">i</span><span class="p">]</span> <span class="p">==</span> <span class="n">pattern</span><span class="p">[</span><span class="n">i</span><span class="p">];</span> <span class="n">i</span><span class="p">--)</span>
+                <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">yield</span> <span class="k">return</span> <span class="n">index</span><span class="p">;</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+
+                <span class="n">index</span> <span class="p">+=</span> <span class="n">badCharacters</span><span class="p">[</span><span class="n">source</span><span class="p">[</span><span class="n">index</span> <span class="p">+</span> <span class="n">lastPatternByte</span><span class="p">]];</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>参见：https://stackoverflow.com/q/16252518/6116637</p>
+
+<p>测试了三个方法的性能，请看下面</p>
+
+<div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="py">BenchmarkDotNet</span><span class="p">=</span><span class="s">v0.10.14, OS=Windows 10.0.17134</span>
+<span class="err">Intel</span> <span class="err">Core</span> <span class="err">i7-6700</span> <span class="err">CPU</span> <span class="err">3.40GHz</span> <span class="err">(Skylake),</span> <span class="err">1</span> <span class="err">CPU,</span> <span class="err">8</span> <span class="err">logical</span> <span class="err">and</span> <span class="err">4</span> <span class="err">physical</span> <span class="err">cores</span>
+<span class="err">.NET</span> <span class="err">Core</span> <span class="py">SDK</span><span class="p">=</span><span class="s">2.1.202</span>
+  <span class="nn">[Host]</span>     <span class="err">:</span> <span class="err">.NET</span> <span class="err">Core</span> <span class="err">2.0.9</span> <span class="err">(CoreCLR</span> <span class="err">4.6.26614.01,</span> <span class="err">CoreFX</span> <span class="err">4.6.26614.01),</span> <span class="err">64bit</span> <span class="err">RyuJIT</span>
+  <span class="err">DefaultJob</span> <span class="err">:</span> <span class="err">.NET</span> <span class="err">Core</span> <span class="err">2.0.9</span> <span class="err">(CoreCLR</span> <span class="err">4.6.26614.01,</span> <span class="err">CoreFX</span> <span class="err">4.6.26614.01),</span> <span class="err">64bit</span> <span class="err">RyuJIT</span>
+
+
+</code></pre></div></div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th style="text-align: right">Mean</th>
+      <th style="text-align: right">Error</th>
+      <th style="text-align: right">StdDev</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Linq</td>
+      <td style="text-align: right">13,332.8 us</td>
+      <td style="text-align: right">251.782 us</td>
+      <td style="text-align: right">466.694 us</td>
+    </tr>
+    <tr>
+      <td>ByteArrayRocks</td>
+      <td style="text-align: right">371.3 us</td>
+      <td style="text-align: right">7.327 us</td>
+      <td style="text-align: right">14.462 us</td>
+    </tr>
+    <tr>
+      <td>BoyerMooreHorspool</td>
+      <td style="text-align: right">108.3 us</td>
+      <td style="text-align: right">1.153 us</td>
+      <td style="text-align: right">1.079 us</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>其他方法请看下面</p>
+
+<p>使用不安全代码的 Boyer Moore 算法 <a href="https://gist.github.com/mjs3339/0772431281093f1bca1fce2f2eca527d">C# High Performance Boyer Moore Byte Array Search Algorithm</a></p>
+
+:ET

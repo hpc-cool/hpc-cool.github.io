@@ -1,0 +1,230 @@
+I"5<p>本文告诉大家如何在 windows 和 Linux 安装使用 <a href="https://www.resilio.com">Btsync</a> 而且分享一些小东西给大家</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/10/8 9:15:06 -->
+
+<div id="toc"></div>
+
+<!-- 标签：btsync -->
+
+<p>btsync 是分布式网盘
+在这高速运作的信息化时代，使用云端来衔接工作和生活的点滴已是寻常事。可你是否曾扪心自问过：用各大云端备份自己的信息资料，真的安全放心吗？</p>
+
+<p>毫不夸张的说，其实恶意代码和漏洞早已和你如影随形。你甚至都不用反驳说这是阴谋论，不信你去看看各网盘的「用户条款」和「隐私政策」。</p>
+
+<p>所以一个可以放在本地的网盘是我们想要的</p>
+
+<h2 id="优点">优点</h2>
+
+<p>btsync 把自己的电脑作为网盘，不限空间流量，适合局域网同步。</p>
+
+<ol>
+  <li>
+    <p>不需要有自己的服务器</p>
+  </li>
+  <li>
+    <p>不需要有公网 IP——如果两台设备都在【内网】，只要这两台设备都能访问到公网，就可以相互同步</p>
+  </li>
+  <li>
+    <p>文件数量【无】限制，文件大小【无】限制</p>
+  </li>
+  <li>
+    <p>支持多种网络形态——可以“公网上互相同步”，也可以是“局域网内相互同步”。</p>
+  </li>
+  <li>
+    <p>【没有】审查</p>
+  </li>
+</ol>
+
+<p>现在 Btsync 也叫 resilio 同步工具</p>
+
+<h2 id="windows-安装">windows 安装</h2>
+
+<p>如何使用？</p>
+
+<p>首先下载安装，然后随意给一个名称。<a href="链接: https://pan.baidu.com/s/1c1CFkw4">点击下载 密码: ns6u</a>，如果百度无法下载，可以到<a href="http://download.csdn.net/detail/lindexi_gd/9792343">这里</a>，下载如果无法下载可以联系我</p>
+
+<p>官网是 <a href="https://www.resilio.com/platforms/desktop/">https://www.resilio.com</a></p>
+
+<p><a href="https://download.csdn.net/download/lindexi_gd/10705179">Resilio-Sync btsync x64 2.6.1-CSDN下载</a></p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F201732412536.jpg" alt="" /></p>
+
+<p>我接下来分享的都会在 btsync ，那么如何分享？</p>
+
+<p>需要拖入一个文件夹，可以看到自动出现文件秘钥</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017324125426.jpg" alt="" /></p>
+
+<p>复制只读秘钥发给朋友，他就可以使用。</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017324125512.jpg" alt="" /></p>
+
+<p>那么拿到秘钥如何获得资源？</p>
+
+<p>点击手动链接</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017324125540.jpg" alt="" /></p>
+
+<p>输入秘钥</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017324125612.jpg" alt="" /></p>
+
+<p>新建文件夹，之后的文件就会放在这个文件夹</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017324125659.jpg" alt="" /></p>
+
+<p>一个秘钥一般需要新建一个文件夹。</p>
+
+<p>点击确定就好了，这样就获得朋友的文件。</p>
+
+<h2 id="centos-6-安装">Centos 6 安装</h2>
+
+<p>本文告诉大家如何安装特点的 1.4 版本。</p>
+
+<p>首先上传解压的文件，我使用的是 btsync_i386-1.4.111 ，直接上传到服务器任意的文件夹</p>
+
+<p>然后使用下面的代码解压</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">tar</span> <span class="n">xvf</span> <span class="n">btsync_i386</span><span class="p">-</span><span class="m">1.4</span><span class="p">.</span><span class="m">111.</span><span class="n">tar</span><span class="p">.</span><span class="n">gz</span>
+</code></pre></div></div>
+
+<p>于是文件 btsync 就解压出来了。如果运行出现下面的问题，那么用 yum 就可以安装</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="p">/</span><span class="n">lib</span><span class="p">/</span><span class="n">ld</span><span class="p">-</span><span class="n">linux</span><span class="p">.</span><span class="n">so</span><span class="p">.</span><span class="m">2</span><span class="p">:</span> <span class="n">bad</span> <span class="n">ELF</span> <span class="n">interpreter</span><span class="p">:</span> <span class="n">No</span> <span class="n">such</span> <span class="n">file</span> <span class="n">or</span> <span class="n">directory</span>
+
+</code></pre></div></div>
+
+<p>安装的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">yum</span> <span class="p">-</span><span class="n">y</span> <span class="n">install</span> <span class="n">glibc</span><span class="p">.</span><span class="n">i686</span>
+
+</code></pre></div></div>
+
+<p>安装完成可以运行 btsync 不过需要获得配置，如果没配置就难以从网页打开</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">./</span><span class="n">btsync</span> <span class="p">--</span><span class="n">dump</span><span class="p">-</span><span class="n">sample</span><span class="p">-</span><span class="n">config</span> <span class="p">&gt;</span> <span class="n">btsync</span><span class="p">.</span><span class="n">conf</span>
+
+</code></pre></div></div>
+
+<p>然后使用 vi 就可以打开配置，可以修改配置的默认端口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vi</span> <span class="n">btsync</span><span class="p">.</span><span class="n">conf</span>
+</code></pre></div></div>
+
+<p>可以看到下面的配置</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+  <span class="s">"device_name"</span><span class="p">:</span> <span class="s">"My Sync Device"</span><span class="p">,</span>
+  <span class="s">"listening_port"</span> <span class="p">:</span> <span class="m">0</span><span class="p">,</span> <span class="c1">// 0 - randomize port 这是软件监听端口，不是网页的端口</span>
+
+<span class="cm">/* storage_path dir contains auxilliary app files if no storage_path field: .sync dir created in the directory
+   where binary is located. otherwise user-defined directory will be used */</span>
+<span class="c1">// "storage_path" : "/home/user/.sync",</span>
+
+<span class="cm">/* set location of pid file */</span>
+<span class="c1">// "pid_file" : "/var/run/btsync/btsync.pid",</span>
+
+<span class="cm">/* use UPnP for port mapping */</span>
+  <span class="s">"use_upnp"</span> <span class="p">:</span> <span class="k">true</span><span class="p">,</span>
+
+<span class="cm">/* limits in kB/s. 0 - no limit */</span>
+  <span class="s">"download_limit"</span> <span class="p">:</span> <span class="m">0</span><span class="p">,</span>
+  <span class="s">"upload_limit"</span> <span class="p">:</span> <span class="m">0</span><span class="p">,</span>
+
+<span class="cm">/* proxy configuration */</span>
+<span class="c1">// "proxy_type" : "socks4", // Valid types: "socks4", "socks5", "http_connect". Any other value means no proxy</span>
+<span class="c1">// "proxy_addr" : "192.168.1.2", // IP address of proxy server.</span>
+<span class="c1">// "proxy_port" : 1080,</span>
+<span class="c1">// "proxy_auth" : false, // Use authentication for proxy. Note: only username/password for socks5 (RFC 1929) is supported, and it is not really secure</span>
+<span class="c1">// "proxy_username" : "user",</span>
+<span class="c1">// "proxy_password" : "password",</span>
+
+  <span class="s">"webui"</span> <span class="p">:</span>
+  <span class="p">{</span>
+    <span class="s">"listen"</span> <span class="p">:</span> <span class="s">"0.0.0.0:8888"</span> <span class="c1">// remove field to disable WebUI 修改这里可以打开网页，监听端口可以修改</span>
+
+<span class="cm">/* preset credentials. Use password or password_hash */</span>
+  <span class="p">,</span><span class="s">"login"</span> <span class="p">:</span> <span class="s">"admin"</span><span class="c1">//网页需要添加账号密码，请自己设置</span>
+  <span class="p">,</span><span class="s">"password"</span> <span class="p">:</span> <span class="s">"password"</span><span class="c1">//这是密码</span>
+<span class="c1">//  ,"password_hash" : "some_hash" // password hash in crypt(3) format</span>
+<span class="c1">//  ,"allow_empty_password" : false // Defaults to true</span>
+<span class="cm">/* ssl configuration */</span>
+<span class="c1">//  ,"force_https" : true // disable http 如果需要使用 https 那么取消注释</span>
+<span class="c1">//  ,"ssl_certificate" : "/path/to/cert.pem" 这时需要添加证书</span>
+<span class="c1">//  ,"ssl_private_key" : "/path/to/private.key"</span>
+
+<span class="cm">/* directory_root path defines where the WebUI Folder browser starts (linux only). Default value is / */</span>
+<span class="c1">//  ,"directory_root" : "/home/user/MySharedFolders/"</span>
+
+<span class="cm">/* dir_whitelist defines which directories can be shown to user or have folders added (linux only)
+   relative paths are relative to directory_root setting */</span>
+<span class="c1">//  ,"dir_whitelist" : [ "/home/user/MySharedFolders/personal", "work" ]</span>
+  <span class="p">}</span>
+
+<span class="cm">/* !!! if you set shared folders in config file WebUI will be DISABLED !!!
+   shared directories specified in config file  override the folders previously added from WebUI. */</span>
+<span class="cm">/*, 如果删除注释，就不可以用网页，直接代码设置分享的文件夹
+  "shared_folders" :
+  [
+    {
+      "secret" : "MY_SECRET_1", // required field - use --generate-secret in command line to create new secret
+      "dir" : "/home/user/bittorrent/sync_test", // * required field
+      "use_relay_server" : true, //  use relay server when direct connection fails
+      "use_tracker" : true,
+      "use_dht" : false, //使用 dht，这个一般需要打开
+      "search_lan" : true,//局域网
+      "use_sync_trash" : true, // enable SyncArchive to store files deleted on remote devices
+      "overwrite_changes" : false, // restore modified files to original version, ONLY for Read-Only folders
+      "known_hosts" : // specify hosts to attempt connection without additional search
+      [
+        "192.168.1.2:123" //预定义主机
+      ]
+    }
+  ]
+*/</span>
+
+<span class="cm">/* Advanced preferences can be added to config file. Info is available at http://sync-help.bittorrent.com */</span>
+
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<h2 id="国内如何下载">国内如何下载</h2>
+
+<p>如果需要在国内使用，那么需要指定预定义主机。btsync可以使用dht进行下载，他的难就在于发现第一个节点。如果发现了一个节点，就可以通过他得到其他的节点。预定义主机就是自己已经知道存在的一个主机。</p>
+
+<p>可以通过代理访问到外面的节点，然后保存他，之后不使用代理也可以下载。或者设置发现的主机，这样通过这个可以得到其它的节点。</p>
+
+<p>首先创建一个文件夹，然后点击设置</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017111191010.jpg" alt="" /></p>
+
+<p>例如我添加字体文件，点击设置 打开dht和添加主机，这时不需要设置代理就可以下载，不过需要等很久</p>
+
+<p>如果需要设置代理，那么需要注意默认用的是 socket4 需要设置为支持的代理。</p>
+
+<p>参见：<a href="http://getos.org/btsync/14111.html">BitTorrent Sync Installer 1.4.111</a></p>
+
+<p>https://program-think.blogspot.com/2015/01/BitTorrent-Sync.html?utm_source=tuicool&amp;utm_medium=referral</p>
+
+<h2 id="搭建预定义主机">搭建预定义主机</h2>
+
+<p>可以购买一个服务器，然后在服务器开启 btsync 这时记录他的 ip 和监听端口，监听端口是软件监听端口。于是这就是预定义主机，需要在他这里同步一些文件，然后设置开启 dht ，这样可以让他去寻找一些节点。</p>
+
+<p>在自己的电脑上，使用预定义主机，开启dht就可以从预定义主机拿到其他节点，所以就可以访问其它的资源。</p>
+
+<p>如果是在校园网，可以通过 btsync 分享资源，做法是开放一台中转服务器，服务器是不关机的，或者基本都是开的，而且ip不会变化，如果ip会变化，就需要使用特殊方法。首先记录下自己的服务器ip地址和端口号，端口就是监听端口，然后把这个告诉大家，让大家添加预定义主机。这样就可以通过这个获取到所有人的 btsync ，通过这个就可以传输资源。</p>
+
+<p>如果 ip 会变化，那么可以使用 meibu 提供的方法，请看 <a href="http://meibu.com/">http://meibu.com/</a>，注册之后就可以使用域名，于是用域名的方法设置服务器就好啦。</p>
+
+<p>如果发现你的局域网无法使用，欢迎联系我。</p>
+
+<h2 id="zerotier">ZeroTier</h2>
+
+<p>最简单的方式是使用 ZeroTier ，如何使用请看</p>
+
+<p><a href="https://www.appinn.com/zerotier-one/">ZeroTier – 无配置，零基础「内网穿透」随时随地连回家/学校/办公室 [跨平台] - 小众软件</a></p>
+
+:ET

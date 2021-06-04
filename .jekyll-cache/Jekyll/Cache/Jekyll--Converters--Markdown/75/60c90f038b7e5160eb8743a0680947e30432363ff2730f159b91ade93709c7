@@ -1,0 +1,35 @@
+I"<p>我有一个应用，我想要在应用上添加水印，这个水印可以如何做</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/9 21:24:55 -->
+
+<p>例如我有一个应用，我在主页面添加了功能页面，在功能页面的最上层需要一个水印，这个水印不能被用户点击到，例如我的功能页面是一个用户控件放在页面</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Window</span> <span class="na">x:Class=</span><span class="s">"NeachecihaDenemceweefai.MainWindow"</span>
+        <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+        <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+        <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+        <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+        <span class="na">xmlns:local=</span><span class="s">"clr-namespace:NeachecihaDenemceweefai"</span>
+        <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+        <span class="na">Title=</span><span class="s">"MainWindow"</span> <span class="na">Height=</span><span class="s">"300"</span> <span class="na">Width=</span><span class="s">"600"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;local:KekalcigarjeyikelRijurjeeyaira&gt;&lt;/local:KekalcigarjeyikelRijurjeeyaira&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Window&gt;</span>
+
+</code></pre></div></div>
+
+<p>可以通过在最顶层元素，也就是上面代码的 Grid 里面添加一个水印控件，如一张图或文字，本文这里使用文字，放在容器最后面，为什么需要放在最后面？因为放在后面的显示在最上层</p>
+
+<p>然后设置水印的命中，请看下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"林德熙是逗比"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">IsHitTestVisible=</span><span class="s">"True"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码核心是<code class="language-plaintext highlighter-rouge">IsHitTestVisible="True"</code>通过这个属性就可以让用户无法点中这个文本</p>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/38bff1c3053f834795808e310aae9fe5cb7968f0/NeachecihaDenemceweefai">github</a> 欢迎小伙伴访问</p>
+
+:ET

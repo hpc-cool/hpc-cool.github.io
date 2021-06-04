@@ -1,0 +1,67 @@
+I"�<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>可以使用下面代码把通配符转正则字符串</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">WildcardRegexString</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 通配符转正则</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="wildcardStr"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetWildcardRegexString</span><span class="p">(</span><span class="kt">string</span> <span class="n">wildcardStr</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Regex</span> <span class="n">replace</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="s">"[.$^{\\[(|)*+?\\\\]"</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">replace</span><span class="p">.</span><span class="nf">Replace</span><span class="p">(</span><span class="n">wildcardStr</span><span class="p">,</span>
+                       <span class="k">delegate</span> <span class="p">(</span><span class="n">Match</span> <span class="n">m</span><span class="p">)</span>
+                       <span class="p">{</span>
+                           <span class="k">switch</span> <span class="p">(</span><span class="n">m</span><span class="p">.</span><span class="n">Value</span><span class="p">)</span>
+                           <span class="p">{</span>
+                               <span class="k">case</span> <span class="s">"?"</span><span class="p">:</span>
+                                   <span class="k">return</span> <span class="s">".?"</span><span class="p">;</span>
+                               <span class="k">case</span> <span class="s">"*"</span><span class="p">:</span>
+                                   <span class="k">return</span> <span class="s">".*"</span><span class="p">;</span>
+                               <span class="k">default</span><span class="p">:</span>
+                                   <span class="k">return</span> <span class="s">"\\"</span> <span class="p">+</span> <span class="n">m</span><span class="p">.</span><span class="n">Value</span><span class="p">;</span>
+                           <span class="p">}</span>
+                       <span class="p">})</span> <span class="p">+</span> <span class="s">"$"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>文件经常是不需要区分大小写，所以需要写一个函数告诉用户，不需要区分大小写。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 获取通配符的正则</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="wildcarStr"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="ignoreCase"&gt;是否忽略大小写&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">Regex</span> <span class="nf">GetWildcardRegex</span><span class="p">(</span><span class="kt">string</span> <span class="n">wildcarStr</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">ignoreCase</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ignoreCase</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="nf">GetWildcardRegexString</span><span class="p">(</span><span class="n">wildcarStr</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="nf">GetWildcardRegexString</span><span class="p">(</span><span class="n">wildcarStr</span><span class="p">),</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">IgnoreCase</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>正则可以使用程序集方式，启动慢，但是运行快</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="k">private</span> <span class="k">static</span> <span class="n">Regex</span> <span class="n">_regex</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="s">"[.$^{\\[(|)*+?\\\\]"</span><span class="p">,</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">Compiled</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>我的软件就需要重复使用，于是就使用这个。</p>
+
+<p>代码：</p>
+
+<script src="https://gist.github.com/lindexi/2bd3bccb6de194aa40ad2e09a5413000.js"></script>
+
+<p><a href="https://gist.github.com/lindexi/2bd3bccb6de194aa40ad2e09a5413000">https://gist.github.com/lindexi/2bd3bccb6de194aa40ad2e09a5413000</a></p>
+
+:ET

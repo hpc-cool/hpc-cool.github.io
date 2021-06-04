@@ -1,0 +1,37 @@
+I"�<p>在 OpenXML 格式里面，其实不存在文本这个元素，所有都是形状。但是在 PPT 界面看到的文本框是什么呢？其实他是特别的形状。而几乎所有的形状都可以输入文本，因此区分形状和文本的意义不会特别大，只是在做解析的时候才会碰到</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/29 11:27:53 -->
+
+<p>在 OpenXML 的 PML 也就是 PPT 使用的格式里面，在 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E8%A7%A3%E6%9E%90-PPT-%E9%A1%B5%E9%9D%A2%E5%85%83%E7%B4%A0%E6%96%87%E6%A1%A3%E6%A0%BC%E5%BC%8F.html">dotnet OpenXML 解析 PPT 页面元素文档格式</a> 告诉大家都是形状</p>
+
+<p>那么文本框是什么形状？其实文本框是特别的形状</p>
+
+<p>在 PPT 里面拖入文本框，然后使用 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E8%A7%A3%E5%8E%8B%E7%BC%A9%E6%96%87%E6%A1%A3%E4%B8%BA%E6%96%87%E4%BB%B6%E5%A4%B9%E5%B7%A5%E5%85%B7.html">OpenXML 解压缩文档为文件夹工具</a> 解压缩，此时可以看到在页面里的元素大概内容如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p:sp&gt;</span>
+    <span class="nt">&lt;p:nvSpPr&gt;</span>
+        <span class="nt">&lt;p:cNvSpPr</span> <span class="na">txBox=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/p:nvSpPr&gt;</span>
+    <span class="c">&lt;!-- 忽略 --&gt;</span>
+<span class="nt">&lt;/p:sp&gt;</span>
+</code></pre></div></div>
+
+<p>也就是说文本框也是 <code class="language-plaintext highlighter-rouge">p:sp</code> 也就是 Shape 元素，但是在 <code class="language-plaintext highlighter-rouge">p:nvSpPr-&gt;p:cNvSpPr-&gt;txBox</code> 有属性表示是文本框</p>
+
+<p>在 dotnet 里面通过 OpenXML SDK 可以这样获取</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">// nvSpPr</span>
+            <span class="n">NonVisualShapeProperties</span> <span class="n">nonVisualShapeProperties</span> <span class="p">=</span> <span class="n">shape</span><span class="p">.</span><span class="n">NonVisualShapeProperties</span><span class="p">;</span>
+            <span class="c1">// cNvSpPr</span>
+            <span class="kt">var</span> <span class="n">nonVisualShapeDrawingProperties</span> <span class="p">=</span> <span class="n">nonVisualShapeProperties</span><span class="p">?.</span><span class="n">NonVisualShapeDrawingProperties</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">isTextBox</span> <span class="p">=</span> <span class="n">nonVisualShapeDrawingProperties</span><span class="p">?.</span><span class="n">TextBox</span><span class="p">?.</span><span class="n">Value</span> <span class="k">is</span> <span class="k">true</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>在 OpenXML SDK 的帮助下，可以解析很多 PPT 文档的缩写，可以提升可读性。如 <code class="language-plaintext highlighter-rouge">nvSpPr</code> 其实就是 <code class="language-plaintext highlighter-rouge">Non(n) Visual(v) Shape(Sp) Properties(pr)</code> 的意思</p>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+:ET

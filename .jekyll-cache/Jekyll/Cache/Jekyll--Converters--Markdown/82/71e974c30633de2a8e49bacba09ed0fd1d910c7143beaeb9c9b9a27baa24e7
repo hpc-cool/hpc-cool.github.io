@@ -1,0 +1,30 @@
+I"�
+<p>我发现了自己的软件，会在桌面创建一个 1.txt 文件，但是我不知道是哪个代码创建的，那么如何进行快速的调试找到是哪个代码创建的</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>最简单的方法是使用 VisualStudio 全局搜 <code class="language-plaintext highlighter-rouge">1.txt</code> 看是否存在，但是这个方法存在两个问题，一个问题是可能这个文件名是拼出来的，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">2</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="s">$"</span><span class="p">{</span><span class="n">i</span><span class="p">}</span><span class="s">.txt"</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就无法通过搜 <code class="language-plaintext highlighter-rouge">1.txt</code> 找到这个代码</p>
+
+<p>之外可能这个文件的写入是在库里面做的，如引用了 <code class="language-plaintext highlighter-rouge">林德熙是逗比.dll</code> 在这个库里面写入了文件</p>
+
+<p>那么有什么有效的方法？</p>
+
+<p>可以通过这样的方法，先删除这个文件，然后创建一个文件夹，将这个文件夹命名为和这个文件相同的名。如删除 <code class="language-plaintext highlighter-rouge">1.txt</code> 文件，然后创建 <code class="language-plaintext highlighter-rouge">1.txt</code> 文件夹，然后获取全局异常，现在就可以发现有文件读写异常的代码应该就是写入 <code class="language-plaintext highlighter-rouge">1.txt</code> 文件的代码</p>
+
+<p>除了创建文件夹之外，还可以写一个 <code class="language-plaintext highlighter-rouge">FileStream</code> 占用这个 <code class="language-plaintext highlighter-rouge">1.txt</code> 文件，找到一个文件由另一个进程占用的异常就可以找到代码在哪</p>
+
+<p>不过本文提供的这些方法都做不到解决在 C++ 等库里面写文件的问题</p>
+
+<p>特别感谢<a href="https://blog.walterlv.com/">walterlv</a>这位写出了 <code class="language-plaintext highlighter-rouge">a[b[c[e[g[a1[a2[a3]]]]]]].Foo</code> 的小伙伴提供的方法</p>
+
+:ET

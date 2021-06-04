@@ -1,0 +1,255 @@
+I"�e<p>本文告诉大家如何使用依赖属性，包括在 UWP 和 WPF 如何使用。
+本文不会告诉大家依赖属性的好处，只是简单告诉大家如何使用。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:17:19 -->
+
+<div id="toc"></div>
+
+<p>在 UWP 和 wpf ，如果需要创建自己的依赖属性，可以使用代码片，在 VisualStudio 可以使用 <code class="language-plaintext highlighter-rouge">propdp </code>输入两个 tab 就可以输入依赖属性。</p>
+
+<p>本文最后提供修改的代码片，可以解决变量名修改出现的界面绑定不刷新。</p>
+
+<h2 id="uwp">UWP</h2>
+
+<h3 id="什么时候可以获取继承的依赖属性">什么时候可以获取继承的依赖属性</h3>
+
+<p>依赖属性一般是不在构造函数写获取继承的属性的值，因为一般这时拿到的值都是没有继承，请看下面的代码</p>
+
+<p>创建一个用户控件 LuenqxuhkRrjbzcf ，在他的构造函数和加载完成事件添加获得 DataContext 的值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+  <span class="err">构造：</span> <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">;</span>
+
+          <span class="k">private</span> <span class="k">void</span> <span class="nf">LuenqxuhkRrjbzcf_Loaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">DataContext</span><span class="p">;</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>然后把他加入到其他页面，这个页面设置了 DataContext ，但是运行在构造的断点可以看到拿到的值是空</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017%25E5%25B9%25B411%25E6%259C%258810%25E6%2597%25A5%2520111233392018114151411.jpg" alt="" /></p>
+
+<p>但是可以在加载完成函数拿到</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017%25E5%25B9%25B411%25E6%259C%258810%25E6%2597%25A5%2520111233392018114151439.jpg" alt="" /></p>
+
+<p>那么是在什么时候才可以拿到依赖属性的值？</p>
+
+<p>依赖属性需要在加逻辑树才可以拿到值，所以在加入逻辑树之后，构造函数是类创建，所以这时不能拿依赖属性的值。</p>
+
+<h3 id="自定义可继承依赖属性">自定义可继承依赖属性</h3>
+
+<p>我找了很久，发现 uwp 不支持 FrameworkPropertyMetadata 所以无法自己定义可以继承的依赖属性</p>
+
+<h2 id="wpf">WPF</h2>
+
+<h3 id="后台绑定-依赖属性">后台绑定 依赖属性</h3>
+
+<p>后台绑定 依赖属性可以使用 Binding</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Binding</span> <span class="n">bind</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">(</span><span class="s">"绑定路径，就是哪个属性"</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Source</span> <span class="p">=</span> <span class="err">绑定源，如果没有设置，可以使用</span> <span class="n">DataContext</span><span class="p">,</span>
+                <span class="n">Mode</span> <span class="p">=</span> <span class="n">BindingMode</span><span class="p">.</span><span class="n">OneWayToSource</span>
+            <span class="p">};</span>
+           <span class="err">一个继承依赖的类</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">xx</span><span class="p">.</span><span class="n">xProperty</span><span class="p">,</span> <span class="n">bind</span><span class="p">);</span>
+</code></pre></div></div>
+<p>例如绑定 ViewModel 的 Padding  到 一个 G控件的 Padding， 可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">Binding</span> <span class="n">bind</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">(</span><span class="s">"Padding"</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Source</span> <span class="p">=</span> <span class="n">ViewModel</span><span class="p">,</span>
+                <span class="n">Mode</span> <span class="p">=</span> <span class="n">BindingMode</span><span class="p">.</span><span class="n">OneWayToSource</span>
+            <span class="p">};</span>
+            <span class="n">G</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="n">bind</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>但我的问题是，绑定只能在包含 G 的类使用？</p>
+
+<p>也就是在 MainPage 写了 G 这个 类，于是绑定只能写在 MainPage 类？</p>
+
+<p>实际我用了一个类来测试</p>
+
+<p>我把上面的绑定代码写到 ViewModel ，发现还是可以使用。</p>
+
+<p>那么问题2，如果我的 ViewModel 的绑定属性是私有的，那么把绑定写在ViewModel 里，那么是否可以访问，可以看到，如果写在ViewModel 的Binding ，那么这个 Binding 是可以访问 ViewModel 的属性，虽然这个属性是私有的。但是实际绑定需要获取的不是在创建的时候拿到，所以这时是获取不到ViewModel 里的属性。</p>
+
+<p>我尝试下面的代码，把 Padding 设置为 private ，然后在 ViewModel 里绑定到他，结果发现无法从绑定获得。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainWindow</span> <span class="p">:</span> <span class="n">Window</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">ViewModel</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ViewModel</span><span class="p">();</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="n">ViewModel</span><span class="p">;</span>
+
+            <span class="n">ViewModel</span><span class="p">.</span><span class="n">Board</span> <span class="p">=</span> <span class="n">G</span><span class="p">;</span>
+
+            <span class="c1">//Binding bind = new Binding("Padding")</span>
+            <span class="c1">//{</span>
+            <span class="c1">//    Source = ViewModel,</span>
+            <span class="c1">//    Mode = BindingMode.OneWayToSource</span>
+            <span class="c1">//};</span>
+            <span class="c1">//G.SetBinding(Border.PaddingProperty, bind);</span>
+            <span class="n">ViewModel</span><span class="p">.</span><span class="nf">Click</span><span class="p">();</span>
+        <span class="p">}</span>
+
+
+
+        <span class="k">public</span> <span class="n">ViewModel</span> <span class="n">ViewModel</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">ButtonBase_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">G</span><span class="p">.</span><span class="n">Padding</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thickness</span><span class="p">(</span><span class="n">G</span><span class="p">.</span><span class="n">Padding</span><span class="p">.</span><span class="n">Left</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">G</span><span class="p">.</span><span class="n">Padding</span><span class="p">.</span><span class="n">Top</span> <span class="p">+</span> <span class="m">1</span><span class="p">,</span> <span class="n">G</span><span class="p">.</span><span class="n">Padding</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="n">G</span><span class="p">.</span><span class="n">Padding</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">ViewModel</span><span class="p">.</span><span class="nf">Pad</span><span class="p">());</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">ViewModel</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">Thickness</span> <span class="nf">Pad</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Padding</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">Thickness</span> <span class="n">Padding</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">Border</span> <span class="n">Board</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Click</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Binding</span> <span class="n">bind</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">(</span><span class="s">"Padding"</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Source</span> <span class="p">=</span> <span class="k">this</span><span class="p">,</span>
+                <span class="n">Mode</span> <span class="p">=</span> <span class="n">BindingMode</span><span class="p">.</span><span class="n">OneWayToSource</span>
+            <span class="p">};</span>
+            <span class="n">Board</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="n">bind</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果在绑定之前，设置 G 的 Padding 为一个值，那么在设置绑定之后，这个值就会被设置默认值。</p>
+
+<p>如果在绑定之前，设置 G 的 Padding  为20 ，那么设置绑定之后， G 的 Padding = 0</p>
+
+<p>如果需要保留这个值，可以使用临时变量。</p>
+
+<p>绑定还有另一个问题，一个属性只能做一次绑定。</p>
+
+<p>假如我有多个属性，把这多个属性绑定在 G 的 Padding ，那么只有最后的一个绑定可以使用，其他的绑定无法使用。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">public</span> <span class="n">Thickness</span> <span class="n">BoardPadding</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+       
+       <span class="k">public</span> <span class="k">void</span> <span class="nf">Click</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Binding</span> <span class="n">bind</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">(</span><span class="s">"Padding"</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Source</span> <span class="p">=</span> <span class="k">this</span><span class="p">,</span>
+                <span class="n">Mode</span> <span class="p">=</span> <span class="n">BindingMode</span><span class="p">.</span><span class="n">OneWayToSource</span>
+            <span class="p">};</span>
+
+            <span class="n">BindingOperations</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">Board</span><span class="p">,</span> <span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="n">bind</span><span class="p">);</span>
+
+
+            <span class="n">bind</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">(</span><span class="s">"BoardPadding"</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Source</span> <span class="p">=</span> <span class="k">this</span><span class="p">,</span>
+                <span class="n">Mode</span> <span class="p">=</span> <span class="n">BindingMode</span><span class="p">.</span><span class="n">OneWayToSource</span>
+            <span class="p">};</span>
+            <span class="n">Board</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="n">bind</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到，这时 Padding 的值一直没有。</p>
+
+<h3 id="wpf-获得依赖属性值更新">WPF 获得依赖属性值更新</h3>
+
+<p>如果需要获得 G 的 Padding 的值更改，WPF 获得依赖属性 值更改可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">DependencyPropertyDescriptor</span><span class="p">.</span><span class="nf">FromProperty</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span><span class="k">typeof</span><span class="p">(</span><span class="n">Border</span><span class="p">)).</span><span class="nf">AddValueChanged</span><span class="p">(</span><span class="n">Board</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">Padding</span> <span class="p">=</span> <span class="n">Board</span><span class="p">.</span><span class="n">Padding</span><span class="p">;</span>
+                    <span class="n">BoardPadding</span> <span class="p">=</span> <span class="n">Board</span><span class="p">.</span><span class="n">Padding</span><span class="p">;</span>
+                <span class="p">});</span>
+</code></pre></div></div>
+
+<p>这个方法就是获得属性的值更改</p>
+
+<p>但是这个方法会出现内存泄露，可以使用 RemoveValueChanged 清除，为了使用清除，需要写一个函数。</p>
+
+<p>不需要担心清除一个不存在的委托，一般在使用 AddValueChanged 之前都使用 RemoveValueChanged 清除</p>
+
+<p>参见：https://stackoverflow.com/questions/4764916/listen-to-changes-of-dependency-property</p>
+
+<h3 id="初始化出现默认值类型与属性类型不同">初始化出现默认值类型与属性类型不同</h3>
+
+<p>定义的依赖属性是需要默认值类型和定义的一样，在一般的代码，可以使用隐式转换，但是在定义不可以使用。</p>
+
+<p>例如使用类型是 double 实际给的是 int ，就会在运行出现<code class="language-plaintext highlighter-rouge">ArgumentException</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">FooProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Foo"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="m">2</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Foo</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">FooProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">FooProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>虽然定义<code class="language-plaintext highlighter-rouge">double a=2;</code>是对的，但是在这里定义的 <code class="language-plaintext highlighter-rouge">2</code>默认是错误的，需要写<code class="language-plaintext highlighter-rouge">2d</code>才是对的</p>
+
+<h3 id="修改属性名称">修改属性名称</h3>
+
+<p>默认的代码片生成代码的属性名称是字符串，但是字符串有个缺点，如果修改了变量名，那么界面绑定就无法找到。</p>
+
+<p>建议把字符串换为C# 6.0 带来的新特性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">FooProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="k">nameof</span><span class="p">(</span><span class="n">Foo</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="m">2d</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Foo</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">FooProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">FooProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过修改代码片就可以做到，如何修改请看 <a href="https://blog.lindexi.com/post/resharper-%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BB%A3%E7%A0%81%E7%89%87.html">resharper 自定义代码片</a></p>
+
+<p>下面就是修改后的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="err">$</span><span class="n">dependencyProperty</span><span class="err">$</span> <span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="n">Property</span> <span class="p">=</span> <span class="err">$</span><span class="n">dependencyProperty</span><span class="err">$</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+  <span class="k">nameof</span><span class="p">(</span><span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="err">$</span><span class="n">propertyType</span><span class="err">$</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="err">$</span><span class="n">containingType</span><span class="err">$</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="err">$</span><span class="n">propertyType</span><span class="err">$</span><span class="p">)));</span>
+
+<span class="k">public</span> <span class="err">$</span><span class="n">propertyType</span><span class="err">$</span> <span class="err">$</span><span class="n">propertyName</span><span class="err">$</span>
+<span class="p">{</span>
+  <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="err">$</span><span class="n">propertyType</span><span class="err">$</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="n">Property</span><span class="p">);</span> <span class="p">}</span>
+  <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="n">Property</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以直接粘贴进去Resharper的代码</p>
+
+<p>或者导入我的设置，点击<a href="http://image.acmx.xyz/%E4%BE%9D%E8%B5%96%E5%B1%9E%E6%80%A71685E00E-67E5-4343-A467-84862A1EE502.DotSettings">下载</a></p>
+
+<p>如果想要使用的是 C# 7 的特性，可以修改代码片，或者点击<a href="http://image.acmx.xyz/%E4%BE%9D%E8%B5%96%E5%B1%9E%E6%80%A72E6789E0-E16E-4B2F-896B-671CC1F21B11.DotSettings">下载</a>导入</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="err">$</span><span class="n">dependencyProperty</span><span class="err">$</span> <span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="n">Property</span> <span class="p">=</span> <span class="err">$</span><span class="n">dependencyProperty</span><span class="err">$</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+  <span class="k">nameof</span><span class="p">(</span><span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="err">$</span><span class="n">propertyType</span><span class="err">$</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="err">$</span><span class="n">containingType</span><span class="err">$</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="err">$</span><span class="n">propertyType</span><span class="err">$</span><span class="p">)));</span>
+
+<span class="k">public</span> <span class="err">$</span><span class="n">propertyType</span><span class="err">$</span> <span class="err">$</span><span class="n">propertyName</span><span class="err">$</span>
+<span class="p">{</span>
+  <span class="k">get</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="err">$</span><span class="n">propertyType</span><span class="err">$</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="n">Property</span><span class="p">);</span>
+  <span class="k">set</span> <span class="p">=&gt;</span> <span class="nf">SetValue</span><span class="p">(</span><span class="err">$</span><span class="n">propertyName</span><span class="err">$</span><span class="n">Property</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><img src="https://i.loli.net/2018/07/29/5b5d61367fc0c.jpg" alt="" /></p>
+
+:ET

@@ -1,0 +1,204 @@
+I"0p<p>本文主要讲ListView等列表可以根据内容不同，使用不同模板的列表模板选择器，DataTemplateSelector。
+如果在 UWP 需要定义某些列的显示和其他列不同，或者某些行的显示和其他行不同，那么可以使用 列表模板选择器 来定义自己的列表，让列表中存在不同的显示。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 10:18:00 -->
+
+<div id="toc"></div>
+
+<p>好啦，我们先来说下我们在什么下需要使用，其实就是当我们的数据有多样，或者对数据所在位置有要求，这时需要对不同的数据做不同处理。我分为两个不同的方向来讲，第一个方向是根据数据所在的位置不同，选择不同的显示。第二个方向是根据数据的不同。</p>
+
+<h2 id="根据数据位置">根据数据位置</h2>
+
+<p>本文告诉大家如何做出下面的控件，可以看到这使用的是 ListView ，但是第一个元素显示和其他的元素不同，看起来就是面包屑导航</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017930193749.jpg" alt="" /></p>
+
+<p>需要定义第一个元素和其他元素的代码，于是使用 Path 做出来，因为本文不是说如何使用 Path 所以就不多说，直接写代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="p">&lt;</span><span class="n">DataTemplate</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"OtherItem"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"t1"</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"-12"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"30"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Height</span><span class="p">=</span><span class="s">"30"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"0,0,-8,0"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"30"</span> <span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Path</span> <span class="n">Data</span><span class="p">=</span><span class="s">"M0,0 10,0 10,30 0,30 10,15"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#000000"</span> <span class="p">/&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"-1 0 0 0"</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#000000"</span> <span class="p">/&gt;</span>
+                                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding }"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,5"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Foreground</span><span class="p">=</span><span class="s">"White"</span> <span class="n">MinWidth</span><span class="p">=</span><span class="s">"60"</span><span class="p">/&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Path</span> <span class="n">Data</span><span class="p">=</span><span class="s">"M0,0 10,15 0,30"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#000000"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">DataTemplate</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"FirstItem"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"t1"</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10 0 -12 0"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"30"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Height</span><span class="p">=</span><span class="s">"30"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"0,0,-7,0"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"30"</span> <span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#000000"</span> <span class="p">/&gt;</span>
+                                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding }"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,5"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Foreground</span><span class="p">=</span><span class="s">"White"</span> <span class="n">MinWidth</span><span class="p">=</span><span class="s">"60"</span><span class="p">/&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Path</span> <span class="n">Data</span><span class="p">=</span><span class="s">"M0,0 10,15 0,30"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#000000"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>然后在后台定义一个类 <code class="language-plaintext highlighter-rouge">AvmdoicYcxhqxugnSelector</code> ，这个可以用来选择不同的模板，于是对于第一个元素，选择第一个模板，其他的元素选择其他的模板。<code class="language-plaintext highlighter-rouge">AvmdoicYcxhqxugnSelector</code>需要继承<code class="language-plaintext highlighter-rouge">DataTemplateSelector</code>重写方法，通过重写<code class="language-plaintext highlighter-rouge">SelectTemplateCore</code>可以选择不同的<code class="language-plaintext highlighter-rouge">DataTemplate</code>，但是<code class="language-plaintext highlighter-rouge">AvmdoicYcxhqxugnSelector</code>需要两个属性才可以获得这两个<code class="language-plaintext highlighter-rouge">DataTemplate</code>所以代码很简单。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">AvmdoicYcxhqxugnSelector</span> <span class="p">:</span> <span class="n">DataTemplateSelector</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">DataTemplate</span> <span class="n">FirstItem</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="n">DataTemplate</span> <span class="n">OtherItem</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="n">DataTemplate</span> <span class="nf">SelectTemplateCore</span><span class="p">(</span><span class="kt">object</span> <span class="n">item</span><span class="p">,</span> <span class="n">DependencyObject</span> <span class="n">container</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">itemsControl</span> <span class="p">=</span> <span class="n">ItemsControl</span><span class="p">.</span><span class="nf">ItemsControlFromItemContainer</span><span class="p">(</span><span class="n">container</span><span class="p">);</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">itemsControl</span><span class="p">.</span><span class="nf">IndexFromContainer</span><span class="p">(</span><span class="n">container</span><span class="p">)</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span> <span class="p">?</span> <span class="n">FirstItem</span> <span class="p">:</span> <span class="n">OtherItem</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后就是创建一个 <code class="language-plaintext highlighter-rouge">ListView</code> 用来显示元素，还需要一个数据，于是所有的代码就是：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            
+            <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">AvmdoicYcxhqxugnSelector</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"Selector"</span> <span class="n">FirstItem</span><span class="p">=</span><span class="s">"{StaticResource FirstItem}"</span> <span class="n">OtherItem</span><span class="p">=</span><span class="s">"{StaticResource OtherItem}"</span><span class="p">&gt;&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">AvmdoicYcxhqxugnSelector</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{x:Bind SkaxicIjocc}"</span> <span class="n">ItemTemplateSelector</span><span class="p">=</span><span class="s">"{StaticResource Selector}"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+   <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainPage</span> <span class="p">:</span> <span class="n">Page</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">SkaxicIjocc</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;()</span>
+        <span class="p">{</span>
+            <span class="s">"lindexi"</span><span class="p">,</span><span class="s">"csdn"</span><span class="p">,</span><span class="s">"cnblogs"</span><span class="p">,</span><span class="s">"自己博客"</span><span class="p">,</span><span class="s">"加班"</span>
+        <span class="p">};</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是这样看起来还是不是我要的，把鼠标放上去，发现出现背景</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017%25E5%25B9%25B49%25E6%259C%25881%25E6%2597%25A5%252015.gif" alt="" /></p>
+
+<p>如何去背景请看<a href="https://blog.lindexi.com/post/win10-UWP-ListView.html">win10 UWP ListView</a></p>
+
+<p>就是把<code class="language-plaintext highlighter-rouge">ListViewItem</code>复制，然后去掉<code class="language-plaintext highlighter-rouge">ListViewItemBackgroundPointerOver</code> 和 <code class="language-plaintext highlighter-rouge">SelectedBackground</code> <code class="language-plaintext highlighter-rouge">SelectedPointerOverBackground</code> 就好了。实际把很多属性去掉就可以做出比较好的效果，但是选中的修改颜色还需要后台写。这是我修改的 Template 可以直接复制使用。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>              <span class="p">&lt;</span><span class="n">ListViewItemPresenter</span>
+                            <span class="n">ContentTransitions</span><span class="p">=</span><span class="s">"{TemplateBinding ContentTransitions}"</span>
+                            <span class="n">SelectionCheckMarkVisualEnabled</span><span class="p">=</span><span class="s">"False"</span>
+                            <span class="n">CheckBrush</span><span class="p">=</span><span class="s">"{ThemeResource SystemControlForegroundBaseMediumHighBrush}"</span>
+                            <span class="n">CheckBoxBrush</span><span class="p">=</span><span class="s">"{ThemeResource SystemControlForegroundBaseMediumHighBrush}"</span>
+                            <span class="n">DragBackground</span><span class="p">=</span><span class="s">"{ThemeResource ListViewItemDragBackgroundThemeBrush}"</span>
+                            <span class="n">DragForeground</span><span class="p">=</span><span class="s">"{ThemeResource ListViewItemDragForegroundThemeBrush}"</span>
+                            <span class="n">FocusBorderBrush</span><span class="p">=</span><span class="s">"{ThemeResource SystemControlForegroundAltHighBrush}"</span>
+                            <span class="n">FocusSecondaryBorderBrush</span><span class="p">=</span><span class="s">"{ThemeResource SystemControlForegroundBaseHighBrush}"</span>
+                            <span class="n">PlaceholderBackground</span><span class="p">=</span><span class="s">"{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}"</span>
+                            <span class="n">DisabledOpacity</span><span class="p">=</span><span class="s">"{ThemeResource ListViewItemDisabledThemeOpacity}"</span>
+                            <span class="n">DragOpacity</span><span class="p">=</span><span class="s">"{ThemeResource ListViewItemDragThemeOpacity}"</span>
+                            <span class="n">ReorderHintOffset</span><span class="p">=</span><span class="s">"{ThemeResource ListViewItemReorderHintThemeOffset}"</span>
+                            <span class="n">HorizontalContentAlignment</span><span class="p">=</span><span class="s">"{TemplateBinding HorizontalContentAlignment}"</span>
+                            <span class="n">VerticalContentAlignment</span><span class="p">=</span><span class="s">"{TemplateBinding VerticalContentAlignment}"</span>
+                            <span class="n">ContentMargin</span><span class="p">=</span><span class="s">"{TemplateBinding Padding}"</span>
+                            <span class="n">CheckMode</span><span class="p">=</span><span class="s">"Inline"</span><span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>下面来告诉大家使用不同的数据，如何对不同的数据有特殊显示。</p>
+
+<h2 id="根据不同的数据">根据不同的数据</h2>
+
+<p>例如我们做了一个类，叫做 人，这时我们继承人做出来 男生 和女生，那么男生的属性可能和女生的不同。所以需要对不同的数据有特殊的显示。</p>
+
+<p>假设我们的 人 有个属性叫做名称，而男生有个属性叫身高，女孩有个属性叫年龄，当然女生年龄放出来并不好，不过我也没找到别的。这时需要显示男生的身高和女生的年龄，可以看到这时的 DataTemplate 难以按照不同的数据显示。于是接下来，我就告诉大家如何让列表显示不同的数据。</p>
+
+<p>好啦，我们在<code class="language-plaintext highlighter-rouge">ViewModel</code>放一个ObservableCollection&lt;Human&gt; HumanWord，这时我们发现，在前台不好弄，如何让列表显示男生和女孩，因为他们的属性不同。</p>
+
+<p>这时就需要我们做选择器，这个可以根据我们传入选择模板。</p>
+
+<p>首先我们建立一个类，这个类用于选择需要显示的 <code class="language-plaintext highlighter-rouge">DataTemplate</code> ，名称：<code class="language-plaintext highlighter-rouge">ListViewDataTemplateSelector</code> 需要继承 <code class="language-plaintext highlighter-rouge">DataTemplateSelector</code> 。这个类需要有两个 <code class="language-plaintext highlighter-rouge">DataTemplate</code> 一个显示 男生，一个显示女生，其中<code class="language-plaintext highlighter-rouge">DataTemplate</code>会在 xaml 写，不会在 cs 写，因为在这里写难度有些高。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+ <span class="k">public</span> <span class="n">DataTemplate</span> <span class="n">MaleData</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+ <span class="k">public</span> <span class="n">DataTemplate</span> <span class="n">FemaleData</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>然后我们判断我们是否传进来是男生，如果是就返回 MaleData ，女生就返回女生的<code class="language-plaintext highlighter-rouge">DataTemplate</code>，这时需要 override <code class="language-plaintext highlighter-rouge">SelectTemplateCore</code>。可以看到这个方法重载有两个，如果我们的 <code class="language-plaintext highlighter-rouge">ItemsPanel</code> 是 <code class="language-plaintext highlighter-rouge">ItemsStackPanel</code> 或 ItemsWrapGrid 我们就需要选择 <code class="language-plaintext highlighter-rouge">SelectTemplateCore(Object)</code> 。如果我们的 <code class="language-plaintext highlighter-rouge">VirtualizingStackPanel</code> 或其他的<code class="language-plaintext highlighter-rouge">WrapGrid</code> ，就是 <code class="language-plaintext highlighter-rouge">SelectTemplateCore(Object, DependencyObject)</code>。请看代码，很简单判断是男生还是女生。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="n">DataTemplate</span> <span class="nf">SelectTemplateCore</span><span class="p">(</span><span class="kt">object</span> <span class="n">item</span><span class="p">,</span> <span class="n">DependencyObject</span> <span class="n">container</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">item</span> <span class="k">is</span> <span class="n">Male</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">MaleData</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">FemaleData</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>下面就是如何使用这个类，首先需要在 xaml 先写出两个 DataTemplate 。需要注意的是<code class="language-plaintext highlighter-rouge">DataTemplate</code> 和选择器都是资源，因为资源的获取是有顺序，所以需要先写<code class="language-plaintext highlighter-rouge">DataTemplate</code>，而且需要给<code class="language-plaintext highlighter-rouge">DataTemplate</code>一个 key 。然后在写<code class="language-plaintext highlighter-rouge">ListViewDataTemplateSelector</code>，把刚才写的<code class="language-plaintext highlighter-rouge">DataTemplate</code>放在<code class="language-plaintext highlighter-rouge">ListViewDataTemplateSelector</code>的属性FemaleData，MaleData 。注意<code class="language-plaintext highlighter-rouge">ListViewDataTemplateSelector</code>也需要key，关于资源的寻找，参见<a href="https://lindexi.gitee.io/post/win10-uwp-xBind-%E6%97%A0%E6%B3%95%E8%8E%B7%E5%BE%97%E8%B5%84%E6%BA%90.html">win10 uwp x:Bind 无法获得资源</a>
+一定要有key，然后在ListViewDataTemplateSelector放在FemaleData，MaleData，注意也要key，随便给个名称都好。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;DataTemplate</span> <span class="na">x:Key=</span><span class="s">"MaleData"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Grid&gt;</span>
+               <span class="nt">&lt;Border&gt;</span>
+                   <span class="nt">&lt;Grid</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;StackPanel&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"名称"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding Path=Name}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"身高"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding Path=Stature}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                        <span class="nt">&lt;/StackPanel&gt;</span>
+                    <span class="nt">&lt;/Grid&gt;</span>
+               <span class="nt">&lt;/Border&gt;</span>
+            <span class="nt">&lt;/Grid&gt;</span>
+        <span class="nt">&lt;/DataTemplate&gt;</span>
+        <span class="nt">&lt;DataTemplate</span> <span class="na">x:Key=</span><span class="s">"FemaleData"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Grid&gt;</span>
+                <span class="nt">&lt;Border&gt;</span>
+                    <span class="nt">&lt;Grid</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;StackPanel&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"名称"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding Path=Name}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"年龄"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding Path=Year}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                        <span class="nt">&lt;/StackPanel&gt;</span>
+                    <span class="nt">&lt;/Grid&gt;</span>
+                <span class="nt">&lt;/Border&gt;</span>
+            <span class="nt">&lt;/Grid&gt;</span>
+        <span class="nt">&lt;/DataTemplate&gt;</span>
+        <span class="nt">&lt;local:ListViewDataTemplateSelector</span> <span class="na">x:Key=</span><span class="s">"Selector"</span> <span class="na">FemaleData=</span><span class="s">"{StaticResource FemaleData}"</span>
+                                            <span class="na">MaleData=</span><span class="s">"{StaticResource MaleData}"</span><span class="nt">&gt;&lt;/local:ListViewDataTemplateSelector&gt;</span>
+</code></pre></div></div>
+
+<p>在需要使用的<code class="language-plaintext highlighter-rouge">ListView</code>就可以指定资源，相信大家也知道如何用。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ListView</span> <span class="na">ItemsSource=</span><span class="s">"{x:Bind View.HumanWorld}"</span>
+                  <span class="na">ItemTemplateSelector=</span><span class="s">"{StaticResource Selector}"</span><span class="nt">&gt;&lt;/ListView&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160802195044703" alt="这里写图片描述" /></p>
+
+<!-- ![](image/win10-uwp-列表模板选择器/win10-uwp-列表模板选择器0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201962311358880" alt="" /></p>
+
+<p>如果使用的数据，传入的列是男生的，那么就会使用<code class="language-plaintext highlighter-rouge">MaleData</code>，于是就可以对不同的数据使用不同的<code class="language-plaintext highlighter-rouge">DataTemplate</code>。上面的例子只是很简单使用两个不同的数据，如果有很多不同的数据，或者数据里，需要按照数据内容，进行自定义的显示，那么使用选择器也是可以做到。</p>
+
+<p>源代码：<a href="https://github.com/lindexi/kechengbiao">https://github.com/lindexi/kechengbiao</a></p>
+
+<p>如果需要所有源代码，请<a href="mailto:lindexi_gd@163.com">联系</a>我因为现在csdn上传需要审查，总是无法上传</p>
+
+<p>参见：<a href="https://blog.lindexi.com/post/win10-uwp-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8DataTemplate.html">win10 uwp 如何使用DataTemplate</a></p>
+
+:ET

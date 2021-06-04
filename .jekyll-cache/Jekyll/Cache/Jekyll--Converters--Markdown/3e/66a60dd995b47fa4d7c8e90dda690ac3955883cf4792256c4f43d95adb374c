@@ -1,0 +1,81 @@
+I"><p>如果一个项目想要让其他某个指定的项目可以使用到 internal 的类或成员，可以通过标记 InternalsVisibleToAttribute 的方式实现</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/21 16:19:07 -->
+
+<p>最简单的方法是新建一个 AssemblyInfo.cs 文件，在这个文件里面使用 System.Runtime.CompilerServices.InternalsVisibleToAttribute 指定某个程序集可见</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Reflection</span><span class="p">;</span>
+
+<span class="p">[</span><span class="n">assembly</span><span class="p">:</span> <span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="nf">InternalsVisibleToAttribute</span><span class="p">(</span><span class="s">"Lindexi.blog.csdn.net"</span><span class="p">)]</span>
+</code></pre></div></div>
+
+<p>对于强签名的程序集，只能被强签名的程序集可见</p>
+
+<p>如果想要在 csproj 文件上面写，也可以，在 ItemGroup 添加下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+        <span class="nt">&lt;AssemblyAttribute</span> <span class="na">Include=</span><span class="s">"System.Runtime.CompilerServices.InternalsVisibleToAttribute"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;_Parameter1&gt;</span>Lindexi.blog.csdn.net<span class="nt">&lt;/_Parameter1&gt;</span>
+        <span class="nt">&lt;/AssemblyAttribute&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>为什么这样就可以实现和原先 AssemblyInfo.cs 相同的功能？其实在构建的之前，将会执行预编译，将 AssemblyAttribute 的内容输出到 <code class="language-plaintext highlighter-rouge">obj\*.AssemblyInfo.cs</code> 文件，小伙伴可以尝试打开这个文件，其实这个文件是由 WriteCodeFragment 生成，内容和刚才的 AssemblyInfo.cs 文件是差不多的</p>
+
+<p>所以本质上是通过预编译创建 AssemblyInfo.cs 文件实现。只是用这个方法可以不手工创建 AssemblyInfo.cs 文件</p>
+
+<p>如我创建的 WPF 项目，这个项目里面有一个 Foo 类，期望被其他两个项目使用，此时可以添加如下代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+        <span class="nt">&lt;AssemblyAttribute</span> <span class="na">Include=</span><span class="s">"System.Runtime.CompilerServices.InternalsVisibleToAttribute"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;_Parameter1&gt;</span>LeerijawarnikoJacallnachaykall<span class="nt">&lt;/_Parameter1&gt;</span>
+        <span class="nt">&lt;/AssemblyAttribute&gt;</span>
+        <span class="nt">&lt;AssemblyAttribute</span> <span class="na">Include=</span><span class="s">"System.Runtime.CompilerServices.InternalsVisibleToAttribute"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;_Parameter1&gt;</span>HikallyijuDallcurjemdehowai<span class="nt">&lt;/_Parameter1&gt;</span>
+        <span class="nt">&lt;/AssemblyAttribute&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/58fd8f2d6f20c57f13fb216f5b9872778801cabc/JikaniqayfaraineWaycarjeefer">github</a> 欢迎小伙伴访问</p>
+
+<p>当然这么写代码比较乱，可以通过小伙伴 <a href="https://www.meziantou.net">Meziantou</a> 的方法，只需要安装一个有趣的 NuGet 包，就可以使用十分清真的写法。安装 NuGet 的方法是在 csproj 里面的添加下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+        <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"Meziantou.MSBuild.InternalsVisibleTo"</span> <span class="na">Version=</span><span class="s">"1.0.2"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;PrivateAssets&gt;</span>all<span class="nt">&lt;/PrivateAssets&gt;</span>
+            <span class="nt">&lt;IncludeAssets&gt;</span>runtime; build; native; contentfiles; analyzers<span class="nt">&lt;/IncludeAssets&gt;</span>
+        <span class="nt">&lt;/PackageReference&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>在安装完成了 Meziantou.MSBuild.InternalsVisibleTo 库之后，可以使用下面代码让其他项目可见 internal 的类</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+        <span class="nt">&lt;InternalsVisibleTo</span> <span class="na">Include=</span><span class="s">"LeerijawarnikoJacallnachaykall"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;InternalsVisibleTo</span> <span class="na">Include=</span><span class="s">"HikallyijuDallcurjemdehowai"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>那么这个 NuGet 库的原理是什么？其实是通过 <a href="https://blog.walterlv.com/post/extend-the-visual-studio-build-process.html">通过重写预定义的 Target 来扩展 MSBuild / Visual Studio 的编译过程 - walterlv</a> 的方法，类似如下代码实现</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"AddInternalsVisibleTo"</span> <span class="na">BeforeTargets=</span><span class="s">"BeforeCompile"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;ItemGroup</span> <span class="na">Condition=</span><span class="s">"'@(InternalsVisibleTo-&gt;Count())' &amp;gt; 0"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;AssemblyAttribute</span> <span class="na">Include=</span><span class="s">"System.Runtime.CompilerServices.InternalsVisibleTo"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;_Parameter1&gt;</span>%(InternalsVisibleTo.Identity)<span class="nt">&lt;/_Parameter1&gt;</span>
+      <span class="nt">&lt;/AssemblyAttribute&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<p>也就是添加一个 AddInternalsVisibleTo 的 Target 在开始构建之前触发</p>
+
+<p>内容就是读取 InternalsVisibleTo 项的内容，加入到 AssemblyAttribute 这里，而在上文小伙伴了解到放在 AssemblyAttribute 的内容将会被输出</p>
+
+<p>用这个方法就可以做到写 InternalsVisibleTo 就可以自动创建 AssemblyInfo.cs 文件</p>
+
+<p>如果需要在添加强签名的程序集添加 InternalsVisibleTo 请看 <a href="https://blog.lindexi.com/post/dotnet-%E5%BC%BA%E7%AD%BE%E5%90%8D%E4%B8%8B%E4%BD%BF%E7%94%A8-InternalsVisibleToAttribute-%E7%BB%99%E7%A8%8B%E5%BA%8F%E9%9B%86%E5%8A%A0%E4%B8%8A%E5%8F%8B%E5%85%83.html">dotnet 强签名下使用 InternalsVisibleToAttribute 给程序集加上友元</a></p>
+
+:ET

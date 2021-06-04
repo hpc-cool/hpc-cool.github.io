@@ -1,0 +1,678 @@
+I"�<p>本文告诉大家如何在项目使用性能测试测试自己写的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 10:13:16 -->
+
+<div id="toc"></div>
+
+<p>在 <a href="https://blog.lindexi.com/post/C-%E6%A0%87%E5%87%86%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95.html">C# 标准性能测试</a> 已经告诉大家如何使用 BenchmarkDotNet 测试性能，本文会告诉大家高级的用法。</p>
+
+<p>建议是创建一个控制台项目用来做性能测试，这个项目要求是 dotnet framework 4.6 以上，建议是 4.7 的版本。使用这个项目引用需要测试的项目，然后在里面写测试的代码。</p>
+
+<p>例如被测试项目有一个类 Foo 里面有一个方法是 lindexidb ，需要测试 林德熙逗比 方法的性能</p>
+
+<p>最简单的测试的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">FooPerf</span>
+<span class="p">{</span>
+	<span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+	<span class="k">public</span> <span class="k">void</span> <span class="nf">lindexidb</span><span class="p">()</span>
+	<span class="p">{</span>
+		<span class="k">new</span> <span class="nf">Foo</span><span class="p">().</span><span class="nf">lindexidb</span><span class="p">();</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 Main 函数使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="kt">var</span> <span class="n">boKar</span> <span class="p">=</span> <span class="n">BenchmarkRunner</span><span class="p">.</span><span class="n">Run</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>这样就可以进行测试，如果需要传入一些参数，那么就需要使用本文的方法</p>
+
+<h2 id="传入参数">传入参数</h2>
+
+<p>如果需要测试的方法需要传入不同的参数，而且在使用不同的参数的性能也是不相同，就需要使用传入参数特性。</p>
+
+<p>例如有底层的项目</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">()</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要创建另一个项目测试这个项目的性能， 需要注意不要在自己的库安装 BenchmarkDotNet ，安装之后会让启动速度慢很多</p>
+
+<p>在测试性能的另一个项目，安装 BenchmarkDotNet 引用库测试，所有的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">BenchmarkRunner</span><span class="p">.</span><span class="n">Run</span><span class="p">&lt;</span><span class="n">FooPerf</span><span class="p">&gt;();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">Read</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">FooPerf</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+            <span class="n">foo</span><span class="p">.</span><span class="nf">Lindexidb</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要知道，必须设置 FooPerf 的访问是 public 没有设置会出现异常</p>
+
+<p>现在例如修改了 Lindexidb 需要传入参数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="n">a</span> <span class="p">+</span> <span class="n">b</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Arguments</span><span class="p">&gt;</span><span class="n">a</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">foo</span> <span class="p">==</span> <span class="m">2</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Arguments</span> <span class="p">=</span> <span class="n">foo</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Arguments</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在需要修改性能项目</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">FooPerf</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">Benchmark</span><span class="p">(</span><span class="n">Description</span> <span class="p">=</span> <span class="s">"这里可以写这个方法是什么"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+            <span class="n">foo</span><span class="p">.</span><span class="nf">Lindexidb</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到上面写法很难写出测试很多参数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">FooPerf</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">10</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">10</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">21</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span><span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+            <span class="n">foo</span><span class="p">.</span><span class="nf">Lindexidb</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过 Arguments 可以传入不同的参数，使用这个方法可以防止初始化参数需要的时间计算为算法的</p>
+
+<p>运行程序可以看到下面输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//   FooPerf.Lindexidb: DefaultJob [a=2, b=3]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [a=2, b=10]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [a=10, b=3]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [a=21, b=3]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [a=100, b=10]</span>
+</code></pre></div></div>
+
+<p>在使用不同的参数可以看到不同的速度</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>a</th>
+      <th>b</th>
+      <th style="text-align: right">Mean</th>
+      <th style="text-align: right">Error</th>
+      <th style="text-align: right">StdDev</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Lindexidb</strong></td>
+      <td><strong>2</strong></td>
+      <td><strong>3</strong></td>
+      <td style="text-align: right"><strong>2.037 ns</strong></td>
+      <td style="text-align: right"><strong>0.0749 ns</strong></td>
+      <td style="text-align: right"><strong>0.0833 ns</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Lindexidb</strong></td>
+      <td><strong>2</strong></td>
+      <td><strong>10</strong></td>
+      <td style="text-align: right"><strong>3.263 ns</strong></td>
+      <td style="text-align: right"><strong>0.0992 ns</strong></td>
+      <td style="text-align: right"><strong>0.2682 ns</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Lindexidb</strong></td>
+      <td><strong>10</strong></td>
+      <td><strong>3</strong></td>
+      <td style="text-align: right"><strong>2.333 ns</strong></td>
+      <td style="text-align: right"><strong>0.0798 ns</strong></td>
+      <td style="text-align: right"><strong>0.1038 ns</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Lindexidb</strong></td>
+      <td><strong>21</strong></td>
+      <td><strong>3</strong></td>
+      <td style="text-align: right"><strong>2.278 ns</strong></td>
+      <td style="text-align: right"><strong>0.0776 ns</strong></td>
+      <td style="text-align: right"><strong>0.0863 ns</strong></td>
+    </tr>
+    <tr>
+      <td><strong>Lindexidb</strong></td>
+      <td><strong>100</strong></td>
+      <td><strong>10</strong></td>
+      <td style="text-align: right"><strong>2.364 ns</strong></td>
+      <td style="text-align: right"><strong>0.0809 ns</strong></td>
+      <td style="text-align: right"><strong>0.2242 ns</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>可以传入不同的参数，传入的参数可以自动转换</p>
+
+<p>如果传入的参数不对，就会提示，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="s">"123"</span><span class="p">,</span> <span class="s">"123"</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">10</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">21</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span><span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+            <span class="n">foo</span><span class="p">.</span><span class="nf">Lindexidb</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本来是使用 int 但是参数写 string 所以会出现下面提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// Build Exception: The build has failed!</span>
+<span class="n">CS0029</span><span class="p">:</span> <span class="n">Cannot</span> <span class="n">implicitly</span> <span class="n">convert</span> <span class="n">type</span> <span class="err">'</span><span class="kt">string</span><span class="err">'</span> <span class="n">to</span> <span class="err">'</span><span class="kt">int</span><span class="err">'</span>
+<span class="n">CS0029</span><span class="p">:</span> <span class="n">Cannot</span> <span class="n">implicitly</span> <span class="n">convert</span> <span class="n">type</span> <span class="err">'</span><span class="kt">string</span><span class="err">'</span> <span class="n">to</span> <span class="err">'</span><span class="kt">int</span><span class="err">'</span>
+</code></pre></div></div>
+
+<p>如果需要参数是 一个，如代码，传入的参数是两个，那么会出现异常</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">FooPerf</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">10</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">21</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="n">Arguments</span><span class="p">;</span>
+            <span class="n">foo</span><span class="p">.</span><span class="nf">Lindexidb</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Arguments</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="属性">属性</h2>
+
+<p>属性和字段都可以修改，但是修改字段需要修改公开字段，不推荐修改字段</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">Params</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Arguments</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以设置属性的值为 <code class="language-plaintext highlighter-rouge">10,2,3</code> 在下面代码会组合属性和传入参数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">Benchmark</span><span class="p">(</span><span class="n">Description</span> <span class="p">=</span> <span class="s">"这里可以写这个方法是什么"</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">1</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">2</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">10</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Arguments</span><span class="p">(</span><span class="m">21</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="n">Arguments</span><span class="p">;</span>
+            <span class="n">foo</span><span class="p">.</span><span class="nf">Lindexidb</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">Params</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Arguments</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行看到有 15 个测试</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=1]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=10]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=21]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=1]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=10]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=21]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=1]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=10]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=21]</span>
+</code></pre></div></div>
+
+<h2 id="传入多个值">传入多个值</h2>
+
+<p>可以看到在特性写参数是比较多的，如果需要很多参数就需要写很多代码</p>
+
+<p>可以使用数组的方式把很多的代码作为数组</p>
+
+<p>请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">Benchmark</span><span class="p">(</span><span class="n">Description</span> <span class="p">=</span> <span class="s">"这里可以写这个方法是什么"</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">ArgumentsSource</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">LeesikeasowSearjeeball</span><span class="p">))]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Lindexidb</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+            <span class="n">foo</span><span class="p">.</span><span class="nf">Lindexidb</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">[</span><span class="k">]&gt;</span> <span class="nf">LeesikeasowSearjeeball</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">yield</span> <span class="k">return</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span><span class="m">2</span><span class="p">,</span> <span class="m">3</span><span class="p">};</span>
+            <span class="k">yield</span> <span class="k">return</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span><span class="m">10</span><span class="p">,</span> <span class="m">2</span><span class="p">};</span>
+            <span class="k">yield</span> <span class="k">return</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span><span class="m">5</span><span class="p">,</span> <span class="m">2</span><span class="p">};</span>
+            <span class="k">yield</span> <span class="k">return</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span><span class="m">100</span><span class="p">,</span> <span class="m">5</span><span class="p">};</span>
+            <span class="k">yield</span> <span class="k">return</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span><span class="m">3</span><span class="p">,</span> <span class="m">100</span><span class="p">};</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面使用 LeesikeasowSearjeeball 作为输入的参数，注意需要返回一个数组，这个数组里就是参数的列表。上面使用的参数有两个，所以数组就是包含两个参数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=2, b=3]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=3, b=100]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=5, b=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=10, b=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=2, a=100, b=5]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=2, b=3]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=3, b=100]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=5, b=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=10, b=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=3, a=100, b=5]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=2, b=3]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=3, b=100]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=5, b=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=10, b=2]</span>
+<span class="c1">//   FooPerf.Lindexidb: DefaultJob [Arguments=10, a=100, b=5]</span>
+</code></pre></div></div>
+
+<p>例子放在 <a href="https://github.com/lindexi/lindexi_gd/tree/ae481a39/HearwhejiyehallyiheFubaduwheefu">github</a> 欢迎小伙伴访问</p>
+
+<p>除了可以设置方法传入，还可以设置属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">Arguments</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">ParamsSource</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">PememasiDismikasu</span><span class="p">))]</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Arguments</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="n">PememasiDismikasu</span> <span class="p">=&gt;</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="m">100</span><span class="p">,</span> <span class="m">200</span> <span class="p">};</span>
+</code></pre></div></div>
+
+<p>通过 ParamsSource 可以告诉测试使用的从哪个拿到</p>
+
+<h2 id="基线">基线</h2>
+
+<p>基线可以用在三个不同的地方，最简单的是方法，另外可以用在分类和不同环境。</p>
+
+<p>因为测试的时间在不同的设备的时间都不相同，如何判断一个方法优化之后是比原来好？方法就是把原来的方法作为基线，这样可以对比不同的方法的速度</p>
+
+<p>如有三个不同的方法，选一个作为基线</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Time50</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">50</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">Benchmark</span><span class="p">(</span><span class="n">Baseline</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Time100</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Time150</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">150</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>设置基线的方法是添加 Baseline = true ，建议在原来的方法添加，然后使用不同的方法看哪个方法的速度比较快</p>
+
+<p>在输出会添加一列 <code class="language-plaintext highlighter-rouge">Scaled</code> 用于表示这个方法对比基线的速度，他的时间是基线的多少。如上面代码的运行会输出</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th style="text-align: right">Mean</th>
+      <th style="text-align: right">Error</th>
+      <th style="text-align: right">StdDev</th>
+      <th style="text-align: right">Scaled</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Time50</td>
+      <td style="text-align: right">50.46 ms</td>
+      <td style="text-align: right">0.0779 ms</td>
+      <td style="text-align: right">0.0729 ms</td>
+      <td style="text-align: right">0.50</td>
+    </tr>
+    <tr>
+      <td>Time100</td>
+      <td style="text-align: right">100.39 ms</td>
+      <td style="text-align: right">0.0762 ms</td>
+      <td style="text-align: right">0.0713 ms</td>
+      <td style="text-align: right">1.00</td>
+    </tr>
+    <tr>
+      <td>Time150</td>
+      <td style="text-align: right">150.48 ms</td>
+      <td style="text-align: right">0.0986 ms</td>
+      <td style="text-align: right">0.0922 ms</td>
+      <td style="text-align: right">1.50</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>这里的 Scaled 就是对比基线方法的时间</p>
+
+<p>如果在不同的分类下需要做不同的标准，就可以在 BenchmarkCategory 添加 Baseline 告诉在哪个分类使用哪个方法作为标准。如下面的代码，设置 Fast 类和 Slow 类使用不同的标准</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">GroupBenchmarksBy</span><span class="p">(</span><span class="n">BenchmarkLogicalGroupRule</span><span class="p">.</span><span class="n">ByCategory</span><span class="p">)]</span>
+    <span class="p">[</span><span class="n">CategoriesColumn</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">IntroCategoryBaseline</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"Fast"</span><span class="p">),</span> <span class="nf">Benchmark</span><span class="p">(</span><span class="n">Baseline</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Time50</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">50</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"Fast"</span><span class="p">),</span> <span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Time100</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"Slow"</span><span class="p">),</span> <span class="nf">Benchmark</span><span class="p">(</span><span class="n">Baseline</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Time550</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">550</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"Slow"</span><span class="p">),</span> <span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Time600</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">600</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行的输出，可以看到对于不同的分类用的是不同的方法</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Categories</th>
+      <th style="text-align: right">Mean</th>
+      <th style="text-align: right">Error</th>
+      <th style="text-align: right">StdDev</th>
+      <th style="text-align: right">Scaled</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Time50</td>
+      <td>Fast</td>
+      <td style="text-align: right">50.46 ms</td>
+      <td style="text-align: right">0.0745 ms</td>
+      <td style="text-align: right">0.0697 ms</td>
+      <td style="text-align: right">1.00</td>
+    </tr>
+    <tr>
+      <td>Time100</td>
+      <td>Fast</td>
+      <td style="text-align: right">100.47 ms</td>
+      <td style="text-align: right">0.0955 ms</td>
+      <td style="text-align: right">0.0893 ms</td>
+      <td style="text-align: right">1.99</td>
+    </tr>
+    <tr>
+      <td> </td>
+      <td> </td>
+      <td style="text-align: right"> </td>
+      <td style="text-align: right"> </td>
+      <td style="text-align: right"> </td>
+      <td style="text-align: right"> </td>
+    </tr>
+    <tr>
+      <td>Time550</td>
+      <td>Slow</td>
+      <td style="text-align: right">550.48 ms</td>
+      <td style="text-align: right">0.0525 ms</td>
+      <td style="text-align: right">0.0492 ms</td>
+      <td style="text-align: right">1.00</td>
+    </tr>
+    <tr>
+      <td>Time600</td>
+      <td>Slow</td>
+      <td style="text-align: right">600.45 ms</td>
+      <td style="text-align: right">0.0396 ms</td>
+      <td style="text-align: right">0.0331 ms</td>
+      <td style="text-align: right">1.09</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>基线除了可以测试方法的基线，还可以测试环境。如我的代码需要在 <code class="language-plaintext highlighter-rouge">Clr</code> <code class="language-plaintext highlighter-rouge">Mono</code> <code class="language-plaintext highlighter-rouge">Core</code> 三个不同环境运行，这时我想知道对比 Clr 环境，其他两个环境的性能。可以使用 JobBaseline 的方式。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">ClrJob</span><span class="p">(</span><span class="n">baseline</span><span class="p">:</span> <span class="k">true</span><span class="p">)]</span>
+    <span class="p">[</span><span class="n">MonoJob</span><span class="p">]</span>
+    <span class="p">[</span><span class="n">CoreJob</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">IntroJobBaseline</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="nf">SplitJoin</span><span class="p">()</span> 
+            <span class="p">=&gt;</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">","</span><span class="p">,</span> <span class="k">new</span> <span class="kt">string</span><span class="p">[</span><span class="m">1000</span><span class="p">]).</span><span class="nf">Split</span><span class="p">(</span><span class="sc">','</span><span class="p">).</span><span class="n">Length</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时输出可以看到 Clr 运行的是标准，在 Core 运行时间是在 Clr 运行的 0.67 通过这个方法就知道在不同的环境相同的方法的测试</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th>Runtime</th>
+      <th style="text-align: right">Mean</th>
+      <th style="text-align: right">Error</th>
+      <th style="text-align: right">StdDev</th>
+      <th style="text-align: right">Scaled</th>
+      <th style="text-align: right">ScaledSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SplitJoin</td>
+      <td>Clr</td>
+      <td style="text-align: right">19.42 us</td>
+      <td style="text-align: right">0.2447 us</td>
+      <td style="text-align: right">0.1910 us</td>
+      <td style="text-align: right">1.00</td>
+      <td style="text-align: right">0.00</td>
+    </tr>
+    <tr>
+      <td>SplitJoin</td>
+      <td>Core</td>
+      <td style="text-align: right">13.00 us</td>
+      <td style="text-align: right">0.2183 us</td>
+      <td style="text-align: right">0.1935 us</td>
+      <td style="text-align: right">0.67</td>
+      <td style="text-align: right">0.01</td>
+    </tr>
+    <tr>
+      <td>SplitJoin</td>
+      <td>Mono</td>
+      <td style="text-align: right">39.14 us</td>
+      <td style="text-align: right">0.7763 us</td>
+      <td style="text-align: right">1.3596 us</td>
+      <td style="text-align: right">2.02</td>
+      <td style="text-align: right">0.07</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>更多关于基线请看 <a href="https://benchmarkdotnet.org/articles/features/baselines.html">Benchmark and Job Baselines </a></p>
+
+<h2 id="分类">分类</h2>
+
+<p>如果在一个类的测试方法有不同的类型，而只需要测试某几个类型的就需要使用本文的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">DryJob</span><span class="p">]</span>
+    <span class="p">[</span><span class="n">CategoriesColumn</span><span class="p">]</span>
+    <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"分类"</span><span class="p">)]</span>
+    <span class="p">[</span><span class="nf">AnyCategoriesFilter</span><span class="p">(</span><span class="s">"A"</span><span class="p">,</span> <span class="s">"1"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">FooPerf</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"A"</span><span class="p">,</span> <span class="s">"1"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">A1</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"A"</span><span class="p">,</span> <span class="s">"2"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">A2</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"B"</span><span class="p">,</span> <span class="s">"1"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">B1</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="p">[</span><span class="nf">BenchmarkCategory</span><span class="p">(</span><span class="s">"B"</span><span class="p">,</span> <span class="s">"2"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">B2</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在方法表示方法属于的类型，可以标记一个方法属于多个类型，如 A1 方法属于 <code class="language-plaintext highlighter-rouge">A</code> <code class="language-plaintext highlighter-rouge">1</code> 两个类型，在类标记 AnyCategoriesFilter 表示测试某些类型，这里标记了 <code class="language-plaintext highlighter-rouge">A</code> 和 1 也就是所有包含 A 或 1 类型的方法会被测试，所以 A1 A2 B1 都会被运行。</p>
+
+<h2 id="包含名字">包含名字</h2>
+
+<p>如果在一个类有很多方法，只需要名字满足某些条件的方法才可以执行，就需要进行包含名字判断。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">Config</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Config</span><span class="p">))]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">FooPerf</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">class</span> <span class="nc">Config</span> <span class="p">:</span> <span class="n">ManualConfig</span>
+        <span class="p">{</span>
+            <span class="c1">// 只有在名字满足包含 "A" 或 "1" 和名字长度小于 3 才执行</span>
+            <span class="k">public</span> <span class="nf">Config</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">DisjunctionFilter</span>
+                <span class="p">(</span>
+                    <span class="c1">// 这里的是或关系</span>
+                    <span class="c1">// 只要名字包含 "A" 或 "1" 就执行</span>
+                    <span class="k">new</span> <span class="nf">NameFilter</span><span class="p">(</span><span class="n">name</span> <span class="p">=&gt;</span> <span class="n">name</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"A"</span><span class="p">)),</span>
+                    <span class="k">new</span> <span class="nf">NameFilter</span><span class="p">(</span><span class="n">name</span> <span class="p">=&gt;</span> <span class="n">name</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"1"</span><span class="p">))</span>
+                <span class="p">));</span>
+
+                <span class="c1">// 这里和上面是 And 关系，也就是必须要同时满足名字长度小于 3 才可以执行</span>
+                <span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">NameFilter</span><span class="p">(</span><span class="n">name</span> <span class="p">=&gt;</span> <span class="n">name</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;</span> <span class="m">3</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">A1</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">A2</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">A3</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">B1</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">B2</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">B3</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">C1</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span> <span class="c1">// Will be benchmarked</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">C2</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">C3</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="n">Benchmark</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Aaa</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在类添加特性，告诉这个类需要使用哪个配置，在配置的构造函数使用了两次的 Add 函数，在多个 Add 之间是 And 关系，也就是必须所有 Add 的条件都满足才可以执行。在一个Add使用的 DisjunctionFilter 可以使用或关系多个条件。</p>
+
+<p>上面的函数使用的满足名字带有 A 或 1 而且名字的长度小于 3 才可以执行。</p>
+
+<p>除了使用名字作为条件，还可以使用 AnyCategoriesFilter 表示存在任意的类型符合，AllCategoriesFilter 要求所有的类型都符合。</p>
+
+<!-- ## 泛型参数
+
+有一些测试方法是需要传入泛型的，如下面方法
+
+```csharp
+    public class Foo
+    {
+        public void Lindexidb<T>(T a, T b) where T : struct, IComparable<T>
+        {
+            if (a.CompareTo(b) > 0)
+            {
+                Arguments = 2;
+            }
+        }
+
+        public int Arguments { get; set; }
+    }
+```
+
+就需要测试使用不同的泛型，方法的速度 -->
+
+<h2 id="运行多个类">运行多个类</h2>
+
+<p>一个需要测试的类需要使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">BenchmarkRunner</span><span class="p">.</span><span class="n">Run</span><span class="p">&lt;</span><span class="n">FooPerf</span><span class="p">&gt;();</span>
+
+</code></pre></div></div>
+
+<p>只能测试一个类，如果有很多类就需要写很多代码，下面告诉大家如何找到所有方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">BenchmarkSwitcher</span><span class="p">.</span><span class="nf">FromAssembly</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Program</span><span class="p">).</span><span class="nf">GetTypeInfo</span><span class="p">().</span><span class="n">Assembly</span><span class="p">).</span><span class="nf">Run</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>在运行的时候就可以选运行哪个</p>
+
+:ET

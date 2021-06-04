@@ -1,0 +1,221 @@
+I"�h<p>在 UWP 是不支持在 Setter 里面的 Value 进行绑定，如果想要在 ItemsPanelTemplate 里面绑定显示方向，那么需要通过附加属性的方法绑定。如果在后台代码定义了 Orientation 属性想要在 xaml 绑定到 ListView 的样式，可以尝试多创建一个帮助属性，用于在里面绑定</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/3/16 10:28:44 -->
+
+<!-- csdn -->
+<div id="toc"></div>
+
+<p>我在后台代码定义了属性 Orientation 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">OrientationProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Orientation"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Orientation</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainPage</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="n">Orientation</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="n">Orientation</span> <span class="n">Orientation</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">Orientation</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">OrientationProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">OrientationProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我在 xaml 有一个 ListView 准备将 Orientation 绑定到 ListView 的 ItemsPanel 通过一个样式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"ItemsPanel"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Setter</span><span class="p">.</span><span class="n">Value</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ItemsStackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"{Binding Orientation, RelativeSource={RelativeSource Mode=TemplatedParent}}"</span><span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Setter</span><span class="p">.</span><span class="n">Value</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>在开始绑定的时候，没有提示任何信息，也没有绑定成功</p>
+
+<p>因为在 <a href="https://docs.microsoft.com/en-us/uwp/api/Windows.UI.Xaml.Setter#Windows_UI_Xaml_Setter_Value">Setter Class (Windows.UI.Xaml) - Windows UWP applications</a> 说到在 UWP 是不支持在 Setting 的 Value 绑定，这个和 WPF 不相同，建议使用静态的资源</p>
+
+<blockquote>
+  <p>Windows Presentation Foundation (WPF) and Microsoft Silverlight supported the ability to use a Binding expression to supply the Value for a Setter in a Style. The Windows Runtime doesn’t support a Binding usage for Setter.Value (the Binding won’t evaluate and the Setter has no effect, you won’t get errors, but you won’t get the desired result either). When you convert XAML styles from Windows Presentation Foundation (WPF) or Microsoft Silverlight XAML, replace any Binding expression usages with strings or objects that set values, or refactor the values as shared {StaticResource} markup extension values rather than Binding -obtained values.</p>
+</blockquote>
+
+<p>在这里是几乎无法通过静态资源做到绑定的，那么如何让在后台代码修改的时候，可以修改 xaml 里面的 ListView 的列表显示方向绑定到后台的属性？</p>
+
+<p>在后台代码创建一个帮助绑定的类，这个类里面包含了一个附加属性，将会在这个附加属性里面尝试绑定</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">BindingHelper</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ItemsPanelOrientationProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">RegisterAttached</span><span class="p">(</span>
+            <span class="s">"ItemsPanelOrientation"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">bool</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">BindingHelper</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">bool</span><span class="p">),</span> <span class="n">ItemsPanelOrientation_OnPropertyChanged</span><span class="p">));</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>核心就在 <code class="language-plaintext highlighter-rouge">ItemsPanelOrientation_OnPropertyChanged</code> 方法，在这个方法里面找到 ItemsStackPanel 然后设置绑定</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">ItemsPanelOrientation_OnPropertyChanged</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">d</span><span class="p">,</span>
+            <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="k">is</span> <span class="n">ListView</span> <span class="n">listView</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">await</span> <span class="n">listView</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">listView</span><span class="p">.</span><span class="n">ItemsPanelRoot</span> <span class="k">is</span> <span class="n">ItemsStackPanel</span> <span class="n">stackPanel</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">BindingOperations</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">stackPanel</span><span class="p">,</span> <span class="n">ItemsStackPanel</span><span class="p">.</span><span class="n">OrientationProperty</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">()</span>
+                        <span class="p">{</span>
+                            <span class="n">Path</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">PropertyPath</span><span class="p">(</span><span class="s">"Orientation"</span><span class="p">),</span>
+                            <span class="n">Mode</span> <span class="p">=</span> <span class="n">BindingMode</span><span class="p">.</span><span class="n">OneWay</span>
+                        <span class="p">});</span>
+                    <span class="p">}</span>
+                <span class="p">});</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么为什么需要在 <code class="language-plaintext highlighter-rouge">listView.Dispatcher.RunAsync</code> 里面绑定？因为初始的时候 <code class="language-plaintext highlighter-rouge">listView.ItemsPanelRoot</code> 是没有值的，需要等待创建完成这个属性</p>
+
+<p>上面的代码是直接绑定，绑定到 DataContext 也就是需要在 ListView 指定 DataContext 才可以绑定</p>
+
+<p>指定当前的 Page 作为 ListView 的 DataContext 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Page</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Page1"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">DataContext</span><span class="p">=</span><span class="s">"{x:Bind Page1}"</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>在样式里面多设置一个附加属性，这里的 Orientation 绑定是不会绑定的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ListView"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"ItemsPanel"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span><span class="p">.</span><span class="n">Value</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ItemsStackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"{Binding Orientation, RelativeSource={RelativeSource Mode=TemplatedParent}}"</span><span class="p">/&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Setter</span><span class="p">.</span><span class="n">Value</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"local:BindingHelper.ItemsPanelOrientation"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"True"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>添加一些元素用于 ListView 进行测试</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Page</span>
+    <span class="n">x</span><span class="p">:</span><span class="n">Class</span><span class="p">=</span><span class="s">"KeejemairbouLirallpurpallnasfakaw.MainPage"</span>
+    <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">x</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">local</span><span class="p">=</span><span class="s">"using:KeejemairbouLirallpurpallnasfakaw"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">d</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">mc</span><span class="p">=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="n">mc</span><span class="p">:</span><span class="n">Ignorable</span><span class="p">=</span><span class="s">"d"</span>
+    <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Page1"</span>
+    <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">DataContext</span><span class="p">=</span><span class="s">"{x:Bind Page1}"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">Style</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ListView"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"ItemsPanel"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span><span class="p">.</span><span class="n">Value</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">ItemsStackPanel</span> <span class="p">/&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Setter</span><span class="p">.</span><span class="n">Value</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"local:BindingHelper.ItemsPanelOrientation"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"True"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">Style</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">Items</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"1"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"2"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"3"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">Items</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>在后台代码的构造函数写一个循环，定时修改后台属性的方向的大小请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">,</span>
+                        <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="n">Orientation</span> <span class="p">=</span> <span class="n">Orientation</span><span class="p">.</span><span class="n">Horizontal</span><span class="p">;</span> <span class="p">});</span>
+
+                    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">5</span><span class="p">));</span>
+
+                    <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">,</span>
+                        <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="n">Orientation</span> <span class="p">=</span> <span class="n">Orientation</span><span class="p">.</span><span class="n">Vertical</span><span class="p">;</span> <span class="p">});</span>
+
+                    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">5</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在看起来的界面是</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201931610244652" alt="" /></p>
+
+<p>写到这里的代码请看 <a href="https://github.com/lindexi/lindexi_gd/tree/43ee46e847179b61157c5bfbbdec0382ccc97268/KeejemairbouLirallpurpallnasfakaw">https://github.com/lindexi/lindexi_gd/tree/43ee46e847179b61157c5bfbbdec0382ccc97268/KeejemairbouLirallpurpallnasfakaw</a></p>
+
+<p>不过附加属性里面使用延迟还是不靠谱，可能延迟拿到的 ListView 的数据是空，所以建议的方法是修改附加属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">BindingHelper</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ItemsPanelOrientationProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">RegisterAttached</span><span class="p">(</span>
+            <span class="s">"ItemsPanelOrientation"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">bool</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">BindingHelper</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">bool</span><span class="p">),</span> <span class="n">ItemsPanelOrientation_OnPropertyChanged</span><span class="p">));</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ItemsPanelOrientation_OnPropertyChanged</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">d</span><span class="p">,</span>
+            <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="k">is</span> <span class="n">ListView</span> <span class="n">listView</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">listView</span><span class="p">.</span><span class="n">IsLoaded</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">SetBind</span><span class="p">(</span><span class="n">listView</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">listView</span><span class="p">.</span><span class="n">Loaded</span> <span class="p">+=</span> <span class="n">ListView_Loaded</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ListView_Loaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">SetBind</span><span class="p">((</span><span class="n">ListView</span><span class="p">)</span> <span class="n">sender</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetBind</span><span class="p">(</span><span class="n">ListView</span> <span class="n">listView</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">listView</span><span class="p">.</span><span class="n">ItemsPanelRoot</span> <span class="k">is</span> <span class="n">ItemsStackPanel</span> <span class="n">stackPanel</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">BindingOperations</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">stackPanel</span><span class="p">,</span> <span class="n">ItemsStackPanel</span><span class="p">.</span><span class="n">OrientationProperty</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="n">Path</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">PropertyPath</span><span class="p">(</span><span class="s">"Orientation"</span><span class="p">),</span>
+                    <span class="n">Mode</span> <span class="p">=</span> <span class="n">BindingMode</span><span class="p">.</span><span class="n">OneWay</span>
+                <span class="p">});</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetItemsPanelOrientation</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">,</span> <span class="kt">bool</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">ItemsPanelOrientationProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">GetItemsPanelOrientation</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kt">bool</span><span class="p">)</span> <span class="n">element</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">ItemsPanelOrientationProperty</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

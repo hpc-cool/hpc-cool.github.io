@@ -1,0 +1,51 @@
+I"�<p>本文提供一个方法，可以判断当前的设备是PC还是手机，UWP 判断当前的 PC 是否平板模式，判断是否苏非的设备</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<!-- csdn -->
+
+<p>如果需要判断 当前的设置是平板或者pc，判断当前是否是手机，那么可以使用下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">Windows.System.Profile</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.UI.ViewManagement</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">Wagonli.Tools</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">DeviceTypeHelper</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">DeviceFormFactorType</span> <span class="nf">GetDeviceFormFactorType</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">AnalyticsInfo</span><span class="p">.</span><span class="n">VersionInfo</span><span class="p">.</span><span class="n">DeviceFamily</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">case</span> <span class="s">"Windows.Mobile"</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">DeviceFormFactorType</span><span class="p">.</span><span class="n">Phone</span><span class="p">;</span>
+                <span class="k">case</span> <span class="s">"Windows.Desktop"</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">UIViewSettings</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">().</span><span class="n">UserInteractionMode</span> <span class="p">==</span> <span class="n">UserInteractionMode</span><span class="p">.</span><span class="n">Mouse</span>
+                        <span class="p">?</span> <span class="n">DeviceFormFactorType</span><span class="p">.</span><span class="n">Desktop</span>
+                        <span class="p">:</span> <span class="n">DeviceFormFactorType</span><span class="p">.</span><span class="n">Tablet</span><span class="p">;</span>
+                <span class="k">case</span> <span class="s">"Windows.Universal"</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">DeviceFormFactorType</span><span class="p">.</span><span class="n">IoT</span><span class="p">;</span>
+                <span class="k">case</span> <span class="s">"Windows.Team"</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">DeviceFormFactorType</span><span class="p">.</span><span class="n">SurfaceHub</span><span class="p">;</span>
+                <span class="k">default</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">DeviceFormFactorType</span><span class="p">.</span><span class="n">Other</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">enum</span> <span class="n">DeviceFormFactorType</span>
+    <span class="p">{</span>
+        <span class="n">Phone</span><span class="p">,</span>
+        <span class="n">Desktop</span><span class="p">,</span>
+        <span class="n">Tablet</span><span class="p">,</span>
+        <span class="n">IoT</span><span class="p">,</span>
+        <span class="n">SurfaceHub</span><span class="p">,</span>
+        <span class="n">Other</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>参见：<a href="https://gist.github.com/wagonli/40d8a31bd0d6f0dd7a5d">Detect device type on Universal Windows Platform</a></p>
+
+:ET

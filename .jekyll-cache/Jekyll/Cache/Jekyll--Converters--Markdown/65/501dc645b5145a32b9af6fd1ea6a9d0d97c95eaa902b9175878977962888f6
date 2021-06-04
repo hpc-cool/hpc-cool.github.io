@@ -1,0 +1,262 @@
+I"]o<p>如果在执行一段卡UI的代码，这时如何让UI响应。如果存在代码需要获得依赖属性，那么代码就需要在UI线程执行，但是这时就会卡UI，为了让UI响应，所以就需要使用<code class="language-plaintext highlighter-rouge">DoEvents</code>来让UI响应。
+首先需要知道，<code class="language-plaintext highlighter-rouge">DoEvents</code>是在 WinForm 有的，在 WPF 没有这个函数，但是可以自己写出来。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<div id="toc"></div>
+
+<!-- csdn -->
+
+<!-- 标签: wpf,doevents,性能优化 -->
+
+<p>先做一个例子让大家知道<code class="language-plaintext highlighter-rouge">DoEvents</code>的作用，使用的呆磨很简单，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Window</span> <span class="n">x</span><span class="p">:</span><span class="n">Class</span><span class="p">=</span><span class="s">"ZuindmMbx.MainWindow"</span>
+        <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+        <span class="n">xmlns</span><span class="p">:</span><span class="n">x</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+        <span class="n">xmlns</span><span class="p">:</span><span class="n">d</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+        <span class="n">xmlns</span><span class="p">:</span><span class="n">mc</span><span class="p">=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+        <span class="n">xmlns</span><span class="p">:</span><span class="n">local</span><span class="p">=</span><span class="s">"clr-namespace:ZuindmMbx"</span>
+        <span class="n">mc</span><span class="p">:</span><span class="n">Ignorable</span><span class="p">=</span><span class="s">"d"</span>
+        <span class="n">Title</span><span class="p">=</span><span class="s">"MainWindow"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"350"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"525"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{Binding KatudefZubpobryk}"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"确定"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Left"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"424,292,0,0"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Top"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"75"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Window</span><span class="p">&gt;</span>
+
+   <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainWindow</span> <span class="p">:</span> <span class="n">Window</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">KatudefZubpobryk</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="nf">Foo</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+                <span class="n">KatudefZubpobryk</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">i</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="nf">Foo</span><span class="p">(</span><span class="n">n</span> <span class="p">-</span> <span class="m">1</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时点击确定可以看到，需要等待一些时间才可以响应界面</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F%25E6%2580%25A7%25E8%2583%25BD1.gif" alt="" /></p>
+
+<p>如果加上了 DoEvents 就可以看到下图的效果</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F%25E6%2580%25A7%25E8%2583%25BD2.gif" alt="" /></p>
+
+<h2 id="用法">用法</h2>
+
+<p>在呆磨的程序做一些修改，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="nf">Foo</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+                <span class="n">KatudefZubpobryk</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">i</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+                <span class="nf">DoEvents</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">DoEvents</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">DispatcherFrame</span> <span class="n">frame</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DispatcherFrame</span><span class="p">();</span>
+            <span class="n">Dispatcher</span><span class="p">.</span><span class="n">CurrentDispatcher</span><span class="p">.</span><span class="nf">BeginInvoke</span><span class="p">(</span><span class="n">DispatcherPriority</span><span class="p">.</span><span class="n">Background</span><span class="p">,</span> <span class="k">new</span> <span class="nf">DispatcherOperationCallback</span><span class="p">(</span><span class="n">ExitFrame</span><span class="p">),</span> <span class="n">frame</span><span class="p">);</span>
+            <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">PushFrame</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">Object</span> <span class="nf">ExitFrame</span><span class="p">(</span><span class="n">Object</span> <span class="n">state</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="p">((</span><span class="n">DispatcherFrame</span><span class="p">)</span> <span class="n">state</span><span class="p">).</span><span class="n">Continue</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>所以只需要在循环加上代码就可以了。可以复制下面的两个方法到需要使用让UI响应的地方，在需要的地方调用，使用的方法很简单。</p>
+
+<p>建议在下面的地方使用：</p>
+
+<ul>
+  <li>后台操作比较耗时，未完全加载也能正常使用</li>
+  <li>性能已经没有办法优化</li>
+  <li>性能没有时间优化，可作为临时性方案</li>
+  <li>DoEvents建议一定是在主线程上使用</li>
+</ul>
+
+<h2 id="原理">原理</h2>
+
+<p>请看一下底层的<code class="language-plaintext highlighter-rouge">PushFrameImpl</code> 下面的代码有删减</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F%25E6%2580%25A7%25E8%2583%25BD120171017105233.jpg" alt="" /></p>
+
+<p>会导致UI重绘的消息：0xC25A及0xC262 所以发送这个消息就可以让UI响应</p>
+
+<h2 id="存在的坑">存在的坑</h2>
+
+<p>这里的坑是 PushFrame 的坑，关于他的原理，请看 <a href="https://walterlv.github.io/post/dotnet/2017/09/26/dispatcher-push-frame.html">https://walterlv.github.io/post/dotnet/2017/09/26/dispatcher-push-frame.html</a></p>
+
+<p>如果点击确定按钮之后，再次点击确定按钮，那么就会出现很多个重复的数。如果使用这个方法，那么需要禁用确定按钮，小心用户多次点击。</p>
+
+<p>在使用方法的时候拖动窗口，可能让窗口卡死。</p>
+
+<p>复现步骤：</p>
+
+<p>修改上面呆磨代码，加上<code class="language-plaintext highlighter-rouge">OnLoaded</code>，里面使用<code class="language-plaintext highlighter-rouge">Dispatcher.Invoke</code>或<code class="language-plaintext highlighter-rouge">DoEvents</code>，然后运行拖动窗口，这时窗口卡死</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+            <span class="n">Loaded</span> <span class="p">+=</span> <span class="n">OnLoaded</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">OnLoaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">2000</span><span class="p">);</span>
+            <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">},</span> <span class="n">DispatcherPriority</span><span class="p">.</span><span class="n">Background</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是这时使用 Alt+Tab 到其他窗口，然后回来，可以看到窗口正常</p>
+
+<p>实际上尝试改变窗口大小也会让窗口卡死，请看<a href="https://connect.microsoft.com/VisualStudio/feedback/details/807292/wpf-application-intermittently-hangs-when-using-dispatcher-invoke-and-or-dispatcher-pushframe-while-user-is-resizing-or-draging-window">WPF application intermittently hangs when using Dispatcher.Invoke and/or Dispatcher.PushFrame while user is resizing or draging window </a></p>
+
+<h3 id="onload-上其他坑">OnLoad 上其他坑</h3>
+
+<p>我必须说，不仅是 OnLoad 会出现这些坑，在很多情况也会，但是我还不知道条件。</p>
+
+<p>请把<code class="language-plaintext highlighter-rouge">await Task.Delay(2000)</code>换为<code class="language-plaintext highlighter-rouge">Foo(10);</code>进行一些计算，这时在软件启动的时候，尝试拖动窗口，可以看到窗口是没有显示内容，但是鼠标放开的时候，就可以看到界面显示。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnLoaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">Foo</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+
+            <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+            <span class="p">},</span> <span class="n">DispatcherPriority</span><span class="p">.</span><span class="n">Background</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接着把<code class="language-plaintext highlighter-rouge">Invoke</code>换为<code class="language-plaintext highlighter-rouge">DoEvents</code>，结果相同，在启动拖动窗口，窗口没有内容。</p>
+
+<h3 id="使用-dispatchertimer-出现窗口冻结">使用 DispatcherTimer 出现窗口冻结</h3>
+
+<p>下面的代码是创建一个 time 不停在里面使用<code class="language-plaintext highlighter-rouge">Dispatcher.Invoke</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+            <span class="n">Loaded</span> <span class="p">+=</span> <span class="n">OnLoaded</span><span class="p">;</span>
+
+            <span class="n">DispatcherTimer</span> <span class="n">time</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DispatcherTimer</span><span class="p">();</span>
+
+            <span class="n">time</span><span class="p">.</span><span class="n">Interval</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">TimeSpan</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">);</span>
+            <span class="n">time</span><span class="p">.</span><span class="n">Tick</span> <span class="p">+=</span> <span class="n">Time_Tick</span><span class="p">;</span>
+            <span class="n">time</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Time_Tick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">Foo</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+            <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">},</span> <span class="n">DispatcherPriority</span><span class="p">.</span><span class="n">Background</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时拖动窗口会出现冻结，和上面一样。</p>
+
+<p>实际把上面代码的运算去掉也会冻住，但是我尝试10次，有2次在放开的时候才冻住。</p>
+
+<h2 id="推荐方法">推荐方法</h2>
+
+<p>实际上垃圾wr是不是要让开发者去写这样的方法？实际上垃圾wr已经做了这个东西，但是没有直接告诉开发者，请尝试使用下面的代码代替上面呆磨</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="nf">Foo</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+                <span class="n">KatudefZubpobryk</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">i</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+                <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">},</span> <span class="n">DispatcherPriority</span><span class="p">.</span><span class="n">Background</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>关键就是<code class="language-plaintext highlighter-rouge">Dispatcher.Invoke(() =&gt; { }, DispatcherPriority.Background);</code>，这句代码就是在主线程插入一个<code class="language-plaintext highlighter-rouge">Background</code> 因为优先级，所以这时就可以让UI处理其他的输入</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F%25E6%2580%25A7%25E8%2583%25BD120171017105655.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F%25E6%2580%25A7%25E8%2583%25BD3.gif" alt="" /></p>
+
+<p>但是直接使用<code class="language-plaintext highlighter-rouge">Dispatcher.Invoke</code>代码太长，是不是可以使用比较简单的？实际上还是有的，请看代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="nf">Foo</span><span class="p">(</span><span class="m">10</span><span class="p">);</span>
+                <span class="n">KatudefZubpobryk</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">i</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+                <span class="k">await</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Threading</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Yield</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>实际上<code class="language-plaintext highlighter-rouge">System.Windows.Threading.Dispatcher.Yield</code>这个方法的实现和<code class="language-plaintext highlighter-rouge">Dispatcher.Invoke(() =&gt; { }, DispatcherPriority.Background</code>一点也不同，他使用的是 async 以及其他我还不知道怎么说的科技。</p>
+
+<p>最后的方法是在UI主线程执行的函数上添加<code class="language-plaintext highlighter-rouge">async</code>和直接使用<code class="language-plaintext highlighter-rouge">Dispatcher.Yield</code>就可以在循环中让UI响应。不会在循环中让UI卡住。</p>
+
+<p>建议使用最后的方法，因为这个方法可以解决坑，而且使用简单</p>
+
+<p>实际上，使用了上面无论哪个方法都不会让界面一直都响应，如果页面有一个循环的动画，就可以看到动画播放实际上有些卡，下面写一个呆磨就可以知道。在上面的界面添加下面的代码，不停做动画。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">Triggers</span><span class="p">&gt;</span>
+
+                <span class="p">&lt;</span><span class="n">EventTrigger</span> <span class="n">RoutedEvent</span><span class="p">=</span><span class="s">"Grid.Loaded"</span><span class="p">&gt;</span>
+
+                    <span class="p">&lt;</span><span class="n">BeginStoryboard</span><span class="p">&gt;</span>
+
+                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">RepeatBehavior</span><span class="p">=</span><span class="s">"Forever"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"T"</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"Angle"</span> <span class="n">From</span><span class="p">=</span><span class="s">"0"</span> <span class="n">To</span><span class="p">=</span><span class="s">"360"</span> <span class="n">Duration</span><span class="p">=</span><span class="s">"0:0:1"</span><span class="p">&gt;&lt;/</span><span class="n">DoubleAnimation</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">BeginStoryboard</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">EventTrigger</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">Triggers</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"G"</span> <span class="n">Background</span><span class="p">=</span><span class="s">"#565656"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"200"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"200"</span> 
+                  <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">RotateTransform</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"T"</span> <span class="n">CenterX</span><span class="p">=</span><span class="s">"100"</span> <span class="n">CenterY</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Angle</span><span class="p">=</span><span class="s">"0"</span><span class="p">&gt;&lt;/</span><span class="n">RotateTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>这时点击按钮，可以看到动画有些卡，点击窗口拖动就可以看到动画正常。</p>
+
+:ET

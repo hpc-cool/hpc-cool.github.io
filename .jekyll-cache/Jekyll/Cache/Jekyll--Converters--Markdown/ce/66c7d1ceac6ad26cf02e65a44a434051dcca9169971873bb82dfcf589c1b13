@@ -1,0 +1,105 @@
+I"0*<p>通过 ReadyToRun 可以在程序集同时包含 IL 和本机代码，可以有效提升软件的启动速度</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/7/2 10:29:55 -->
+
+<!-- csdn -->
+
+<p>在 .NET Core 3.0 Preview 6 发布了 ReadyToRun 的功能，通过这个功能可以提升软件的启动性能，在程序设置在发布的时候使用 ReadyToRun 的特性，将会编译出来 ReadyToRun（R2R）格式的程序集</p>
+
+<p>在这个程序集里面同时包含了 IL 和本机代码，可以做到在启动的时间减少 JIT 编译的时间，减少的这部分启动时间是 JIT 编译代码使用的时间</p>
+
+<p>经过测试，在测试项目上，可以从原来的 1.9 秒的启动时间使用 ReadyToRun 减少为 1.3 秒的时间，同时因为在启动过程不需要 JIT 进行中间编译，可以节省此部分的内存，将内存从 69.1 MB 降低为 55.7 MB 大小</p>
+
+<p>当然在运行性能上的提升同时也会让应用程序大小变大因为当前的应用程序会同时包含 IL 和本机代码，在相同的测试项目上，应用程序的大小从原来的 150MB 变为 156MB 这个大小对于桌面端应用程序几乎是可以被忽略</p>
+
+<p>我认为使用 ReadyToRun 是对桌面端应用程序的极大的提升，这个功能其实已经很古老了，但是一直都没有发布，下面让我告诉大家如何在项目上应用这个白科技提高软件性能</p>
+
+<p>请确定本地的 dotnet sdk 版本大于 .NET Core 3.0 Preview 6 使用以下命令可以知道自己的 sdk 版本</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="p">--</span><span class="n">info</span>
+</code></pre></div></div>
+
+<p>在控制台输入上面代码将会输出当前设备安装的版本</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">Version</span><span class="p">:</span>   <span class="m">3.0</span><span class="p">.</span><span class="m">100</span><span class="p">-</span><span class="n">preview6</span><span class="p">-</span><span class="m">012264</span>
+ <span class="n">Commit</span><span class="p">:</span>    <span class="n">be3f0c1a03</span>
+
+<span class="err">运行时环境</span><span class="p">:</span>
+ <span class="n">OS</span> <span class="n">Name</span><span class="p">:</span>     <span class="n">Windows</span>
+ <span class="n">OS</span> <span class="n">Version</span><span class="p">:</span>  <span class="m">10.0</span><span class="p">.</span><span class="m">18362</span>
+ <span class="n">OS</span> <span class="n">Platform</span><span class="p">:</span> <span class="n">Windows</span>
+ <span class="n">RID</span><span class="p">:</span>         <span class="n">win10</span><span class="p">-</span><span class="n">x64</span>
+ <span class="n">Base</span> <span class="n">Path</span><span class="p">:</span>   <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Program</span> <span class="n">Files</span><span class="err">\</span><span class="n">dotnet</span><span class="err">\</span><span class="n">sdk</span><span class="err">\</span><span class="m">3.0</span><span class="p">.</span><span class="m">100</span><span class="p">-</span><span class="n">preview6</span><span class="p">-</span><span class="m">012264</span><span class="err">\</span>
+</code></pre></div></div>
+
+<p>如果发现自己的版本比较低请到<a href="https://dotnet.microsoft.com/download/dotnet-core/3.0">官网</a> 下载最新版本安装</p>
+
+<p>打开或新建一个 WPF 项目，在项目文件里面添加属性 PublishReadyToRun 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Project</span> <span class="n">Sdk</span><span class="p">=</span><span class="s">"Microsoft.NET.Sdk.WindowsDesktop"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">OutputType</span><span class="p">&gt;</span><span class="n">WinExe</span><span class="p">&lt;/</span><span class="n">OutputType</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TargetFramework</span><span class="p">&gt;</span><span class="n">netcoreapp3</span><span class="p">.</span><span class="m">0</span><span class="p">&lt;/</span><span class="n">TargetFramework</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">UseWPF</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">UseWPF</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">PublishReadyToRun</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">PublishReadyToRun</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="n">Project</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>注意，并非只有 WPF 可以使用这个特性，理论上任何的 dotnet core 程序都可以</p>
+
+<p>在添加了 <code class="language-plaintext highlighter-rouge">&lt;PublishReadyToRun&gt;true&lt;/PublishReadyToRun&gt;</code> 之后可以进行发布，此时发布的时候需要带上确定的运行环境属性，因为这个特性是编译为本地代码需要对每个平台编译为特定的代码</p>
+
+<p>同时 ReadyToRun 只能用于<a href="https://docs.microsoft.com/dotnet/core/deploying/">独立部署</a> 的应用</p>
+
+<p>请使用下面代码进行发布使用 ReadyToRun 特性的程序</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">publish</span> <span class="p">-</span><span class="n">c</span> <span class="n">release</span>  <span class="p">-</span><span class="n">r</span> <span class="n">win</span><span class="p">-</span><span class="n">x64</span> <span class="p">--</span><span class="n">self</span><span class="p">-</span><span class="n">contained</span>
+</code></pre></div></div>
+
+<p>因为 ReadyToRun 是对特性的平台创建特定的代码，所以 <code class="language-plaintext highlighter-rouge">-r</code> 属性是不能少的。另外因为默认只对独立部署生效，所以独立部署属性可选添加</p>
+
+<p>一个空白的 WPF 程序编译的时候将会让程序文件多了大约 3k 的大小，但是这部分关系不大，因为在 <a href="https://devblogs.microsoft.com/dotnet/announcing-net-core-3-0-preview-6/">.NET Core 3.0 Preview 6 </a> 还发布了 <a href="https://aka.ms/dotnet-illink">Assembly linking</a> 功能用于减少应用程序大小</p>
+
+<p>此时的应用程序包含了本机代码，如果需要同时创建本机代码的符号，请在项目文件添加以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">PublishReadyToRunEmitSymbols</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">PublishReadyToRunEmitSymbols</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在的项目文件代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Project</span> <span class="n">Sdk</span><span class="p">=</span><span class="s">"Microsoft.NET.Sdk.WindowsDesktop"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">OutputType</span><span class="p">&gt;</span><span class="n">WinExe</span><span class="p">&lt;/</span><span class="n">OutputType</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TargetFramework</span><span class="p">&gt;</span><span class="n">netcoreapp3</span><span class="p">.</span><span class="m">0</span><span class="p">&lt;/</span><span class="n">TargetFramework</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">UseWPF</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">UseWPF</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">PublishReadyToRun</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">PublishReadyToRun</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">PublishReadyToRunEmitSymbols</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">PublishReadyToRunEmitSymbols</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="n">Project</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>依然使用上面的命令发布</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">publish</span> <span class="p">-</span><span class="n">c</span> <span class="n">release</span>  <span class="p">-</span><span class="n">r</span> <span class="n">win</span><span class="p">-</span><span class="n">x64</span> <span class="p">--</span><span class="n">self</span><span class="p">-</span><span class="n">contained</span>
+</code></pre></div></div>
+
+<p>此时在发布的文件夹可以找到比原来多出的 <code class="language-plaintext highlighter-rouge">.ni.pdb</code> 文件，这就是本机代码的符号文件</p>
+
+<p>关于项目文件的配置请看我的<a href="https://github.com/lindexi/lindexi_gd/tree/36d9e70722f86bc8d03385868a99fc9c7719b504/FuhelerjaihuBuqibeayay">项目</a> 下载之后可以使用本文方法进行编译</p>
+
+<p>更多请看<a href="https://github.com/dotnet/coreclr/blob/master/Documentation/botr/readytorun-overview.md">官方文档</a></p>
+
+<p><a href="https://devblogs.microsoft.com/dotnet/announcing-net-core-3-0-preview-6/">Announcing .NET Core 3.0 Preview 6 </a></p>
+
+<p><a href="https://github.com/dotnet/coreclr/blob/master/Documentation/botr/readytorun-overview.md">coreclr/readytorun-overview.md at master · dotnet/coreclr</a></p>
+
+<p><a href="https://github.com/dotnet/coreclr/blob/master/Documentation/building/crossgen.md">coreclr/crossgen.md at master · dotnet/coreclr</a></p>
+
+:ET

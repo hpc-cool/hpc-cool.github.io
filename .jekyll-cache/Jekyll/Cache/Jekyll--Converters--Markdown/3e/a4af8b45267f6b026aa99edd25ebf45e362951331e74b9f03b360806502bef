@@ -1,0 +1,59 @@
+I"�<p>本文告诉大家如何通过 WMI 获取系统服务</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<!-- 标签：PowerShell,WMI -->
+
+<p>通过 Win32_Service 可以获取系统启动的服务</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="n">Win32_Service</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">Caption</span><span class="p">,</span><span class="n">State</span>
+</code></pre></div></div>
+
+<p>运行代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Caption</span> <span class="p">:</span> <span class="n">Apple</span> <span class="n">Mobile</span> <span class="n">Device</span> <span class="n">Service</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Running</span>
+
+<span class="n">Caption</span> <span class="p">:</span> <span class="n">iPod</span> <span class="err">服务</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Running</span>
+</code></pre></div></div>
+
+<p>通过上面代码可以获取服务当前是否启动，还可以加上 StartMode 获取服务启动方法，可以选择手动启动，不自动启动和开机启动</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="n">Win32_Service</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">Caption</span><span class="p">,</span><span class="n">State</span><span class="p">,</span><span class="n">CreationClassName</span><span class="p">,</span><span class="n">Description</span><span class="p">,</span><span class="n">DisplayName</span><span class="p">,</span><span class="n">Name</span><span class="p">,</span><span class="n">PathName</span><span class="p">,</span><span class="n">ServiceType</span><span class="p">,</span><span class="n">StartMode</span><span class="p">,</span><span class="n">StartName</span><span class="p">,</span><span class="n">SystemCreationClassName</span><span class="p">,</span><span class="n">SystemName</span>
+</code></pre></div></div>
+
+<p>运行代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Caption</span>                 <span class="p">:</span> <span class="n">Apple</span> <span class="n">Mobile</span> <span class="n">Device</span> <span class="n">Service</span>
+<span class="n">State</span>                   <span class="p">:</span> <span class="n">Running</span>
+<span class="n">CreationClassName</span>       <span class="p">:</span> <span class="n">Win32_Service</span>
+<span class="n">Description</span>             <span class="p">:</span> <span class="n">Provides</span> <span class="n">the</span> <span class="k">interface</span> <span class="nc">to</span> <span class="n">Apple</span> <span class="n">mobile</span> <span class="n">devices</span><span class="p">.</span>
+<span class="n">DisplayName</span>             <span class="p">:</span> <span class="n">Apple</span> <span class="n">Mobile</span> <span class="n">Device</span> <span class="n">Service</span>
+<span class="n">Name</span>                    <span class="p">:</span> <span class="n">Apple</span> <span class="n">Mobile</span> <span class="n">Device</span> <span class="n">Service</span>
+<span class="n">PathName</span>                <span class="p">:</span> <span class="s">"C:\Program Files\Common Files\Apple\Mobile Device Support\AppleMobileDeviceService.exe"</span>
+<span class="n">ServiceType</span>             <span class="p">:</span> <span class="n">Own</span> <span class="n">Process</span>
+<span class="n">StartMode</span>               <span class="p">:</span> <span class="n">Auto</span>
+<span class="n">StartName</span>               <span class="p">:</span> <span class="n">LocalSystem</span>
+<span class="n">SystemCreationClassName</span> <span class="p">:</span> <span class="n">Win32_ComputerSystem</span>
+<span class="n">SystemName</span>              <span class="p">:</span> <span class="n">DESKTOP</span><span class="p">-</span><span class="n">KA1CD6M</span>
+
+<span class="n">Caption</span>                 <span class="p">:</span> <span class="n">iPod</span> <span class="err">服务</span>
+<span class="n">State</span>                   <span class="p">:</span> <span class="n">Running</span>
+<span class="n">CreationClassName</span>       <span class="p">:</span> <span class="n">Win32_Service</span>
+<span class="n">Description</span>             <span class="p">:</span> <span class="n">iPod</span> <span class="err">硬件管理服务</span>
+<span class="n">DisplayName</span>             <span class="p">:</span> <span class="n">iPod</span> <span class="err">服务</span>
+<span class="n">Name</span>                    <span class="p">:</span> <span class="n">iPod</span> <span class="n">Service</span>
+<span class="n">PathName</span>                <span class="p">:</span> <span class="s">"C:\Program Files\iPod\bin\iPodService.exe"</span>
+<span class="n">ServiceType</span>             <span class="p">:</span> <span class="n">Own</span> <span class="n">Process</span>
+<span class="n">StartMode</span>               <span class="p">:</span> <span class="n">Manual</span>
+<span class="n">StartName</span>               <span class="p">:</span> <span class="n">LocalSystem</span>
+<span class="n">SystemCreationClassName</span> <span class="p">:</span> <span class="n">Win32_ComputerSystem</span>
+<span class="n">SystemName</span>              <span class="p">:</span> <span class="n">DESKTOP</span><span class="p">-</span><span class="n">KA1CD6M</span>
+</code></pre></div></div>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/win32-service">Win32_Service class - Windows applications</a></p>
+
+:ET

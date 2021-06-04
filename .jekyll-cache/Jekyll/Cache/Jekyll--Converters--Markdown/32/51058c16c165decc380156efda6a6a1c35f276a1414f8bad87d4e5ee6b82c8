@@ -1,0 +1,4 @@
+I"�<p>本文讲的是把git在最新2.9.2，合并pull两个不同的项目，出现的问题
+如何去解决 <code class="language-plaintext highlighter-rouge">fatal: refusing to merge unrelated histories</code> 合并两个不同历史的仓库</p>
+
+:ET

@@ -1,0 +1,174 @@
+I"Q<p>在 WPF 中，在 XAML 里面定义的对象的创建，实际上不是完全通过反射来进行创建的，在WPF框架里面，有进行了一系列的优化</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/1/18 19:40:02 -->
+
+<!-- 标签：WPF，WPF源代码 -->
+<!-- 发布 -->
+
+<p>在 WPF 中，将会通过 XamlTypeInvoker 的 CreateInstance 方法来进行对象的创建，而默认的 XamlTypeInvoker 的 CreateInstance 定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">virtual</span> <span class="kt">object</span> <span class="nf">CreateInstance</span><span class="p">(</span><span class="kt">object</span><span class="p">[]</span> <span class="n">arguments</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">ThrowIfUnknown</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(!</span><span class="n">_xamlType</span><span class="p">.</span><span class="n">UnderlyingType</span><span class="p">.</span><span class="n">IsValueType</span> <span class="p">&amp;&amp;</span> <span class="p">(</span><span class="n">arguments</span> <span class="p">==</span> <span class="k">null</span> <span class="p">||</span> <span class="n">arguments</span><span class="p">.</span><span class="n">Length</span> <span class="p">==</span> <span class="m">0</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">object</span> <span class="n">result</span> <span class="p">=</span> <span class="n">DefaultCtorXamlActivator</span><span class="p">.</span><span class="nf">CreateInstance</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nf">CreateInstanceWithActivator</span><span class="p">(</span><span class="n">_xamlType</span><span class="p">.</span><span class="n">UnderlyingType</span><span class="p">,</span> <span class="n">arguments</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">object</span> <span class="nf">CreateInstanceWithActivator</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">,</span> <span class="kt">object</span><span class="p">[]</span> <span class="n">arguments</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">SafeReflectionInvoker</span><span class="p">.</span><span class="nf">CreateInstance</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="n">arguments</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是说将调用 SafeReflectionInvoker.CreateInstance 进行对象的创建，这里的创建方式就是通过反射，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">static</span> <span class="k">class</span> <span class="nc">SafeReflectionInvoker</span>
+    <span class="p">{</span>
+        <span class="k">internal</span> <span class="k">static</span> <span class="kt">object</span> <span class="nf">CreateInstance</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">,</span> <span class="kt">object</span><span class="p">[]</span> <span class="n">arguments</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Activator</span><span class="p">.</span><span class="nf">CreateInstance</span><span class="p">(</span><span class="n">type</span><span class="p">,</span> <span class="n">arguments</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从 <a href="https://blog.walterlv.com/post/dotnet-high-performance-reflection-suggestions.html">.NET/C# 反射的的性能数据，以及高性能开发建议（反射获取 Attribute 和反射调用方法） - walterlv</a> 和 <a href="https://blog.lindexi.com/post/C-%E7%9B%B4%E6%8E%A5%E5%88%9B%E5%BB%BA%E5%A4%9A%E4%B8%AA%E7%B1%BB%E5%92%8C%E4%BD%BF%E7%94%A8%E5%8F%8D%E5%B0%84%E5%88%9B%E5%BB%BA%E7%B1%BB%E7%9A%84%E6%80%A7%E8%83%BD.html">C# 直接创建多个类和使用反射创建类的性能</a> 可以了解，使用反射创建和对象创建性能相差大概有 30 倍</p>
+
+<p>如果 WPF 真的全部使用反射进行创建，那么整体性能将会很低</p>
+
+<p>从 XamlTypeInvoker 的 CreateInstance 方法的定义可以看到，这是一个可以被重写的方法，也就是说上面的代码只是默认的实现而已。在 WPF 中的一个重写方法是 WpfKnownTypeInvoker 类，这里面的定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">WpfKnownTypeInvoker</span> <span class="p">:</span> <span class="n">XamlTypeInvoker</span>
+    <span class="p">{</span>
+        <span class="n">WpfKnownType</span> <span class="n">_type</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="k">override</span> <span class="kt">object</span> <span class="nf">CreateInstance</span><span class="p">(</span><span class="kt">object</span><span class="p">[]</span> <span class="n">arguments</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">arguments</span> <span class="p">==</span> <span class="k">null</span> <span class="p">||</span> <span class="n">arguments</span><span class="p">.</span><span class="n">Length</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="n">_type</span><span class="p">.</span><span class="n">DefaultConstructor</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">_type</span><span class="p">.</span><span class="n">DefaultConstructor</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">base</span><span class="p">.</span><span class="nf">CreateInstance</span><span class="p">(</span><span class="n">arguments</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是将会尝试调用 WpfKnownType 的 DefaultConstructor 方法，这里的定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">WpfKnownType</span> <span class="p">:</span> <span class="n">WpfXamlType</span><span class="p">,</span> <span class="n">ICustomAttributeProvider</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">DefaultConstructor</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_defaultConstructor</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="nf">CheckFrozen</span><span class="p">();</span>
+                <span class="n">_defaultConstructor</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是说其实这里面是委托创建，性能将会比反射的运行效率大概高几十倍的速度</p>
+
+<p>这里的委托是在 WpfSharedBamlSchemaContext 类里面定义的，这里面的内容大概如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="nf">MethodImpl</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">MethodImplOptions</span><span class="p">.</span><span class="n">NoInlining</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="n">WpfKnownType</span> <span class="nf">Create_BamlType_TextBlock</span><span class="p">(</span><span class="kt">bool</span> <span class="n">isBamlType</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">useV3Rules</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">bamlType</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WpfKnownType</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="c1">// SchemaContext</span>
+                                              <span class="m">638</span><span class="p">,</span> <span class="s">"TextBlock"</span><span class="p">,</span>
+                                              <span class="k">typeof</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="n">TextBlock</span><span class="p">),</span>
+                                              <span class="n">isBamlType</span><span class="p">,</span> <span class="n">useV3Rules</span><span class="p">);</span>
+            <span class="n">bamlType</span><span class="p">.</span><span class="n">DefaultConstructor</span> <span class="p">=</span> <span class="k">delegate</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="k">new</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Controls</span><span class="p">.</span><span class="nf">TextBlock</span><span class="p">();</span> <span class="p">};</span>
+            <span class="n">bamlType</span><span class="p">.</span><span class="n">ContentPropertyName</span> <span class="p">=</span> <span class="s">"Inlines"</span><span class="p">;</span>
+            <span class="n">bamlType</span><span class="p">.</span><span class="n">RuntimeNamePropertyName</span> <span class="p">=</span> <span class="s">"Name"</span><span class="p">;</span>
+            <span class="n">bamlType</span><span class="p">.</span><span class="n">XmlLangPropertyName</span> <span class="p">=</span> <span class="s">"Language"</span><span class="p">;</span>
+            <span class="n">bamlType</span><span class="p">.</span><span class="n">UidPropertyName</span> <span class="p">=</span> <span class="s">"Uid"</span><span class="p">;</span>
+            <span class="n">bamlType</span><span class="p">.</span><span class="n">IsUsableDuringInit</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="n">bamlType</span><span class="p">.</span><span class="nf">Freeze</span><span class="p">();</span>
+            <span class="k">return</span> <span class="n">bamlType</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到对于 WPF 框架里面了解的对象，都将会创建委托的方式提升性能</p>
+
+<p>这个类超过了一万行，可以看到这里用了很大的逻辑来提升 XAML 对象创建的性能</p>
+
+<p>那如果是 WPF 不认识的类呢？如我自己定义的类型，那么将会进入 XamlTypeInvoker 的 CreateInstance 方法的 DefaultCtorXamlActivator 类，在这个类里面的逻辑如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">DefaultCtorXamlActivator</span>
+        <span class="p">{</span>
+            <span class="k">public</span> <span class="k">static</span> <span class="kt">object</span> <span class="nf">CreateInstance</span><span class="p">(</span><span class="n">XamlTypeInvoker</span> <span class="n">type</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(!</span><span class="nf">EnsureConstructorDelegate</span><span class="p">(</span><span class="n">type</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="kt">object</span> <span class="n">inst</span> <span class="p">=</span> <span class="nf">CallCtorDelegate</span><span class="p">(</span><span class="n">type</span><span class="p">);</span>
+                <span class="k">return</span> <span class="n">inst</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 EnsureConstructorDelegate 方法里面将会判断如果对象是公开的，那么尝试获取默认构造函数，将默认构造函数做成委托。此时的性能将会是类型第一次进入的时候的速度比较慢，但是后续进入的时候就能使用委托创建，此时性能将会比较好。通过反射创建委托提升性能的方法，详细请看 <a href="https://blog.walterlv.com/post/create-delegate-to-improve-reflection-performance.html">.NET Core/Framework 创建委托以大幅度提高反射调用的性能 - walterlv</a></p>
+
+<p>这里的 EnsureConstructorDelegate 方法相对复杂，我删减了一些代码，让逻辑相对清晰。详细的代码还请到 WPF 官方仓库获取</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">EnsureConstructorDelegate</span><span class="p">(</span><span class="n">XamlTypeInvoker</span> <span class="n">type</span><span class="p">)</span>
+            <span class="p">{</span>
+            	<span class="c1">// 如果类型初始化过构造函数创建，那么返回，这是缓存的方法</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">type</span><span class="p">.</span><span class="n">_constructorDelegate</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="c1">// 如果不是公开的方法，那么将无法使用反射创建委托的科技</span>
+                <span class="k">if</span> <span class="p">(!</span><span class="n">type</span><span class="p">.</span><span class="n">IsPublic</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="c1">// 反射获取对象的构造函数</span>
+                <span class="n">Type</span> <span class="n">underlyingType</span> <span class="p">=</span> <span class="n">type</span><span class="p">.</span><span class="n">_xamlType</span><span class="p">.</span><span class="n">UnderlyingType</span><span class="p">.</span><span class="n">UnderlyingSystemType</span><span class="p">;</span>
+                <span class="c1">// Look up public ctors only, for equivalence with Activator.CreateInstance</span>
+                <span class="n">ConstructorInfo</span> <span class="n">tConstInfo</span> <span class="p">=</span> <span class="n">underlyingType</span><span class="p">.</span><span class="nf">GetConstructor</span><span class="p">(</span><span class="n">Type</span><span class="p">.</span><span class="n">EmptyTypes</span><span class="p">);</span>
+                <span class="n">IntPtr</span> <span class="n">constPtr</span> <span class="p">=</span> <span class="n">tConstInfo</span><span class="p">.</span><span class="n">MethodHandle</span><span class="p">.</span><span class="nf">GetFunctionPointer</span><span class="p">();</span>
+               
+                <span class="c1">// 反射创建委托，这样下次访问就不需要使用反射，可以提升性能</span>
+                <span class="c1">// This requires Reflection Permission</span>
+                <span class="n">Action</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">ctorDelegate</span> <span class="p">=</span> <span class="n">ctorDelegate</span> <span class="p">=</span>
+                    <span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;)</span><span class="n">s_actionCtor</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span> <span class="k">null</span><span class="p">,</span> <span class="n">constPtr</span> <span class="p">});</span>
+                <span class="n">type</span><span class="p">.</span><span class="n">_constructorDelegate</span> <span class="p">=</span> <span class="n">ctorDelegate</span><span class="p">;</span>
+                <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是说只有第一次的类型进入才会调用反射创建委托用来提升性能，之后的进入将会使用第一次创建出来的委托来创建对象，这样能提升性能</p>
+
+<p>从上面代码可以看到，如果对象不是公开的，那么将因为 .NET 的限制，不能使用反射创建委托的方法来提升性能。因此一个性能提升的建议是在 XAML 里面使用的类尽量都是公开的，这样能提升一些性能</p>
+
+<p>在获取到了构造函数的对应的委托之后，就能调用 CallCtorDelegate 方法来创建对象，此时的创建对象速度会比反射快很多</p>
+
+<p>但是如果对象的类不是公开的，那么将需要用到 CreateInstanceWithActivator 使用反射创建对象，此时的性能相对来说比较差</p>
+
+<p>因此在 WPF 的 XAML 创建对象，只有在尝试了判断这是 WPF 已知的对象失败之后，同时对象对应的类不是公开的不能使用反射创建委托的科技，才会使用反射创建对象。大多数的时候，使用 XAML 都不会有很多性能损失</p>
+
+<p>而对于自己定义的非公开的类，我给 WPF 官方提一个建议，就是提供让开发端自己注入创建器的方式，用来提升性能，请看 <a href="https://github.com/dotnet/wpf/issues/4022">API Request: Allow developers to inject a XAML factory for creating objects · Issue #4022 · dotnet/wpf</a></p>
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

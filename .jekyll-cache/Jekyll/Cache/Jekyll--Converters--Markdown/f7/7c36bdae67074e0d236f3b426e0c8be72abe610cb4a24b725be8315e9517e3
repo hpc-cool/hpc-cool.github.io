@@ -1,0 +1,3 @@
+I"�<p>在代码审查 WPF 仓库的时候，小伙伴告诉我说使用 dotnet core 版本的 WPF 开了 ReadyToRun 的提升还不够大，他准备开始一大波业务无关的优化，其中就包含了 xaml 中的字符串相关优化。我在 davidwrighton 大大的优化代码和 pentp 大大的代码审查里面学到了使用 startIndex 提升 IndexOf 的性能，本文就来和大家分享一下</p>
+
+:ET

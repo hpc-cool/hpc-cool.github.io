@@ -1,0 +1,57 @@
+title: 华东师范大学高性能实验室
+description: 数据科学与工程学院
+author: 
+post_author: 华东师范大学
+logo: /img/avatar.png
+github: 
+about: 
+mail: 
+baseurl: ""
+url: 
+
+allowsearch: false
+
+analytics:
+  google: UA-110214503-1
+disqus:
+  name: 
+
+share:
+  twitter_username: 
+
+
+enableTags: true
+tagarray: []
+
+excerpt_separator: "<!--more-->"
+paginate: 35
+per_page: 60
+paginate_path: "/blog/page:num/"
+markdown: kramdown
+kramdown:
+   input: GFM
+   hard_wrap: false
+   math_engine: mathjax
+gems: [jekyll-paginate, jekyll-gist]
+
+# Content Collection
+collections:
+  articles:
+    output: true
+
+# Content Template
+defaults:
+  - scope:
+      path: "_posts"
+      type: "posts"
+    values:
+      layout: "post"
+      author: "DaSE_HPC"
+      permalink: "/post/:title.html"
+  - scope:
+      path: "_articles"
+      type: "articles"
+    values:
+      layout: "post"
+      author: "DaSE_HPC"
+      permalink: "/article/:title.html"

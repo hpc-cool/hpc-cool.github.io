@@ -1,0 +1,3 @@
+I"�<p>默认的 GitLab 的 Runner 在构建时不会去拉取 Git Submodules 仓库，将会提示 Skipping Git submodules setup 跳过初始化 Git Submodule 仓库</p>
+
+:ET

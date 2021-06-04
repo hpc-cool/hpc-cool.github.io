@@ -1,0 +1,72 @@
+I"p<p>在 WPF 中如背景色等都是使用笔刷，在使用绑定的时候可能绑定不上，本文告诉大家绑定不上可能的原因和调试方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:46:22 -->
+
+<!-- csdn -->
+
+<p>有小伙伴问我为什么他的背景绑定不上，他的代码如下</p>
+
+<pre><code class="language-xaml">    &lt;Window.Resources&gt;
+        &lt;local:StateToColorConverter x:Key="StateToColorConverter"&gt;&lt;/local:StateToColorConverter&gt;
+    &lt;/Window.Resources&gt;
+    &lt;Grid &gt;
+        &lt;Grid Background="{Binding Path=Width,Converter={StaticResource StateToColorConverter}}"&gt;&lt;/Grid&gt;
+    &lt;/Grid&gt;
+</code></pre>
+
+<p>其中后台代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainWindow</span> <span class="p">:</span> <span class="n">Window</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">StateToColorConverter</span> <span class="p">:</span> <span class="n">IValueConverter</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="k">value</span><span class="p">)</span>
+            <span class="p">{</span>
+               
+                <span class="k">default</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Transparent</span><span class="p">.</span><span class="n">Color</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">object</span> <span class="nf">ConvertBack</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">NotImplementedException</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这是简化的版本</p>
+
+<p>原因是在小伙伴在转换器里面绑定的返回值是 Color 而 Background 的需要的值是 Brush 所以绑定不上</p>
+
+<p>修复方法是不返回 Color 应该返回 Brush 就可以</p>
+
+<p>调试 XAML 绑定可以通过在 VisualStudio 的选项开启输出绑定信息</p>
+
+<!-- ![](image/WPF 笔刷绑定不上可能的原因/WPF 笔刷绑定不上可能的原因0.png) -->
+
+<p>在工具 选项 调试 输出窗口 可以看到绑定的输出，将这一项设置为详细就可以输出很多调试信息，如上面代码将会输出绑定返回值</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>System.Windows.Data Information: 10 : Cannot retrieve value using the binding and no valid fallback value exists; using default instead. BindingExpression:Path=Width; DataItem=null; target element is 'Grid' (Name=''); target property is 'Background' (type 'Brush')
+
+</code></pre></div></div>
+
+<p>翻译一下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Data</span> <span class="n">Information</span><span class="p">:</span> <span class="m">10</span> <span class="p">:</span> <span class="err">无法接受绑定的返回值，同时没有设置绑定失败使用的值；将使用默认值代替。绑定表达式是</span> <span class="n">Path</span><span class="p">=</span><span class="n">Width</span> <span class="err">数据项是没有，绑定的元素是</span> <span class="n">Grid</span> <span class="err">绑定的属性是</span> <span class="n">Background</span> <span class="err">这个属性的类型是</span> <span class="n">Brush</span> <span class="err">类型</span>
+</code></pre></div></div>
+
+<p>如果不想每次都设置 VisualStudio 可以使用 <a href="https://blog.lindexi.com/post/WPF-%E5%A6%82%E4%BD%95%E8%B0%83%E8%AF%95-binding.html">WPF 如何调试 binding</a></p>
+
+:ET

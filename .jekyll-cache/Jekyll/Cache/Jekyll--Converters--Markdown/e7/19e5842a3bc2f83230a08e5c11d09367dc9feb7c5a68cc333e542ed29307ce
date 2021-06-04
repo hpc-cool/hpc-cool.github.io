@@ -1,0 +1,42 @@
+I"u<p>在使用 csproj 格式，如果需要给不同的平台设置 PlatformTarget 对应平台的值，需要写比较多的代码，本文告诉大家一个简便的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/17 18:57:25 -->
+
+<p>使用三句话就完成了平台设置</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;PropertyGroup&gt;</span>
+    <span class="nt">&lt;PlatformTarget&gt;</span>$(Platform)<span class="nt">&lt;/PlatformTarget&gt;</span>
+<span class="nt">&lt;/PropertyGroup&gt;</span>
+
+</code></pre></div></div>
+
+<p>上面代码和下面代码是相同的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">PropertyGroup</span> <span class="n">Condition</span><span class="p">=</span><span class="s">"'$(Configuration)|$(Platform)'=='Release|AnyCPU'"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PlatformTarget</span><span class="p">&gt;</span><span class="n">AnyCPU</span><span class="p">&lt;/</span><span class="n">PlatformTarget</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span> <span class="n">Condition</span><span class="p">=</span><span class="s">"'$(Configuration)|$(Platform)'=='Release|x86'"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PlatformTarget</span><span class="p">&gt;</span><span class="n">x86</span><span class="p">&lt;/</span><span class="n">PlatformTarget</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span> <span class="n">Condition</span><span class="p">=</span><span class="s">"'$(Configuration)|$(Platform)'=='Release|x64'"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PlatformTarget</span><span class="p">&gt;</span><span class="n">x64</span><span class="p">&lt;/</span><span class="n">PlatformTarget</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span> <span class="n">Condition</span><span class="p">=</span><span class="s">"'$(Configuration)|$(Platform)'=='Debug|AnyCPU'"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PlatformTarget</span><span class="p">&gt;</span><span class="n">AnyCPU</span><span class="p">&lt;/</span><span class="n">PlatformTarget</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span> <span class="n">Condition</span><span class="p">=</span><span class="s">"'$(Configuration)|$(Platform)'=='Debug|x86'"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PlatformTarget</span><span class="p">&gt;</span><span class="n">x86</span><span class="p">&lt;/</span><span class="n">PlatformTarget</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span> <span class="n">Condition</span><span class="p">=</span><span class="s">"'$(Configuration)|$(Platform)'=='Debug|x64'"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PlatformTarget</span><span class="p">&gt;</span><span class="n">x64</span><span class="p">&lt;/</span><span class="n">PlatformTarget</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+:ET

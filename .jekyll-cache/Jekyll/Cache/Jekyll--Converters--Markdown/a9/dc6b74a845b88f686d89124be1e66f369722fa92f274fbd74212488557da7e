@@ -1,0 +1,48 @@
+I"d<p>本文通过 SOHU 提供的服务获取本机的外网 IP 地址</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/17 16:38:10 -->
+
+<!-- csdn -->
+
+<p>如果有自己的服务器，可以通过自己的服务器使用 <a href="https://blog.lindexi.com/post/asp-dotnet-core-%E4%BB%8E-Frp-%E8%8E%B7%E5%8F%96%E7%94%A8%E6%88%B7%E7%9C%9F%E5%AE%9E-IP-%E5%9C%B0%E5%9D%80.html">asp dotnet core 服务器获取客户 IP 地址</a> 方法，将获取的 IP 地址返回给用户</p>
+
+<p>如果没有搭建服务器，可以使用 SOHU 的方法</p>
+
+<p>访问 <a href="http://pv.sohu.com/cityjson">http://pv.sohu.com/cityjson</a> 可以返回当前设备的外网 IP 地址</p>
+
+<p>所以使用下面代码可以获取</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">httpClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">await</span> <span class="n">httpClient</span><span class="p">.</span><span class="nf">GetStringAsync</span><span class="p">(</span><span class="s">"http://pv.sohu.com/cityjson"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>但是 SOHU 返回的使用 GBK 编码，可以通过 <a href="https://blog.lindexi.com/post/dotnet-core-%E4%BD%BF%E7%94%A8-GBK-%E7%BC%96%E7%A0%81.html">dotnet core 使用 GBK 编码</a> 的方法，安装 System.Text.Encoding.CodePages 库 然后注册</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Encoding</span><span class="p">.</span><span class="nf">RegisterProvider</span><span class="p">(</span><span class="n">CodePagesEncodingProvider</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">httpClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">await</span> <span class="n">httpClient</span><span class="p">.</span><span class="nf">GetStringAsync</span><span class="p">(</span><span class="s">"http://pv.sohu.com/cityjson"</span><span class="p">);</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span> <span class="c1">// var returnCitySN = {"cip": "183.63.127.82", "cid": "440100", "cname": "广东省广州市"};</span>
+</code></pre></div></div>
+
+<p>此时返回的字符串不是只有 IP 需要读取字符串</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">regex</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="s">@"(\d+\.\d+\.\d+\.\d+)"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">match</span> <span class="p">=</span> <span class="n">regex</span><span class="p">.</span><span class="nf">Match</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">match</span><span class="p">.</span><span class="n">Success</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">ip</span> <span class="p">=</span> <span class="n">match</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">0</span><span class="p">].</span><span class="n">Value</span><span class="p">;</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">ip</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就可以拿到本机的外网 IP 地址</p>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/0de1af7a6591bf88cc901a23a75bbc33a6061413/RernallkarhadahiNearlaynerene">github</a> 欢迎小伙伴访问</p>
+
+:ET

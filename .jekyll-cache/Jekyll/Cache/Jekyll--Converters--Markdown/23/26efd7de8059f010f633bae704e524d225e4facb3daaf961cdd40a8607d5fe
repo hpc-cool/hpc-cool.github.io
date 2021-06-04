@@ -1,0 +1,3 @@
+I"�<p>在 OpenXML 文档格式里面，所有的资源以及页面之间的引用等，都是通过 Relationship 的引用，如资源需要通过 GetReferenceRelationship 的方法才能拿到。那为什么要这样设计呢</p>
+
+:ET

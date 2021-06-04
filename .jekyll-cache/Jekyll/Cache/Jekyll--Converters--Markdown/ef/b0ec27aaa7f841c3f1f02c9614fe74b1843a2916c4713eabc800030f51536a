@@ -1,0 +1,134 @@
+I"�.<p>在使用 sdk 格式的项目文件支持快速进行打包，但使用这个方式打包的时候将默认只带程序集输出文件，而没有带依赖的文件。本文告诉大家如何在打包的时候加上需要放在包里面的文件</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/12/18 20:08:32 -->
+
+<!-- csdn -->
+
+<!-- 标签：Roslyn,MSBuild,编译器,nuget,打包 -->
+
+<p>在 <a href="https://blog.lindexi.com/post/VisualStudio-%E4%BD%BF%E7%94%A8%E6%96%B0%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F%E5%BF%AB%E9%80%9F%E6%89%93%E5%87%BA-Nuget-%E5%8C%85.html">VisualStudio 使用新项目格式快速打出 Nuget 包</a> 告诉大家快速打包的方法，但有时候我需要将本地的一些资源或依赖也放在包里面，此时就需要用到下面的方法</p>
+
+<p>在项目里面引用的资源，可以通过在引用的时候添加 Pack 属性设置打包，使用 PackagePath 属性设置打包的时候放在包里面的哪个文件夹</p>
+
+<p>例如将项目里面引用的 <code class="language-plaintext highlighter-rouge">林德熙是逗比.txt</code> 打包放在 <code class="language-plaintext highlighter-rouge">lib\doubi</code> 文件夹里面，可以这样写</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;None</span> <span class="na">Include=</span><span class="s">"林德熙是逗比.txt"</span>
+                  <span class="na">Pack=</span><span class="s">"True"</span>
+                  <span class="na">PackagePath=</span><span class="s">"\lib\doubi\"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>注意需要将 None 放在 ItemGroup 里面，请看代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+        <span class="nt">&lt;None</span> <span class="na">Include=</span><span class="s">"林德熙是逗比.txt"</span>
+              <span class="na">Pack=</span><span class="s">"True"</span>
+              <span class="na">PackagePath=</span><span class="s">"\lib\doubi\"</span> <span class="nt">/&gt;</span>	
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>如果在这一行代码执行之前已经添加了引用这个文件，那么请将 Include 修改为 Update 请看下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+    	<span class="nt">&lt;None</span> <span class="na">Include=</span><span class="s">"*.txt"</span><span class="nt">/&gt;</span>
+    	<span class="c">&lt;!-- 上面的代码使用 *.txt 包含了 林德熙是逗比.txt 文件，需要在下面代码使用更新 --&gt;</span>
+        <span class="nt">&lt;None</span> <span class="na">Update=</span><span class="s">"林德熙是逗比.txt"</span>
+              <span class="na">Pack=</span><span class="s">"True"</span>
+              <span class="na">PackagePath=</span><span class="s">"\lib\doubi\"</span> <span class="nt">/&gt;</span>	
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>而如果是引用了输出文件里面的某个 dll 如我引用了 Newtonsoft.Json.dll 这个库文件，我需要在 <code class="language-plaintext highlighter-rouge">bin\release</code> 文件夹里面引用文件，那么我将需要这样写</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ItemGroup&gt;</span>
+            <span class="nt">&lt;None</span> <span class="na">Include=</span><span class="s">"$(OutputPath)\net48\Newtonsoft.Json.dll"</span>
+                  <span class="na">Pack=</span><span class="s">"True"</span>
+                  <span class="na">PackagePath=</span><span class="s">"\tools\net48\Newtonsoft.Json.dll"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码将会在输出文件夹找到 Newtonsoft.Json.dll 将这个文件输出到打包文件夹里面</p>
+
+<p>如果我是需要在运行过程引用的一些 C++ 运行库，那么同样可以上面方法</p>
+
+<p>另外在输出的时候也支持改名，例如在写 NuGet 的时候，在修改编译过程的 targets 和 props 文件是需要跟随包的名才能被执行。例如在 <a href="https://blog.lindexi.com/post/Roslyn-%E9%80%9A%E8%BF%87-Target-%E4%BF%AE%E6%94%B9%E7%BC%96%E8%AF%91%E7%9A%84%E6%96%87%E4%BB%B6.html">Roslyn 通过 Target 修改编译的文件</a> 写到的替换编译文件，此时要求对应的文件有规定的命名</p>
+
+<p>在 NuGet 里面，要求执行的 targets 文件必须满足命名要求，需要命名为 <code class="language-plaintext highlighter-rouge">NuGet包id.targets</code> 才会被执行，对应的 props 文件也相同</p>
+
+<p>如果是自己手写文件名，在更改 NuGet 包 id 的时候如果没有更改，或复制不对，那么会发现没有执行</p>
+
+<p>简单的解决方法是在打包的时候自动修改对应的文件包</p>
+
+<p>先在项目文件的 build 文件夹里面添加 package.targets 和 package.props 文件，在项目文件添加下面代码进行输出</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;None</span> <span class="na">Include=</span><span class="s">"build\package.targets"</span> <span class="na">Pack=</span><span class="s">"True"</span> <span class="na">PackagePath=</span><span class="s">"\build\$(PackageId).targets"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;None</span> <span class="na">Include=</span><span class="s">"build\package.props"</span> <span class="na">Pack=</span><span class="s">"True"</span> <span class="na">PackagePath=</span><span class="s">"\build\$(PackageId).props"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>这样在输出的时候就会自动更改文件名</p>
+
+<p>在 package.targets 文件让对应的放在 NuGet 文件的资源输出，通过 <a href="https://blog.lindexi.com/post/Roslyn-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-MSBuild-Copy-%E5%A4%8D%E5%88%B6%E6%96%87%E4%BB%B6.html">Copy</a> 的方式输出</p>
+
+<p>先定义一个 Target 可以在编译完成之后输出</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Project&gt;</span>
+    <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"CopyXxxFile"</span> <span class="na">AfterTargets=</span><span class="s">"AfterBuild"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;/Target&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div></div>
+
+<p>请将 Target 的名修改为实际使用的复制文件</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    &lt;Target Name="_CopyXxxFile" AfterTargets="AfterBuild"&gt;
+        &lt;Copy SourceFiles="$(MSBuildThisFileDirectory)..\tools\nuget.exe" DestinationFiles="$(OutputPath)\tools\nuget.exe" SkipUnchangedFiles="True"&gt;&lt;/Copy&gt;
+    &lt;/Target&gt;
+</code></pre></div></div>
+
+<p>使用 <code class="language-plaintext highlighter-rouge">$(MSBuildThisFileDirectory)</code> 拿到当前文件的文件夹，此时通过上一层文件就可以拿到 NuGet 包的文件夹。获取对应的文件进行输出到软件编译输出文件夹</p>
+
+<p>关于文件复制请看 <a href="https://blog.lindexi.com/post/Roslyn-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-MSBuild-Copy-%E5%A4%8D%E5%88%B6%E6%96%87%E4%BB%B6.html">Roslyn 如何使用 MSBuild Copy 复制文件</a></p>
+
+<p>如果这个库文件只是需要添加资源文件，不需要加上 lib 文件，也就是不添加引用，那么请设置这个项目作为工具库</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    &lt;IsTool&gt;true&lt;/IsTool&gt;
+    &lt;NoPackageAnalysis&gt;true&lt;/NoPackageAnalysis&gt;
+    &lt;GeneratePackageOnBuild&gt;true&lt;/GeneratePackageOnBuild&gt;
+    &lt;NoBuild&gt;true&lt;/NoBuild&gt;
+    &lt;IncludeBuildOutput&gt;false&lt;/IncludeBuildOutput&gt;
+</code></pre></div></div>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">IsTool</code> 将不会在安装的项目引用编译的文件，也就是这个 NuGet 库只是工具，里面的 dll 不会被引用</p>
+
+<p>在 NuGet 包嵌入 符号文件 的方法是添加 AllowedOutputExtensionsInPackageBuildOutputFolder 属性</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Project</span> <span class="na">Sdk=</span><span class="s">"Microsoft.NET.Sdk"</span><span class="nt">&gt;</span>
+ <span class="nt">&lt;PropertyGroup&gt;</span>
+    <span class="c">&lt;!-- Include symbol files (*.pdb) in the built .nupkg --&gt;</span>
+    <span class="nt">&lt;AllowedOutputExtensionsInPackageBuildOutputFolder&gt;</span>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb<span class="nt">&lt;/AllowedOutputExtensionsInPackageBuildOutputFolder&gt;</span>
+  <span class="nt">&lt;/PropertyGroup&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div></div>
+
+<p>默认符号文件是放在 snupkg 文件，而不是放在 nupkg 文件，原因是将符号文件放在 nupkg 文件，会让 nupkg 文件太大。如果将符号文件放在 nupkg 文件，那么不需要开发者另外配置符号服务器，就可以拿到符号文件</p>
+
+<p>官方文档 <a href="https://docs.microsoft.com/zh-cn/dotnet/standard/library-guidance/nuget">NuGet 和 .NET 库</a> 里明确告诉小伙伴请考虑将符号作为符号包 (<code class="language-plaintext highlighter-rouge">*.snupkg</code>) 发布到 NuGet.org 而不是放在 nupkg 文件，符号包 (<code class="language-plaintext highlighter-rouge">*.snupkg</code>) 为开发人员提供了良好的按需调试体验，而不会使主程序包大小膨胀，也不会影响那些不打算调试 NuGet 包的用户的还原性能</p>
+
+<p>如果只是需要放注释文档，请看 <a href="https://blog.lindexi.com/post/Roslyn-%E5%9C%A8-NuGet-%E5%8C%85%E4%B8%AD%E6%94%BE%E6%B3%A8%E9%87%8A-xml-%E6%96%87%E4%BB%B6%E7%9A%84%E6%96%B9%E6%B3%95.html">Roslyn 在 NuGet 包中放注释 xml 文件的方法</a></p>
+
+<p>详细请看 <a href="https://blog.lindexi.com/post/NuGet-%E5%91%BD%E4%BB%A4%E8%A1%8C%E4%B8%8A%E4%BC%A0%E6%89%BE%E4%B8%8D%E5%88%B0-snupkg-%E6%96%87%E4%BB%B6.html">NuGet 命令行上传找不到 snupkg 文件</a></p>
+
+<p><a href="https://blog.lindexi.com/post/Roslyn-%E4%BD%BF%E7%94%A8-Target-%E6%9B%BF%E6%8D%A2%E5%8D%A0%E4%BD%8D%E7%AC%A6%E6%96%B9%E5%BC%8F%E7%94%9F%E6%88%90-nuget-%E6%89%93%E5%8C%85.html">Roslyn 使用 Target 替换占位符方式生成 nuget 打包</a></p>
+
+<p><a href="https://blog.walterlv.com/post/write-msbuild-target.html#microsoftnetsdk-%E4%B8%BA%E6%88%91%E4%BB%AC%E6%8F%90%E4%BE%9B%E7%9A%84%E7%8E%B0%E6%88%90%E5%8F%AF%E7%94%A8%E7%9A%84-task">如何编写基于 Microsoft.NET.Sdk 的跨平台的 MSBuild Target（附各种自带的 Task） - walterlv</a></p>
+
+<p><a href="https://blog.walterlv.com/post/create-a-cross-platform-msbuild-task-based-nuget-tool.html">如何创建一个基于 MSBuild Task 的跨平台的 NuGet 工具包 - walterlv</a></p>
+
+<p><a href="https://blog.lindexi.com/post/Roslyn-%E5%A6%82%E4%BD%95%E5%9C%A8-Target-%E5%BC%95%E7%94%A8-xaml-%E9%98%B2%E6%AD%A2%E6%96%87%E4%BB%B6%E6%B2%A1%E6%9C%89%E7%BC%96%E8%AF%91.html">Roslyn 如何在 Target 引用 xaml 防止文件没有编译</a></p>
+
+<p><a href="https://blog.lindexi.com/post/Roslyn-%E9%80%9A%E8%BF%87-Target-%E4%BF%AE%E6%94%B9%E7%BC%96%E8%AF%91%E7%9A%84%E6%96%87%E4%BB%B6.html">Roslyn 通过 Target 修改编译的文件</a></p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20197917354626" alt="" /></p>
+
+:ET

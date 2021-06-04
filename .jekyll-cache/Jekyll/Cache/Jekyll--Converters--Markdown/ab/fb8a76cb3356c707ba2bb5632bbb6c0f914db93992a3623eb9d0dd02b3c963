@@ -1,0 +1,33 @@
+I"�	<p>本文来告诉大家如何实现一个 WeakLazy 方法</p>
+
+<!--more-->
+
+<!-- CreateTime:6/5/2020 9:35:31 AM -->
+
+<p>代码很简单，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">WeakLazy</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="k">class</span><span class="err">,</span> <span class="nc">new</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">WeakReference</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">_instance</span> <span class="p">=</span> <span class="k">new</span> <span class="n">WeakReference</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">null</span><span class="p">);</span>
+        <span class="k">public</span> <span class="n">T</span> <span class="n">Value</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">lock</span> <span class="p">(</span><span class="n">_instance</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">T</span> <span class="k">value</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(!</span><span class="n">_instance</span><span class="p">.</span><span class="nf">TryGetTarget</span><span class="p">(</span><span class="k">out</span> <span class="k">value</span><span class="p">))</span>
+                    <span class="p">{</span>
+                        <span class="k">value</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">T</span><span class="p">();</span>
+                        <span class="n">_instance</span><span class="p">.</span><span class="nf">SetTarget</span><span class="p">(</span><span class="k">value</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    <span class="k">return</span> <span class="k">value</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就能做到一个简单的缓存</p>
+
+:ET

@@ -1,0 +1,20 @@
+I"\<p>超级简单的方法，只需要设置 HorizontalScrollBarVisibility 可见就可以了</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/1 11:32:15 -->
+
+<p>但是为什么我设置了，没有水平滚动条呢？也许是设置了 TextWrapping 属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Text"</span> <span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"Visible"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">TextWrapping</span><span class="p">=</span><span class="s">"Wrap"</span> <span class="n">AcceptsReturn</span><span class="p">=</span><span class="s">"True"</span><span class="p">&gt;&lt;/</span><span class="n">TextBox</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>因为 TextWrapping 设置为 Wrap 就会在超过框架自动换行，因此就不需要滚动条</p>
+
+<p>所以看到 HorizontalScrollBarVisibility 设置了，但是滚动条不显示，就是 设置了 TextWrapping 的问题</p>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/c5085f37e1867a9835c68993ed15aee168976805/HalujakenifawFarlurjibellerwa">github</a> 欢迎小伙伴访问</p>
+
+<p>更复杂的方法请看 <a href="https://www.cnblogs.com/seekdream/p/6293563.html">WPF实现滚动显示的TextBlock - Hello——寻梦者！ - 博客园</a></p>
+
+:ET

@@ -1,0 +1,260 @@
+I"�X<p>我将告诉大家两个方法去获取C#输入的命令行参数。</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/2 9:06:56 -->
+
+<div id="toc"></div>
+
+<p>第一个方法是不需要安装任何的库，这个方法是性能很高，但是封装不好。第二个方法是使用 CommandLineParser 库，这个库提高很好的封装但是性能会比较差。</p>
+
+<p>第一个方法：</p>
+
+<p><a href="http://www.cnblogs.com/linxuanchen/p/c-sharp-command-line-argument-parser.html">林选臣</a>大神写的，他的方法很简单。</p>
+
+<p>首先复制两个类到项目</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="k">public</span> <span class="k">class</span> <span class="nc">CommandLineArgumentParser</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">readonly</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">CommandLineArgument</span><span class="p">&gt;</span> <span class="n">_arguments</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="nf">CommandLineArgumentParser</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_arguments</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">CommandLineArgument</span><span class="p">&gt;();</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">args</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">_arguments</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">CommandLineArgument</span><span class="p">(</span><span class="n">_arguments</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">args</span><span class="p">[</span><span class="n">i</span><span class="p">]));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="n">CommandLineArgumentParser</span> <span class="nf">Parse</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">CommandLineArgumentParser</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">CommandLineArgument</span> <span class="nf">Get</span><span class="p">(</span><span class="kt">string</span> <span class="n">argumentName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_arguments</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">p</span> <span class="p">=&gt;</span> <span class="n">p</span> <span class="p">==</span> <span class="n">argumentName</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">CommandLineArgument</span><span class="p">&gt;</span> <span class="nf">GetEnumerator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">_arguments</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">yield</span> <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">Has</span><span class="p">(</span><span class="kt">string</span> <span class="n">argumentName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_arguments</span><span class="p">.</span><span class="nf">Any</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span> <span class="p">==</span> <span class="n">argumentName</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">CommandLineArgument</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">readonly</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">CommandLineArgument</span><span class="p">&gt;</span> <span class="n">_arguments</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="kt">string</span> <span class="n">_argumentText</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="n">_index</span><span class="p">;</span>
+
+        <span class="k">internal</span> <span class="nf">CommandLineArgument</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">CommandLineArgument</span><span class="p">&gt;</span> <span class="n">args</span><span class="p">,</span> <span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="kt">string</span> <span class="n">argument</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_arguments</span> <span class="p">=</span> <span class="n">args</span><span class="p">;</span>
+            <span class="n">_index</span> <span class="p">=</span> <span class="n">index</span><span class="p">;</span>
+            <span class="n">_argumentText</span> <span class="p">=</span> <span class="n">argument</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">CommandLineArgument</span> <span class="n">Next</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_index</span> <span class="p">&lt;</span> <span class="n">_arguments</span><span class="p">.</span><span class="n">Count</span> <span class="p">-</span> <span class="m">1</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">_arguments</span><span class="p">[</span><span class="n">_index</span> <span class="p">+</span> <span class="m">1</span><span class="p">];</span>
+                <span class="p">}</span>
+
+                <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">CommandLineArgument</span> <span class="n">Previous</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_index</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">_arguments</span><span class="p">[</span><span class="n">_index</span> <span class="p">-</span> <span class="m">1</span><span class="p">];</span>
+                <span class="p">}</span>
+
+                <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">CommandLineArgument</span> <span class="nf">Take</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Next</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">CommandLineArgument</span><span class="p">&gt;</span> <span class="nf">Take</span><span class="p">(</span><span class="kt">int</span> <span class="n">count</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">list</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">CommandLineArgument</span><span class="p">&gt;();</span>
+            <span class="kt">var</span> <span class="n">parent</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">next</span> <span class="p">=</span> <span class="n">parent</span><span class="p">.</span><span class="n">Next</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">next</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                    <span class="k">break</span><span class="p">;</span>
+
+                <span class="n">list</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">next</span><span class="p">);</span>
+
+                <span class="n">parent</span> <span class="p">=</span> <span class="n">next</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">list</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">implicit</span> <span class="k">operator</span> <span class="kt">string</span><span class="p">(</span><span class="n">CommandLineArgument</span> <span class="n">argument</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">argument</span><span class="p">?.</span><span class="n">_argumentText</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">override</span> <span class="kt">string</span> <span class="nf">ToString</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_argumentText</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+
+</code></pre></div></div>
+
+<p>复制完成就可以使用，在主函数可以使用下面代码进行转换，下面代码的 <code class="language-plaintext highlighter-rouge">args</code> 就是传入的参数字符串数组。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">arguments</span> <span class="p">=</span> <span class="n">CommandLineArgumentParser</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>如果需要获得参数的信息，可以使用下面代码，也就是使用 Get 方法传入一个指定的值，通过这个值就可以拿到这个值的参数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">f</span> <span class="p">=</span> <span class="n">arguments</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="s">"--lindexi"</span><span class="p">).</span><span class="nf">Take</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>如命令输入<code class="language-plaintext highlighter-rouge">--lindexi doubi</code>，上面代码就可以拿到<code class="language-plaintext highlighter-rouge">doubi</code>，虽然使用这个库的写法的封装不是很好，但是性能很好。下面告诉大家使用另一个方法，十分容易写，但是性能比较差。</p>
+
+<p>第二个方法需要使用 Nuget 安装 CommandLineParser 库，可以在控制台输入下面代码安装</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">Install</span><span class="p">-</span><span class="n">Package</span> <span class="n">CommandLineParser</span>
+</code></pre></div></div>
+
+<p>然后写一个工具类，代码是在<a href="http://www.cnblogs.com/speeding/archive/2012/08/07/2626066.html">申龙斌大神博客</a> 抄的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">class</span> <span class="nc">Options</span>
+   <span class="p">{</span>
+
+        <span class="c1">// 短参数名称，长参数名称，是否是可选参数，默认值，帮助文本等</span>
+
+        <span class="c1">// 第一个参数-d 如果使用比较高的 .net 那么第一个参数可能是 char 而不是字符串</span>
+
+        <span class="p">[</span><span class="nf">Option</span><span class="p">(</span><span class="s">"d"</span><span class="p">,</span> <span class="s">"dir"</span><span class="p">,</span> <span class="n">Required</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="n">HelpText</span> <span class="p">=</span> <span class="s">"PGN Directory to read."</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">PgnDir</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">// 新的版本使用的是 char 来作为第一个字符，也就是需要修改 "d" 为 'd' 字符</span>
+        <span class="c1">// [Option('d', "dir", Required = true, HelpText = "PGN Directory to read.")]</span>
+        <span class="c1">// public string PgnDir { get; set; }</span>
+
+        <span class="c1">// 第二个参数-s 也可以使用 --step </span>
+
+        <span class="p">[</span><span class="nf">Option</span><span class="p">(</span><span class="s">"s"</span><span class="p">,</span> <span class="s">"step"</span><span class="p">,</span> <span class="n">DefaultValue</span> <span class="p">=</span> <span class="m">30</span><span class="p">,</span> <span class="n">HelpText</span> <span class="p">=</span> <span class="s">"The maximum steps in PGN game to process."</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">MaxStep</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">[</span><span class="n">HelpOption</span><span class="p">]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">GetUsage</span><span class="p">()</span>
+        <span class="p">{</span>
+
+            <span class="c1">// 应该可以根据前面的参数设置自动生成使用说明的，这里没有使用</span>
+
+            <span class="kt">var</span> <span class="n">usage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+
+            <span class="n">usage</span><span class="p">.</span><span class="nf">AppendLine</span><span class="p">(</span><span class="s">"OpeningBook 1.0"</span><span class="p">);</span>
+
+            <span class="n">usage</span><span class="p">.</span><span class="nf">AppendLine</span><span class="p">(</span><span class="s">"-d PgnDir [-s MaxSteps=30]"</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="n">usage</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>主程序Main里使用可以使用下面代码，这里的 args 数组就是主函数传入函数。下面的代码是老版本的写法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="c1">// 老版本的写法</span>
+
+<span class="kt">var</span> <span class="n">options</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Options</span><span class="p">();</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">Parser</span><span class="p">.</span><span class="n">Default</span><span class="p">.</span><span class="nf">ParseArguments</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">options</span><span class="p">))</span>
+<span class="p">{</span>
+
+     <span class="kt">string</span> <span class="n">pgnDir</span> <span class="p">=</span> <span class="n">options</span><span class="p">.</span><span class="n">PgnDir</span><span class="p">;</span>
+
+     <span class="kt">int</span> <span class="n">maxStep</span> <span class="p">=</span> <span class="n">options</span><span class="p">.</span><span class="n">MaxStep</span><span class="p">;</span>
+
+     <span class="c1">// 参数取出来了，可以随便使用了</span>
+
+     <span class="c1">// 本例中参数比较简单，稍微有点大材小用了</span>
+
+<span class="p">}</span>
+<span class="k">else</span>  
+<span class="p">{</span>
+<span class="c1">//转化失败</span>
+
+      <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="nf">GetUsage</span><span class="p">());</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码是老的版本，现在更新 2.2.0 版本是需要修改代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Options</span>
+    <span class="p">{</span>
+        <span class="c1">// 注意 'd' 用的是字符</span>
+        <span class="c1">// 短参数名称，长参数名称，是否是可选参数，默认值，帮助文本等</span>
+
+        <span class="p">[</span><span class="nf">Option</span><span class="p">(</span><span class="sc">'d'</span><span class="p">,</span> <span class="s">"dir"</span><span class="p">,</span> <span class="n">Required</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="n">HelpText</span> <span class="p">=</span> <span class="s">"PGN Directory to read."</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">PgnDir</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">// 第二个参数-s</span>
+
+        <span class="p">[</span><span class="nf">Option</span><span class="p">(</span><span class="sc">'s'</span><span class="p">,</span> <span class="s">"step"</span><span class="p">,</span> <span class="n">HelpText</span> <span class="p">=</span> <span class="s">"The maximum steps in PGN game to process."</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">MaxStep</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>原来的 DefaultValue 修改为 Default 可以传入任何类型</p>
+
+<p>在 Main 函数需要修改代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">CommandLine</span><span class="p">.</span><span class="n">Parser</span><span class="p">.</span><span class="n">Default</span><span class="p">.</span><span class="n">ParseArguments</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;(</span><span class="n">args</span><span class="p">)</span>
+                <span class="p">.</span><span class="nf">WithParsed</span><span class="p">(</span><span class="n">options</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">step</span> <span class="p">=</span> <span class="n">options</span><span class="p">.</span><span class="n">MaxStep</span><span class="p">;</span>
+                <span class="p">})</span>
+                <span class="p">.</span><span class="nf">WithNotParsed</span><span class="p">(</span><span class="n">errorList</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    
+                <span class="p">});</span>
+</code></pre></div></div>
+
+<p>在 WithParsed 就是解析成功的委托，在 WithNotParsed 就是解析失败的</p>
+
+<p>如何使用参见：http://www.cnblogs.com/speeding/archive/2012/08/07/2626066.html</p>
+
+<p><a href="https://github.com/gsscoder/commandline/wiki/Quickstart">Quickstart · gsscoder/commandline Wiki</a></p>
+
+<p>参见：http://www.cnblogs.com/linxuanchen/p/c-sharp-command-line-argument-parser.html</p>
+
+<p>http://www.cnblogs.com/speeding/archive/2012/08/07/2626066.html</p>
+
+<p><a href="https://walterlv.github.io/post/microsoft-extensions-commandlineutils.html">安利一款命令行参数</a></p>
+
+:ET

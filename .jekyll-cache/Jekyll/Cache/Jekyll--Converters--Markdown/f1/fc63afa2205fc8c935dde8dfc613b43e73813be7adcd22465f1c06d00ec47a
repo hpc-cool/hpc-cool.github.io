@@ -1,0 +1,253 @@
+I"ǉ<p>有时候需要获得文件或视频的缩略图。
+本文提供两个方法，用于获得文件的缩略图和截取视频指定时间的显示图片。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<h2 id="文件缩略图">文件缩略图</h2>
+
+<p>如果有一个文件需要获得缩略图，可以使用 <code class="language-plaintext highlighter-rouge">GetThumbnailAsync</code> 或 <code class="language-plaintext highlighter-rouge">GetScaledImageAsThumbnailAsync</code> ，就可以获得。代码请看下面：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">FileOpenPicker</span> <span class="n">openPicker</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileOpenPicker</span><span class="p">();</span>
+            <span class="n">openPicker</span><span class="p">.</span><span class="n">FileTypeFilter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">".mp4"</span><span class="p">);</span>
+
+            <span class="n">StorageFile</span> <span class="n">file</span> <span class="p">=</span> <span class="k">await</span> <span class="n">openPicker</span><span class="p">.</span><span class="nf">PickSingleFileAsync</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">thumbnail</span> <span class="p">=</span>  <span class="k">await</span> <span class="n">file</span><span class="p">.</span><span class="nf">GetScaledImageAsThumbnailAsync</span><span class="p">(</span><span class="n">ThumbnailMode</span><span class="p">.</span><span class="n">VideosView</span><span class="p">);</span>
+            <span class="n">BitmapImage</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+            <span class="n">InMemoryRandomAccessStream</span> <span class="n">randomAccessStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">();</span>
+            <span class="k">await</span> <span class="n">RandomAccessStream</span><span class="p">.</span><span class="nf">CopyAsync</span><span class="p">(</span><span class="n">thumbnail</span><span class="p">,</span> <span class="n">randomAccessStream</span><span class="p">);</span>
+            <span class="n">randomAccessStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="n">randomAccessStream</span><span class="p">);</span>
+            <span class="n">Image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">bitmapImage</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>可以看到 <code class="language-plaintext highlighter-rouge">GetScaledImageAsThumbnailAsync</code> 的参数提供多种方式进行截图，如果知道了文件的类型，就可以使用对应的方式进行显示。需要知道的是 thumbnail 得到的是一个流，就需要把他转换为 BitmapImage 显示。</p>
+
+<p>我接下来获取文件夹内所有文件的缩略图显示出来</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20176272002.jpg" alt="" /></p>
+
+<p>首先是界面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"587*"</span><span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"auto"</span><span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{x:Bind Ruqya}"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Stretch"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">WrapGrid</span> <span class="n">ItemWidth</span><span class="p">=</span><span class="s">"200"</span>  <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="n">MaximumRowsOrColumns</span><span class="p">=</span><span class="s">"5"</span><span class="p">&gt;&lt;/</span><span class="n">WrapGrid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+             <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+                 <span class="p">&lt;</span><span class="n">DataTemplate</span> <span class="n">x</span><span class="p">:</span><span class="n">DataType</span><span class="p">=</span><span class="s">"local:Ruqya"</span><span class="p">&gt;</span>
+                     <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                         <span class="p">&lt;</span><span class="n">Image</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Source</span><span class="p">=</span><span class="s">"{x:Bind Image}"</span><span class="p">&gt;&lt;/</span><span class="n">Image</span><span class="p">&gt;</span>
+                     <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                 <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"确定"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>界面是有一个 ListView 和一个 Button ，点击 Button 就会执行从一个文件夹获取所有文件，拿到缩略图。</p>
+
+<p>但是还需要一个类，用于界面显示图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Ruqya</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">Ruqya</span><span class="p">(</span><span class="n">BitmapImage</span> <span class="n">image</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Image</span> <span class="p">=</span> <span class="n">image</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">BitmapImage</span> <span class="n">Image</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为这时的 Image 不会修改，就不需要继承通知</p>
+
+<p>按钮点击的代码，就是核心，需要从文件夹获得文件。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">public</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="n">Ruqya</span><span class="p">&gt;</span> <span class="n">Ruqya</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="n">Ruqya</span><span class="p">&gt;();</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">FolderPicker</span> <span class="n">pick</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FolderPicker</span><span class="p">();</span>
+            <span class="n">pick</span><span class="p">.</span><span class="n">FileTypeFilter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">".txt"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">folder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">pick</span><span class="p">.</span><span class="nf">PickSingleFolderAsync</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">folder</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">Ruqya</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+
+            <span class="c1">//获取文件夹所有文件的缩略图</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="k">await</span> <span class="n">folder</span><span class="p">.</span><span class="nf">GetFilesAsync</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">thumbnail</span> <span class="p">=</span> <span class="k">await</span> <span class="n">temp</span><span class="p">.</span><span class="nf">GetThumbnailAsync</span><span class="p">(</span><span class="n">ThumbnailMode</span><span class="p">.</span><span class="n">SingleItem</span><span class="p">);</span>
+                <span class="n">BitmapImage</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+                <span class="n">InMemoryRandomAccessStream</span> <span class="n">randomAccessStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">();</span>
+                <span class="k">await</span> <span class="n">RandomAccessStream</span><span class="p">.</span><span class="nf">CopyAsync</span><span class="p">(</span><span class="n">thumbnail</span><span class="p">,</span> <span class="n">randomAccessStream</span><span class="p">);</span>
+                <span class="n">randomAccessStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+                <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="n">randomAccessStream</span><span class="p">);</span>
+                <span class="n">Ruqya</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Ruqya</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>所有代码就这一点，相信没有看不懂。</p>
+
+<p>接下来告诉大家如何获得视频的小图</p>
+
+<h2 id="视频小图">视频小图</h2>
+
+<p>如果需要获得视频的某一个页面，那么可以使用下面代码，首先是获得视频文件，计算指定时间的视频截图，这时不需要进行播放视频就可以从文件直接获得指定时间的显示图片。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">FileOpenPicker</span> <span class="n">openPicker</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileOpenPicker</span><span class="p">();</span>
+            <span class="n">openPicker</span><span class="p">.</span><span class="n">FileTypeFilter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">".mp4"</span><span class="p">);</span>
+
+            <span class="n">StorageFile</span> <span class="n">file</span> <span class="p">=</span> <span class="k">await</span> <span class="n">openPicker</span><span class="p">.</span><span class="nf">PickSingleFileAsync</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">thumbnail</span> <span class="p">=</span> <span class="k">await</span> <span class="nf">GetThumbnailAsync</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+            <span class="n">BitmapImage</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+            <span class="n">InMemoryRandomAccessStream</span> <span class="n">randomAccessStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">();</span>
+            <span class="k">await</span> <span class="n">RandomAccessStream</span><span class="p">.</span><span class="nf">CopyAsync</span><span class="p">(</span><span class="n">thumbnail</span><span class="p">,</span> <span class="n">randomAccessStream</span><span class="p">);</span>
+            <span class="n">randomAccessStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="n">randomAccessStream</span><span class="p">);</span>
+            <span class="n">Image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">bitmapImage</span><span class="p">;</span>
+
+          
+          <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">IInputStream</span><span class="p">&gt;</span> <span class="nf">GetThumbnailAsync</span><span class="p">(</span><span class="n">StorageFile</span> <span class="n">file</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">mediaClip</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MediaClip</span><span class="p">.</span><span class="nf">CreateFromFileAsync</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">mediaComposition</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MediaComposition</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">time</span><span class="p">=</span><span class="m">5000</span><span class="p">;</span> <span class="err">获取那一时间的页面</span>
+            <span class="n">mediaComposition</span><span class="p">.</span><span class="n">Clips</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">mediaClip</span><span class="p">);</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">mediaComposition</span><span class="p">.</span><span class="nf">GetThumbnailAsync</span><span class="p">(</span>
+                <span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromMilliseconds</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">VideoFramePrecision</span><span class="p">.</span><span class="n">NearestFrame</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就可以获得指定时间的页面，因为得到图像是 IInputStream ，所以需要把他转为 bitmapImage ，这样才可以设置为图片。这个方法只需要传入视频的文件，大法支持很多个视频类型，只要有系统解析的，就可以支持，暂时我还不知道他支持的是哪些文件。</p>
+
+<p>接下来就是做下面的软件，在播放视频的时候，拖动进度条，就会显示对应的视频缩略图，如拖到指定时间，就显示这一时间的视频缩略图</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017%25E5%25B9%25B46%25E6%259C%258827%25E6%2597%25A5%25202929.gif" alt="" /></p>
+
+<!-- ![](http://wx4.sinaimg.cn/large/005VX1Eagy1fh027j7qutg30z10nyu11.gif) -->
+
+<!-- ![](http://wx1.sinaimg.cn/mw690/005VX1Eagy1fh026g7k0ej30z10nyag1.jpg) -->
+
+<p>首先是界面代码，可以看到界面就一个播放和一个进度条</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="p">&lt;</span><span class="n">MediaElement</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"MediaElement"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Stretch</span><span class="p">=</span><span class="s">"None"</span>
+                         <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Stretch"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Stretch"</span><span class="p">&gt;&lt;/</span><span class="n">MediaElement</span><span class="p">&gt;</span>
+            
+           <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Bottom"</span><span class="p">&gt;</span>
+               <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Slider"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">PointerReleased</span><span class="p">=</span><span class="s">"UIElement_OnPointerReleased"</span> <span class="n">PointerPressed</span><span class="p">=</span><span class="s">"UIElement_OnPointerReleased"</span><span class="p">&gt;&lt;/</span><span class="n">Slider</span><span class="p">&gt;</span>
+           <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>后台代码很多都使用上面的代码，需要知道的有两个代码。第一个是<code class="language-plaintext highlighter-rouge">OnPointerReleased</code> 需要添加在构造函数，因为滑动进度会吃了 PointerReleased ，如果不把下面的代码写入，就使用上面界面的代码，可以看到点击的函数不会进去。但是如果加了下面的代码，就可以获得点击的事件。在 UWP 没有区分触摸和鼠标点击，都使用 Pointer 来说是点击结束或者点击。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Slider</span><span class="p">.</span><span class="nf">AddHandler</span><span class="p">(</span><span class="n">PointerReleasedEvent</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PointerEventHandler</span><span class="p">(</span><span class="n">UIElement_OnPointerReleased</span><span class="p">),</span> <span class="k">true</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>需要知道的第二个就是如何进行播放视频，因为上面代码已经从可以选到文件，于是就可以使用从文件播放的方式，让播放器使用文件。代码很简单，对于需要的 MIME 可以忽略，直接给空。如果对他给空，当然要求文件是 mp4 。如果文件是其他的，建议不要给空，播放器解析也许出错。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">MediaElement</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="k">await</span> <span class="n">file</span><span class="p">.</span><span class="nf">OpenAsync</span><span class="p">(</span><span class="n">FileAccessMode</span><span class="p">.</span><span class="n">Read</span><span class="p">),</span> <span class="s">""</span><span class="p">);</span>
+
+            <span class="err">如果文件类型不是</span> <span class="n">mp4</span> <span class="err">，请用下面代码</span>
+            <span class="n">MediaElement</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="k">await</span> <span class="n">file</span><span class="p">.</span><span class="nf">OpenAsync</span><span class="p">(</span><span class="n">FileAccessMode</span><span class="p">.</span><span class="n">Read</span><span class="p">),</span> <span class="n">file</span><span class="p">.</span><span class="n">ContentType</span><span class="p">);</span> 
+</code></pre></div></div>
+
+<p>在点击进度条，就可以获得当前的值，然后计算在视频中的时间，通过这个时间，进行截图。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">slider</span> <span class="p">=</span> <span class="p">(</span><span class="n">Slider</span><span class="p">)</span> <span class="n">sender</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">slider</span><span class="p">.</span><span class="n">Value</span> <span class="p">/</span> <span class="n">slider</span><span class="p">.</span><span class="n">Maximum</span><span class="p">;</span>
+            <span class="n">n</span> <span class="p">=</span> <span class="n">MediaElement</span><span class="p">.</span><span class="n">NaturalDuration</span><span class="p">.</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">TotalMilliseconds</span> <span class="p">*</span> <span class="n">n</span><span class="p">;</span>
+</code></pre></div></div>
+<p>获取视频总时间可以使用 NaturalDuration ，我需要把他转换时间，使用的代码同样很简单</p>
+
+<p>获得需要的时间，就可以使用上面代码进行截图，其中 File 就是刚才选的文件，如果已经播放了，实际还有其它的方法，但是本文说的是文件截图。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">thumbnail</span> <span class="p">=</span> <span class="k">await</span> <span class="nf">GetThumbnailAsync</span><span class="p">(</span><span class="n">File</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+            <span class="n">BitmapImage</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+            <span class="n">InMemoryRandomAccessStream</span> <span class="n">randomAccessStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">();</span>
+            <span class="k">await</span> <span class="n">RandomAccessStream</span><span class="p">.</span><span class="nf">CopyAsync</span><span class="p">(</span><span class="n">thumbnail</span><span class="p">,</span> <span class="n">randomAccessStream</span><span class="p">);</span>
+            <span class="n">randomAccessStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="n">randomAccessStream</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>好像代码已经完成了，但是在哪里显示？为了可以显示，这里使用 Flyout ，给他一个图片控件，用于显示。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Flyout</span> <span class="n">flyout</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Flyout</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">image</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Image</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="m">100</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="m">100</span><span class="p">,</span>
+                <span class="n">Stretch</span> <span class="p">=</span> <span class="n">Stretch</span><span class="p">.</span><span class="n">Fill</span><span class="p">,</span>
+                <span class="n">Margin</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thickness</span><span class="p">(</span><span class="m">0</span><span class="p">)</span>
+            <span class="p">};</span>
+            <span class="n">flyout</span><span class="p">.</span><span class="n">Content</span> <span class="p">=</span> <span class="n">image</span><span class="p">;</span>
+            <span class="n">image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">bitmapImage</span><span class="p">;</span>
+
+            <span class="n">flyout</span><span class="p">.</span><span class="nf">ShowAt</span><span class="p">(</span><span class="n">slider</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>去掉 flyout 背景很简单，我就不说啦，于是所有代码都写在这，不要找我要工程</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">UIElement_OnPointerReleased</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">slider</span> <span class="p">=</span> <span class="p">(</span><span class="n">Slider</span><span class="p">)</span> <span class="n">sender</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">slider</span><span class="p">.</span><span class="n">Value</span> <span class="p">/</span> <span class="n">slider</span><span class="p">.</span><span class="n">Maximum</span><span class="p">;</span>
+            <span class="n">n</span> <span class="p">=</span> <span class="n">MediaElement</span><span class="p">.</span><span class="n">NaturalDuration</span><span class="p">.</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">TotalMilliseconds</span> <span class="p">*</span> <span class="n">n</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">thumbnail</span> <span class="p">=</span> <span class="k">await</span> <span class="nf">GetThumbnailAsync</span><span class="p">(</span><span class="n">File</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+            <span class="n">BitmapImage</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+            <span class="n">InMemoryRandomAccessStream</span> <span class="n">randomAccessStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">();</span>
+            <span class="k">await</span> <span class="n">RandomAccessStream</span><span class="p">.</span><span class="nf">CopyAsync</span><span class="p">(</span><span class="n">thumbnail</span><span class="p">,</span> <span class="n">randomAccessStream</span><span class="p">);</span>
+            <span class="n">randomAccessStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="n">randomAccessStream</span><span class="p">);</span>
+
+            <span class="n">Flyout</span> <span class="n">flyout</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Flyout</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">image</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Image</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="m">100</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="m">100</span><span class="p">,</span>
+                <span class="n">Stretch</span> <span class="p">=</span> <span class="n">Stretch</span><span class="p">.</span><span class="n">Fill</span><span class="p">,</span>
+                <span class="n">Margin</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thickness</span><span class="p">(</span><span class="m">0</span><span class="p">)</span>
+            <span class="p">};</span>
+            <span class="n">flyout</span><span class="p">.</span><span class="n">Content</span> <span class="p">=</span> <span class="n">image</span><span class="p">;</span>
+            <span class="n">image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">bitmapImage</span><span class="p">;</span>
+
+            <span class="n">flyout</span><span class="p">.</span><span class="nf">ShowAt</span><span class="p">(</span><span class="n">slider</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">IInputStream</span><span class="p">&gt;</span> <span class="nf">GetThumbnailAsync</span><span class="p">(</span><span class="n">StorageFile</span> <span class="n">file</span><span class="p">,</span> <span class="kt">double</span> <span class="n">time</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">mediaClip</span> <span class="p">=</span> <span class="k">await</span> <span class="n">MediaClip</span><span class="p">.</span><span class="nf">CreateFromFileAsync</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">mediaComposition</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MediaComposition</span><span class="p">();</span>
+            <span class="n">mediaComposition</span><span class="p">.</span><span class="n">Clips</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">mediaClip</span><span class="p">);</span>
+            <span class="k">return</span> <span class="k">await</span> <span class="n">mediaComposition</span><span class="p">.</span><span class="nf">GetThumbnailAsync</span><span class="p">(</span>
+                <span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromMilliseconds</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">VideoFramePrecision</span><span class="p">.</span><span class="n">NearestFrame</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>感谢 <a href="https://kljzndx.github.io/My-Blog/">李继龙</a></p>
+
+<p>参见：https://stackoverflow.com/a/37314446/6116637</p>
+
+:ET

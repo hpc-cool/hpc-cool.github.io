@@ -1,0 +1,4 @@
+I"J<p>我把仓库上传到 gogs 出现错误，提示如下 <code class="language-plaintext highlighter-rouge">remote: hooks/update: line 2: E:/gogs/gogs.exe: No such file or directory</code>
+gogs 仓库无法上传，一个原因是移动了gogs，如果把gogs放在移动U盘，插入时，上传经常出现这个问题。</p>
+
+:ET

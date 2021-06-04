@@ -1,0 +1,153 @@
+I"]4<p>本文告诉大家如何在 UWP 中使用 sm.ms 图床服务上传图片，获取图片外链</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>和之前不一样的是，现在的 sm.ms 网站是需要注册才能获取对应的 Api Key 进行上传图片</p>
+
+<h2 id="注册账号">注册账号</h2>
+
+<p>打开 <a href="https://sm.ms/">https://sm.ms/</a> 点击右上角的注册按钮，注册步骤我就省略了</p>
+
+<p>注册之后有免费的 5G 的空间，理论上用来做私人的图床也是足够的</p>
+
+<p>打开 <a href="https://sm.ms/home/apitoken">https://sm.ms/home/apitoken</a> 可以生成对应的 Secret Token 请看下图</p>
+
+<!-- ![](image/win10_uwp_smmstu_chuang/win10_uwp_smmstu_chuang0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202032914798525.jpg" alt="" /></p>
+
+<p>将这串 Api Key 保存到本地记事本上，接下来将会用到</p>
+
+<h2 id="安装库">安装库</h2>
+
+<p>虽然 sm.ms 上有文档说如何上传，但是我依然写了一个库，通过这个库可以让大家使用起来更加方便</p>
+
+<p>通过 NuGet 安装 <a href="https://www.nuget.org/packages/smms/">smms</a> 库</p>
+
+<p>这个库的源代码是开源的，全部源代码可以在<a href="https://github.com/lindexi/Sm.ms">github</a>下载</p>
+
+<h2 id="使用库上传图片">使用库上传图片</h2>
+
+<p>因为我不想要在我的库里面引用 json 库，所以我的库的返回值就是字符串，解析方法请小伙伴自行用 json 或正则进行解析</p>
+
+<p>这个库的初始化要求传入刚才保存的 Api Key 也就是每个小伙伴注册的都不一样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">smms</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Smms</span><span class="p">(</span><span class="s">"Api Key"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>调用 UploadImage 传入 stream 就可以完成上传了，但是在 UWP 里面获取文件是用 StorageFile 的方式，需要通过 StorageFile 的扩展方法打开文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">await</span> <span class="n">smms</span><span class="p">.</span><span class="nf">UploadImage</span><span class="p">(</span><span class="k">await</span> <span class="n">File</span><span class="p">.</span><span class="nf">OpenStreamForReadAsync</span><span class="p">(),</span> <span class="n">File</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>上面代码的 File 是一个属性，定义请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="n">StorageFile</span> <span class="n">File</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>而 OpenStreamForReadAsync 是一个扩展方法，复制粘贴上面代码到 VisualStudio 里面就可以自动添加引用</p>
+
+<p>调用 UploadImage 返回值是一个字符串，可以通过 Json 库转换为实际的类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">class</span> <span class="nc">SmmsInfo</span>
+        <span class="p">{</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"success"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">bool</span> <span class="n">Success</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"code"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Code</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"message"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Message</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"data"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="n">Data</span> <span class="n">Data</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"RequestId"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">RequestId</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">class</span> <span class="nc">Data</span>
+        <span class="p">{</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"file_id"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">int</span> <span class="n">FileId</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"width"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">int</span> <span class="n">Width</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"height"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">int</span> <span class="n">Height</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"filename"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Filename</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"storename"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">StoreName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"size"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">int</span> <span class="n">Size</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"path"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Path</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"hash"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Hash</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"url"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Url</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"delete"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Delete</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// </span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="p">[</span><span class="nf">JsonProperty</span><span class="p">(</span><span class="s">"page"</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">Page</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在安装完成了json解析库可以使用下面方法转换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="kt">var</span> <span class="n">smmsInfo</span> <span class="p">=</span> <span class="n">JsonConvert</span><span class="p">.</span><span class="n">DeserializeObject</span><span class="p">&lt;</span><span class="n">SmmsInfo</span><span class="p">&gt;(</span><span class="n">str</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在使用这个库的时候需要注意处理网络异常等</p>
+
+:ET

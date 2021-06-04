@@ -1,0 +1,43 @@
+I"�<p>本文告诉大家如何获取应用内的所有窗口，无论这些窗口有没显示</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/2/11 8:55:31 -->
+
+<!-- csdn -->
+
+<p>在 WPF 可以通过 Application.Current.Windows 列举应用的所有窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">foreach</span><span class="p">(</span><span class="n">Window</span> <span class="n">window</span> <span class="k">in</span> <span class="n">Application</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Windows</span> <span class="p">)</span> 
+<span class="p">{</span>
+    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">window</span><span class="p">.</span><span class="n">Title</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果需要获取一个线程的窗口，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">delegate</span> <span class="kt">bool</span> <span class="nf">EnumThreadDelegate</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">EnumThreadWindows</span><span class="p">(</span><span class="kt">int</span> <span class="n">dwThreadId</span><span class="p">,</span> <span class="n">EnumThreadDelegate</span> <span class="n">lpfn</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">);</span>
+
+        <span class="k">static</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IntPtr</span><span class="p">&gt;</span> <span class="nf">EnumerateProcessWindowHandles</span><span class="p">(</span><span class="n">Process</span> <span class="n">process</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">handleList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">IntPtr</span><span class="p">&gt;();</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="n">ProcessThread</span> <span class="n">thread</span> <span class="k">in</span> <span class="n">process</span><span class="p">.</span><span class="n">Threads</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">EnumThreadWindows</span><span class="p">(</span><span class="n">thread</span><span class="p">.</span><span class="n">Id</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">hWnd</span><span class="p">,</span> <span class="n">lParam</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="n">handleList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">hWnd</span><span class="p">);</span> <span class="k">return</span> <span class="k">true</span><span class="p">;</span> <span class="p">},</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">handleList</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><a href="https://lindexi.gitee.io/post/WPF-%E4%B8%80%E4%B8%AA%E7%A9%BA%E7%9A%84-WPF-%E7%A8%8B%E5%BA%8F%E6%9C%89%E5%A4%9A%E5%B0%91%E4%B8%AA%E7%AA%97%E5%8F%A3.html">WPF 一个空的 WPF 程序有多少个窗口</a></p>
+
+<p><a href="https://lindexi.gitee.io/post/WPF-%E5%86%85%E9%83%A8%E7%9A%845%E4%B8%AA%E7%AA%97%E5%8F%A3%E4%B9%8B-MediaContextNotificationWindow.html">WPF 内部的5个窗口之 MediaContextNotificationWindow </a></p>
+
+:ET

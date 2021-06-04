@@ -1,0 +1,5 @@
+I"<p>获取文件夹时出现</p>
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">Access</span> <span class="k">is</span> <span class="n">denied</span><span class="p">.</span> <span class="p">(</span><span class="n">Exception</span> <span class="k">from</span> <span class="n">HRESULT</span><span class="p">:</span> <span class="m">0x80070005</span> <span class="p">(</span><span class="n">E_ACCESSDENIED</span><span class="p">))</span>
+</code></pre></div></div>
+
+:ET

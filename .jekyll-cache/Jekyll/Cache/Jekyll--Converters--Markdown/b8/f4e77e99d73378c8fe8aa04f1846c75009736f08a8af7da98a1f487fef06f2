@@ -1,0 +1,37 @@
+I"�
+<p>在进行 PPT 解析的时候，因为 PPT 是支持在文本框里面的文本段落设置允许标点溢出边界可以在符号超过了文本框的长度，不会换行，而是显示在文本框之外</p>
+
+<!--more-->
+
+<!-- CreateTime:4/26/2020 10:53:43 AM -->
+
+<p>在 PPT 里面可以在段落设置允许标点溢出边界请看下面</p>
+
+<!-- ![](image/Office OpenXml SDK 文本段落允许标点溢出边界属性/Office OpenXml SDK 文本段落允许标点溢出边界属性0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20204261056584592.jpg" alt="" /></p>
+
+<p>在段落属性里面，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">a</span><span class="p">:</span><span class="n">ppr</span> <span class="n">fontalgn</span><span class="p">=</span><span class="s">"auto"</span> <span class="n">hangingpunct</span><span class="p">=</span><span class="s">"0"</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>通过 hangingpunct 属性是 0 表示不允许标点溢出边界，使用 1 或不设置表示允许标点溢出边界，这个值的默认值是 1 也就是不填写这个属性就表示不将标点带到下一行</p>
+
+<p>在 OpenXml 里面可以通过下面代码判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">void</span> <span class="nf">HeawearajakeheCawchalljorurko</span><span class="p">(</span><span class="n">TextParagraphPropertiesType</span> <span class="n">textParagraphPropertiesType</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="kt">var</span> <span class="n">height</span> <span class="p">=</span> <span class="n">textParagraphPropertiesType</span><span class="p">?.</span><span class="n">Height</span><span class="p">?.</span><span class="n">Value</span> <span class="p">??</span> <span class="k">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>没错，这个属性使用的是 Height 其实我没有猜出，不过好在微软的属性上面有注释，所以还是方便找到这个属性</p>
+
+<p>这个属性和 WPF 的 Wrap 属性是不相同的，需要自己写布局</p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/documentformat.openxml.drawing.textparagraphpropertiestype.height?view=openxml-2.8.1#DocumentFormat_OpenXml_Drawing_TextParagraphPropertiesType_Height">TextParagraphPropertiesType.Height Property (DocumentFormat.OpenXml.Drawing)</a></p>
+
+<p><a href="http://officeopenxml.com/drwSp-text-paraProps-align.php">Office Open XML - DrawingML - Shapes - Text - Alignment, Tabs, Other</a></p>
+
+:ET

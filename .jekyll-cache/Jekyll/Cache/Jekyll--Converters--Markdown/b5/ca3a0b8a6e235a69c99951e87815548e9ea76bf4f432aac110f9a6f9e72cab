@@ -1,0 +1,282 @@
+I"�h<p>在很多代码需要使用数学计算，在用到 double 很难直接判断一个值是 0 或者 1 ，判断两个值相等。
+本文提供一个数学扩展，让大家可以简单使用到 double 判断</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/3/1 9:19:05 -->
+
+<p>在开始看本文之前，希望大家是知道计算机是如何存放 double 和 double 精度问题原因。如果大家不知道这个的话，会比较难理解为什么需要使用扩展方法来判断。</p>
+
+<p>如果只是想用这个类，请把到文章最后面，复制代码到自己项目。</p>
+
+<p>例如有两个计算出来的 double ，分别是 a 和 b ，如果直接判断相等，那么 Resharper 会不开心，告诉你这个代码可能判断不对。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">a</span> <span class="p">==</span> <span class="n">b</span>
+</code></pre></div></div>
+
+<p>如果你问 Resharper 建议修改为怎样，他会告诉你，修改为这样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">Math</span><span class="p">.</span><span class="nf">Abs</span><span class="p">(</span><span class="n">a</span><span class="p">-</span><span class="n">b</span><span class="p">)&lt;</span><span class="err">一个很小的数</span>
+</code></pre></div></div>
+
+<p>原因就是 double 精度问题，虽然你觉得使用两个相同的方法计算出来的数值在数学计算上是相等的，但是实际上在进行判断的时候判断是不相等。</p>
+
+<p>请注意，只有赋值的 double 才可以进行自带的判断相等，如果是计算拿到的 double ，使用自带的判断相等可能会把两个相同的 double 判断为不相同。</p>
+
+<p>可以看到上面的代码，如果用到很多地方判断两个值就会有很多冗余的代码，而且在 Math.Abs 求绝对值计算性能是比不过判断一个大于 0 的值和一个小于 0 的值做两次判断</p>
+
+<p>一个比较建议的判断两个 double 是不是相等的方法是判断两个值的大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsClose</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="n">value1</span><span class="p">,</span> <span class="kt">double</span> <span class="n">value2</span><span class="p">,</span>
+            <span class="kt">double</span> <span class="n">maximumAbsoluteError</span> <span class="p">=</span> <span class="n">DefaultDoubleAccuracy</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="kt">double</span><span class="p">.</span><span class="nf">IsInfinity</span><span class="p">(</span><span class="n">value1</span><span class="p">)</span> <span class="p">||</span> <span class="kt">double</span><span class="p">.</span><span class="nf">IsInfinity</span><span class="p">(</span><span class="n">value2</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nf">Equals</span><span class="p">(</span><span class="n">value1</span><span class="p">,</span> <span class="n">value2</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="kt">double</span><span class="p">.</span><span class="nf">IsNaN</span><span class="p">(</span><span class="n">value1</span><span class="p">)</span> <span class="p">||</span> <span class="kt">double</span><span class="p">.</span><span class="nf">IsNaN</span><span class="p">(</span><span class="n">value2</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">delta</span> <span class="p">=</span> <span class="n">value1</span> <span class="p">-</span> <span class="n">value2</span><span class="p">;</span>
+
+            <span class="c1">//return Math.Abs(delta) &lt;= maximumAbsoluteError;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">delta</span> <span class="p">&gt;</span> <span class="n">maximumAbsoluteError</span> <span class="p">||</span>
+                <span class="n">delta</span> <span class="p">&lt;</span> <span class="p">-</span><span class="n">maximumAbsoluteError</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个方法不敢写判断相等，因为实际上有一些值是在数学上计算不相等，但是在这里判断是相等。</p>
+
+<p>刚刚写了和另一个 double 判断相等，那么如何判断 double 是不是 0？虽然可以直接把 0 作为 double 判断，但是实际上这个判断是不建议的，因为有更好的方法。</p>
+
+<p>在 double 计算，最小的一个单位可以让 1 加上这个值就不等于 1 的就是 <code class="language-plaintext highlighter-rouge">2 * 2^(-53)</code>，代码把这个这个值变量写为 PositiveMachineEpsilon ，使用这个 PositiveMachineEpsilon 可以判断一个 double 的大小。</p>
+
+<p>判断一个 double 是 0 那么可以通过判断这个值大于 <code class="language-plaintext highlighter-rouge">-PositiveMachineEpsilon</code> 并且 小于<code class="language-plaintext highlighter-rouge">PositiveMachineEpsilon</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsZero</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//return Math.Abs(value) &lt;= PositiveMachineEpsilon;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">&gt;</span> <span class="n">PositiveMachineEpsilon</span> <span class="p">||</span>
+                <span class="k">value</span> <span class="p">&lt;</span> <span class="p">-</span><span class="n">PositiveMachineEpsilon</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么如何判断 double 是 1 ？如果有仔细看上面的代码，那么很容易就知道如何判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsOne</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">delta</span> <span class="p">=</span> <span class="k">value</span> <span class="p">-</span> <span class="m">1D</span><span class="p">;</span>
+
+            <span class="c1">//return Math.Abs(delta) &lt;= PositiveMachineEpsilon;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">delta</span> <span class="p">&gt;</span> <span class="n">PositiveMachineEpsilon</span> <span class="p">||</span>
+                <span class="n">delta</span> <span class="p">&lt;</span> <span class="p">-</span><span class="n">PositiveMachineEpsilon</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个代码是从 https://github.com/mathnet/mathnet-numerics/blob/master/src/Numerics/Precision.cs 复制</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Double 的扩展</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">//SOURCE: https://github.com/mathnet/mathnet-numerics/blob/master/src/Numerics/Precision.cs</span>
+    <span class="c1">//        https://github.com/mathnet/mathnet-numerics/blob/master/src/Numerics/Precision.Equality.cs</span>
+    <span class="c1">//        http://referencesource.microsoft.com/#WindowsBase/Shared/MS/Internal/DoubleUtil.cs</span>
+    <span class="c1">//        http://stackoverflow.com/questions/2411392/double-epsilon-for-equality-greater-than-less-than-less-than-or-equal-to-gre</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">DoubleExtensions</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// The smallest positive number that when SUBTRACTED from 1D yields a result different from 1D.</span>
+        <span class="c1">///</span>
+        <span class="c1">/// This number has the following properties:</span>
+        <span class="c1">///     (1 - NegativeMachineEpsilon) &amp;lt; 1 and</span>
+        <span class="c1">///     (1 + NegativeMachineEpsilon) == 1</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="kt">double</span> <span class="n">MeasuredNegativeMachineEpsilon</span> <span class="p">=</span> <span class="nf">MeasureNegativeMachineEpsilon</span><span class="p">();</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// The smallest positive number that when ADDED to 1D yields a result different from 1D.</span>
+        <span class="c1">///</span>
+        <span class="c1">/// This number has the following properties:</span>
+        <span class="c1">///     (1 - PositiveDoublePrecision) &amp;lt; 1 and</span>
+        <span class="c1">///     (1 + PositiveDoublePrecision) &amp;gt; 1</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="kt">double</span> <span class="n">MeasuredPositiveMachineEpsilon</span> <span class="p">=</span> <span class="nf">MeasurePositiveMachineEpsilon</span><span class="p">();</span>
+
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// The smallest positive number that when SUBTRACTED from 1D yields a result different from 1D.</span>
+        <span class="c1">/// The value is derived from 2^(-53) = 1.1102230246251565e-16, where IEEE 754 binary64 &amp;quot;double precision&amp;quot; floating point numbers have a significand precision that utilize 53 bits.</span>
+        <span class="c1">///</span>
+        <span class="c1">/// This number has the following properties:</span>
+        <span class="c1">///     (1 - NegativeMachineEpsilon) &amp;lt; 1 and</span>
+        <span class="c1">///     (1 + NegativeMachineEpsilon) == 1</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">const</span> <span class="kt">double</span> <span class="n">NegativeMachineEpsilon</span> <span class="p">=</span> <span class="m">1.1102230246251565e-16D</span><span class="p">;</span> <span class="c1">//Math.Pow(2, -53);</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// The smallest positive number that when ADDED to 1D yields a result different from 1D.</span>
+        <span class="c1">/// The value is derived from 2 * 2^(-53) = 2.2204460492503131e-16, where IEEE 754 binary64 &amp;quot;double precision&amp;quot; floating point numbers have a significand precision that utilize 53 bits.</span>
+        <span class="c1">///</span>
+        <span class="c1">/// This number has the following properties:</span>
+        <span class="c1">///     (1 - PositiveDoublePrecision) &amp;lt; 1 and</span>
+        <span class="c1">///     (1 + PositiveDoublePrecision) &amp;gt; 1</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">const</span> <span class="kt">double</span> <span class="n">PositiveMachineEpsilon</span> <span class="p">=</span> <span class="m">2D</span> <span class="p">*</span> <span class="n">NegativeMachineEpsilon</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsClose</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="n">value1</span><span class="p">,</span> <span class="kt">double</span> <span class="n">value2</span><span class="p">,</span>
+            <span class="kt">double</span> <span class="n">maximumAbsoluteError</span> <span class="p">=</span> <span class="n">DefaultDoubleAccuracy</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="kt">double</span><span class="p">.</span><span class="nf">IsInfinity</span><span class="p">(</span><span class="n">value1</span><span class="p">)</span> <span class="p">||</span> <span class="kt">double</span><span class="p">.</span><span class="nf">IsInfinity</span><span class="p">(</span><span class="n">value2</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nf">Equals</span><span class="p">(</span><span class="n">value1</span><span class="p">,</span> <span class="n">value2</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="kt">double</span><span class="p">.</span><span class="nf">IsNaN</span><span class="p">(</span><span class="n">value1</span><span class="p">)</span> <span class="p">||</span> <span class="kt">double</span><span class="p">.</span><span class="nf">IsNaN</span><span class="p">(</span><span class="n">value2</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">delta</span> <span class="p">=</span> <span class="n">value1</span> <span class="p">-</span> <span class="n">value2</span><span class="p">;</span>
+
+            <span class="c1">//return Math.Abs(delta) &lt;= maximumAbsoluteError;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">delta</span> <span class="p">&gt;</span> <span class="n">maximumAbsoluteError</span> <span class="p">||</span>
+                <span class="n">delta</span> <span class="p">&lt;</span> <span class="p">-</span><span class="n">maximumAbsoluteError</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">LessThan</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="n">value1</span><span class="p">,</span> <span class="kt">double</span> <span class="n">value2</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">value1</span> <span class="p">&lt;</span> <span class="n">value2</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="nf">IsClose</span><span class="p">(</span><span class="n">value1</span><span class="p">,</span> <span class="n">value2</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">GreaterThan</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="n">value1</span><span class="p">,</span> <span class="kt">double</span> <span class="n">value2</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">value1</span> <span class="p">&gt;</span> <span class="n">value2</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="nf">IsClose</span><span class="p">(</span><span class="n">value1</span><span class="p">,</span> <span class="n">value2</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">LessThanOrClose</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="n">value1</span><span class="p">,</span> <span class="kt">double</span> <span class="n">value2</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">value1</span> <span class="p">&lt;</span> <span class="n">value2</span><span class="p">)</span> <span class="p">||</span> <span class="nf">IsClose</span><span class="p">(</span><span class="n">value1</span><span class="p">,</span> <span class="n">value2</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">GreaterThanOrClose</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="n">value1</span><span class="p">,</span> <span class="kt">double</span> <span class="n">value2</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">value1</span> <span class="p">&gt;</span> <span class="n">value2</span><span class="p">)</span> <span class="p">||</span> <span class="nf">IsClose</span><span class="p">(</span><span class="n">value1</span><span class="p">,</span> <span class="n">value2</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsOne</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">delta</span> <span class="p">=</span> <span class="k">value</span> <span class="p">-</span> <span class="m">1D</span><span class="p">;</span>
+
+            <span class="c1">//return Math.Abs(delta) &lt;= PositiveMachineEpsilon;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">delta</span> <span class="p">&gt;</span> <span class="n">PositiveMachineEpsilon</span> <span class="p">||</span>
+                <span class="n">delta</span> <span class="p">&lt;</span> <span class="p">-</span><span class="n">PositiveMachineEpsilon</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsZero</span><span class="p">(</span><span class="k">this</span> <span class="kt">double</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//return Math.Abs(value) &lt;= PositiveMachineEpsilon;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">&gt;</span> <span class="n">PositiveMachineEpsilon</span> <span class="p">||</span>
+                <span class="k">value</span> <span class="p">&lt;</span> <span class="p">-</span><span class="n">PositiveMachineEpsilon</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 判断两个 &lt;see cref="T:System.Double" /&gt; 值是否近似相等。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="d1"&gt;值1。&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="d2"&gt;值2。&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="tolerance"&gt;近似容差。&lt;/param&gt;</span>
+        <span class="p">[</span><span class="n">PublicAPI</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">NearlyEquals</span><span class="p">(</span><span class="kt">double</span> <span class="n">d1</span><span class="p">,</span> <span class="kt">double</span> <span class="n">d2</span><span class="p">,</span> <span class="kt">double</span> <span class="n">tolerance</span> <span class="p">=</span> <span class="m">1E-05</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nf">IsClose</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">double</span> <span class="nf">MeasureNegativeMachineEpsilon</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">epsilon</span> <span class="p">=</span> <span class="m">1D</span><span class="p">;</span>
+
+            <span class="k">do</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">nextEpsilon</span> <span class="p">=</span> <span class="n">epsilon</span> <span class="p">/</span> <span class="m">2D</span><span class="p">;</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="nf">NearlyEquals</span><span class="p">(</span><span class="m">1D</span> <span class="p">-</span> <span class="n">nextEpsilon</span><span class="p">,</span> <span class="m">1D</span><span class="p">))</span> <span class="c1">//if nextEpsilon is too small</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">epsilon</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="n">epsilon</span> <span class="p">=</span> <span class="n">nextEpsilon</span><span class="p">;</span>
+            <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">double</span> <span class="nf">MeasurePositiveMachineEpsilon</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">epsilon</span> <span class="p">=</span> <span class="m">1D</span><span class="p">;</span>
+
+            <span class="k">do</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">nextEpsilon</span> <span class="p">=</span> <span class="n">epsilon</span> <span class="p">/</span> <span class="m">2D</span><span class="p">;</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="nf">NearlyEquals</span><span class="p">((</span><span class="m">1D</span> <span class="p">+</span> <span class="n">nextEpsilon</span><span class="p">),</span> <span class="m">1D</span><span class="p">))</span> <span class="c1">//if nextEpsilon is too small</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">epsilon</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="n">epsilon</span> <span class="p">=</span> <span class="n">nextEpsilon</span><span class="p">;</span>
+            <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">double</span> <span class="n">DefaultDoubleAccuracy</span> <span class="p">=</span> <span class="n">NegativeMachineEpsilon</span> <span class="p">*</span> <span class="m">10D</span><span class="p">;</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>参见：</p>
+
+<p>https://github.com/mathnet/mathnet-numerics/blob/master/src/Numerics/Precision.cs</p>
+
+<p>https://github.com/mathnet/mathnet-numerics/blob/master/src/Numerics/Precision.Equality.cs</p>
+
+<p>http://referencesource.microsoft.com/#WindowsBase/Shared/MS/Internal/DoubleUtil.cs</p>
+
+<p>http://stackoverflow.com/questions/2411392/double-epsilon-for-equality-greater-than-less-than-less-than-or-equal-to-gre</p>
+
+:ET

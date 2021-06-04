@@ -1,0 +1,49 @@
+I"<p>在 Xamarin 中，使用文件存储或打开某个特定文件都是很常用的做法，而在跨平台中，每个平台都有自己的 IO 的坑。如何在 Xamarin.Froms 里面让用户可以选择打开哪个本文文件，需要照顾多个不同的平台的文件访问方式</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/23 16:43:08 -->
+<!-- 标签：Xamarin -->
+
+<p>在 Xamarin.Forms 右击管理 NuGet 程序包，搜寻 Xamarin.Plugin.FilePicker 进行安装，或在 csproj 上添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"Xamarin.Plugin.FilePicker"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"2.1.36-beta"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>如果不是让用户选取文件内容，那么在 Xamarin.Essentials 这个提供了 Xamarin 原生 API 交互的库就完全足够使用了</p>
+
+<p>在界面上添加一个按钮，用来让用户选取文件内容</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;StackLayout&gt;</span>
+        <span class="nt">&lt;Label</span> <span class="na">x:Name=</span><span class="s">"FileText"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;&lt;/Label&gt;</span>
+        <span class="nt">&lt;Button</span> <span class="na">HorizontalOptions=</span><span class="s">"Center"</span> <span class="na">Text=</span><span class="s">"选取文件"</span> <span class="na">Clicked=</span><span class="s">"Button_OnClicked"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+    <span class="nt">&lt;/StackLayout&gt;</span>
+</code></pre></div></div>
+
+<p>在后台代码添加按钮点击时让用户选择文件的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">Plugin.FilePicker</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_OnClicked</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">pickFile</span> <span class="p">=</span> <span class="k">await</span> <span class="n">CrossFilePicker</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="nf">PickFile</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pickFile</span> <span class="k">is</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 用户拒绝选择文件</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">FileText</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">$@"选取文件路径 :</span><span class="p">{</span><span class="n">pickFile</span><span class="p">.</span><span class="n">FilePath</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时用户可以不选择文件，如果用户不选择文件，那么将拿到一个空值</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2FScreenshot_1582444733.png" alt="" /></p>
+
+<p>现在 CrossFilePicker 的 Open 和 Save 方法都过时了，请使用 <code class="language-plaintext highlighter-rouge">Xamarin.Essentials.FileSystem</code> 代替，或者用 <code class="language-plaintext highlighter-rouge">Xamarin.Essentials.ShareFile</code> 将文件分享给其他应用打开</p>
+
+<p>这个项目所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/a94fb1c9361e7a7ed80b4d7df2b587b2c0d57045/FecawjearwhalljearWugeweenere">github</a> 欢迎小伙伴访问</p>
+
+:ET

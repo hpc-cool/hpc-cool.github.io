@@ -1,0 +1,45 @@
+I"N<p>HMAC是密钥相关的哈希运算消息认证码，输入密钥和信息。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>在uwp，Hmac在很多网络使用，我最近写qiniu SDK，把原来C#改为UWP，需要使用HMAC。</p>
+
+<p>上传文件时需要填写 form ，这是官方要求的</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;form</span> <span class="na">method=</span><span class="s">"post"</span> <span class="na">action=</span><span class="s">"http://upload.qiniu.com/"</span>
+ <span class="na">enctype=</span><span class="s">"multipart/form-data"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"key"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">value=</span><span class="s">"&lt;resource_key&gt;"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"x:&lt;custom_name&gt;"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">value=</span><span class="s">"&lt;custom_value&gt;"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"token"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="na">value=</span><span class="s">"&lt;upload_token&gt;"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"file"</span> <span class="na">type=</span><span class="s">"file"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"crc32"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;input</span> <span class="na">name=</span><span class="s">"accept"</span> <span class="na">type=</span><span class="s">"hidden"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</code></pre></div></div>
+
+<p>里面需要凭据，凭据有上传策略，而做这个需要 Hmac，我找了好久才得到，希望大家遇到 Hmac 问题可以在我这里发现解决方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">string</span> <span class="n">str_alg_name</span> <span class="p">=</span> <span class="n">MacAlgorithmNames</span><span class="p">.</span><span class="n">HmacSha1</span><span class="p">;</span>
+            <span class="n">MacAlgorithmProvider</span> <span class="n">obj_mac_prov</span> <span class="p">=</span> <span class="n">MacAlgorithmProvider</span><span class="p">.</span><span class="nf">OpenAlgorithm</span><span class="p">(</span><span class="n">str_alg_name</span><span class="p">);</span>
+            <span class="n">IBuffer</span> <span class="n">buff_msg</span> <span class="p">=</span> <span class="n">CryptographicBuffer</span><span class="p">.</span><span class="nf">CreateFromByteArray</span><span class="p">(</span><span class="n">path_and_query_bytes</span><span class="p">);</span>
+            <span class="n">IBuffer</span> <span class="n">buff_key_material</span> <span class="p">=</span> <span class="n">CryptographicBuffer</span><span class="p">.</span><span class="nf">CreateFromByteArray</span><span class="p">(</span><span class="n">mac</span><span class="p">.</span><span class="n">SecretKey</span><span class="p">);</span>
+            <span class="n">CryptographicKey</span> <span class="n">hmac_key</span> <span class="p">=</span> <span class="n">obj_mac_prov</span><span class="p">.</span><span class="nf">CreateKey</span><span class="p">(</span><span class="n">buff_key_material</span><span class="p">);</span>
+            <span class="n">IBuffer</span> <span class="n">hmac</span> <span class="p">=</span> <span class="n">CryptographicEngine</span><span class="p">.</span><span class="nf">Sign</span><span class="p">(</span><span class="n">hmac_key</span><span class="p">,</span> <span class="n">buff_msg</span><span class="p">);</span>
+            <span class="kt">byte</span><span class="p">[]</span> <span class="n">digest</span> <span class="p">=</span> <span class="n">hmac</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">string str_alg_name = MacAlgorithmNames.HmacSha1;</code>是从预设的算法中拿出Hmac，而微软有这么多算法：AesCmac、HmacMd5、HmacSha1、HmacSha256、HmacSha384、HmacSha512</p>
+
+<p><code class="language-plaintext highlighter-rouge">MacAlgorithmProvider.OpenAlgorithm</code> 传入使用算法</p>
+
+<p>Hmac 输入是 buffer，如果我们只有 byte 请使用 <code class="language-plaintext highlighter-rouge">CryptographicBuffer.CreateFromByteArray</code> 转Buffer</p>
+
+<p>Hmac密钥 <code class="language-plaintext highlighter-rouge">obj_mac_prov.CreateKey(buff_key_material)</code></p>
+
+<p>最后使用 ` CryptographicEngine.Sign(hmac_key, buff_msg);`</p>
+
+:ET

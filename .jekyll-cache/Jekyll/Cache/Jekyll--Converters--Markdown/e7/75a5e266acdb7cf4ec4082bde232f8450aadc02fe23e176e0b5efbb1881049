@@ -1,0 +1,117 @@
+I"1<p>我之前开发一个软件 winMarkdown，这个软件在关闭需要提示用户还没有保存东西，需要保存，如果用户选择退出，那么把数据存放。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>在Metro程序中，没有传统的窗口，当我们要用需要交互的消息提示时，在Win8时代，引入了一个MessageDialog来取代常用的MessageBox。</p>
+
+<p>我在MainPage，挂起<code class="language-plaintext highlighter-rouge">App.Current.Suspending += suspend;</code>添加通知用户</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">suspend</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">Windows</span><span class="p">.</span><span class="n">ApplicationModel</span><span class="p">.</span><span class="n">SuspendingEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">SuspendingDeferral</span> <span class="n">deferral</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">SuspendingOperation</span><span class="p">.</span><span class="nf">GetDeferral</span><span class="p">();</span>
+            <span class="n">MessageDialog</span> <span class="n">message_dialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MessageDialog</span><span class="p">(</span><span class="s">"当前还在运行，确定退出"</span><span class="p">,</span> <span class="s">"退出"</span><span class="p">);</span>
+            <span class="n">message_dialog</span><span class="p">.</span><span class="n">Commands</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">UICommand</span><span class="p">(</span><span class="s">"确定"</span><span class="p">,</span> <span class="n">cmd</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">},</span> <span class="s">"退出"</span><span class="p">));</span>
+            <span class="n">message_dialog</span><span class="p">.</span><span class="n">Commands</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">UICommand</span><span class="p">(</span><span class="s">"取消"</span><span class="p">,</span> <span class="n">cmd</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">}));</span>
+            <span class="n">message_dialog</span><span class="p">.</span><span class="n">DefaultCommandIndex</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="n">message_dialog</span><span class="p">.</span><span class="n">CancelCommandIndex</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+            <span class="n">IUICommand</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">message_dialog</span><span class="p">.</span><span class="nf">ShowAsync</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">Id</span> <span class="k">as</span> <span class="kt">string</span> <span class="p">==</span> <span class="s">"退出"</span><span class="p">)</span>
+            <span class="p">{</span>
+                
+            <span class="p">}</span>
+            <span class="n">deferral</span><span class="p">.</span><span class="nf">Complete</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">SuspendingDeferral deferral = e.SuspendingOperation.GetDeferral();</code>挂起还要做，直到<code class="language-plaintext highlighter-rouge">deferral.Complete();</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">MessageDialog</span> <span class="n">message_dialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MessageDialog</span><span class="p">(</span><span class="s">"当前还在运行，确定退出"</span><span class="p">,</span> <span class="s">"退出"</span><span class="p">);</span>
+            <span class="n">message_dialog</span><span class="p">.</span><span class="n">Commands</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">UICommand</span><span class="p">(</span><span class="s">"确定"</span><span class="p">,</span> <span class="n">cmd</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">},</span> <span class="s">"退出"</span><span class="p">));</span>
+            <span class="n">message_dialog</span><span class="p">.</span><span class="n">Commands</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">UICommand</span><span class="p">(</span><span class="s">"取消"</span><span class="p">,</span> <span class="n">cmd</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">}));</span>
+</code></pre></div></div>
+
+<p>两个按钮，一个确定，一个取消，可以UICommand ID作为点击后，是哪个按钮点击</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MessageDialog</span><span class="p">.</span><span class="n">DefaultCommandIndex</span><span class="err">按</span><span class="n">ESC</span><span class="err">选择按钮</span>
+<span class="n">MessageDialog</span><span class="p">.</span><span class="n">CancelCommandIndex</span><span class="err">按</span><span class="n">enter</span><span class="err">按钮</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">IUICommand</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">message_dialog</span><span class="p">.</span><span class="nf">ShowAsync</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">Id</span> <span class="k">as</span> <span class="kt">string</span> <span class="p">==</span> <span class="s">"退出"</span><span class="p">)</span>
+            <span class="p">{</span>
+                
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>程序要调试挂起，需要生命周期，点击挂起
+<img src="http://img.blog.csdn.net/20160307210947340" alt="这里写图片描述" /></p>
+
+<p>我们按enter就会点击确定</p>
+
+<p>而我们对于MessageDialog功能还是觉得不够，ContentDialog可以定义复杂的Xaml自定义</p>
+
+<p>我们把MessageDialog换ContentDialog</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">ContentDialog</span> <span class="n">content_dialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ContentDialog</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Title</span> <span class="p">=</span> <span class="s">"退出"</span><span class="p">,</span>
+                <span class="n">Content</span> <span class="p">=</span> <span class="s">"当前还在运行，确定退出"</span><span class="p">,</span>
+                <span class="n">PrimaryButtonText</span> <span class="p">=</span> <span class="s">"确定"</span><span class="p">,</span>
+                <span class="n">SecondaryButtonText</span> <span class="p">=</span> <span class="s">"取消"</span><span class="p">,</span>
+                <span class="n">FullSizeDesired</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span>
+            <span class="p">};</span>
+
+            <span class="n">content_dialog</span><span class="p">.</span><span class="n">PrimaryButtonClick</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_s</span><span class="p">,</span> <span class="n">_e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">};</span>
+
+            <span class="k">await</span> <span class="n">content_dialog</span><span class="p">.</span><span class="nf">ShowAsync</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160307212834443" alt="这里写图片描述" /></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;UserControl</span>
+    <span class="na">x:Class=</span><span class="s">"produproperty.content"</span>
+    <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="na">xmlns:local=</span><span class="s">"using:produproperty"</span>
+    <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+    <span class="na">d:DesignHeight=</span><span class="s">"300"</span>
+    <span class="na">d:DesignWidth=</span><span class="s">"400"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;TextBlock</span> <span class="na">Grid.Row=</span><span class="s">"0"</span> <span class="na">Text=</span><span class="s">"当前还在运行，确定退出"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+        <span class="nt">&lt;CheckBox</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">Content=</span><span class="s">"保存"</span><span class="nt">&gt;&lt;/CheckBox&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/UserControl&gt;</span>
+
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">ContentDialog</span> <span class="n">content_dialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ContentDialog</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Title</span> <span class="p">=</span> <span class="s">"退出"</span><span class="p">,</span>
+                <span class="n">Content</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">content</span><span class="p">(),</span>
+                <span class="n">PrimaryButtonText</span> <span class="p">=</span> <span class="s">"确定"</span><span class="p">,</span>
+                <span class="n">SecondaryButtonText</span> <span class="p">=</span> <span class="s">"取消"</span><span class="p">,</span>
+                <span class="n">FullSizeDesired</span> <span class="p">=</span> <span class="k">false</span><span class="p">,</span>
+            <span class="p">};</span>
+
+            <span class="n">content_dialog</span><span class="p">.</span><span class="n">PrimaryButtonClick</span> <span class="p">+=</span> <span class="p">(</span><span class="n">_s</span><span class="p">,</span> <span class="n">_e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">};</span>
+
+            <span class="k">await</span> <span class="n">content_dialog</span><span class="p">.</span><span class="nf">ShowAsync</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160307213038399" alt="这里写图片描述" /></p>
+
+<p>参见：
+http://www.cnblogs.com/TianFang/p/4857205.html</p>
+
+:ET

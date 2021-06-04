@@ -1,0 +1,60 @@
+I"a<p>在 WPF 中有一个特性是按下 Alt 键盘选中某个按钮，而这个特性是通过在内容里面的字符串里面添加关键字，让某个字符作为关键字的方法就是在前面加上下划线所以这个下划线默认是不显示的</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/10/16 9:21:32 -->
+
+<!-- csdn -->
+
+<p>请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">CheckBox</span> <span class="n">Content</span><span class="p">=</span><span class="s">"Text_Content"</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">CheckBox</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>运行的界面可以看到没有了下划线</p>
+
+<!-- ![](image/WPF 控件 Content 的内容不显示下划线字符串/WPF 控件 Content 的内容不显示下划线字符串0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019101691346786" alt="" /></p>
+
+<p>如果此时在界面按下了 Alt 键，将会看到 <code class="language-plaintext highlighter-rouge">Text_Content</code> 中的 <code class="language-plaintext highlighter-rouge">C</code> 添加了下划线</p>
+
+<!-- ![](image/WPF 控件 Content 的内容不显示下划线字符串/WPF 控件 Content 的内容不显示下划线字符串1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019101691447318" alt="" /></p>
+
+<p>按下 Alt + C 就可以选中这个按钮</p>
+
+<p>所以这是一个快捷键的功能，通过在特定字符前面加上下划线的方式，让这个按钮可以使用快捷键</p>
+
+<p>很少有逗比会用中文作为快捷键，虽然这也可以，如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;CheckBox</span> <span class="na">Content=</span><span class="s">"按下Alt键盘加上_逗就可以选中这个按钮"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/CheckBox&gt;</span>
+</code></pre></div></div>
+
+<p>但是输入 逗 字会被用户说逗比</p>
+
+<p>如果此时想要下划线可以通过写两次下划线</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;CheckBox</span> <span class="na">Content=</span><span class="s">"Text__Content"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/CheckBox&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 控件 Content 的内容不显示下划线字符串/WPF 控件 Content 的内容不显示下划线字符串2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019101691931375" alt="" /></p>
+
+<p>或者将 Content 里面添加文本控件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;CheckBox&gt;</span>
+            <span class="nt">&lt;CheckBox.Content&gt;</span>
+                <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"Text_Content"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+            <span class="nt">&lt;/CheckBox.Content&gt;</span>
+        <span class="nt">&lt;/CheckBox&gt;</span>
+</code></pre></div></div>
+
+<p>在看到 WPF 控件按钮的文本的下划线看不到的时候，请不要认为这是 WPF 的坑</p>
+
+:ET

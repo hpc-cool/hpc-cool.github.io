@@ -1,0 +1,152 @@
+I"�6<p>在写 asp dotnet core 时，如果没有单元测试保证，需要每个方法都从 web api 的入口开始运行，此时的执行效率是很低的。而如果写单元测试，又有一个坑的问题是写单元测试也是需要时间的。本文告诉大家一些提高效率的方法，这些方法不是正经的用法，但是能提升效率。至于能不能用好不好用就请观众老爷自己决定</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/1 17:04:53 -->
+
+<h2 id="cunit-中文命名单元测试">CUnit 中文命名单元测试</h2>
+
+<p>在写单元测试时，小伙伴说需要让单元测试的方法名符合 <code class="language-plaintext highlighter-rouge">条件_执行_结果</code> 而要求这个方法命名为英文，我的英文就超级渣，这一点 <a href="https://blog.sdlsj.net/">少珺</a> 小伙伴可以帮我证明。于是你会看到我写了以下的测试 <code class="language-plaintext highlighter-rouge">WhenABuDengYuThree_DokanarkelawNinirahajairi_SetSlj</code> 的命名，而如果要我优化这个单元测试的命名，大家都知道，有些小伙伴和我一样想一个好的命名可能占了开发的一半时间</p>
+
+<p>写单元测试时，大量的单元测试方法命名将会占用大量的时间，让小伙伴不愿意写单元测试。或者写出来的单元测试的只有自己能读懂</p>
+
+<p>在一个团队里面的，如果英文水平参差不齐，如我所在的团队有英文特别厉害的<a href="https://blog.walterlv.com">walterlv</a>和<a href="https://getandplay.github.io/">天龙</a>也有英文特别差国语也特别差的大壮哥，还有英文有毒的本渣。此时用英文命名的单元测试就是一个神坑，除非团队能成立一个改名部专门协助命名</p>
+
+<p>一个解决方法是干脆用中文命名单元测试算了，请看下面单元测试</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="n">TestClass</span><span class="p">]</span>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">DemoTest</span>
+<span class="p">{</span>
+    <span class="p">[</span><span class="n">ContractTestCase</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="s">"当满足 A 条件时，应该发生 A' 事。"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+        <span class="p">{</span>
+            <span class="c1">// Arrange</span>
+            <span class="c1">// Action</span>
+            <span class="c1">// Assert</span>
+        <span class="p">});</span>
+        
+        <span class="s">"当满足 B 条件时，应该发生 B' 事。"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+        <span class="p">{</span>
+            <span class="c1">// Arrange</span>
+            <span class="c1">// Action</span>
+            <span class="c1">// Assert</span>
+        <span class="p">});</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行单元测试将看到这样的结果视图</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20202111018744.jpg" alt="" /></p>
+
+<p>只要有任何一个单元测试炸了，相信小伙伴看提示特别快就知道哪里炸了</p>
+
+<p>使用这个库的前提是用 NuGet 安装 <a href="https://www.nuget.org/packages/MSTestEnhancer">MSTestEnhancer</a> 库，如果是 SDK 格式的项目文件，可以添加下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;ItemGroup&gt;
+    &lt;PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" /&gt;
+    &lt;PackageReference Include="Moq" Version="4.13.1" /&gt;
+    &lt;PackageReference Include="MSTest.TestAdapter" Version="2.0.0" /&gt;
+    &lt;PackageReference Include="MSTest.TestFramework" Version="2.0.0" /&gt;
+    &lt;PackageReference Include="coverlet.collector" Version="1.0.1" /&gt;
+    &lt;PackageReference Include="MSTestEnhancer" Version="1.6.0" /&gt;
+  &lt;/ItemGroup&gt;
+</code></pre></div></div>
+
+<p>注意版本号需要你自己更新</p>
+
+<p>在单元测试的方法里面，推荐写某个需要测试的方法，在方法上面添加特性 <code class="language-plaintext highlighter-rouge">ContractTestCase</code> 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">ContractTestCase</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>接下来在方法里面用一段字符串和 <code class="language-plaintext highlighter-rouge">.Test</code> 写出对应的单元测试</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="s">"当满足 A 条件时，应该发生 A' 事。"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+        <span class="p">{</span>
+            <span class="c1">// Arrange</span>
+            <span class="c1">// Action</span>
+            <span class="c1">// Assert</span>
+        <span class="p">});</span>
+</code></pre></div></div>
+
+<p>一个例子是我在<a href="https://github.com/dotnet-campus/DotNetGitLabWebHook">DotNetGitLabWebHook</a>用到的方法，代码请看 <a href="https://github.com/dotnet-campus/DotNetGitLabWebHook/blob/da88f6b108b10f87fdc78231628da603363db205/DotNetGitLabWebHookToMatterMost.Tests/Business/Check/RepoManagerTests.cs">github</a> 是不是觉得写起来特别快</p>
+
+<p>用 CUnit(MSTestEnhancer) 能让团队内小伙伴写单元测试的效率提升，也能提升团队里面读单元测试以及单元测试炸了解决的效率</p>
+
+<p>现在问题只有一个，你的团队内对中文的看法是如何？千万不要在我的博客下评论，我的博客的评论做的很渣，如果有很多人都在评论我的博客就用不了</p>
+
+<h2 id="利用原有依赖注入">利用原有依赖注入</h2>
+
+<p>在 asp dotnet core 的各个类可以在构造函数添加依赖注入的方法，如我的<a href="https://github.com/dotnet-campus/DotNetGitLabWebHook">DotNetGitLabWebHook</a>就在各个类里面的构造函数添加了依赖注入</p>
+
+<p>在 asp dotnet core 默认的构造函数依赖注入非常好用，例如我的 <a href="https://github.com/dotnet-campus/DotNetGitLabWebHook/blob/da88f6b108b10f87fdc78231628da603363db205/DotNetGitLabWebHook/Business/GitLabMRCheckerFlow.cs">GitLabMRCheckerFlow.cs</a> 用到两个类 Notify 和 FileChecker 类，而 Notify 用到了 IConfiguration 配置，于是我可以这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Notify</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">Notify</span><span class="p">(</span><span class="n">IConfiguration</span> <span class="n">configuration</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Configuration</span> <span class="p">=</span> <span class="n">configuration</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IConfiguration</span> <span class="n">Configuration</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">// 忽略代码</span>
+    <span class="p">}</span>
+
+    <span class="c1">// GitLabMRCheckerFlow.cs</span>
+
+            <span class="k">public</span> <span class="nf">GitLabMRCheckerFlow</span><span class="p">(</span><span class="n">Notify</span> <span class="n">notify</span><span class="p">,</span> <span class="n">FileChecker</span> <span class="n">fileChecker</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>在 Startup.cs 的 ConfigureServices 添加注入</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">services</span><span class="p">.</span><span class="n">AddScoped</span><span class="p">&lt;</span><span class="n">GitLabMRCheckerFlow</span><span class="p">&gt;();</span>
+            <span class="n">services</span><span class="p">.</span><span class="n">AddScoped</span><span class="p">&lt;</span><span class="n">Notify</span><span class="p">&gt;();</span>
+            <span class="n">services</span><span class="p">.</span><span class="n">AddScoped</span><span class="p">&lt;</span><span class="n">FileChecker</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>代码请看 <a href="https://github.com/dotnet-campus/DotNetGitLabWebHook/blob/da88f6b108b10f87fdc78231628da603363db205/DotNetGitLabWebHook/Startup.cs">Startup.cs</a></p>
+
+<p>此时获取对象的方法都是放在构造函数参数，此时各个参数对应的类的创建也会自动注入构造参数。如在 GitLabMRCheckerFlow 需要传入 Notify 参数，而创建 Notify 类需要传入 IConfiguration 参数，这些都会在自带的依赖注入完成</p>
+
+<p>在写 Controller 的单元测试时，难道我是需要运行一个 ASP.NET Core 服务，然后用 postman 进行测试？这样的效率太低了，可以尝试直接创建类调用对应的方法。而如果需要每个类都自己创建，这个创建效率实在太低，因为创建一个类需要在他的构造函数传入其他类，而这个类的构造函数可能后续修改，这样的单元测试小伙伴都想砍人</p>
+
+<p>简单的方法是在单元测试创建服务</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">hostBuilder</span> <span class="p">=</span> <span class="n">Program</span><span class="p">.</span><span class="nf">CreateHostBuilder</span><span class="p">(</span><span class="k">new</span> <span class="kt">string</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+            <span class="kt">var</span> <span class="n">build</span> <span class="p">=</span> <span class="n">hostBuilder</span><span class="p">.</span><span class="nf">Build</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">serviceProvider</span> <span class="p">=</span> <span class="n">build</span><span class="p">.</span><span class="n">Services</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面的代码在单元测试里面调用，调用上面代码将会创建服务</p>
+
+<p>然后拿到 serviceProvider 创建对象。如我需要测试 GitLabWebHookController 我可以给他的构造函数每个参数都在 serviceProvider 获取，此时就不需要手动创建</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">void</span> <span class="nf">MergeRequestTest</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">hostBuilder</span> <span class="p">=</span> <span class="n">Program</span><span class="p">.</span><span class="nf">CreateHostBuilder</span><span class="p">(</span><span class="k">new</span> <span class="kt">string</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+            <span class="kt">var</span> <span class="n">build</span> <span class="p">=</span> <span class="n">hostBuilder</span><span class="p">.</span><span class="nf">Build</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">serviceProvider</span> <span class="p">=</span> <span class="n">build</span><span class="p">.</span><span class="n">Services</span><span class="p">;</span>
+            
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">scope</span> <span class="p">=</span> <span class="n">serviceProvider</span><span class="p">.</span><span class="nf">CreateScope</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">gitLabMrCheckerFlow</span> <span class="p">=</span> <span class="n">scope</span><span class="p">.</span><span class="n">ServiceProvider</span><span class="p">.</span><span class="n">GetService</span><span class="p">&lt;</span><span class="n">GitLabMRCheckerFlow</span><span class="p">&gt;();</span>
+
+                <span class="kt">var</span> <span class="n">gitLabWebHookController</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">GitLabWebHookController</span><span class="p">(</span><span class="n">gitLabMrCheckerFlow</span><span class="p">);</span>
+                <span class="n">gitLabWebHookController</span><span class="p">.</span><span class="nf">MergeRequest</span><span class="p">(</span><span class="n">TestMRJson</span><span class="p">.</span><span class="nf">GetObject</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里有细节是 Controller 的注入有很多参数都是在 Scope 需要创建</p>
+
+<p>而如果我的 Controller 有某些参数需要使用 Fake 或 Mock 的，这些参数就自己用 Mock 啦</p>
+
+<p>通过这个方法会降低单元测试运行速度，但是能提升写单元测试的效率</p>
+
+:ET

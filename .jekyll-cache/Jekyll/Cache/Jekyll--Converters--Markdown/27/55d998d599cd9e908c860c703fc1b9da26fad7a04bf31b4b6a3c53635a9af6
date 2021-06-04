@@ -1,0 +1,37 @@
+I"<p>一般的密码框输入左对齐，如何让他不左对齐
+<img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017315175218.jpg" alt="" />
+<img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017315175617.jpg" alt="" /></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:17:19 -->
+
+<div id="toc"></div>
+<!-- csdn -->
+
+<p>设置了<code class="language-plaintext highlighter-rouge">HorizontalContentAlignment</code>没有变化</p>
+
+<p>于是找了很久，有一个方法可以设置，下面将会说这个方法</p>
+
+<p>新建一个 PasswordBox 控件，编辑模板，可以看到 vs 自动写出很多代码</p>
+
+<p>可以看到这样代码，需要自己去找一下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    
+    
+    <span class="p">&lt;</span><span class="n">ScrollViewer</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ContentElement"</span> <span class="n">AutomationProperties</span><span class="p">.</span><span class="n">AccessibilityView</span><span class="p">=</span><span class="s">"Raw"</span> <span class="n">HorizontalScrollMode</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.HorizontalScrollMode}"</span> <span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"</span> <span class="n">IsTabStop</span><span class="p">=</span><span class="s">"False"</span> <span class="n">IsHorizontalRailEnabled</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.IsHorizontalRailEnabled}"</span> <span class="n">IsVerticalRailEnabled</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.IsVerticalRailEnabled}"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"{TemplateBinding BorderThickness}"</span> <span class="n">Padding</span><span class="p">=</span><span class="s">"{TemplateBinding Padding}"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span> <span class="n">VerticalScrollBarVisibility</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"</span> <span class="n">VerticalScrollMode</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.VerticalScrollMode}"</span> <span class="n">ZoomMode</span><span class="p">=</span><span class="s">"Disabled"</span><span class="p">/&gt;</span>
+</code></pre></div></div>
+<p>但是需要修改的只有<code class="language-plaintext highlighter-rouge">HorizontalAlignment</code>，
+修改这句就好，使用下面代码 代替上面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                                <span class="p">&lt;</span><span class="n">ScrollViewer</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ContentElement"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Stretch"</span> <span class="n">AutomationProperties</span><span class="p">.</span><span class="n">AccessibilityView</span><span class="p">=</span><span class="s">"Raw"</span> <span class="n">HorizontalScrollMode</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.HorizontalScrollMode}"</span> <span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"</span> 
+                                          <span class="n">IsTabStop</span><span class="p">=</span><span class="s">"False"</span> 
+                                          <span class="n">IsHorizontalRailEnabled</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.IsHorizontalRailEnabled}"</span> <span class="n">IsVerticalRailEnabled</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.IsVerticalRailEnabled}"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"{TemplateBinding BorderThickness}"</span> <span class="n">Padding</span><span class="p">=</span><span class="s">"{TemplateBinding Padding}"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span> <span class="n">VerticalScrollBarVisibility</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"</span> <span class="n">VerticalScrollMode</span><span class="p">=</span><span class="s">"{TemplateBinding ScrollViewer.VerticalScrollMode}"</span> <span class="n">ZoomMode</span><span class="p">=</span><span class="s">"Disabled"</span><span class="p">/&gt;</span>
+
+</code></pre></div></div>
+
+<p>修改他的 <code class="language-plaintext highlighter-rouge">HorizontalAlignment</code> 修改为 Center ，密码控件就是上面的图，密码中间。</p>
+
+<p>https://stackoverflow.com/questions/42805582/setting-the-alignment-of-a-passwordbox-in-uwp</p>
+
+:ET

@@ -1,0 +1,90 @@
+I"�'<p>如果在 WPF 需要用多进程通信，一个推荐的方法是 WCF ，因为 WCF 是 RPC 计算。先来讲下 RPC (Remote Procedure Call) 远程过程调用，他是通过特定协议，包括 tcp 、http 等对其他进程进行调用的技术。详细请看<a href="https://baike.baidu.com/item/%E8%BF%9C%E7%A8%8B%E8%BF%87%E7%A8%8B%E8%B0%83%E7%94%A8%E5%8D%8F%E8%AE%AE?fromtitle=RPC&amp;fromid=609861">百度</a></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/6/24 14:41:29 -->
+
+<!-- 标签：dotnetremoting,rpc,wpf -->
+
+<p>现在不会告诉大家如何使用 WCF ，下面讲的是使用 remoting 这个方法。需要知道 dotnet remoting 是已经过时的技术，建议使用 wcf 但是 wcf 部署难度比较高，对于性能要求比较高或想快速使用，建议使用 remoting 。使用方法很简单</p>
+
+<p>如果不想知道具体是怎么做，只想使用，那么请看<a href="https://lindexi.oschina.io/lindexi/post/WPF-%E5%B0%81%E8%A3%85-dotnet-remoting-%E8%B0%83%E7%94%A8%E5%85%B6%E4%BB%96%E8%BF%9B%E7%A8%8B.html">WPF 封装 dotnet remoting 调用其他进程</a>，欢迎加入<a href="https://t.me/dotnet_campus">dotnet 职业学院</a>任何问题都可以在群里交流</p>
+
+<p>首先创建三个工程，一个工程放其他两个需要使用的库，一个是服务端，一个是客户端。其中客户端就可以调用服务端，客户端和服务端是两个不同的进程，所以可以跨进程调用。</p>
+
+<p>先创建一个简单的工程，库的工程 RemoteObject ，里面只有一个类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">public</span> <span class="k">class</span> <span class="nc">RemoteCalculator</span> <span class="p">:</span> <span class="n">MarshalByRefObject</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">Port</span> <span class="p">=</span> <span class="m">13570</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="nf">Add</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">a</span> <span class="p">+</span> <span class="n">b</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意这个类需要继承 MarshalByRefObject ，这个类是在两个进程引用，客户端不实现这个类，所以客户端使用这个类接口同样可以。具体调用这个类的方法在服务端运行，结果通过 tcp 或 http 返回。</p>
+
+<p>客户端的主要代码是连接服务端，然后访问库的 add 函数，但是这个函数不在客户端运行，通过 tcp 调用服务端，让他运行。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">private</span> <span class="k">void</span> <span class="nf">ButtonBase_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_channel</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Process</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="s">"CalcnsMnlhzydYeuiitcCddhxvlhm.exe"</span><span class="p">);</span>
+                <span class="n">_channel</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">TcpChannel</span><span class="p">();</span>
+                <span class="n">ChannelServices</span><span class="p">.</span><span class="nf">RegisterChannel</span><span class="p">(</span><span class="n">_channel</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="kt">var</span> <span class="n">calculator</span> <span class="p">=</span> <span class="p">(</span><span class="n">RemoteCalculator</span><span class="p">)</span> <span class="n">Activator</span><span class="p">.</span><span class="nf">GetObject</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">RemoteCalculator</span><span class="p">),</span>
+                <span class="s">"tcp://"</span> <span class="p">+</span> <span class="s">"127.0.0.1"</span> <span class="p">+</span> <span class="s">":"</span> <span class="p">+</span> <span class="n">RemoteCalculator</span><span class="p">.</span><span class="n">Port</span> <span class="p">+</span> <span class="s">"/RemoteCalculator"</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">calculator</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">2</span><span class="p">));</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>服务端的名称是 CalcnsMnlhzydYeuiitcCddhxvlhm ，主要是打开连接，执行客户端发过来的函数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">_channel</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">TcpChannel</span><span class="p">(</span><span class="n">RemoteCalculator</span><span class="p">.</span><span class="n">Port</span><span class="p">);</span>
+
+                <span class="n">ChannelServices</span><span class="p">.</span><span class="nf">RegisterChannel</span><span class="p">(</span><span class="n">_channel</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+                <span class="n">RemotingConfiguration</span><span class="p">.</span><span class="nf">RegisterWellKnownServiceType</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">RemoteCalculator</span><span class="p">),</span> <span class="s">"RemoteCalculator"</span><span class="p">,</span> <span class="n">WellKnownObjectMode</span><span class="p">.</span><span class="n">Singleton</span><span class="p">);</span>
+            <span class="p">}).</span><span class="nf">Start</span><span class="p">();</span>
+            <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">TcpChannel</span> <span class="n">_channel</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>需要注意，客户端点击按钮需要先打开服务端，使用这个代码<code class="language-plaintext highlighter-rouge">Process.Start("CalcnsMnlhzydYeuiitcCddhxvlhm.exe");</code>然后创建 tcp 告诉通过tcp和服务端连接。然后从服务端获得 calculator 这个类，实际这个类现在是没有实现，调用函数需要发送到服务端。</p>
+
+<p>服务端需要打开 TcpChannel ，这时需要定义调用的类，<code class="language-plaintext highlighter-rouge">RemotingConfiguration.RegisterWellKnownServiceType(typeof(RemoteCalculator), "RemoteCalculator", WellKnownObjectMode.Singleton);</code>，这个函数的一个参数就是注册的类，第二个函数是调用的这个类使用什么名称，一般都是使用类的名称，最后一个参数可以在一个连接给一个实例。所以在库的类不能在构造函数需要传入</p>
+
+<p>客户端调用的<code class="language-plaintext highlighter-rouge">"tcp://" + "127.0.0.1" + ":" + RemoteCalculator.Port + "/RemoteCalculator"</code>最后一个<code class="language-plaintext highlighter-rouge">RemoteCalculator</code>就是服务端注册的第二个函数。</p>
+
+<p>那么这个功能的作用是什么？因为 x64 程序不能调用 x86 的库，所以可以用这个方法在 x64 的程序调用其他平台的库，因为进程运行的平台不一样，但是通信是相同。</p>
+
+<p>其他的功能我没有使用，我就使用打开服务，调用他的函数，所以如果大家遇到问题，不要来问我。如果按照我的代码无法运行，可以发邮件给我，我发源代码给你</p>
+
+<p>代码下载：<a href="http://lindexi.ml:8080/index.php/s/pfHF9skZm8HiUxe">网盘</a></p>
+
+<p>更多关于 WPF dotnet remoting RPC 的博客请看</p>
+
+<p><a href="https://blog.lindexi.com/post/dotnet-remoting-%E4%BD%BF%E7%94%A8%E4%BA%8B%E4%BB%B6.html">.net remoting 使用事件</a></p>
+
+<p><a href="https://blog.lindexi.com/post/dotnet-remoting-%E6%8A%9B%E5%87%BA%E5%BC%82%E5%B8%B8.html">.net remoting 抛出异常</a></p>
+
+<p>如果不想知道那么多，想要快速开始，请看</p>
+
+<p><a href="https://blog.lindexi.com/post/WPF-%E4%BD%BF%E7%94%A8RPC%E8%B0%83%E7%94%A8%E5%85%B6%E4%BB%96%E8%BF%9B%E7%A8%8B.html">WPF 封装 dotnet remoting 调用其他进程</a></p>
+
+<p><img src="https://i.loli.net/2018/04/08/5ac9ffe655114.jpg" alt="" /></p>
+
+:ET

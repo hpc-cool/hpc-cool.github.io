@@ -1,0 +1,408 @@
+I"��<p>这仅是一个辅助方法帮助类，可以协助小伙伴写二进制序列化的效率，代码也还看的过去</p>
+
+<!--more-->
+
+<!-- CreateTime:6/10/2020 5:17:20 PM -->
+
+<p>在开始之前，我需要说明的是，如果不是必要，不要使用二进制序列化。因为很难做到版本兼容，如果写错了也不知道是哪里写错了，调试难度很大。但是对于性能的提升，其实也不大</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// 二进制序列化</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">interface</span> <span class="nc">IBinarySerializable</span>
+    <span class="p">{</span>
+        <span class="k">void</span> <span class="nf">Serialize</span><span class="p">(</span><span class="n">BinaryWriter</span> <span class="n">binaryWriter</span><span class="p">);</span>
+        <span class="k">void</span> <span class="nf">Deserialize</span><span class="p">(</span><span class="n">BinaryReader</span> <span class="n">binaryReader</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个接口用于给对象继承，如果对象继承了，那么就方便进行序列化</p>
+
+<p>这是一些辅助方法</p>
+
+<p>没有用到反射，需要自己手动写转换代码。注意顺序</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">static</span> <span class="k">class</span> <span class="nc">BinarySerialize</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 写入 uin32 列表</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="binaryWriter"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="list"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">WriteUint32List</span><span class="p">(</span><span class="k">this</span> <span class="n">BinaryWriter</span> <span class="n">binaryWriter</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">list</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 格式先写入列表长度，然后依次写入内容</span>
+            <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">list</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">n</span> <span class="k">in</span> <span class="n">list</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 读取 uint32 列表</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="binaryReader"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="nf">ReadUint32List</span><span class="p">(</span><span class="k">this</span> <span class="n">BinaryReader</span> <span class="n">binaryReader</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 读取长度</span>
+            <span class="kt">var</span> <span class="n">count</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadInt32</span><span class="p">();</span>
+
+            <span class="n">List</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;</span> <span class="n">list</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;(</span><span class="n">count</span><span class="p">);</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">list</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadUInt32</span><span class="p">());</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">list</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 写入字符串列表</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="binaryWriter"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="stringList"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">WriteStringList</span><span class="p">(</span><span class="k">this</span> <span class="n">BinaryWriter</span> <span class="n">binaryWriter</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">stringList</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 格式先写入列表长度，然后依次写入字符串</span>
+            <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">stringList</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">str</span> <span class="k">in</span> <span class="n">stringList</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 写入可序列化类的列表</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;typeparam name="T"&gt;&lt;/typeparam&gt;</span>
+        <span class="c1">/// &lt;param name="binaryWriter"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="list"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="n">WriteList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">BinaryWriter</span> <span class="n">binaryWriter</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">list</span><span class="p">)</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="n">IBinarySerializable</span>
+        <span class="p">{</span>
+            <span class="c1">// 先写入长度</span>
+            <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">list</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">binarySerializable</span> <span class="k">in</span> <span class="n">list</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">binarySerializable</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">binaryWriter</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 读取可序列化类的列表</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;typeparam name="T"&gt;&lt;/typeparam&gt;</span>
+        <span class="c1">/// &lt;param name="binaryReader"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">ReadList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">BinaryReader</span> <span class="n">binaryReader</span><span class="p">)</span> <span class="k">where</span> <span class="n">T</span> <span class="p">:</span> <span class="n">IBinarySerializable</span><span class="p">,</span> <span class="k">new</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 读取长度</span>
+            <span class="kt">var</span> <span class="n">count</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadInt32</span><span class="p">();</span>
+            <span class="n">List</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">list</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">count</span><span class="p">);</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">T</span> <span class="n">t</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">T</span><span class="p">();</span>
+                <span class="n">t</span><span class="p">.</span><span class="nf">Deserialize</span><span class="p">(</span><span class="n">binaryReader</span><span class="p">);</span>
+                <span class="n">list</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">t</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">list</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 读取字符串列表</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="binaryReader"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="nf">ReadStringList</span><span class="p">(</span><span class="k">this</span> <span class="n">BinaryReader</span> <span class="n">binaryReader</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 先读取列表长度，然后依次读取字符串</span>
+            <span class="kt">var</span> <span class="n">count</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadInt32</span><span class="p">();</span>
+            <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">stringList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(</span><span class="n">count</span><span class="p">);</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadString</span><span class="p">();</span>
+                <span class="n">stringList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">stringList</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 写入头信息，默认是需要固定长度的</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="binaryWriter"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="head"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="headLength"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">WriteHead</span><span class="p">(</span><span class="k">this</span> <span class="n">BinaryWriter</span> <span class="n">binaryWriter</span><span class="p">,</span> <span class="kt">string</span> <span class="n">head</span><span class="p">,</span> <span class="kt">int</span> <span class="n">headLength</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">headByte</span> <span class="p">=</span> <span class="nf">StringToByteList</span><span class="p">(</span><span class="n">head</span><span class="p">);</span>
+            <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteByteList</span><span class="p">(</span><span class="n">headByte</span><span class="p">,</span> <span class="n">headLength</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 将字符串转换为 byte 其中字符串添加长度前缀</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="str"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">byte</span><span class="p">[]</span> <span class="nf">StringToByteList</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">strByteList</span> <span class="p">=</span> <span class="n">Utf8</span><span class="p">.</span><span class="nf">GetBytes</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="kt">ushort</span> <span class="n">byteLength</span> <span class="p">=</span> <span class="p">(</span><span class="kt">ushort</span><span class="p">)</span><span class="n">strByteList</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">newLength</span> <span class="p">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">ushort</span><span class="p">)</span> <span class="p">+</span> <span class="n">strByteList</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">newLength</span><span class="p">];</span>
+            <span class="kt">var</span> <span class="n">binaryWriter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryWriter</span><span class="p">(</span><span class="k">new</span> <span class="nf">MemoryStream</span><span class="p">(</span><span class="n">byteList</span><span class="p">));</span>
+            <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">byteLength</span><span class="p">);</span>
+            <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">strByteList</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">byteList</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 写入二进制写入固定长度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="binaryWriter"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="source"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="byteCount"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">WriteByteList</span><span class="p">(</span><span class="k">this</span> <span class="n">BinaryWriter</span> <span class="n">binaryWriter</span><span class="p">,</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">source</span><span class="p">,</span> <span class="kt">int</span> <span class="n">byteCount</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">byteCount</span><span class="p">];</span>
+            <span class="n">Array</span><span class="p">.</span><span class="nf">Copy</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">byteList</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="n">source</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span> <span class="n">byteCount</span><span class="p">));</span>
+
+            <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">byteList</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">byteCount</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">Encoding</span> <span class="n">Utf8</span> <span class="p">=&gt;</span> <span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">;</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 读取固定长度的头</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="binaryReader"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="headLength"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">ReadHead</span><span class="p">(</span><span class="k">this</span> <span class="n">BinaryReader</span> <span class="n">binaryReader</span><span class="p">,</span> <span class="kt">int</span> <span class="n">headLength</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">strByteLength</span> <span class="p">=</span> <span class="p">(</span><span class="kt">ushort</span><span class="p">)</span><span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadInt16</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">strByteList</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadBytes</span><span class="p">(</span><span class="n">strByteLength</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">head</span> <span class="p">=</span> <span class="n">Utf8</span><span class="p">.</span><span class="nf">GetString</span><span class="p">(</span><span class="n">strByteList</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">readLength</span> <span class="p">=</span> <span class="n">headLength</span> <span class="p">-</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">ushort</span><span class="p">)</span> <span class="p">-</span> <span class="n">strByteLength</span><span class="p">;</span>
+            <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadBytes</span><span class="p">(</span><span class="n">readLength</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="n">head</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的读写 Head 也许小伙伴的业务是用不到的，我用这个方法主要是写入版本号</p>
+
+<p>这是单元测试的代码，只是测试主要使用方法，边界没有测试</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">TestClass</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">BinarySerializeTests</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">class</span> <span class="nc">FakeBinarySerialize</span> <span class="p">:</span> <span class="n">IBinarySerializable</span><span class="p">,</span> <span class="n">IEquatable</span><span class="p">&lt;</span><span class="n">FakeBinarySerialize</span><span class="p">&gt;</span>
+        <span class="p">{</span>
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="k">void</span> <span class="nf">Serialize</span><span class="p">(</span><span class="n">BinaryWriter</span> <span class="n">binaryWriter</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">F1</span><span class="p">);</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">F2</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="k">void</span> <span class="nf">Deserialize</span><span class="p">(</span><span class="n">BinaryReader</span> <span class="n">binaryReader</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">F1</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadString</span><span class="p">();</span>
+                <span class="n">F2</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadInt32</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="k">public</span> <span class="kt">string</span> <span class="n">F1</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">public</span> <span class="kt">int</span> <span class="n">F2</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="kt">bool</span> <span class="nf">Equals</span><span class="p">(</span><span class="n">FakeBinarySerialize</span> <span class="n">other</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nf">ReferenceEquals</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nf">ReferenceEquals</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">other</span><span class="p">))</span> <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+                <span class="k">return</span> <span class="n">F1</span> <span class="p">==</span> <span class="n">other</span><span class="p">.</span><span class="n">F1</span> <span class="p">&amp;&amp;</span> <span class="n">F2</span> <span class="p">==</span> <span class="n">other</span><span class="p">.</span><span class="n">F2</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="k">override</span> <span class="kt">bool</span> <span class="nf">Equals</span><span class="p">(</span><span class="kt">object</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nf">ReferenceEquals</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">obj</span><span class="p">))</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nf">ReferenceEquals</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">obj</span><span class="p">))</span> <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">obj</span><span class="p">.</span><span class="nf">GetType</span><span class="p">()</span> <span class="p">!=</span> <span class="k">this</span><span class="p">.</span><span class="nf">GetType</span><span class="p">())</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+                <span class="k">return</span> <span class="nf">Equals</span><span class="p">((</span><span class="n">FakeBinarySerialize</span><span class="p">)</span><span class="n">obj</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="k">override</span> <span class="kt">int</span> <span class="nf">GetHashCode</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="k">unchecked</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="p">((</span><span class="n">F1</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">?</span> <span class="n">F1</span><span class="p">.</span><span class="nf">GetHashCode</span><span class="p">()</span> <span class="p">:</span> <span class="m">0</span><span class="p">)</span> <span class="p">*</span> <span class="m">397</span><span class="p">)</span> <span class="p">^</span> <span class="n">F2</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="n">ContractTestCase</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">WriteUint32List</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="s">"写入uint列表，可以读取列表内容"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="c1">// Arrange</span>
+                <span class="kt">var</span> <span class="n">memoryStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MemoryStream</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">binaryWriter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryWriter</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">fakeBinarySerializeList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">uint</span><span class="p">&gt;();</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="n">fakeBinarySerializeList</span><span class="p">.</span><span class="nf">Add</span><span class="p">((</span><span class="kt">uint</span><span class="p">)</span><span class="n">i</span><span class="p">);</span>
+                <span class="p">}</span>
+
+                <span class="c1">// Action</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteUint32List</span><span class="p">(</span><span class="n">fakeBinarySerializeList</span><span class="p">);</span>
+
+                <span class="c1">// Assert</span>
+                <span class="n">memoryStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">binaryReader</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryReader</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">readList</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadUint32List</span><span class="p">();</span>
+
+                <span class="nf">Equal</span><span class="p">(</span><span class="n">fakeBinarySerializeList</span><span class="p">,</span> <span class="n">readList</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="n">ContractTestCase</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">WriteList</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="s">"写入列表内容，可以读取列表"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="c1">// Arrange</span>
+                <span class="kt">var</span> <span class="n">memoryStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MemoryStream</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">binaryWriter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryWriter</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">fakeBinarySerializeList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">FakeBinarySerialize</span><span class="p">&gt;();</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="n">fakeBinarySerializeList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">FakeBinarySerialize</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">F1</span> <span class="p">=</span> <span class="n">i</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(),</span>
+                        <span class="n">F2</span> <span class="p">=</span> <span class="n">i</span><span class="p">,</span>
+                    <span class="p">});</span>
+                <span class="p">}</span>
+
+                <span class="c1">// Action</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteList</span><span class="p">(</span><span class="n">fakeBinarySerializeList</span><span class="p">);</span>
+
+                <span class="c1">// Assert</span>
+                <span class="n">memoryStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">binaryReader</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryReader</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">readList</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="n">ReadList</span><span class="p">&lt;</span><span class="n">FakeBinarySerialize</span><span class="p">&gt;();</span>
+                <span class="nf">Equal</span><span class="p">(</span><span class="n">fakeBinarySerializeList</span><span class="p">,</span> <span class="n">readList</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="n">Equal</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">a</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">b</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Assert</span><span class="p">.</span><span class="nf">AreEqual</span><span class="p">(</span><span class="n">a</span><span class="p">.</span><span class="n">Count</span><span class="p">,</span> <span class="n">b</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">a</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="nf">AreEqual</span><span class="p">(</span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="n">ContractTestCase</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">WriteStringList</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="s">"写入空字符串列表，可以读取空的列表"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="c1">// Arrange</span>
+                <span class="kt">var</span> <span class="n">memoryStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MemoryStream</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">binaryWriter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryWriter</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">head</span> <span class="p">=</span> <span class="s">"Font Data 1.0.0"</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="m">20</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">test</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span><span class="m">0xF1</span><span class="p">;</span>
+
+                <span class="kt">var</span> <span class="n">stringList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
+
+                <span class="c1">// Action</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteHead</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">test</span><span class="p">);</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteStringList</span><span class="p">(</span><span class="n">stringList</span><span class="p">);</span>
+
+                <span class="c1">// Assert</span>
+
+                <span class="n">memoryStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">binaryReader</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryReader</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadHead</span><span class="p">(</span><span class="n">length</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadByte</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">readList</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadStringList</span><span class="p">();</span>
+
+                <span class="n">Assert</span><span class="p">.</span><span class="nf">AreEqual</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">readList</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+            <span class="p">});</span>
+
+            <span class="s">"写入字符串列表，可以读取写入的值"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="c1">// Arrange</span>
+                <span class="kt">var</span> <span class="n">memoryStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MemoryStream</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">binaryWriter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryWriter</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">head</span> <span class="p">=</span> <span class="s">"Font Data 1.0.0"</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="m">20</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">test</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span><span class="m">0xF1</span><span class="p">;</span>
+
+                <span class="kt">var</span> <span class="n">stringList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;()</span>
+                <span class="p">{</span>
+                    <span class="s">"lindexi"</span><span class="p">,</span><span class="s">"doubi"</span>
+                <span class="p">};</span>
+
+                <span class="c1">// Action</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteHead</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">test</span><span class="p">);</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteStringList</span><span class="p">(</span><span class="n">stringList</span><span class="p">);</span>
+
+                <span class="c1">// Assert</span>
+                <span class="n">memoryStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">binaryReader</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryReader</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadHead</span><span class="p">(</span><span class="n">length</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadByte</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">readList</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadStringList</span><span class="p">();</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="n">ContractTestCase</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">WriteHead</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="s">"尝试写入长度小于指定长度的头，可以写入和读取"</span><span class="p">.</span><span class="nf">Test</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="c1">// Arrange</span>
+                <span class="kt">var</span> <span class="n">memoryStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MemoryStream</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">binaryWriter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryWriter</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">head</span> <span class="p">=</span> <span class="s">"Font Data 1.0.0"</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="m">20</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">test</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span><span class="m">0xF1</span><span class="p">;</span>
+                <span class="c1">// Action</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">WriteHead</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+                <span class="n">binaryWriter</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">test</span><span class="p">);</span>
+
+                <span class="c1">// Assert</span>
+                <span class="n">memoryStream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">binaryReader</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryReader</span><span class="p">(</span><span class="n">memoryStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadHead</span><span class="p">(</span><span class="n">length</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="n">binaryReader</span><span class="p">.</span><span class="nf">ReadByte</span><span class="p">();</span>
+
+                <span class="n">Assert</span><span class="p">.</span><span class="nf">AreEqual</span><span class="p">(</span><span class="n">head</span><span class="p">,</span> <span class="n">str</span><span class="p">);</span>
+                <span class="n">Assert</span><span class="p">.</span><span class="nf">AreEqual</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码需要使用 <a href="github.com/dotnet-campus/CUnit">CUnit</a> 库的支持，才能在单元测试里面使用中文写条件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"MSTestEnhancer"</span> <span class="na">Version=</span><span class="s">"1.6.0"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+:ET

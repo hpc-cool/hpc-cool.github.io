@@ -1,0 +1,128 @@
+I"+7<p>本文主要翻译：<a href="http://visuallylocated.com/post/2015/02/20/Creating-a-WrapPanel-for-your-Windows-Runtime-apps.aspx">http://visuallylocated.com/post/2015/02/20/Creating-a-WrapPanel-for-your-Windows-Runtime-apps.aspx</a>    <a href="http://depblog.weblogs.us/2015/02/18/how-to-add-a-tag-list-into-winrt-universal-apps/">http://depblog.weblogs.us/2015/02/18/how-to-add-a-tag-list-into-winrt-universal-apps/</a><br />
+我们需要给用户很多标签，我们需要使用一个控件，他的长度是变化，可以快速放，这样好像wrapPancel就是我们需要，因为这个我直接写如果看起来不懂，可以看</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p><img src="http://img.blog.csdn.net/20160428154345998" alt="这里写图片描述" /></p>
+
+<p>我们点添加就会添加标签，我们删除标签就很快排版。</p>
+
+<p>我们使用RichBox，这个可以做我们标签</p>
+
+<p>源代码因为作者写的和UWP不一样，我改UWP，放在https://github.com/lindexi/TagList</p>
+
+<p>运行效果</p>
+
+<p><img src="http://img.blog.csdn.net/20160429102218298" alt="这里写图片描述" /></p>
+
+<p>点击按钮
+<img src="http://img.blog.csdn.net/20160429102248655" alt="这里写图片描述" /></p>
+
+<p>删除
+<img src="http://img.blog.csdn.net/20160429102311111" alt="这里写图片描述" /></p>
+
+<p>软件使用，先add
+<img src="http://img.blog.csdn.net/20160429102913148" alt="这里写图片描述" /></p>
+
+<p>跳到让用户选择，这里如果让用户输入，使用有点难，可以使用用户在跳转输入，输入自动变为预设一样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">源</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Tag</span><span class="p">()</span> <span class="p">{</span><span class="n">Id</span> <span class="p">=</span> <span class="s">"id"</span><span class="p">,</span><span class="n">Label</span> <span class="p">=</span> <span class="s">"用户输入"</span><span class="p">});</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160429103328037" alt="这里写图片描述" /></p>
+
+<p>选择标签，选择完成保存</p>
+
+<p><img src="http://img.blog.csdn.net/20160429103355334" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160429103411522" alt="这里写图片描述" /></p>
+
+<p>可以看到首页</p>
+
+<p><img src="http://img.blog.csdn.net/20160429103435514" alt="这里写图片描述" /></p>
+
+<p>标签使用在跳转MainPage</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">NavigationMode</span> <span class="p">==</span> <span class="n">NavigationMode</span><span class="p">.</span><span class="n">Back</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>我们把选择保存</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">General</span><span class="p">.</span><span class="nf">GetInstance</span><span class="p">().</span><span class="n">TagSelection</span>
+</code></pre></div></div>
+
+<p>在<code class="language-plaintext highlighter-rouge">SetTags</code>是本算法的主要</p>
+
+<p>我们搜索全部新加和被删除</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">tagParagraph</span> <span class="p">=</span> <span class="p">(</span><span class="n">Paragraph</span><span class="p">)</span> <span class="p">(</span><span class="k">from</span> <span class="n">paragraph</span> <span class="k">in</span> <span class="n">TagRichTextBlock</span><span class="p">.</span><span class="n">Blocks</span>
+    <span class="k">where</span> <span class="n">paragraph</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="nf">StartsWith</span><span class="p">(</span><span class="s">"Tags"</span><span class="p">)</span>
+    <span class="k">select</span> <span class="n">paragraph</span><span class="p">).</span><span class="nf">FirstOrDefault</span><span class="p">();</span>
+
+<span class="kt">var</span> <span class="n">tagIds</span> <span class="p">=</span> <span class="k">from</span> <span class="n">tag</span> <span class="k">in</span> <span class="n">General</span><span class="p">.</span><span class="nf">GetInstance</span><span class="p">().</span><span class="n">TagSelection</span><span class="p">.</span><span class="n">Tags</span>
+    <span class="k">select</span> <span class="n">tag</span><span class="p">.</span><span class="n">Id</span><span class="p">;</span>
+
+<span class="kt">var</span> <span class="n">buttonsToRemove</span> <span class="p">=</span> <span class="k">from</span> <span class="n">item</span> <span class="k">in</span> <span class="n">tagParagraph</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="n">Cast</span><span class="p">&lt;</span><span class="n">InlineUIContainer</span><span class="p">&gt;()</span>
+    <span class="k">where</span> <span class="p">!</span><span class="n">tagIds</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(((</span><span class="n">Button</span><span class="p">)</span> <span class="n">item</span><span class="p">.</span><span class="n">Child</span><span class="p">).</span><span class="n">Name</span><span class="p">)</span>
+    <span class="k">select</span> <span class="n">item</span><span class="p">;</span>
+
+<span class="k">foreach</span> <span class="p">(</span><span class="n">InlineUIContainer</span> <span class="n">container</span> <span class="k">in</span> <span class="n">buttonsToRemove</span><span class="p">)</span>
+    <span class="n">tagParagraph</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">container</span><span class="p">);</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">buttonIds</span> <span class="p">=</span> <span class="k">from</span> <span class="n">item</span> <span class="k">in</span> <span class="n">tagParagraph</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="n">Cast</span><span class="p">&lt;</span><span class="n">InlineUIContainer</span><span class="p">&gt;()</span>
+                    <span class="k">select</span> <span class="p">((</span><span class="n">Button</span><span class="p">)</span> <span class="n">item</span><span class="p">.</span><span class="n">Child</span><span class="p">).</span><span class="n">Name</span><span class="p">;</span>
+
+                <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Tag</span><span class="p">&gt;</span> <span class="n">tagsToAdd</span> <span class="p">=</span> <span class="k">from</span> <span class="n">item</span> <span class="k">in</span> <span class="n">General</span><span class="p">.</span><span class="nf">GetInstance</span><span class="p">().</span><span class="n">TagSelection</span><span class="p">.</span><span class="n">Tags</span>
+                    <span class="k">where</span> <span class="p">!</span><span class="n">buttonIds</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">Id</span><span class="p">)</span>
+                    <span class="k">select</span> <span class="n">item</span><span class="p">;</span>
+
+                <span class="k">foreach</span> <span class="p">(</span><span class="n">Tag</span> <span class="n">tag</span> <span class="k">in</span> <span class="n">tagsToAdd</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">InlineUIContainer</span> <span class="n">container</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InlineUIContainer</span><span class="p">();</span>
+                    <span class="n">RichTextBlock</span> <span class="n">inlineRichTextBlock</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RichTextBlock</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">IsTextSelectionEnabled</span> <span class="p">=</span> <span class="k">false</span>
+                    <span class="p">};</span>
+                    <span class="n">Paragraph</span> <span class="n">inlineParagraph</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Paragraph</span><span class="p">();</span>
+                    <span class="n">inlineParagraph</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Run</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">Text</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="s">"{0} "</span><span class="p">,</span> <span class="n">tag</span><span class="p">.</span><span class="n">Label</span><span class="p">),</span>
+                        <span class="n">FontSize</span> <span class="p">=</span> <span class="m">14</span>
+                    <span class="p">});</span>
+                    <span class="n">inlineParagraph</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Run</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">Text</span> <span class="p">=</span> <span class="s">"\uE106"</span><span class="p">,</span>
+                        <span class="n">FontFamily</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="s">"Segoe UI Symbol"</span><span class="p">),</span>
+                        <span class="n">FontSize</span> <span class="p">=</span> <span class="m">10</span>
+                    <span class="p">});</span>
+                    <span class="n">inlineRichTextBlock</span><span class="p">.</span><span class="n">Blocks</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">inlineParagraph</span><span class="p">);</span>
+
+                    <span class="n">Button</span> <span class="n">tagButton</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Button</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">Content</span> <span class="p">=</span> <span class="n">inlineRichTextBlock</span><span class="p">,</span>
+                        <span class="n">Style</span> <span class="p">=</span> <span class="p">(</span><span class="n">Style</span><span class="p">)</span> <span class="n">Application</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Resources</span><span class="p">[</span><span class="s">"TagButtonStyle"</span><span class="p">],</span>
+                        <span class="n">Name</span> <span class="p">=</span> <span class="n">tag</span><span class="p">.</span><span class="n">Id</span>
+                    <span class="p">};</span>
+                    <span class="n">tagButton</span><span class="p">.</span><span class="n">Click</span> <span class="p">+=</span> <span class="n">OnTagButtonClicked</span><span class="p">;</span>
+                    <span class="n">container</span><span class="p">.</span><span class="n">Child</span> <span class="p">=</span> <span class="n">tagButton</span><span class="p">;</span>
+
+                    <span class="n">tagParagraph</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">container</span><span class="p">);</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>点击删除按钮，删除id</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">string</span> <span class="n">tagId</span> <span class="p">=</span> <span class="p">((</span><span class="n">Button</span><span class="p">)</span> <span class="n">sender</span><span class="p">).</span><span class="n">Name</span><span class="p">;</span>
+            <span class="n">General</span><span class="p">.</span><span class="nf">GetInstance</span><span class="p">()</span>
+                <span class="p">.</span><span class="n">TagSelection</span><span class="p">.</span><span class="n">Tags</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">General</span><span class="p">.</span><span class="nf">GetInstance</span><span class="p">().</span><span class="n">TagSelection</span><span class="p">.</span><span class="n">Tags</span><span class="p">.</span><span class="nf">Single</span><span class="p">(</span><span class="n">item</span> <span class="p">=&gt;</span> <span class="n">item</span><span class="p">.</span><span class="n">Id</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">tagId</span><span class="p">)));</span>
+            <span class="nf">SetTags</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>源码：https://github.com/Depechie/TagList</p>
+
+:ET

@@ -1,0 +1,95 @@
+I"7<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>如果不知道我说的是哪个，请看下面的图。</p>
+
+<p><img src="http://img.blog.csdn.net/20170103153113813?watermark/3/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbGluZGV4aV9nZA==/font/5a6L5L2T/fontsize/200/fill/I0JBQkFCMA==/dissolve/70/gravity/West" alt="这里写图片描述" /></p>
+
+<p>左边颜色变化的就是我们要修改的图标。</p>
+
+<p>要修改他很简单，我们需要写资源。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;CalendarDatePicker&gt;</span>
+    <span class="nt">&lt;CalendarDatePicker.Resources&gt;</span>
+        <span class="nt">&lt;SolidColorBrush</span> <span class="na">x:Key=</span><span class="s">"CalendarDatePickerCalendarGlyphForeground"</span> <span class="na">Color=</span><span class="s">"CornflowerBlue"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/CalendarDatePicker.Resources&gt;</span>
+<span class="nt">&lt;/CalendarDatePicker&gt;</span>
+</code></pre></div></div>
+
+<p>图标使用的资源被我们在资源重写，于是他就使用我们的资源，这是一个好办法，在堆栈网看到的。</p>
+
+<p>上面的图，其实代码很少</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="nt">&lt;StackPanel&gt;</span>
+   CalendarDatePicker 是一个好用的东西，但是我发现想要修改他右边的那个图标，显示日历的图标颜色，没有这个选项。
+
+<span class="c">&lt;!--more--&gt;</span>
+<span class="c">&lt;!-- CreateTime:2018/2/13 17:23:03 --&gt;</span>
+
+
+<span class="nt">&lt;div</span> <span class="na">id=</span><span class="s">"toc"</span><span class="nt">&gt;&lt;/div&gt;</span>
+
+如果不知道我说的是哪个，请看下面的图。
+
+![这里写图片描述](http://img.blog.csdn.net/20170103153113813?watermark/3/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbGluZGV4aV9nZA==/font/5a6L5L2T/fontsize/200/fill/I0JBQkFCMA==/dissolve/70/gravity/West)
+
+左边颜色变化的就是我们要修改的图标。
+
+要修改他很简单，我们需要写资源。
+
+```xml
+<span class="nt">&lt;CalendarDatePicker&gt;</span>
+    <span class="nt">&lt;CalendarDatePicker.Resources&gt;</span>
+        <span class="nt">&lt;SolidColorBrush</span> <span class="na">x:Key=</span><span class="s">"CalendarDatePickerCalendarGlyphForeground"</span> <span class="na">Color=</span><span class="s">"CornflowerBlue"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/CalendarDatePicker.Resources&gt;</span>
+<span class="nt">&lt;/CalendarDatePicker&gt;</span>
+</code></pre></div></div>
+
+<p>图标使用的资源被我们在资源重写，于是他就使用我们的资源，这是一个好办法，在堆栈网看到的。</p>
+
+<p>上面的图，其实代码很少</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="nt">&lt;StackPanel&gt;</span>
+                <span class="nt">&lt;CalendarDatePicker</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;&lt;/CalendarDatePicker&gt;</span>
+                <span class="nt">&lt;CalendarDatePicker</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;CalendarDatePicker.Resources&gt;</span>
+                        <span class="nt">&lt;SolidColorBrush</span> <span class="na">x:Key=</span><span class="s">"CalendarDatePickerCalendarGlyphForeground"</span> <span class="na">Color=</span><span class="s">"CornflowerBlue"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/CalendarDatePicker.Resources&gt;</span>
+                <span class="nt">&lt;/CalendarDatePicker&gt;</span>
+
+                <span class="nt">&lt;CalendarDatePicker</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;CalendarDatePicker.Resources&gt;</span>
+                        <span class="nt">&lt;SolidColorBrush</span> <span class="na">x:Key=</span><span class="s">"CalendarDatePickerCalendarGlyphForeground"</span> <span class="na">Color=</span><span class="s">"Gray"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/CalendarDatePicker.Resources&gt;</span>
+                <span class="nt">&lt;/CalendarDatePicker&gt;</span>
+
+                <span class="nt">&lt;CalendarDatePicker</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span>
+                                    <span class="na">Foreground=</span><span class="s">"MediumSeaGreen"</span>  <span class="na">Header=</span><span class="s">"前景色"</span> <span class="nt">&gt;</span>
+                   
+                <span class="nt">&lt;/CalendarDatePicker&gt;</span>
+
+                <span class="nt">&lt;CalendarDatePicker</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span>
+                                    <span class="na">Header=</span><span class="s">""</span> <span class="na">PlaceholderText=</span><span class="s">"PlaceholdText"</span> <span class="na">Foreground=</span><span class="s">"Black"</span><span class="nt">&gt;</span>
+
+                <span class="nt">&lt;/CalendarDatePicker&gt;</span>
+            <span class="nt">&lt;/StackPanel&gt;</span>
+</code></pre></div></div>
+
+<p>http://stackoverflow.com/questions/41424379/change-foreground-property-of-calendarglyph-in-calendardatepicker</p>
+
+<p>代码 <a href="https://github.com/lindexi/UWP/tree/master/uwp/src/CalendarDatePickerForeground">https://github.com/lindexi/UWP/tree/master/uwp/src/CalendarDatePickerForeground</a></p>
+
+<p>在上传图片，发现csdn博客可以在图片加水印。下面我就来说下在图片加水印。</p>
+
+<p>发现csdn图片可以加水印，csdn 上传的图片加水印，需要在原先的图片加一句watermark。</p>
+
+<p>我们可以在原先上传的图片，假如地址为<code class="language-plaintext highlighter-rouge">http://img.blog.csdn.net/20170103153113813</code>，我们在最后面加上 <code class="language-plaintext highlighter-rouge">?watermark/[数字3显示水印]/text/[水印base64]/font/5a6L5L2T/fontsize/[字体大小]/fill/[颜色 #HHHHHH base64]/dissolve/70/gravity/[方向 South SouthEast North West  Center  大小写必须是和我们的一样]</code></p>
+
+<p>看起来大概就是<code class="language-plaintext highlighter-rouge">![这里写图片描述](http://img.blog.csdn.net/20170103153113813?watermark/3/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbGluZGV4aV9nZA==/font/5a6L5L2T/fontsize/200/fill/I0JBQkFCMA==/dissolve/70/gravity/West)</code></p>
+
+<p>字体大小在400左右是比较好。</p>
+
+:ET

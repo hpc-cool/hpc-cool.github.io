@@ -1,0 +1,3 @@
+I"�<p>如果使用 Newtonsoft Json 解析字符串，字符串里面有不清真的格式，那么默认的解析将会炸掉。如果想要自己解决字符串中的不清真格式，可以使用传入 JsonSerializerSettings 的方法</p>
+
+:ET

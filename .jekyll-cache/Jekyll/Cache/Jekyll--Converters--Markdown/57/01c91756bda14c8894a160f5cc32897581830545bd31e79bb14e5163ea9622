@@ -1,0 +1,26 @@
+I"�<p>在 csproj 文件或在 NuGet 的 Targets 文件中可以通过 Target 调用 ZipDirectory 任务用来制作压缩包，在构建的时候，可以用这个方法将某个输出文件夹等内容压缩输出</p>
+
+<!--more-->
+
+<!-- CreateTime:4/21/2020 7:50:26 PM -->
+
+<p>使用 ZipDirectory 有两个必要的属性，一个是 DestinationFile 表示输出的 zip 文件的路径，另一个是 SourceDirectory 表示将被压缩的文件夹路径</p>
+
+<p>如果 DestinationFile 文件期望进行覆盖，也就是如果 DestinationFile 路径已经存在，将覆盖写入新的 zip 文件，可以使用 Overwrite 属性</p>
+
+<p>使用方法如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"ZipOutputPath"</span> <span class="na">AfterTargets=</span><span class="s">"Build"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;ZipDirectory</span>
+            <span class="na">SourceDirectory=</span><span class="s">"$(OutputPath)"</span>
+            <span class="na">DestinationFile=</span><span class="s">"$(MSBuildProjectDirectory)\lindexi.zip"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<p>将上面代码放在 csproj 文件，构建将会在 csproj 文件所在文件夹找到创建的文件</p>
+
+<p>本文代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/c55f0a334b5eac0cdd3c12046961af8573f76369/BerjearnearheliCallrachurjallhelur">github</a>欢迎小伙伴访问</p>
+
+<p><a href="https://docs.microsoft.com/en-us/visualstudio/msbuild/zipdirectory-task?view=vs-2019">ZipDirectory Task</a></p>
+
+:ET

@@ -1,0 +1,133 @@
+I"�<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>这篇翻译，如果有不对可以发邮箱</p>
+
+<p>为创建页面，可以通过按钮，TextBox输入，组合框来显示数据，获得用户输入。添加一个控件可以使用三个关键步骤：</p>
+
+<ul>
+  <li>
+    <p>添加一个控件到界面</p>
+  </li>
+  <li>
+    <p>设置控件属性，高度，宽度，颜色</p>
+  </li>
+  <li>
+    <p>添加控件的事件</p>
+  </li>
+</ul>
+
+<h2 id="添加控件">添加控件</h2>
+
+<p>可以使用以下任意方式添加控件</p>
+
+<ul>
+  <li>使用界面直接拖控件，Blend直接在工具箱把控件拖到界面</li>
+  <li><img src="http://i12.tietuku.cn/5af30d67c9536b70.png" alt="" /></li>
+</ul>
+
+<p>点击Button，拖动Button界面
+ <img src="http://i13.tietuku.cn/d1ce83f232b174fb.jpg" alt="" /></p>
+
+<ul>
+  <li>
+    <p>用Xaml编辑<code class="language-plaintext highlighter-rouge">&lt;Button Content="确定"&gt;&lt;/Button&gt;</code></p>
+  </li>
+  <li>
+    <p>代码添加控件</p>
+  </li>
+</ul>
+
+<p>在visual studio可以使用工具箱、Xaml编辑器、设计器，属性窗口</p>
+
+<ul>
+  <li>工具箱</li>
+</ul>
+
+<p><img src="http://i13.tietuku.cn/75399cc4641b063e.png" alt="" /></p>
+
+<ul>
+  <li>Xaml编辑器</li>
+</ul>
+
+<p><img src="http://img.blog.csdn.net/20160323170242683" alt="这里写图片描述" /></p>
+
+<ul>
+  <li>设计器</li>
+</ul>
+
+<p><img src="http://img.blog.csdn.net/20160323170453139" alt="这里写图片描述" /></p>
+
+<ul>
+  <li>属性窗口</li>
+</ul>
+
+<p><img src="http://img.blog.csdn.net/20160323170538139" alt="这里写图片描述" /></p>
+
+<p>工具箱显示很多可以用在软件的控件，可以拖动控件到界面，可以双击控件，控件就会自动添加到软件。</p>
+
+<p>双击TextBox</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;TextBox</span> <span class="na">x:Name=</span><span class="s">"textBox"</span> <span class="na">TextWrapping=</span><span class="s">"Wrap"</span> <span class="na">Text=</span><span class="s">"TextBox"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<h2 id="命名控件">命名控件</h2>
+
+<p>为了在代码改变控件，可以给控件名字，<code class="language-plaintext highlighter-rouge">x:Name</code>后面写控件名称，控件名称不能重复，不能数字开头</p>
+
+<p>可以使用属性来命名控件</p>
+
+<p>点击控件，在属性可以看到
+<img src="http://img.blog.csdn.net/20160323171006786" alt="这里写图片描述" /></p>
+
+<p>在名称写上控件名</p>
+
+<h2 id="设置控件属性">设置控件属性</h2>
+
+<p>可以在属性选择控件属性</p>
+
+<p><img src="http://img.blog.csdn.net/20160323171006786" alt="这里写图片描述" /></p>
+
+<p>可以编辑Xaml写控件</p>
+
+<p><img src="http://img.blog.csdn.net/20160323171135819" alt="这里写图片描述" /></p>
+
+<p>如果你设置了一个你不要，可以重设属性</p>
+
+<p><img src="http://i12.tietuku.cn/54149a3630910083.png" alt="" />
+点击重新设置</p>
+
+<p>设置颜色可以使用下面的颜色表</p>
+
+<p><img src="http://i12.tietuku.cn/8f87d0190a7279e7.png" alt="" /></p>
+
+<p>在Xaml写Visual studio在你按下一个键就会提示</p>
+
+<p><img src="http://i12.tietuku.cn/3ce2d0efe79ef44f.png" alt="" /></p>
+
+<h2 id="控件事件">控件事件</h2>
+
+<p>每个控件都有很多事件，可以使用Xaml，属性创建事件，创建事件的方法是事件处理，参见：https://msdn.microsoft.com/windows/uwp/xaml-platform/events-and-routed-events-overview</p>
+
+<p>创建事件可以在属性</p>
+
+<p><img src="http://i12.tietuku.cn/7ddf9aae007a821a.png" alt="" />
+选择事件，写名称，按回车，就会到cs，事件处理第一个参数是发送者，引用对象，第二个是事件数据</p>
+
+<p>我们创建一个Click</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Button</span> <span class="n">button</span><span class="p">=</span><span class="n">sender</span> <span class="k">as</span> <span class="n">Button</span><span class="p">;</span><span class="c1">//sender 发送者</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<p>如果有给按钮名称，可以在代码</p>
+
+<p><img src="http://i12.tietuku.cn/2cc32155efa5e434.png" alt="" /></p>
+
+<p>原文：https://msdn.microsoft.com/windows/uwp/controls-and-patterns/controls-and-events-intro</p>
+
+:ET

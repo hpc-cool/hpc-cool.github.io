@@ -1,0 +1,111 @@
+I")<p>这是一篇在 2015 翻译的社区问答，内容已经过时</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>开始是一些欢迎，就不翻译</p>
+
+<ul>
+  <li>Question: Is the code already there?</li>
+  <li>
+    <p>Answer: There is some code on that codeplex site, but more will be added after this course.</p>
+  </li>
+  <li>Q：是否已经有代码（xaml解析的代码）？</li>
+  <li>
+    <p>A：现在已有一些代码，不过更多的会在之后发布，http://xaml.codeplex.com</p>
+  </li>
+  <li>Q:we need no VS?</li>
+  <li>
+    <p>A：Yes, you need VS.</p>
+  </li>
+  <li>Q：需要安装visual studio？</li>
+  <li>A:是的，需要安装visual studio 2015</li>
+  <li>
+    <p>PS 现在是 VisualStudio 2019 了</p>
+  </li>
+  <li>Q:Can’t universal apps also be used on the Xbox One platform</li>
+  <li>
+    <p>A:Mike, good point. We announced at BUILD in April that the Universal Windows app model will extend to XBOX ONE, but that is not available yet nor is it covered in this training.</p>
+  </li>
+  <li>Q:是否通用程序可以使用在Xbox平台</li>
+  <li>A:是的，我们4月宣布BUILD可以把通用应用UWA扩展到Xbox，但还没有一个好的教程。</li>
+  <li>
+    <p>PS 现在已经支持了</p>
+  </li>
+  <li>Q:it is free to public any app in the store ?</li>
+  <li>
+    <p>A:To publish an app in the store, you need to sign up for a developer license, which costs $19</p>
+  </li>
+  <li>Q:提交到商店应用是免费的？</li>
+  <li>
+    <p>A:要提交到应用商店，你必须注册成为开发者，注册需要 $19 也就是大概 ￥119</p>
+  </li>
+  <li>Question: ＄19  for a month or year ?</li>
+  <li>
+    <p>Answer: <code class="language-plaintext highlighter-rouge">$19</code> forever.</p>
+  </li>
+  <li>Q:<code class="language-plaintext highlighter-rouge">$19</code>一个月还是一年？</li>
+  <li>A:<code class="language-plaintext highlighter-rouge">$19</code>永久</li>
+  <li>
+    <p>PS 其实你可以在淘宝买一个学生账号注册</p>
+  </li>
+  <li>Q:I know nothing about xaml yet, should I leave or what</li>
+  <li>
+    <p>A:Hamid, stick around! You will learn a lot here, even if you do not know XAML</p>
+  </li>
+  <li>Q:我不知道一点xaml知识，我需要离开还是怎么办</li>
+  <li>A:留下来，在这里你会学到很多东西，即使你不知道xaml</li>
+  <li>
+    <p>PS 问我不知道 xaml 的知识我还能进坑，回答是没错，你还可以进坑，因为在这里有很多坑货带你</p>
+  </li>
+  <li>Q:a good way to backup your code is to use OneDrive</li>
+  <li>
+    <p>A:I agree, all my dev projects reside in OneDrive, but I am also using GitHub &amp; Visual Studio Online (with Git endpoints)</p>
+  </li>
+  <li>Q:是不是使用 OneDrive 备份代码是一个好主意</li>
+  <li>
+    <p>A:我同意,我所有的开发项目位于OneDrive,但是我也使用GitHub &amp; Visual Studio在线(Git端点)</p>
+  </li>
+  <li>Q:Missed the beginning, can you build universal apps with html and javascript？</li>
+  <li>
+    <p>A:Martin, yes, the Universal app model works for HTML &amp; JavaScript too (i.e. WinJS), as well as XAML with either VB, C# or C++</p>
+  </li>
+  <li>Q:开始不是学C#，能够使用 html and javascrip开发UWA应用？</li>
+  <li>
+    <p>A:通用应用适用于HTML和JavaScript(例如WinJS),以及XAML用VB、c#或c++</p>
+  </li>
+  <li>Question: How do you tie an existing phone app to store app? (The names may not be the same)</li>
+  <li>
+    <p>Answer: John, you’ll have to publish an update and reserve the same name for both the Windows Phone and Windows Store version, that will link them</p>
+  </li>
+  <li>Q:你如何把现有的手机应用和商店应用程序联系起来?(可能不是相同的名称)</li>
+  <li>
+    <p>A:约翰,你必须发布一个更新和储备相同的名称为Windows Phone和Windows版本存储联系他们。</p>
+  </li>
+  <li>Question: is there anything that we should download or need for this class besides visual studio</li>
+  <li>
+    <p>Answer: make sure you have Visual Studio 2013 with Update 3. You can use either the Express for Windows version, or Professional and higher</p>
+  </li>
+  <li>Q:我们需要下载什么？除了visual studio提供的环境</li>
+  <li>
+    <p>A:确保你有Visual Studio 2013 with Update 3。您可以使用Express for Windows 的版本</p>
+  </li>
+  <li>Question: Someone has reserved app name I used on the phone so I guess I have to rename the phone app</li>
+  <li>
+    <p>Answer: John, it can happen. Support can sometimes help with naming issues</p>
+  </li>
+  <li>Q:有人的应用名字和我的相同，我必须重命名我的手机应用？</li>
+  <li>
+    <p>A:John,它可能发生。support有时可以帮助命名问题</p>
+  </li>
+  <li>Question: I’m sorry if I my question is inappropriate, but I’ve been trying for a few days to render animated GIF images in a universal app. What is the right way to do it? Thanks in advance!</li>
+  <li>
+    <p>Answer: I recommend you take a look at the Nokia Imaging SDK to work with animated GIFs in Universal apps</p>
+  </li>
+  <li>Q:我很抱歉，如果我，我的问题是不合适的,但我一直很努力了几天，在一个普遍应用呈现动画GIF图像。正确方法是怎么做?先谢谢!</li>
+  <li>A:我建议你在UWA看看诺基亚成像SDK处理动态gif播放
+PS 现在已经可以支持 Gif 播放</li>
+</ul>
+
+:ET

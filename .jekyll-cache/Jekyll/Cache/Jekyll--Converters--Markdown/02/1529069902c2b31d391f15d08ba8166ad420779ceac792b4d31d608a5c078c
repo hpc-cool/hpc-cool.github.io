@@ -1,0 +1,3 @@
+I"�<p>在使用 InkCanvas 的过程，无法直接通过 Pointer 消息拿到书写移动，需要使用 StrokeInput 才能获取到</p>
+
+:ET

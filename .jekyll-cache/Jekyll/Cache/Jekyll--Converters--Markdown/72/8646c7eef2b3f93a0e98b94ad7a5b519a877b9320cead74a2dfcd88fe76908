@@ -1,0 +1,166 @@
+I"F<p>这是在 GitHub 上有小伙伴报的问题，在 WPF 中，不支持调用 BitmapDecoder.Create 方法，传入的 FileStream 是配置了 FileOptions.Asynchronous 选项的文件流。本质原因是 WIC 层不支持，和 WPF 没有关系</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/15 8:54:30 -->
+
+<!-- 标签：WPF，WPF源代码 -->
+<!-- 发布 -->
+
+<p>GitHub 链接： <a href="https://github.com/dotnet/wpf/issues/4355">BitmapDecoder.Create does not handle FileStream with FileOptions.Asynchronous · Issue #4355 · dotnet/wpf</a></p>
+
+<p>现象是传入 BitmapDecoder.Create 的 FileStream 配置了 FileOptions.Asynchronous 选项，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">var</span> <span class="n">fs</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="s">"image.jpg"</span><span class="p">,</span>
+	<span class="n">FileMode</span><span class="p">.</span><span class="n">Open</span><span class="p">,</span>
+	<span class="n">FileAccess</span><span class="p">.</span><span class="n">Read</span><span class="p">,</span>
+	<span class="n">FileShare</span><span class="p">.</span><span class="n">Read</span><span class="p">,</span>
+	<span class="m">4096</span><span class="p">,</span>
+	<span class="n">FileOptions</span><span class="p">.</span><span class="n">Asynchronous</span><span class="p">);</span>
+
+<span class="kt">var</span> <span class="n">decoder</span> <span class="p">=</span> <span class="n">BitmapDecoder</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">fs</span><span class="p">,</span> <span class="n">BitmapCreateOptions</span><span class="p">.</span><span class="n">PreservePixelFormat</span><span class="p">,</span> <span class="n">BitmapCacheOption</span><span class="p">.</span><span class="n">None</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>运行以上代码将会抛出 <code class="language-plaintext highlighter-rouge">ArgumentException</code> 而创建解码器失败</p>
+
+<p>本质原因是 WIC 层不支持 FileStream 配置了 FileOptions.Asynchronous 选项。在 BitmapDecoder.Create 的底层，调用了 <a href="https://docs.microsoft.com/en-us/windows/win32/wic/-wic-codec-iwicimagingfactory-createdecoderfromfilehandle-proxy?WT.mc_id=WD-MVP-5003260">IWICImagingFactory_CreateDecoderFromFileHandle_Proxy function - Win32 apps</a> 方法创建解码器，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="n">BitmapDecoder</span> <span class="nf">Create</span><span class="p">(</span>
+            <span class="n">Stream</span> <span class="n">bitmapStream</span><span class="p">,</span>
+            <span class="n">BitmapCreateOptions</span> <span class="n">createOptions</span><span class="p">,</span>
+            <span class="n">BitmapCacheOption</span> <span class="n">cacheOption</span>
+            <span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 忽略代码</span>
+            <span class="k">return</span> <span class="nf">CreateFromUriOrStream</span><span class="p">(</span>
+                <span class="k">null</span><span class="p">,</span>
+                <span class="k">null</span><span class="p">,</span>
+                <span class="n">bitmapStream</span><span class="p">,</span>
+                <span class="n">createOptions</span><span class="p">,</span>
+                <span class="n">cacheOption</span><span class="p">,</span>
+                <span class="k">null</span><span class="p">,</span>
+                <span class="k">true</span>
+                <span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">internal</span> <span class="k">static</span> <span class="n">BitmapDecoder</span> <span class="nf">CreateFromUriOrStream</span><span class="p">(</span>
+            <span class="n">Uri</span> <span class="n">baseUri</span><span class="p">,</span>
+            <span class="n">Uri</span> <span class="n">uri</span><span class="p">,</span>
+            <span class="n">Stream</span> <span class="n">stream</span><span class="p">,</span>
+            <span class="n">BitmapCreateOptions</span> <span class="n">createOptions</span><span class="p">,</span>
+            <span class="n">BitmapCacheOption</span> <span class="n">cacheOption</span><span class="p">,</span>
+            <span class="n">RequestCachePolicy</span> <span class="n">uriCachePolicy</span><span class="p">,</span>
+            <span class="kt">bool</span> <span class="n">insertInDecoderCache</span>
+            <span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 忽略代码</span>
+                <span class="n">decoderHandle</span> <span class="p">=</span> <span class="n">BitmapDecoder</span><span class="p">.</span><span class="nf">SetupDecoderFromUriOrStream</span><span class="p">(</span>
+                    <span class="n">finalUri</span><span class="p">,</span>
+                    <span class="n">stream</span><span class="p">,</span>
+                    <span class="n">cacheOption</span><span class="p">,</span>
+                    <span class="k">out</span> <span class="n">clsId</span><span class="p">,</span>
+                    <span class="k">out</span> <span class="n">isOriginalWritable</span><span class="p">,</span>
+                    <span class="k">out</span> <span class="n">uriStream</span><span class="p">,</span>
+                    <span class="k">out</span> <span class="n">unmanagedMemoryStream</span><span class="p">,</span>
+                    <span class="k">out</span> <span class="n">safeFilehandle</span>
+                    <span class="p">);</span>
+            <span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+
+        <span class="k">internal</span> <span class="k">static</span> <span class="n">SafeMILHandle</span> <span class="nf">SetupDecoderFromUriOrStream</span><span class="p">(</span>
+            <span class="n">Uri</span> <span class="n">uri</span><span class="p">,</span>
+            <span class="n">Stream</span> <span class="n">stream</span><span class="p">,</span>
+            <span class="n">BitmapCacheOption</span> <span class="n">cacheOption</span><span class="p">,</span>
+            <span class="k">out</span> <span class="n">Guid</span> <span class="n">clsId</span><span class="p">,</span>
+            <span class="k">out</span> <span class="kt">bool</span> <span class="n">isOriginalWritable</span><span class="p">,</span>
+            <span class="k">out</span> <span class="n">Stream</span> <span class="n">uriStream</span><span class="p">,</span>
+            <span class="k">out</span> <span class="n">UnmanagedMemoryStream</span> <span class="n">unmanagedMemoryStream</span><span class="p">,</span>
+            <span class="k">out</span> <span class="n">SafeFileHandle</span> <span class="n">safeFilehandle</span>
+            <span class="p">)</span>
+        <span class="p">{</span>
+                    <span class="k">using</span> <span class="p">(</span><span class="n">FactoryMaker</span> <span class="n">myFactory</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FactoryMaker</span><span class="p">())</span>
+                    <span class="p">{</span>
+                        <span class="n">HRESULT</span><span class="p">.</span><span class="nf">Check</span><span class="p">(</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WICImagingFactory</span><span class="p">.</span><span class="nf">CreateDecoderFromFileHandle</span><span class="p">(</span>
+                            <span class="n">myFactory</span><span class="p">.</span><span class="n">ImagingFactoryPtr</span><span class="p">,</span>
+                            <span class="n">safeFilehandle</span><span class="p">,</span>
+                            <span class="k">ref</span> <span class="n">vendorMicrosoft</span><span class="p">,</span>
+                            <span class="n">metadataFlags</span><span class="p">,</span>
+                            <span class="k">out</span> <span class="n">decoder</span>
+                            <span class="p">));</span>
+                    <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是说最底层调用就是通过 CreateDecoderFromFileHandle 方法创建解码器，而 CreateDecoderFromFileHandle 的定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">WICImagingFactory</span>
+        <span class="p">{</span>
+            <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">DllImport</span><span class="p">.</span><span class="n">WindowsCodecs</span><span class="p">,</span> <span class="n">EntryPoint</span> <span class="p">=</span> <span class="s">"IWICImagingFactory_CreateDecoderFromFileHandle_Proxy"</span><span class="p">)]</span>
+            <span class="k">internal</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="cm">/*HRESULT*/</span> <span class="nf">CreateDecoderFromFileHandle</span><span class="p">(</span>
+                <span class="n">IntPtr</span> <span class="n">pICodecFactory</span><span class="p">,</span>
+                <span class="n">Microsoft</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">SafeHandles</span><span class="p">.</span><span class="n">SafeFileHandle</span>  <span class="cm">/*ULONG_PTR*/</span> <span class="n">hFileHandle</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">Guid</span> <span class="n">guidVendor</span><span class="p">,</span>
+                <span class="n">UInt32</span> <span class="n">metadataFlags</span><span class="p">,</span>
+                <span class="k">out</span> <span class="n">IntPtr</span> <span class="cm">/* IWICBitmapDecoder */</span> <span class="n">ppIDecode</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从以上代码可以看到是在 <code class="language-plaintext highlighter-rouge">WindowsCodecs.dll</code> 也就是 WIC 层的 <code class="language-plaintext highlighter-rouge">IWICImagingFactory_CreateDecoderFromFileHandle_Proxy</code> 抛出失败的</p>
+
+<p>在 FileStream 创建中，如果传入了 FileOptions.Asynchronous 参数，将会在 Windows 下，调用的是 <a href="https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew?WT.mc_id=WD-MVP-5003260">CreateFileW function (fileapi.h) - Win32 apps</a> 方法，在这个方法里面将会设置 <code class="language-plaintext highlighter-rouge">FILE_FLAG_OVERLAPPED</code> 参数。不过我没有从网上找到在设置了 <code class="language-plaintext highlighter-rouge">FILE_FLAG_OVERLAPPED</code> 参数的文件句柄将在 <code class="language-plaintext highlighter-rouge">IWICImagingFactory_CreateDecoderFromFileHandle_Proxy</code> 或 <a href="https://docs.microsoft.com/en-us/windows/win32/api/wincodec/nf-wincodec-iwicimagingfactory-createdecoderfromfilehandle?WT.mc_id=WD-MVP-5003260">IWICImagingFactory::CreateDecoderFromFileHandle</a> 方法不支持的知识</p>
+
+<p>我写了一个简单的 demo 程序，用来测试是否 FileOptions.Asynchronous 参数的文件句柄将会在 WIC 层不支持</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">CheckHResult</span><span class="p">(</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WICCodec</span><span class="p">.</span><span class="nf">CreateImagingFactory</span><span class="p">(</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WICCodec</span><span class="p">.</span><span class="n">WINCODEC_SDK_VERSION</span><span class="p">,</span>
+                <span class="k">out</span> <span class="kt">var</span> <span class="n">pImagingFactory</span><span class="p">));</span>
+
+            <span class="k">using</span> <span class="nn">var</span> <span class="n">fs</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="s">"image.jpg"</span><span class="p">,</span>
+                <span class="n">FileMode</span><span class="p">.</span><span class="n">Open</span><span class="p">,</span>
+                <span class="n">FileAccess</span><span class="p">.</span><span class="n">Read</span><span class="p">,</span>
+                <span class="n">FileShare</span><span class="p">.</span><span class="n">Read</span><span class="p">,</span>
+                <span class="m">4096</span><span class="p">,</span>
+                <span class="n">FileOptions</span><span class="p">.</span><span class="n">Asynchronous</span><span class="p">);</span>
+
+            <span class="n">Guid</span> <span class="n">vendorMicrosoft</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Guid</span><span class="p">(</span><span class="n">MILGuidData</span><span class="p">.</span><span class="n">GUID_VendorMicrosoft</span><span class="p">);</span>
+            <span class="n">UInt32</span> <span class="n">metadataFlags</span> <span class="p">=</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span><span class="n">WICMetadataCacheOptions</span><span class="p">.</span><span class="n">WICMetadataCacheOnDemand</span><span class="p">;</span>
+
+            <span class="nf">CheckHResult</span>
+            <span class="p">(</span>
+                <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WICImagingFactory</span><span class="p">.</span><span class="nf">CreateDecoderFromFileHandle</span>
+                <span class="p">(</span>
+                    <span class="n">pImagingFactory</span><span class="p">,</span>
+                    <span class="n">fs</span><span class="p">.</span><span class="n">SafeFileHandle</span><span class="p">,</span>
+                    <span class="k">ref</span> <span class="n">vendorMicrosoft</span><span class="p">,</span>
+                    <span class="n">metadataFlags</span><span class="p">,</span>
+                    <span class="k">out</span> <span class="kt">var</span> <span class="n">decoder</span>
+                <span class="p">)</span>
+            <span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">CheckHResult</span><span class="p">(</span><span class="kt">int</span> <span class="n">hr</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">hr</span> <span class="p">&lt;</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Exception</span> <span class="n">exceptionForHR</span> <span class="p">=</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">GetExceptionForHR</span><span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="p">(</span><span class="n">IntPtr</span><span class="p">)(-</span><span class="m">1</span><span class="p">));</span>
+
+                <span class="k">throw</span> <span class="n">exceptionForHR</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过以上代码可以看到，如果 FileStream 的创建参数里面加上了 FileOptions.Asynchronous 那么将会在 CreateDecoderFromFileHandle 抛出错误</p>
+
+<p>因此在 WPF 中，调用 BitmapDecoder.Create 方法，传入的带 FileOptions.Asynchronous 的 FileStream 抛出错误，不是 WPF 层的锅，而是 WIC 层不支持。在 GitHub 上报告的作者 <a href="https://github.com/vonzshik">Nikita Kazmin</a> 给了一个我同意的建议是 WPF 在 BitmapDecoder.Create 方法里面应该判断一下，如果传入的 FileStream 是异步的，那么在 WPF 层抛出错误，这样方便开发者了解不能这样使用</p>
+
+<p>我也有另一个想法，如果是 FileStream 是异步的，不如完全读取到内存里面，这样开发者也就可以不关注这部分的逻辑</p>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/78c73fe25229f0b50992102e59c01cd535e60c31/JemlemlacuLemjakarbabo">github</a> 和 <a href="https://gitee.com/lindexi/lindexi_gd/tree/78c73fe25229f0b50992102e59c01cd535e60c31/JemlemlacuLemjakarbabo">gitee</a> 欢迎小伙伴访问</p>
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

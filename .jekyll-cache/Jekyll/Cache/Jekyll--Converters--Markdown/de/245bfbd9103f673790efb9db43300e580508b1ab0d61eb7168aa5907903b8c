@@ -1,0 +1,3 @@
+I"�<p>我在安装 dotnet tool 工具时发现所有的工具都安装失败，全部都提示 Could not find a part of the path 安装失败。我重新安装了 dotnet SDK 也没有用，更新到了3.1.402 版本也没有修复</p>
+
+:ET

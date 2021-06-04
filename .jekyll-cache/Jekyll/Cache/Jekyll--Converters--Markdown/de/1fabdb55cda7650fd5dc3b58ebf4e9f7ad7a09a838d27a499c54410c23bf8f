@@ -1,0 +1,145 @@
+I"vI<p>在 Windows 的平板模式下才能自动在获取键盘输入焦点时弹出屏幕键盘，但是 Windows 的屏幕键盘做的粗糙，有时候不会自动开启屏幕键盘，此时需要使用代码辅助</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/19 14:48:07 -->
+
+<p>如果是非平板模式，以及系统没有检测到触摸，此时不一定能弹出屏幕键盘</p>
+
+<p>在 Win10 版本小于 10.0.14393 时，可以通过启动 TabTip.exe 应用打开屏幕键盘。而在大于等于 10.0.14393 版本需要使用 COM 的方式</p>
+
+<p>先来聊聊如何通过 TabTip.exe 应用打开屏幕键盘</p>
+
+<p>默认的 TabTip.exe 应用将会放在 <code class="language-plaintext highlighter-rouge">Program Files</code> 文件夹下，可以通过如下代码拿到 <code class="language-plaintext highlighter-rouge">Program Files</code> 文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">commonFilesPath</span> <span class="p">=</span> <span class="n">Environment</span><span class="p">.</span><span class="nf">GetFolderPath</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">SpecialFolder</span><span class="p">.</span><span class="n">CommonProgramFiles</span><span class="p">);</span>
+            <span class="c1">//程序集目标平台为X86时，获取到的是x86的Program Files，但TabTip.exe始终在Program Files目录下</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">commonFilesPath</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"Program Files (x86)"</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">commonFilesPath</span> <span class="p">=</span> <span class="n">commonFilesPath</span><span class="p">.</span><span class="nf">Replace</span><span class="p">(</span><span class="s">"Program Files (x86)"</span><span class="p">,</span> <span class="s">"Program Files"</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时拿到应用路径可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">tabTipPath</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">commonFilesPath</span><span class="p">,</span> <span class="s">@"microsoft shared\ink\TabTip.exe"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>启动应用，启动之后需要等待一下，下面代码使用 <code class="language-plaintext highlighter-rouge">Thread.Sleep(50)</code> 等待，请小伙伴根据需要更改时间或更改为 Task.Delay 等。如果没有后续逻辑依赖键盘，那么可以删除 Thread.Sleep 的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">processStartInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ProcessStartInfo</span>
+                <span class="p">{</span>
+                    <span class="n">FileName</span> <span class="p">=</span> <span class="n">tabTipPath</span><span class="p">,</span>
+                    <span class="n">UseShellExecute</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span>
+                    <span class="n">CreateNoWindow</span> <span class="p">=</span> <span class="k">true</span>
+                <span class="p">};</span>
+                <span class="n">Process</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="n">processStartInfo</span><span class="p">);</span>
+                <span class="c1">//第一次系统软键盘启动时候，需要缓冲一下</span>
+                <span class="n">Thread</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="m">50</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>如果是 10.0.14393 Windows 10周年纪念版 版本，可以使用 com 的方式启动，在启动之前，可以先判断一下版本号</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">minWin10Version</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Version</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">14393</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">isNeedCom</span> <span class="p">=</span> <span class="n">Environment</span><span class="p">.</span><span class="n">OSVersion</span><span class="p">.</span><span class="n">Version</span> <span class="p">&gt;=</span> <span class="n">minWin10Version</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>注意，默认的 .NET 程序是不会让你获取 Environment.OSVersion 到 win10 的版本，详细请看 <a href="https://www.cnblogs.com/chihirosan/p/5139078.html">关于C#中Environment.OSVersion判断操作系统及Win10上的问题 - 夏至千秋 - 博客园</a></p>
+
+<p>通过 COM 只有 Toggle 方法，也就是如果原本是没有开启的，调用将会开启。否则将会关闭</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+  <span class="c1">//使用com组件的方式来打开TabTip.exe</span>
+  <span class="kt">var</span> <span class="n">uiHostNoLaunch</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">UIHostNoLaunch</span><span class="p">();</span>
+  <span class="c1">// ReSharper disable once SuspiciousTypeConversion.Global</span>
+  <span class="kt">var</span> <span class="n">tipInvocation</span> <span class="p">=</span> <span class="n">uiHostNoLaunch</span> <span class="k">as</span> <span class="n">ITipInvocation</span><span class="p">;</span>
+  <span class="n">tipInvocation</span><span class="p">?.</span><span class="nf">Toggle</span><span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetDesktopWindow</span><span class="p">());</span>
+  <span class="n">Marshal</span><span class="p">.</span><span class="nf">ReleaseComObject</span><span class="p">(</span><span class="n">uiHostNoLaunch</span><span class="p">);</span>
+
+    <span class="p">[</span><span class="n">ComImport</span><span class="p">,</span> <span class="nf">Guid</span><span class="p">(</span><span class="s">"4ce576fa-83dc-4F88-951c-9d0782b4e376"</span><span class="p">)]</span>
+    <span class="k">class</span> <span class="nc">UIHostNoLaunch</span>
+    <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">ComImport</span><span class="p">,</span> <span class="nf">Guid</span><span class="p">(</span><span class="s">"37c994e7-432b-4834-a2f7-dce1f13b834b"</span><span class="p">)]</span>
+    <span class="p">[</span><span class="nf">InterfaceType</span><span class="p">(</span><span class="n">ComInterfaceType</span><span class="p">.</span><span class="n">InterfaceIsIUnknown</span><span class="p">)]</span>
+    <span class="k">interface</span> <span class="nc">ITipInvocation</span>
+    <span class="p">{</span>
+        <span class="k">void</span> <span class="nf">Toggle</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">false</span><span class="p">)]</span>
+    <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">GetDesktopWindow</span><span class="p">();</span>
+</code></pre></div></div>
+
+<!-- https://stackoverflow.com/a/48545074/6116637 -->
+
+<p>判断屏幕键盘是否开启，在 10.0.14393 Windows 10周年纪念版之前可以采用如下方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">IntPtr</span> <span class="nf">FindTipMainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">FindWindow</span><span class="p">(</span><span class="n">KeyboardWindowClass</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">KeyboardWindowClass</span> <span class="p">=</span> <span class="s">"IPTip_Main_Window"</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">GetIsOpenLegacy</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">touchHwnd</span> <span class="p">=</span> <span class="nf">FindTipMainWindow</span><span class="p">();</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">touchHwnd</span> <span class="p">==</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 这里需要 unchecked 因为返回的是 int 转换为 WindowStyles 需要忽略负号</span>
+            <span class="kt">var</span> <span class="n">style</span> <span class="p">=</span> <span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">WindowStyles</span><span class="p">)</span> <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetWindowLongPtr</span><span class="p">(</span><span class="n">touchHwnd</span><span class="p">,</span>
+                <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Win32</span><span class="p">.</span><span class="n">GetWindowLongFields</span><span class="p">.</span><span class="n">GWL_STYLE</span><span class="p">);</span>
+            <span class="c1">// 如果满足了下面的条件就可以判断显示键盘</span>
+            <span class="c1">// 由于有的系统在键盘不显示时候只是多返回一个WS_DISABLED这个字段。所以加一个它的判断</span>
+            <span class="k">return</span> <span class="n">style</span><span class="p">.</span><span class="nf">HasFlag</span><span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">WindowStyles</span><span class="p">.</span><span class="n">WS_CLIPSIBLINGS</span><span class="p">)</span>
+                   <span class="p">&amp;&amp;</span> <span class="n">style</span><span class="p">.</span><span class="nf">HasFlag</span><span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">WindowStyles</span><span class="p">.</span><span class="n">WS_VISIBLE</span><span class="p">)</span>
+                   <span class="p">&amp;&amp;</span> <span class="n">style</span><span class="p">.</span><span class="nf">HasFlag</span><span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">WindowStyles</span><span class="p">.</span><span class="n">WS_POPUP</span><span class="p">)</span>
+                   <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">style</span><span class="p">.</span><span class="nf">HasFlag</span><span class="p">(</span><span class="n">Win32</span><span class="p">.</span><span class="n">WindowStyles</span><span class="p">.</span><span class="n">WS_DISABLED</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果是 10.0.14393 需要使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">WindowParentClass</span> <span class="p">=</span> <span class="s">"ApplicationFrameWindow"</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">WindowClass</span> <span class="p">=</span> <span class="s">"Windows.UI.Core.CoreWindow"</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">WindowCaption</span> <span class="p">=</span> <span class="s">"Microsoft Text Input Application"</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span><span class="p">?</span> <span class="nf">GetIsOpenKeyboardWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// if there is a top-level window - the keyboard is closed</span>
+            <span class="kt">var</span> <span class="n">wnd</span> <span class="p">=</span> <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">FindWindowEx</span><span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="n">WindowClass</span><span class="p">,</span> <span class="n">WindowCaption</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">wnd</span> <span class="p">!=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">parent</span> <span class="p">=</span> <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">FindWindowEx</span><span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="n">WindowParentClass</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">parent</span> <span class="p">==</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span>
+                <span class="k">return</span> <span class="k">null</span><span class="p">;</span> <span class="c1">// no more windows, keyboard state is unknown</span>
+
+            <span class="c1">// if it's a child of a WindowParentClass1709 window - the keyboard is open</span>
+            <span class="n">wnd</span> <span class="p">=</span> <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">FindWindowEx</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="n">WindowClass</span><span class="p">,</span> <span class="n">WindowCaption</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">wnd</span> <span class="p">!=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span>
+                <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+
+ <span class="c1">// 这是 Win32.User32 的方法</span>
+            <span class="k">public</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">LibraryName</span> <span class="p">=</span> <span class="s">"user32"</span><span class="p">;</span>
+
+            <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">LibraryName</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">Properties</span><span class="p">.</span><span class="n">BuildCharSet</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">FindWindowEx</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwndParent</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">hwndChildAfter</span><span class="p">,</span> <span class="kt">string</span> <span class="n">lpszClass</span><span class="p">,</span>
+                <span class="kt">string</span> <span class="n">lpszWindow</span><span class="p">);</span>
+
+            <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">LibraryName</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">Properties</span><span class="p">.</span><span class="n">BuildCharSet</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">FindWindow</span><span class="p">(</span><span class="kt">string</span> <span class="n">lpClassName</span><span class="p">,</span> <span class="kt">string</span> <span class="n">lpWindowName</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>但是在 10.0.18362 版本，上面判断方法在一些设备上凉凉</p>
+
+:ET

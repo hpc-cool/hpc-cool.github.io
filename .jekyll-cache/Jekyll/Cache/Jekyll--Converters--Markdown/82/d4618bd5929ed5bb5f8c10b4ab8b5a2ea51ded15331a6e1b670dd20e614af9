@@ -1,0 +1,46 @@
+I"�<p>本文告诉大家如果遇到 double 数组转 float 数组千万不要使用 Cast ，一般都使用 select 强转。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/12/25 9:27:46 -->
+
+<!-- 标签：C#,dotnet -->
+
+<p>最近在开发<a href="https://github.com/AvaloniaUI/Avalonia">Avalonia</a> ，有大神告诉我，下面的代码可以这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dashes</span> <span class="p">=</span> <span class="n">pen</span><span class="p">.</span><span class="n">DashStyle</span><span class="p">.</span><span class="n">Dashes</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">x</span><span class="p">).</span><span class="nf">ToArray</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>修改为</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dashes</span> <span class="p">=</span> <span class="n">pen</span><span class="p">.</span><span class="n">DashStyle</span><span class="p">.</span><span class="n">Dashes</span><span class="p">.</span><span class="n">Cast</span><span class="p">&lt;</span><span class="kt">float</span><span class="p">&gt;.</span><span class="nf">ToArray</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><a href="https://github.com/AvaloniaUI/Avalonia/pull/1472">Improve tiny performance</a></p>
+
+<p>但是实际上不能这样写，因为 cast 无法转换 float 和 double 因为不存在一个类同时继承 float 和 double ，所以如果使用这个方法转换，就无法运行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">InvalidCastException</span><span class="p">:</span><span class="err">“</span><span class="n">Unable</span> <span class="n">to</span> <span class="n">cast</span> <span class="kt">object</span> <span class="n">of</span> <span class="n">type</span> <span class="err">'</span><span class="n">System</span><span class="p">.</span><span class="n">Double</span><span class="err">'</span> <span class="n">to</span> <span class="n">type</span> <span class="err">'</span><span class="n">System</span><span class="p">.</span><span class="n">Single</span><span class="err">'</span><span class="p">.</span><span class="err">”</span>
+</code></pre></div></div>
+
+<p>所以建议的方法是使用 select ，在里面强转。</p>
+
+<p>尝试运行下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">List</span><span class="p">&lt;</span><span class="kt">double</span><span class="p">&gt;</span> <span class="n">titHruxvrvaa</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">double</span><span class="p">&gt;()</span>
+            <span class="p">{</span>
+                <span class="m">1d</span><span class="p">,</span>
+                <span class="m">2d</span><span class="p">,</span>
+                <span class="m">3d</span>
+            <span class="p">};</span>
+
+            <span class="kt">var</span> <span class="n">traStqjq</span> <span class="p">=</span> <span class="n">titHruxvrvaa</span><span class="p">.</span><span class="n">Cast</span><span class="p">&lt;</span><span class="kt">float</span><span class="p">&gt;().</span><span class="nf">ToArray</span><span class="p">();</span><span class="c1">//System.InvalidCastException:“Unable to cast object of type 'System.Double' to type 'System.Single'.”</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">traStqjq</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

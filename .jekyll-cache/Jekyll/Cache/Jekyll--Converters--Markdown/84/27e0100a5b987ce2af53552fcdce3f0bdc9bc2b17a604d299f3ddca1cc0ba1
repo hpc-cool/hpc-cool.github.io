@@ -1,0 +1,20 @@
+I"�<p>如果在开发的时候遇到非泛型 类型“IEnumerable”不能与类型参数一起使用，那么就是变量的命名空间没弄对</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:59 -->
+
+<p>在 dotnet 里面有 <code class="language-plaintext highlighter-rouge">System.Collections.IEnumerable</code> 和 <code class="language-plaintext highlighter-rouge">System.Collections.Generic.IEnumerable&lt;&gt;</code> 两个不同的类，带泛型的需要在 <code class="language-plaintext highlighter-rouge">System.Collections.Generic</code> 命名空间找到</p>
+
+<p>如果是写了 <code class="language-plaintext highlighter-rouge">System.Collections.IEnumerable&lt;Foo&gt;</code> 那么请修改代码里面的命名空间 <code class="language-plaintext highlighter-rouge">System.Collections.Generic.IEnumerable&lt;Foo&gt;</code> 就可以通过编译</p>
+
+<p>如果是使用 <code class="language-plaintext highlighter-rouge">IEnumerable&lt;Foo&gt;</code> 提示 不能与类型实参一起使用，那么只需要添加 using 就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>除了 IEnumerable 对于 IEnumerator 也一样，如果遇到非泛型 类型“System.Collections.IEnumerator”不能与类型实参一起使用，那么看代码里面是通过 <code class="language-plaintext highlighter-rouge">System.Collections.IEnumerator&lt;Foo&gt;</code> 还是 <code class="language-plaintext highlighter-rouge">IEnumerator&lt;Foo&gt;</code> 可以选择添加命名空间还是修改</p>
+
+<p><img src="https://i.loli.net/2019/04/14/5cb29f897d199.jpg" alt="" /></p>
+
+:ET

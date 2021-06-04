@@ -1,0 +1,94 @@
+I"><p>微软很久就在做 Blazor 但是我现在才开始创建一个测试项目，我想用 C# 去控制 HTML 界面。小伙伴也许会问现在前端不是烂大街么，为什么还需要 Blazor 来做。可能原因只有一个，就是可以使用 C# 写脚本，代码比较清真</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/20 18:26:25 -->
+
+<!-- csdn -->
+
+<p>用 VisualStudio 创建一个默认的 Blazor 项目，在创建完成之后，可以看到有很多例子文件，这样可以降低入手成本。我是从睡醒3点开始创建项目，同时一边水群，一边看 B 站，然而我在 3 点半左右就做出下图效果，虽然大部分逻辑都不理解</p>
+
+<p><img src="https://i.loli.net/2019/11/09/nD1pvHRa7biPZqT.gif" alt="" /></p>
+
+<p>所以本文不是教程，而是在告诉大家又有一个新坑</p>
+
+<h2 id="路由">路由</h2>
+
+<p>在 Blazor 里面，用页面第一句代码 <code class="language-plaintext highlighter-rouge">@page</code> 说明这个页面的路由，也就是默认首页的是 <code class="language-plaintext highlighter-rouge">/</code> 可以这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">@page</span> <span class="s">"/"</span>
+</code></pre></div></div>
+
+<p>也就是无论页面命名为什么，只需要设置了路由，就能更改默认页面</p>
+
+<h2 id="页面就是字符串">页面就是字符串</h2>
+
+<p>在我用 Blazor 的理解，整个页面除了代码就是字符串，而这个页面可以使用字段变量作为占位符替换。也就是整个页面的显示内容包括样式都是可以使用局部变量替换的，所以本文上面的逻辑就是通过让按钮的样式绑定变量，通过在代码修改变量的方式修改界面</p>
+
+<p>默认有 Counter.razor 页面，在这个页面里面，默认的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">h1</span><span class="p">&gt;</span><span class="n">Counter</span><span class="p">&lt;/</span><span class="n">h1</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="n">p</span><span class="p">&gt;</span><span class="n">Current</span> <span class="n">count</span><span class="p">:</span> <span class="n">@currentCount</span><span class="p">&lt;/</span><span class="n">p</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="n">button</span> <span class="k">class</span><span class="err">="</span><span class="nc">btn</span> <span class="n">btn</span><span class="p">-</span><span class="n">primary</span><span class="s">" @onclick="</span><span class="n">IncrementCount</span><span class="s">"&gt;Click me&lt;/button&gt;
+</span>
+<span class="n">@code</span> 
+<span class="p">{</span>
+
+    <span class="kt">int</span> <span class="n">currentCount</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+
+    <span class="k">void</span> <span class="nf">IncrementCount</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">currentCount</span><span class="p">++;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是在按钮点击时触发 IncrementCount 方法，而在上面有文本绑定 <code class="language-plaintext highlighter-rouge">currentCount</code> 在代码会被修改，此时可以看到点击按钮时将会修改文本的值</p>
+
+<p>现在尝试将按钮的样式也进行绑定，将按钮的字体和 margin 进行绑定</p>
+
+<div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;button</span> <span class="na">class=</span><span class="s">"btn btn-primary"</span> <span class="na">style=</span><span class="s">"
+     font-size: @fontSize; 
+     margin-left: @(marginLeft)px;
+"</span> <span class="err">@</span><span class="na">onclick=</span><span class="s">"IncrementCount"</span><span class="nt">&gt;</span>Click me<span class="nt">&lt;/button&gt;</span>
+</code></pre></div></div>
+
+<p>当然此时需要在 code 里面添加 fontSize 和 marginLeft 的定义。在上面代码，因为需要拼接 xx px 字符串，而 marginLeft 的值和 px 中间没有空格隔开，也就是需要 <code class="language-plaintext highlighter-rouge">margin-left: 10px;</code> 才是需要的值，如果连一起写就是 <code class="language-plaintext highlighter-rouge">margin-left: @marginLeftpx;</code> 也就是无法识别为 <code class="language-plaintext highlighter-rouge">@marginLeft</code> 变量和 <code class="language-plaintext highlighter-rouge">px</code> 还是需要 <code class="language-plaintext highlighter-rouge">@marginLeftpx</code> 变量，此时就可以使用括号</p>
+
+<p>修改代码让点击按钮触发事件，修改按钮样式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">@code</span> 
+<span class="p">{</span>
+    
+	<span class="kt">string</span> <span class="n">fontSize</span> <span class="p">=</span> <span class="s">"large"</span><span class="p">;</span>
+
+	<span class="kt">int</span> <span class="n">marginLeft</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">currentCount</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+
+    <span class="k">void</span> <span class="nf">IncrementCount</span><span class="p">()</span>
+    <span class="p">{</span>
+	   <span class="k">if</span><span class="p">(</span><span class="n">fontSize</span> <span class="p">==</span> <span class="s">"large"</span><span class="p">)</span>
+	   <span class="p">{</span>
+	       <span class="n">fontSize</span> <span class="p">=</span> <span class="s">"initial"</span><span class="p">;</span>
+	   <span class="p">}</span>
+	   <span class="k">else</span>
+	   <span class="p">{</span>
+	       <span class="n">fontSize</span> <span class="p">=</span> <span class="s">"large"</span><span class="p">;</span>
+	   <span class="p">}</span>
+        <span class="n">marginLeft</span><span class="p">++;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就是上文的效果，如果有前端小伙伴协助写界面样式，此时让我来写 C# 业务逻辑，应该是可以快速上手的。这就是 Blazor 的优点</p>
+
+<p>大部分项目都可以忽略性能和并发和流量，所以一些玩具可以使用 Blazor 开发</p>
+
+<p>使用 HTML 写界面对我来说还是不清真，现在有 UNO 项目，这个项目是通过 XAML 写界面的，可以作为 WebAssembly 发布，这个玩具会更清真</p>
+
+<p>微软的技术还是很强，可惜这些技术都不在实处，大概作为玩具还不错。期待这些玩具能真的作为产品级使用</p>
+
+:ET

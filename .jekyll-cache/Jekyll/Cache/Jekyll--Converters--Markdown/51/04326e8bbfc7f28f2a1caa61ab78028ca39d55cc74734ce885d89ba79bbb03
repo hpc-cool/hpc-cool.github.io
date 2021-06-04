@@ -1,0 +1,101 @@
+I"t/<p>经常在应用需要修改光标，显示点击、显示输入，但是有些元素不是系统的，那么如何设置鼠标？
+本文主要：UWP 设置光标，UWP 移动鼠标</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<h2 id="设置光标">设置光标</h2>
+
+<p>需要写一点代码来让程序比较容易看到，什么光标对于什么。</p>
+
+<p>UWP 设置的光标有些看不懂，直接看不知道他是干什么</p>
+
+<p>在xaml写代码：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    
+        <span class="p">&lt;</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"Hand"</span> <span class="n">PointerEntered</span><span class="p">=</span><span class="s">"button_OnPointerEntered"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"Arrow"</span> <span class="n">PointerEntered</span><span class="p">=</span><span class="s">"button_OnPointerEntered"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"Cross"</span> <span class="n">PointerEntered</span><span class="p">=</span><span class="s">"button_OnPointerEntered"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"Help"</span> <span class="n">PointerEntered</span><span class="p">=</span><span class="s">"button_OnPointerEntered"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"Beam"</span> <span class="n">PointerEntered</span><span class="p">=</span><span class="s">"button_OnPointerEntered"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>代码写好了，他可以在鼠标移入TextBlock 进入函数，可以在函数修改UWP 鼠标光标</p>
+
+<p>首先使用<code class="language-plaintext highlighter-rouge">Windows.UI.Xaml.Window.Current.CoreWindow.PointerCursor </code> 设置或获取光标。</p>
+
+<p>需要设置光标需要用<code class="language-plaintext highlighter-rouge">Windows.UI.Core.CoreCursor</code></p>
+
+<p>他有一些比较多用的类型，下面是他们对于代码</p>
+
+<ul>
+  <li>
+    <p>Hand 点击</p>
+  </li>
+  <li>
+    <p>Arrow 正常</p>
+  </li>
+  <li>
+    <p>Cross 十字</p>
+  </li>
+  <li>
+    <p>Help 帮助</p>
+  </li>
+  <li>
+    <p>Wait 等待</p>
+  </li>
+  <li>
+    <p>Beam 输入</p>
+  </li>
+</ul>
+
+<p>于是对应界面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">button_OnPointerEntered</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="p">(</span><span class="n">sender</span> <span class="k">as</span> <span class="n">TextBlock</span><span class="p">)?.</span><span class="n">Text</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+            <span class="kt">uint</span> <span class="n">n</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">str</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">case</span> <span class="s">"Hand"</span><span class="p">:</span>
+                    <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">PointerCursor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="nf">CoreCursor</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">CoreCursorType</span><span class="p">.</span><span class="n">Hand</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="s">"Arrow"</span><span class="p">:</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">PointerCursor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="nf">CoreCursor</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">CoreCursorType</span><span class="p">.</span><span class="n">Arrow</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="s">"Cross"</span><span class="p">:</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">PointerCursor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="nf">CoreCursor</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">CoreCursorType</span><span class="p">.</span><span class="n">Cross</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="s">"Help"</span><span class="p">:</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">PointerCursor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="nf">CoreCursor</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">CoreCursorType</span><span class="p">.</span><span class="n">Help</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="s">"Beam"</span><span class="p">:</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">PointerCursor</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="nf">CoreCursor</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">CoreCursorType</span><span class="p">.</span><span class="n">IBeam</span><span class="p">,</span> <span class="n">n</span><span class="p">);</span> <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+            
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>试试把代码放到工程，可以看到UWP 光标改变。</p>
+
+<p>如果不知道 n 是什么，我可以说，自定义光标就是使用n，但是复杂。</p>
+
+<p>很少会有需要自己做光标。如果需要自己做，请看<a href="https://blogs.msdn.microsoft.com/devfish/2012/08/01/customcursors-in-windows-8-csharp-metro-applications/">自定义光标</a></p>
+
+<h2 id="移动鼠标">移动鼠标</h2>
+
+<p>有时候需要把鼠标移动到一个元素上，UWP 移动鼠标和改变光标一样。</p>
+
+<p>移动鼠标，设置<code class="language-plaintext highlighter-rouge">CoreWindow.PointerPosition</code></p>
+
+<p>在界面放一个按钮，点击他，移动鼠标</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             <span class="kt">var</span> <span class="n">p</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Bounds</span><span class="p">.</span><span class="n">X</span> <span class="p">+</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Bounds</span><span class="p">.</span><span class="n">Width</span> <span class="p">/</span> <span class="m">2</span><span class="p">,</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Bounds</span><span class="p">.</span><span class="n">Y</span> <span class="p">+</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Bounds</span><span class="p">.</span><span class="n">Height</span> <span class="p">/</span> <span class="m">2</span><span class="p">);</span>
+            <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">PointerPosition</span> <span class="p">=</span> <span class="n">p</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>这样移动很简单，移动是屏幕坐标，不是应用坐标，需要对移动加上窗口移动</p>
+
+<p>https://blogs.msdn.microsoft.com/devfish/2012/08/01/customcursors-in-windows-8-csharp-metro-applications/</p>
+
+:ET

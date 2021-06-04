@@ -1,0 +1,245 @@
+I"�i<p>如果在 WPF 使用 StylusPlugIn 同时在同一个界面用多个元素都加上 StylusPlugIn 那么事件触发的顺序将会很乱
+我建议是不要让 StylusPlugIn 有重叠，在没有理解 StylusPlugIn 之前请不要写出让 StylusPlugIn 有重叠的代码。因为可能有小伙伴移动了一个元素就让你的代码的行为和之前写的不一样</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 10:20:41 -->
+
+<!-- csdn -->
+<div id="toc"></div>
+
+<p>如果多个 StylusPlugIn 附加的元素没有重叠，那么所有元素的工作都会符合预期。也就是点到哪个元素，将会触发对应元素的 StylusPlugIn 方法</p>
+
+<p>因为本文比较复杂，主要是很无聊的原理，所以只想了解现象的小伙伴只看下面图片就可以</p>
+
+<p>我将会使用两个不同的框代表不同的元素，红色的框代表的是普通的容器，而蓝色代表附加StylusPlugIn元素</p>
+
+<!-- ![](image/WPF 多个 StylusPlugIn 的事件触发顺序/WPF 多个 StylusPlugIn 的事件触发顺序0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191019103336641" alt="" /></p>
+
+<p>对同容器内两个重叠元素，将会同时触发两个元素的 StylusPlugIn 事件，不同的是在最底层的元素将会在触摸线程触发，而在最上层的元素将会是主线程触发</p>
+
+<!-- ![](image/WPF 多个 StylusPlugIn 的事件触发顺序/WPF 多个 StylusPlugIn 的事件触发顺序1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191019103717547" alt="" /></p>
+
+<p>对同容器内多个重叠元素，将知道最上层和最底层的元素会触发事件，不同的是在最底层的元素将会在触摸线程触发，而在最上层的元素将会是主线程触发</p>
+
+<!-- ![](image/WPF 多个 StylusPlugIn 的事件触发顺序/WPF 多个 StylusPlugIn 的事件触发顺序2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019101910391898" alt="" /></p>
+
+<p>如果是一个附加 StylusPlugIn 的容器，包含一个附加 StylusPlugIn 的元素，那么只有元素会触发在触摸线程触发事件</p>
+
+<!-- ![](image/WPF 多个 StylusPlugIn 的事件触发顺序/WPF 多个 StylusPlugIn 的事件触发顺序3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191019104028762" alt="" /></p>
+
+<p>代码放在 github 建议下载代码测试</p>
+
+<ul>
+  <li><a href="https://github.com/lindexi/lindexi_gd/tree/cab38b1073ee81caa50284ae6ed9920c7f6a275e/HoqawkuwemwajaJalerjanicear">点击查看同容器内两个重叠元素例子</a></li>
+  <li><a href="https://github.com/lindexi/lindexi_gd/tree/20228402e681006a1ec7fa592fe4a18e916812c1/HoqawkuwemwajaJalerjanicear">点击查看同容器内多个重叠元素例子</a></li>
+  <li><a href="https://github.com/lindexi/lindexi_gd/blob/803ed917efcdffbe4ad2655c17e3d399bb0f17c8/HoqawkuwemwajaJalerjanicear/MainWindow.xaml">点击查看容器和包含一个元素例子</a></li>
+</ul>
+
+<p>如果不想了解原理，请关闭页面</p>
+
+<p>在阅读本文之前，请先看<a href="https://blog.lindexi.com/post/WPF-%E9%AB%98%E9%80%9F%E4%B9%A6%E5%86%99-StylusPlugIn-%E5%8E%9F%E7%90%86.html">WPF 高速书写 StylusPlugIn 原理</a></p>
+
+<p>如果多个元素有重叠，那么就需要分为以下不同的重叠方法</p>
+
+<h2 id="同容器内两个重叠元素">同容器内两个重叠元素</h2>
+
+<p>先定义一个自定义控件和一个 StylusPlugIn1 类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">CustomControl</span> <span class="p">:</span> <span class="n">Grid</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">CustomControl</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">White</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">StylusPlugInCollection</span> <span class="n">StylusPlugInCollection</span> <span class="p">=&gt;</span> <span class="n">StylusPlugIns</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">StylusPlugIn1</span> <span class="p">:</span> <span class="n">StylusPlugIn</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">StylusPlugIn1</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStylusDown</span><span class="p">(</span><span class="n">RawStylusInput</span> <span class="n">rawStylusInput</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"</span><span class="p">{</span><span class="n">Name</span><span class="p">}</span><span class="s"> Down 当前线程</span><span class="p">{</span><span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">Name</span><span class="p">}</span><span class="s"> id=</span><span class="p">{</span><span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">ManagedThreadId</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnStylusDown</span><span class="p">(</span><span class="n">rawStylusInput</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">override</span> <span class="kt">string</span> <span class="nf">ToString</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="s">$"</span><span class="p">{</span><span class="n">Name</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在界面创建两个 CustomControl 元素加入到相同一个 Grid 作为元素</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;local:CustomControl</span> <span class="na">x:Name=</span><span class="s">"Control1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;local:CustomControl.StylusPlugInCollection&gt;</span>
+                <span class="nt">&lt;local:StylusPlugIn1</span> <span class="na">Name=</span><span class="s">"Stylus 1"</span><span class="nt">&gt;&lt;/local:StylusPlugIn1&gt;</span>
+            <span class="nt">&lt;/local:CustomControl.StylusPlugInCollection&gt;</span>
+        <span class="nt">&lt;/local:CustomControl&gt;</span>
+        <span class="nt">&lt;local:CustomControl</span> <span class="na">x:Name=</span><span class="s">"Control2"</span> <span class="nt">&gt;</span>
+            <span class="nt">&lt;local:CustomControl.StylusPlugInCollection&gt;</span>
+                <span class="nt">&lt;local:StylusPlugIn1</span> <span class="na">Name=</span><span class="s">"Stylus 2"</span><span class="nt">&gt;&lt;/local:StylusPlugIn1&gt;</span>
+            <span class="nt">&lt;/local:CustomControl.StylusPlugInCollection&gt;</span>
+        <span class="nt">&lt;/local:CustomControl&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>此时尝试触摸一下屏幕，可以看到下面输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Stylus</span> <span class="m">1</span> <span class="n">Down</span> <span class="err">当前线程</span><span class="n">Stylus</span> <span class="n">Input</span> <span class="n">id</span><span class="p">=</span><span class="m">3</span>
+<span class="n">Stylus</span> <span class="m">2</span> <span class="n">Down</span> <span class="err">当前线程</span> <span class="n">id</span><span class="p">=</span><span class="m">1</span>
+</code></pre></div></div>
+
+<p>也就是传入的 <code class="language-plaintext highlighter-rouge">Stylus 1</code> 和 <code class="language-plaintext highlighter-rouge">Stylus 2</code> 都收到了 Down 但是分别是通过不同的线程传入</p>
+
+<p>这里有一点疑惑是为什么 Control2 的界面层级比 Control1 的高，但是为什么反而是 <code class="language-plaintext highlighter-rouge">Stylus 1</code> 先收到按下</p>
+
+<p>在<a href="https://blog.lindexi.com/post/WPF-%E9%AB%98%E9%80%9F%E4%B9%A6%E5%86%99-StylusPlugIn-%E5%8E%9F%E7%90%86.html">WPF 高速书写 StylusPlugIn 原理</a>有说到一点原理，但是在这篇博客我不想在这个方面讲细节，所以将细节放在这篇博客</p>
+
+<p>在 PenContexts.HittestPlugInCollection 方法，将会返回一个 StylusPlugInCollection 用于决定处理 StylusInput 线程的逻辑，而这个方法的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>		<span class="k">private</span> <span class="n">StylusPlugInCollection</span> <span class="nf">HittestPlugInCollection</span><span class="p">(</span><span class="n">Point</span> <span class="n">pt</span><span class="p">)</span>
+		<span class="p">{</span>
+			<span class="k">foreach</span> <span class="p">(</span><span class="n">StylusPlugInCollection</span> <span class="n">stylusPlugInCollection</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="n">_plugInCollectionList</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="k">if</span> <span class="p">(</span><span class="n">stylusPlugInCollection</span><span class="p">.</span><span class="nf">IsHit</span><span class="p">(</span><span class="n">pt</span><span class="p">))</span>
+				<span class="p">{</span>
+					<span class="k">return</span> <span class="n">stylusPlugInCollection</span><span class="p">;</span>
+				<span class="p">}</span>
+			<span class="p">}</span>
+			<span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+		<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的 <code class="language-plaintext highlighter-rouge">_plugInCollectionList</code> 就是全局添加到元素的 StylusPlugInCollection 列表，从上面代码可以看到没有做任何的排序，也就是拿到第一个可以命中的元素就返回。而这个字段的添加是依赖于视觉树添加的顺序，这也就是本文开始告诉大家的，不要做出重叠的原因</p>
+
+<p>关于 <code class="language-plaintext highlighter-rouge">_plugInCollectionList</code> 字段是如何添加的，将会在下文说到，现在回到开始的问题</p>
+
+<p>在触摸线程 StylusInput 线程拿到的 StylusPlugInCollection 是第一个满足条件的，而刚好按照视觉树是 Control1 先添加到视觉树，所以返回的就是第一个元素</p>
+
+<p>在第一个元素返回之后，触发了 Down 就完成了触摸线程的逻辑了。而 Control2 是如何触发的？</p>
+
+<p>请看 Control2 的调用堆栈</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">StylusPlugIns</span><span class="p">.</span><span class="n">StylusPlugInCollection</span><span class="p">.</span><span class="n">FireRawStylusInput</span><span class="p">.</span><span class="nf">AnonymousMethod__0</span><span class="p">()</span>
+ 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">StylusPlugIns</span><span class="p">.</span><span class="n">StylusPlugInCollection</span><span class="p">.</span><span class="nf">ExecuteWithPotentialLock</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Action</span> <span class="n">action</span><span class="p">)</span>
+ 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">StylusPlugIns</span><span class="p">.</span><span class="n">StylusPlugInCollection</span><span class="p">.</span><span class="nf">FireRawStylusInput</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">StylusPlugIns</span><span class="p">.</span><span class="n">RawStylusInput</span> <span class="n">args</span><span class="p">)</span>
+ 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">StylusWisp</span><span class="p">.</span><span class="n">WispLogic</span><span class="p">.</span><span class="nf">VerifyStylusPlugInCollectionTarget</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">RawStylusInputReport</span> <span class="n">rawStylusInputReport</span><span class="p">)</span>
+ 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">StylusWisp</span><span class="p">.</span><span class="n">WispLogic</span><span class="p">.</span><span class="nf">PreNotifyInput</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">NotifyInputEventArgs</span> <span class="n">e</span><span class="p">)</span>
+ 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">InputManager</span><span class="p">.</span><span class="nf">ProcessStagingArea</span><span class="p">()</span>
+ 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">InputManager</span><span class="p">.</span><span class="nf">ProcessInput</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">InputEventArgs</span> <span class="n">input</span><span class="p">)</span>
+ 	<span class="n">PresentationCore</span><span class="p">.</span><span class="n">dll</span><span class="p">!</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">StylusWisp</span><span class="p">.</span><span class="n">WispLogic</span><span class="p">.</span><span class="nf">InputManagerProcessInput</span><span class="p">(</span><span class="kt">object</span> <span class="n">oInput</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>可以从上面堆栈看到这是主线程的调用堆栈，通过上面的输出可以看到这个方法是在主线程触发</p>
+
+<p>在 <a href="https://github.com/dotnet/wpf/blob/ac9d1b7a6b0ee7c44fd2875a1174b820b3940619/src/Microsoft.DotNet.Wpf/src/PresentationCore/System/Windows/Input/Stylus/Wisp/WispLogic.cs#L2620">WispLogic.VerifyStylusPlugInCollectionTarget</a> 方法将调用触摸命中的元素的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">UIElement</span> <span class="n">newTarget</span> <span class="p">=</span> <span class="n">InputElement</span><span class="p">.</span><span class="nf">GetContainingUIElement</span><span class="p">(</span><span class="n">rawStylusInputReport</span><span class="p">.</span><span class="n">StylusDevice</span><span class="p">.</span><span class="n">DirectlyOver</span> <span class="k">as</span> <span class="n">DependencyObject</span><span class="p">)</span> <span class="k">as</span> <span class="n">UIElement</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">newTarget</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">targetPIC</span> <span class="p">=</span> <span class="n">rawStylusInputReport</span><span class="p">.</span><span class="n">PenContext</span><span class="p">.</span><span class="n">Contexts</span><span class="p">.</span><span class="nf">FindPlugInCollection</span><span class="p">(</span><span class="n">newTarget</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在 WPF 开放源代码了，以上代码在 <a href="https://github.com/dotnet/wpf/blob/ac9d1b7a6b0ee7c44fd2875a1174b820b3940619/src/Microsoft.DotNet.Wpf/src/PresentationCore/System/Windows/Input/Stylus/Wisp/WispLogic.cs#L2638">WispLogic.cs#L2638</a> 可以看到在找到 newTarget 的时候将会调用 FindPlugInCollection 方法寻找</p>
+
+<p>而 targetPIC 的定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">// See if we have a plugin for the target of this input.</span>
+            <span class="n">StylusPlugInCollection</span> <span class="n">targetPIC</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>也就是在当前命中的是元素，同时在这个元素可以找到 StylusPlugInCollection 那么将给这个变量赋值</p>
+
+<p>调用代码请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>               <span class="c1">// Now fire RawStylusInput if needed to the right plugincollection.</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">sendRawStylusInput</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// We are on the pen thread, just call directly.</span>
+                    <span class="n">targetPIC</span><span class="p">.</span><span class="nf">FireRawStylusInput</span><span class="p">(</span><span class="n">rawStylusInputReport</span><span class="p">.</span><span class="n">RawStylusInput</span><span class="p">);</span>
+                    <span class="n">updateEventPoints</span> <span class="p">=</span> <span class="p">(</span><span class="n">updateEventPoints</span> <span class="p">||</span> <span class="n">rawStylusInputReport</span><span class="p">.</span><span class="n">RawStylusInput</span><span class="p">.</span><span class="n">StylusPointsModified</span><span class="p">);</span>
+
+                    <span class="c1">// Indicate we've used a stylus plugin</span>
+                    <span class="n">Statistics</span><span class="p">.</span><span class="n">FeaturesUsed</span> <span class="p">|=</span> <span class="n">StylusTraceLogger</span><span class="p">.</span><span class="n">FeatureFlags</span><span class="p">.</span><span class="n">StylusPluginsUsed</span><span class="p">;</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>所以将会看到有 <code class="language-plaintext highlighter-rouge">Stylus 1</code> 和 <code class="language-plaintext highlighter-rouge">Stylus 2</code> 的 Down 都被调用，但是不同的是 <code class="language-plaintext highlighter-rouge">Stylus 2</code> 是在主线程调用</p>
+
+<h2 id="同容器内多个重叠元素">同容器内多个重叠元素</h2>
+
+<p>在上面告诉大家同容器内两个重叠元素将会都触发事件</p>
+
+<p>但是千万不要认为多个重叠的元素都会被触发，其实只有最先加入视觉树的元素和命中到的元素会触发，如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="nt">&lt;local:CustomControl</span> <span class="na">x:Name=</span><span class="s">"Control1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;local:CustomControl.StylusPlugInCollection&gt;</span>
+                <span class="nt">&lt;local:StylusPlugIn1</span> <span class="na">Name=</span><span class="s">"Stylus 1"</span><span class="nt">&gt;&lt;/local:StylusPlugIn1&gt;</span>
+            <span class="nt">&lt;/local:CustomControl.StylusPlugInCollection&gt;</span>
+        <span class="nt">&lt;/local:CustomControl&gt;</span>
+        <span class="nt">&lt;local:CustomControl</span> <span class="na">x:Name=</span><span class="s">"Control2"</span> <span class="nt">&gt;</span>
+            <span class="nt">&lt;local:CustomControl.StylusPlugInCollection&gt;</span>
+                <span class="nt">&lt;local:StylusPlugIn1</span> <span class="na">Name=</span><span class="s">"Stylus 2"</span><span class="nt">&gt;&lt;/local:StylusPlugIn1&gt;</span>
+            <span class="nt">&lt;/local:CustomControl.StylusPlugInCollection&gt;</span>
+        <span class="nt">&lt;/local:CustomControl&gt;</span>
+        <span class="nt">&lt;local:CustomControl</span> <span class="na">x:Name=</span><span class="s">"Control3"</span> <span class="nt">&gt;</span>
+            <span class="nt">&lt;local:CustomControl.StylusPlugInCollection&gt;</span>
+                <span class="nt">&lt;local:StylusPlugIn1</span> <span class="na">Name=</span><span class="s">"Stylus 3"</span><span class="nt">&gt;&lt;/local:StylusPlugIn1&gt;</span>
+            <span class="nt">&lt;/local:CustomControl.StylusPlugInCollection&gt;</span>
+        <span class="nt">&lt;/local:CustomControl&gt;</span>
+</code></pre></div></div>
+
+<p>如果理解了上面的逻辑可以知道，第一个元素将会在触摸线程调用，而最后一个元素在主线程命中测试找到也会被调用，那么第二个元素呢</p>
+
+<p>其实第二个元素因为没有在主线程命中测试找到，所以就不会被调用，上面代码在触摸屏幕可以看到下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Stylus</span> <span class="m">1</span> <span class="n">Down</span> <span class="err">当前线程</span><span class="n">Stylus</span> <span class="n">Input</span> <span class="n">id</span><span class="p">=</span><span class="m">3</span>
+<span class="n">Stylus</span> <span class="m">3</span> <span class="n">Down</span> <span class="err">当前线程</span> <span class="n">id</span><span class="p">=</span><span class="m">1</span>
+</code></pre></div></div>
+
+<h2 id="容器和包含一个元素">容器和包含一个元素</h2>
+
+<p>如果容器本身就附加了 StylusPlugIn 同时容器里面也包含一个附加的元素，如下面代码，那么触发效果是什么</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;local:CustomControl</span> <span class="na">x:Name=</span><span class="s">"Control1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;local:CustomControl.StylusPlugInCollection&gt;</span>
+                <span class="nt">&lt;local:StylusPlugIn1</span> <span class="na">Name=</span><span class="s">"Stylus 1"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;/local:CustomControl.StylusPlugInCollection&gt;</span>
+            <span class="nt">&lt;local:CustomControl.Children&gt;</span>
+                <span class="nt">&lt;local:CustomControl</span> <span class="na">x:Name=</span><span class="s">"Control2"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;local:CustomControl.StylusPlugInCollection&gt;</span>
+                        <span class="nt">&lt;local:StylusPlugIn1</span> <span class="na">Name=</span><span class="s">"Stylus 2"</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/local:CustomControl.StylusPlugInCollection&gt;</span>
+                <span class="nt">&lt;/local:CustomControl&gt;</span>
+            <span class="nt">&lt;/local:CustomControl.Children&gt;</span>
+        <span class="nt">&lt;/local:CustomControl&gt;</span>
+</code></pre></div></div>
+
+<p>通过运行代码可以看到输出的只有 Control2 事件</p>
+
+<p>在 <code class="language-plaintext highlighter-rouge">PenContexts.AddStylusPlugInCollection</code> 方法会将当前元素的 StylusPlugIn 添加到全局的字段，而添加的时候会调用 <code class="language-plaintext highlighter-rouge">PenContexts.FindZOrderIndex</code> 方法，在这个方法将会决定添加的 StylusPlugIn 所在字段的顺序，因为在通过命中测试获取点击到的元素是按照字段列表的顺序获取，返回第一个满足的元素。在字段列表的顺序将会决定哪个元素响应</p>
+
+<p>在 FindZOrderIndex 将会让 Control2 添加到最前，也就是在触摸线程命中测试将会返回 Control2 触发，而在主线程命中测试也是返回第二个控件</p>
+
+<p>所以第一个控件没有被触发事件</p>
+
+:ET

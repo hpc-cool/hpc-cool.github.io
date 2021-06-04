@@ -1,0 +1,114 @@
+I"u%<p>win10 可以全屏软件或窗口，窗口有一般、最小化、最大化。我们有新的API设置我们软件是全屏，是窗口。我们可以使用<code class="language-plaintext highlighter-rouge">ApplicationView</code>让我们软件全屏或取消。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/6/17 17:51:19 -->
+
+<div id="toc"></div>
+
+<p>下面是一个简单的例子，判断我们软件是不是全屏，如果是，就不全屏，代码在一个 ToggleButton 的点击</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ApplicationView</span> <span class="n">view</span> <span class="p">=</span> <span class="n">ApplicationView</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">();</span>
+
+<span class="kt">bool</span> <span class="n">isInFullScreenMode</span> <span class="p">=</span> <span class="n">view</span><span class="p">.</span><span class="n">IsFullScreenMode</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">isInFullScreenMode</span><span class="p">)</span>  
+<span class="p">{</span>
+    <span class="n">view</span><span class="p">.</span><span class="nf">ExitFullScreenMode</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="k">else</span>  
+<span class="p">{</span>
+    <span class="n">view</span><span class="p">.</span><span class="nf">TryEnterFullScreenMode</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">IsFullScreenMode</code>为true，现在应用全屏</p>
+
+<p><code class="language-plaintext highlighter-rouge">ExitFullScreenMode</code>退出全屏</p>
+
+<p><code class="language-plaintext highlighter-rouge">TryEnterFullScreenMode</code>进入全屏，进入全屏成功true</p>
+
+<p>如果窗口改变需要知道，可以注册<code class="language-plaintext highlighter-rouge">Window.Current.SizeChanged</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">IsFullScreenModeTrigger</span> <span class="p">:</span> <span class="n">StateTriggerBase</span>  
+<span class="p">{</span>
+    <span class="k">public</span> <span class="nf">IsFullScreenModeTrigger</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">ApplicationView</span> <span class="n">view</span> <span class="p">=</span> <span class="n">ApplicationView</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">();</span>
+
+        <span class="nf">SetActive</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">IsFullScreenMode</span><span class="p">);</span>
+
+        <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">SizeChanged</span> <span class="p">+=</span> <span class="n">CurrentWindow_SizeChanged</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">CurrentWindow_SizeChanged</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">WindowSizeChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">ApplicationView</span> <span class="n">view</span> <span class="p">=</span> <span class="n">ApplicationView</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">();</span>
+
+        <span class="nf">SetActive</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="n">IsFullScreenMode</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Grid</span> <span class="na">Background=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="nt">&gt;</span>  
+    <span class="nt">&lt;VisualStateManager.VisualStateGroups&gt;</span>
+        <span class="nt">&lt;VisualStateGroup&gt;</span>
+            <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"InFullScreen"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;VisualState.StateTriggers&gt;</span>
+                    <span class="nt">&lt;local:IsFullScreenModeTrigger</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/VisualState.StateTriggers&gt;</span>
+                <span class="nt">&lt;VisualState.Setters&gt;</span>
+                    <span class="nt">&lt;Setter</span> <span class="na">Target=</span><span class="s">"IsFullScreenText.Text"</span> <span class="na">Value=</span><span class="s">"In full screen mode"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/VisualState.Setters&gt;</span>
+            <span class="nt">&lt;/VisualState&gt;</span>
+        <span class="nt">&lt;/VisualStateGroup&gt;</span>
+    <span class="nt">&lt;/VisualStateManager.VisualStateGroups&gt;</span>
+    <span class="nt">&lt;StackPanel</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Button</span> <span class="na">Click=</span><span class="s">"Button_Click"</span> 
+                <span class="na">Content=</span><span class="s">"Toggle full screen"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+        <span class="nt">&lt;TextBlock</span> <span class="na">x:Name=</span><span class="s">"IsFullScreenText"</span> 
+                    <span class="na">FontSize=</span><span class="s">"72"</span> 
+                    <span class="na">TextWrapping=</span><span class="s">"Wrap"</span> 
+                    <span class="na">Text=</span><span class="s">"Not in full screen mode"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/StackPanel&gt;</span>
+<span class="nt">&lt;/Grid&gt;</span>  
+</code></pre></div></div>
+
+<p>在我们应用变为全屏，textblock就会显示 <code class="language-plaintext highlighter-rouge">In full screen mode</code></p>
+
+<p>我们可以设置<code class="language-plaintext highlighter-rouge">PreferredLaunchWindowingMode</code>，在我们应用打开设置窗口大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ApplicationView</span><span class="p">.</span><span class="n">PreferredLaunchWindowingMode</span> <span class="p">=</span> <span class="n">ApplicationViewWindowingMode</span><span class="p">.</span><span class="n">FullScreen</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>ApplicationViewWindowingMode可以<code class="language-plaintext highlighter-rouge">Auto</code> ,<code class="language-plaintext highlighter-rouge">PreferredLaunchViewSize</code>设置窗口和<code class="language-plaintext highlighter-rouge">ApplicationView.PreferredLaunchViewSize</code>，如果没有设置<code class="language-plaintext highlighter-rouge">ApplicationView.PreferredLaunchViewSize</code>会使用上次关闭窗口， 如<code class="language-plaintext highlighter-rouge">FullScreen</code></p>
+
+<p>win10有很简单的API可以应用全屏，在电脑，我们经常用窗口，手机经常使用全屏。</p>
+
+<p>参见：http://igrali.com/2015/06/21/full-screen-mode-in-windows-10-universal-apps/</p>
+
+<!-- 对于窗口大小，参见：win10_uwp_she_zhi_qi_dong_chuang_kou_da_xiao_huo_q.md -->
+
+<h2 id="vb-全屏">VB 全屏</h2>
+
+<p>在点击按钮的时候设置 UWP 窗口在原来全屏的时候变为窗口显示，在窗口显示变为全屏</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">Sub</span> <span class="nf">FullScreenButton</span><span class="p">()</span> <span class="n">Handles</span> <span class="n">Button</span><span class="p">.</span><span class="n">Click</span>
+        <span class="n">Dim</span> <span class="n">isFullScreen</span> <span class="p">=</span> <span class="n">ApplicationView</span><span class="p">.</span><span class="n">GetForCurrentView</span><span class="p">.</span><span class="n">IsFullScreenMode</span>
+
+        <span class="n">If</span> <span class="n">isFullScreen</span> <span class="n">Then</span>
+            <span class="n">ApplicationView</span><span class="p">.</span><span class="n">GetForCurrentView</span><span class="p">.</span><span class="nf">ExitFullScreenMode</span><span class="p">()</span>
+        <span class="n">Else</span>
+            <span class="n">ApplicationView</span><span class="p">.</span><span class="n">GetForCurrentView</span><span class="p">.</span><span class="nf">TryEnterFullScreenMode</span><span class="p">()</span>
+        <span class="n">End</span> <span class="n">If</span>
+    <span class="n">End</span> <span class="n">Sub</span>
+</code></pre></div></div>
+
+<h2 id="c-全屏">C++ 全屏</h2>
+
+<script src="https://gist.github.com/gyakoo/cfef3ca0403d26a082afc8c055240082.js"></script>
+
+<p>参见：https://gist.github.com/gyakoo/cfef3ca0403d26a082afc8c055240082</p>
+
+:ET

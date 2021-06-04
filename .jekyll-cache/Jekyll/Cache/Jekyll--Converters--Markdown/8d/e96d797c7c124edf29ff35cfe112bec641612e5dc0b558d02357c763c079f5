@@ -1,0 +1,45 @@
+I"<p>本文告诉大家如何在 ListView 或 ListBox 使用 WrapPanel 让里面的控件自动换行</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/2/11 8:55:31 -->
+
+<!-- csdn -->
+
+<p>在 WPF 可以通过修改 ItemsPanel 设置使用不同的 ItemsPanel 如 StackPanel 等</p>
+
+<p>可以通过使用 WrapPanel 让控件，如果宽度在 ListView 或 ListBox 之外就换行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">WrapPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;&lt;/</span><span class="n">WrapPanel</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>如果现在就运行代码，看到所有的控件都放在水平，没有在 ListView 自动换行</p>
+
+<p>因为没有设置 ListView 不能水平移动，在 ListView 的宽度是无限，设置 ListView 的框架就是他的可见宽度可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ScrollViewer</span><span class="p">.</span><span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"Disabled"</span>
+</code></pre></div></div>
+
+<p>现在的 ListView 看起来大概是下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">ListView</span> <span class="n">ScrollViewer</span><span class="p">.</span><span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"Disabled"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">WrapPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+  <span class="p">...</span>
+<span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 列表自动换行/WPF 列表自动换行0.png) -->
+
+<p><img src="https://i.loli.net/2019/02/09/5c5ec21f5336b.png" alt="" /></p>
+
+<p><a href="https://lindexi.gitee.io/post/win10-UWP-ListView.html">win10 UWP ListView</a></p>
+
+:ET

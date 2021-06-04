@@ -1,0 +1,159 @@
+I"�1<p>本文告诉大家如何在 MSBuild 里使用 Copy 复制文件</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/1/19 14:56:19 -->
+
+<!-- 标签：Roslyn,MSBuild,编译器 -->
+
+<p>需要知道 Rosyln 是 MSBuild 的 dotnet core 版本。</p>
+
+<p>在 MSBuild 里可以使用很多命令，本文告诉大家如何使用 Copy 这个 Task 来复制文件</p>
+
+<p>在开始本文之前，希望大家已经知道了一些关于 csproj 文件格式，如果还是不知道，请看<a href="https://walterlv.github.io/post/understand-the-csproj.html">理解 C# 项目 csproj 文件格式的本质和编译流程 - walterlv</a></p>
+
+<p>最简单的复制命令请看代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Copy</span> <span class="na">SourceFiles=</span><span class="s">"lindexi.txt"</span> <span class="na">DestinationFolder=</span><span class="s">"LetirNuhe\"</span> <span class="nt">&gt;&lt;/Copy&gt;</span>
+</code></pre></div></div>
+
+<p>需要注意，不要把 Copy 直接写在 Project 下，如下面的代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Project Sdk="Microsoft.NET.Sdk"&gt;
+     &lt;!-- 忽略代码 --&gt;
+   &lt;Copy SourceFiles="lindexi.txt" DestinationFolder="LetirNuhe\" &gt;&lt;/Copy&gt;
+&lt;/Project&gt;
+
+</code></pre></div></div>
+
+<p>就会出现下面异常</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">D</span><span class="p">:</span><span class="err">\林德熙\代码\测试代码\</span><span class="n">CemfeetoQewasXaiki</span><span class="err">\</span><span class="n">CemfeetoQewasXaiki</span><span class="p">.</span><span class="n">csproj</span> <span class="p">:</span> <span class="n">error</span>  <span class="p">:</span> <span class="err">无法识别元素</span> <span class="p">&lt;</span><span class="n">Project</span><span class="p">&gt;</span> <span class="err">下面的元素</span> <span class="p">&lt;</span><span class="n">Copy</span><span class="p">&gt;</span><span class="err">。</span>  <span class="n">D</span><span class="p">:</span><span class="err">\林德熙\代码\测试代码\</span><span class="n">CemfeetoQewasXaiki</span>
+</code></pre></div></div>
+
+<p>为了运行 Copy 需要使用下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+  &lt;Target Name="Copy" BeforeTargets="CoreCompile"&gt;
+    &lt;Copy SourceFiles="LekeexelSurgooHerkassayyayTowjome.txt" DestinationFolder="LetirNuhe\"&gt;&lt;/Copy&gt;
+  &lt;/Target&gt;
+</code></pre></div></div>
+
+<p>需要知道 Target 需要给 Name 并且告诉他在什么时候运行，这里使用 BeforeTargets 告诉在开始编译前，也就是复制的文件会被编译。</p>
+
+<p>对于复制资源文件或需要编译的资源，就设置 BeforeTargets 在编译前，如果是不需要进行编译的文件，如 dll 就可以设置在编译后运行。</p>
+
+<p>重新生成项目，可以看到文件夹存在文件</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018710103796940.jpg" alt="" /></p>
+
+<p>如果刚才没有创建 文件，复制时找不到文件，就会出现在重新编译出现无法编译</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">error</span> <span class="n">MSB3030</span><span class="p">:</span> <span class="err">无法复制文件“</span><span class="n">lindexi</span><span class="p">.</span><span class="n">txt</span><span class="err">”，原因是找不到该文件</span>
+</code></pre></div></div>
+
+<p>复制有多个方式，下面让我来一个个和大家说</p>
+
+<h2 id="文件到文件">文件到文件</h2>
+
+<p>第一个方法是最简单的，复制文件到文件</p>
+
+<p>例如我需要复制 lindiexi.txt 到 <code class="language-plaintext highlighter-rouge">LetirNuhe\lindexi</code> ，可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Target</span> <span class="n">Name</span><span class="p">=</span><span class="s">"Copy"</span> <span class="n">BeforeTargets</span><span class="p">=</span><span class="s">"CoreCompile"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Copy</span> <span class="n">SourceFiles</span><span class="p">=</span><span class="s">"lindexi.txt"</span> <span class="n">DestinationFiles</span><span class="p">=</span><span class="s">"LetirNuhe\lindexi.txt"</span><span class="p">&gt;&lt;/</span><span class="n">Copy</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Target</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>那么如果需要复制多个文件到多个文件？</p>
+
+<p>可以看到 SourceFiles 是可以输入多个文件，只需要使用<code class="language-plaintext highlighter-rouge">;</code>作为多个文件</p>
+
+<p>下面复制 <code class="language-plaintext highlighter-rouge">lindexi.txt</code> 和 <code class="language-plaintext highlighter-rouge">lindexi.gitee.io.txt</code> 到 <code class="language-plaintext highlighter-rouge">LetirNuhe</code> 文件夹下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;Target Name="Copy" BeforeTargets="CoreCompile"&gt;
+    &lt;Copy SourceFiles="lindexi.txt;lindexi.gitee.io.txt" DestinationFiles="LetirNuhe\lindexi.txt;LetirNuhe\lindexi.gitee.io.txt"&gt;&lt;/Copy&gt;
+  &lt;/Target&gt;
+</code></pre></div></div>
+
+<p>这里的文件是对应的，也就是第一个文件是 <code class="language-plaintext highlighter-rouge">lindexi.txt</code>在 DestinationFiles 也需要写第一个文件是<code class="language-plaintext highlighter-rouge">lindexi.txt</code>的，如果写为<code class="language-plaintext highlighter-rouge">lindexi2.txt</code> 会自动把 <code class="language-plaintext highlighter-rouge">lindexi.txt</code> 复制并且修改名字。第一个文件对应 DestinationFiles 写的第一个文件，也就是项对应。</p>
+
+<p>因为从文件复制到文件的代码太多了，如果只是需要把文件都放在相同的文件夹，可以使用下面的方法</p>
+
+<h2 id="文件到文件夹">文件到文件夹</h2>
+
+<p>如果需要把文件都复制到相同的文件夹，可以使用下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;Target Name="Copy" BeforeTargets="CoreCompile"&gt;
+    &lt;Copy SourceFiles="lindexi.txt;lindexi.gitee.io.txt" DestinationFolder="LetirNuhe\"&gt;&lt;/Copy&gt;
+  &lt;/Target&gt;
+</code></pre></div></div>
+
+<p>使用 DestinationFolder 指定文件夹，在文件夹不存在的时候会自动创建，刚才的代码也是。</p>
+
+<h2 id="文件列表到文件夹">文件列表到文件夹</h2>
+
+<p>实际上刚才是写 SourceFiles ，但是实际这样写无法使用通配，也就是<code class="language-plaintext highlighter-rouge">*.txt</code>的方法，如果需要使用就需要用文件列表</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;Txt</span> <span class="na">Include=</span><span class="s">"*.txt"</span><span class="nt">&gt;&lt;/Txt&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+
+  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"Copy"</span> <span class="na">BeforeTargets=</span><span class="s">"CoreCompile"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Copy</span> <span class="na">SourceFiles=</span><span class="s">"@(Txt)"</span> <span class="na">DestinationFolder=</span><span class="s">"LetirNuhe\"</span><span class="nt">&gt;&lt;/Copy&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<p>多个文件的列表是在 ItemGroup 里添加 一个新的标签，这个标签是可以自己定义名字的，我这里定义了 Txt ，让他包含了 <code class="language-plaintext highlighter-rouge">*.txt</code> ，现在就可以在 SourceFiles 使用。使用数组的方法是 <code class="language-plaintext highlighter-rouge">@(Txt)</code> ，通过 @ 和 标签名就可以拿到标签的文件。如果这时输出<code class="language-plaintext highlighter-rouge">@(Txt)</code> 会看到下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xx</span><span class="err">\</span><span class="n">lindexi</span><span class="p">.</span><span class="n">txt</span><span class="p">;</span><span class="n">xx</span><span class="err">\</span><span class="n">lindexi</span><span class="p">.</span><span class="n">gitee</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">txt</span>
+</code></pre></div></div>
+
+<p>因为 ItemGroup 可以写多个标签，可以修改下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;Txt</span> <span class="na">Include=</span><span class="s">"lindexi.txt"</span><span class="nt">&gt;&lt;/Txt&gt;</span>
+    <span class="nt">&lt;Txt</span> <span class="na">Include=</span><span class="s">"lindexi.gitee.io.txt"</span><span class="nt">&gt;&lt;/Txt&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+
+  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"Copy"</span> <span class="na">BeforeTargets=</span><span class="s">"CoreCompile"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Copy</span> <span class="na">SourceFiles=</span><span class="s">"@(Txt)"</span> <span class="na">DestinationFolder=</span><span class="s">"LetirNuhe\"</span><span class="nt">&gt;&lt;/Copy&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<h2 id="较新才复制">较新才复制</h2>
+
+<p>如果不想每次编译都复制，可以设置<code class="language-plaintext highlighter-rouge">SkipUnchangedFiles="True"</code> 只有在发现文件较新才复制。</p>
+
+<p>判断文件较新使用的是判断两个文件的最后更改时间和文件大小。</p>
+
+<h2 id="软连接">软连接</h2>
+
+<p>可以通过设置 <code class="language-plaintext highlighter-rouge">UseHardlinksIfPossible="True"</code>不复制文件，而是设置文件的软连接，也就是修改一个文件可以两个地方生效</p>
+
+<p>设置软连接可以做到在多个项目看起来都有自己的文件，但是实际都是指向相同的文件</p>
+
+<p>需要说的是，这个是软连接，但是在系统是硬连接方式。</p>
+
+<h2 id="判断文件存在就不复制">判断文件存在就不复制</h2>
+
+<p>如果需要判断文件存在就不复制，可以使用 <code class="language-plaintext highlighter-rouge">Condition</code> 判断</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Copy</span> <span class="na">SourceFiles=</span><span class="s">"@(Txt)"</span> <span class="na">DestinationFolder=</span><span class="s">"LetirNuhe\"</span> <span class="na">SkipUnchangedFiles=</span><span class="s">"True"</span> <span class="na">OverwriteReadOnlyFiles=</span><span class="s">"True"</span> <span class="na">Condition=</span><span class="s">"!Exists('LetirNuhe\lindexi.txt')"</span><span class="nt">&gt;&lt;/Copy&gt;</span>
+</code></pre></div></div>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">Exists</code> 判断文件是否存在，如果存在就不复制。</p>
+
+<p>更多 MSBuild 相关博客请看</p>
+
+<p><a href="https://walterlv.github.io/post/understand-the-csproj.html">理解 C# 项目 csproj 文件格式的本质和编译流程 - walterlv</a></p>
+
+<p><a href="https://walterlv.github.io/post/create-a-cross-platform-command-based-nuget-tool.html">如何创建一个基于命令行工具的跨平台的 NuGet 工具包 - walterlv</a></p>
+
+<p><a href="https://walterlv.github.io/post/exec-task-of-msbuild-target.html">如何使用 MSBuild Target（Exec）中的控制台输出 - walterlv</a></p>
+
+<p>更多关于 Roslyn 请看 <a href="https://lindexi.oschina.io/lindexi/post/roslyn.html">手把手教你写 Roslyn 修改编译</a></p>
+
+<p>参见：<a href="https://blog.csdn.net/lindexi_gd/category_7945110.html">Roslyn 入门 - CSDN博客</a></p>
+
+:ET

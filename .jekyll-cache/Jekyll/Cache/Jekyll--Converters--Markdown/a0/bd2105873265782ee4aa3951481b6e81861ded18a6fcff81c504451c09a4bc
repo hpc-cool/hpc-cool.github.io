@@ -1,0 +1,367 @@
+I"�u<p>很少会有人可以答对，如果你遇到一个来面试的人实在嚣张，就可以用本文的题去打击
+本文内容就看着玩，请不要在严肃的面试中问题这样的题目</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/17 9:06:06 -->
+
+<p>如果面试到一个人可以回答出下面的题目也不能证明他的技术很强，只能说明他了解很多C#相关，或者他看过我的博客</p>
+
+<div id="toc"></div>
+
+<h2 id="循环下面的代码">循环下面的代码</h2>
+
+<p>请在下面的代码的注释处填写代码，让函数 Foo 里面的代码输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 请在此处写代码，调用 Foo 函数内的输出代码</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+                <span class="p">{</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">finally</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"尝试调用 Foo 函数执行这一句代码"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>参考答案</p>
+
+<p>使用一个线程调用的方式，调用之后结束线程，此时就会输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 请在此处写代码，调用 Foo 函数内的输出代码</span>
+
+            <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(</span><span class="n">Foo</span><span class="p">);</span>
+            <span class="n">thread</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">).</span><span class="nf">Wait</span><span class="p">();</span>
+            <span class="n">thread</span><span class="p">.</span><span class="nf">Abort</span><span class="p">();</span><span class="c1">// 这时就会结束循环</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">Read</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意，在 dotnet core 不支持 Abort 方法</p>
+
+<h2 id="从空转换">从空转换</h2>
+
+<p>请写出 IFoo 和 Foo 的实现，让下面的代码不会抛出空异常</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Foo</span> <span class="n">foo</span> <span class="p">=</span> <span class="p">(</span><span class="n">IFoo</span><span class="p">)</span> <span class="k">null</span><span class="p">;</span>
+            <span class="n">foo</span><span class="p">.</span><span class="n">Name</span> <span class="p">=</span> <span class="s">"lindexi"</span><span class="p">;</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">Read</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>参考答案</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">IFoo</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">implicit</span> <span class="k">operator</span> <span class="nf">Foo</span><span class="p">(</span><span class="n">IFoo</span> <span class="n">foo</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="等待不存在的类">等待不存在的类</h2>
+
+<p>请添加新的类的代码让下面的代码编译通过</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Foo</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">await</span> <span class="p">(</span><span class="kt">object</span><span class="p">)</span> <span class="k">null</span><span class="p">;</span>
+            <span class="n">foo</span><span class="p">.</span><span class="n">Name</span> <span class="p">=</span> <span class="s">"lindexi"</span><span class="p">;</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">Read</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>参考答案</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">public</span> <span class="k">class</span> <span class="nc">HeabdsdnbKevx</span> <span class="p">:</span> <span class="n">INotifyCompletion</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="n">IsCompleted</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">Foo</span> <span class="nf">GetResult</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">OnCompleted</span><span class="p">(</span><span class="n">Action</span> <span class="n">continuation</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">RelelnisSou</span> 
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">HeabdsdnbKevx</span> <span class="nf">GetAwaiter</span><span class="p">(</span><span class="k">this</span> <span class="kt">object</span> <span class="n">obj</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">HeabdsdnbKevx</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>再高级一点，写出下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span>
+                <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="k">await</span> <span class="s">"林德熙是逗比"</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>其实很简单，也就是将 GetResult 修改一下，在上面的代码修改</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="kt">string</span> <span class="nf">GetResult</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="s">"林德熙是逗比"</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为返回值是 string 所以又可以继续等待</p>
+
+<h2 id="如何不执行-finally-里面的代码">如何不执行 finally 里面的代码</h2>
+
+<p>这里有一个代码，需要让 finally 里面的代码不执行，现在你只能写 Foo 方法，同时这个方法不能运行无限长时间</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="nf">Foo</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">finally</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"不要让这个代码运行"</span><span class="p">);</span>
+            <span class="p">}</span> 
+</code></pre></div></div>
+
+<p>参考答案</p>
+
+<p>因为不能让 Foo 运行无限长，就不能使用无限循环的方法，可以使用的方法有 Environment.FailFast 或 Environment.Exit 退出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">Environment</span><span class="p">.</span><span class="nf">Exit</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>或者进行堆栈溢出，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">Foo</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>或者 少珺 小伙伴的不安全代码申请</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">unsafe</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="k">stackalloc</span> <span class="kt">int</span><span class="p">[</span><span class="kt">int</span><span class="p">.</span><span class="n">MaxValue</span><span class="p">];</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>或者干掉自己进程</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+           <span class="n">Process</span><span class="p">.</span><span class="nf">GetCurrentProcess</span><span class="p">().</span><span class="nf">Kill</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是申请大内存和退出当前线程方法都会让 finally 执行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">int</span><span class="p">[</span><span class="kt">int</span><span class="p">.</span><span class="n">MaxValue</span><span class="p">];</span>
+        <span class="p">}</span>
+        <span class="c1">// 虽然提示内存不够，但是finally依然可以运行</span>
+</code></pre></div></div>
+
+<p>退出当前线程抛出的是线程中断异常，和其他异常一样都能执行 finally 代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="nf">Abort</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意，在 dotnet core 不支持 Abort 方法</p>
+
+<p>另外，如果进入 try 是不能使用 goto 跳出但不执行 finally 代码</p>
+
+<p>如果是在 VisualStudio 调试，在 Foo 执行完之后，在 VS 里把调试箭头拖到 finally 的后面</p>
+
+<h2 id="请问下面代码输出多少">请问下面代码输出多少</h2>
+
+<p>请问下面的代码的 n 的值是多少？</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">class</span> <span class="nc">Foo</span>
+        <span class="p">{</span>
+            <span class="k">public</span> <span class="kt">int</span> <span class="n">N</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+        <span class="p">}</span>
+
+            <span class="n">Foo</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="m">2</span> <span class="p">+</span> <span class="n">foo</span><span class="p">?.</span><span class="n">N</span> <span class="p">??</span> <span class="m">1</span><span class="p">;</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>参考答案</p>
+
+<p>1</p>
+
+<p>可能有小伙伴认为在 <code class="language-plaintext highlighter-rouge">2 + foo?.N</code> 这时如果 foo 为空就应该返回 <code class="language-plaintext highlighter-rouge">??</code> 后面的值，但是这是不对的上面的代码是和下面的代码差不多等同的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">if</span> <span class="p">(</span><span class="n">foo</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">n</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">n</span> <span class="p">=</span> <span class="m">2</span> <span class="p">+</span> <span class="n">foo</span><span class="p">.</span><span class="n">N</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>而不是和下面的代码等价的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="k">if</span> <span class="p">(</span><span class="n">foo</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">n</span> <span class="p">=</span> <span class="m">2</span> <span class="p">+</span> <span class="m">1</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">n</span> <span class="p">=</span> <span class="m">2</span> <span class="p">+</span> <span class="n">foo</span><span class="p">.</span><span class="n">N</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在表达里面只有 <code class="language-plaintext highlighter-rouge">?</code> 的值为空，那么就不会执行</p>
+
+<p>等等，为什么上面的代码说的是差不多等同而不是等价，因为尝试运行下面代码，会看到 Hi 输出，多谢 <a href="https://github.com/imba-tjd">九鼎</a> 指出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">class</span> <span class="nc">Test</span>
+<span class="p">{</span>
+    <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">N</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Hi."</span><span class="p">);</span>
+                <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">Foo</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+        <span class="n">Foo</span> <span class="n">foo2</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Foo</span><span class="p">();</span>
+        <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="m">2</span> <span class="p">+</span> <span class="n">foo</span><span class="p">?.</span><span class="n">N</span> <span class="p">+</span> <span class="n">foo2</span><span class="p">.</span><span class="n">N</span> <span class="p">??</span> <span class="m">1</span><span class="p">;</span>
+        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码中，第一个 <code class="language-plaintext highlighter-rouge">foo?.N</code> 会进行判断，因为 foo 不存在，所以整个表达式没有执行，但是表达式内的逻辑依然执行</p>
+
+<p>或者试试下面代码就知道了</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Foo</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+
+            <span class="kt">int</span> <span class="n">n</span> <span class="p">=</span> <span class="nf">Lindexi</span><span class="p">()</span> <span class="p">+</span> <span class="n">foo</span><span class="p">?.</span><span class="n">N</span> <span class="p">??</span> <span class="m">1</span><span class="p">;</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">int</span> <span class="nf">Lindexi</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"林德熙是逗比"</span><span class="p">);</span>
+            <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">N</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="模式匹配">模式匹配</h2>
+
+<p>请问下面代码输出什么？</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    <span class="k">class</span> <span class="nc">B</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="k">operator</span> <span class="p">&amp;(</span><span class="n">B</span> <span class="n">left</span><span class="p">,</span> <span class="n">B</span> <span class="n">right</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="m">1</span><span class="p">;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="k">operator</span> <span class="p">&gt;(</span><span class="n">B</span> <span class="n">left</span><span class="p">,</span> <span class="n">B</span> <span class="n">right</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="m">2</span><span class="p">;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="k">operator</span> <span class="p">&lt;(</span><span class="n">B</span> <span class="n">left</span><span class="p">,</span> <span class="n">B</span> <span class="n">right</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="m">3</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="k">operator</span> <span class="p">&amp;(</span><span class="kt">bool</span> <span class="n">left</span><span class="p">,</span> <span class="n">B</span> <span class="n">right</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="m">5</span><span class="p">;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="k">operator</span> <span class="p">&gt;(</span><span class="kt">bool</span> <span class="n">left</span><span class="p">,</span> <span class="n">B</span> <span class="n">right</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="m">6</span><span class="p">;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">int</span> <span class="k">operator</span> <span class="p">&lt;(</span><span class="kt">bool</span> <span class="n">left</span><span class="p">,</span> <span class="n">B</span> <span class="n">right</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="m">7</span><span class="p">;</span>
+    <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">B</span> <span class="n">B</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">object</span> <span class="n">a</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+            <span class="n">B</span> <span class="n">c</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span> <span class="k">is</span> <span class="n">B</span> <span class="n">b</span> <span class="p">&amp;</span> <span class="n">c</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span> <span class="k">is</span> <span class="n">B</span> <span class="n">b1</span> <span class="p">&gt;</span> <span class="n">c</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span> <span class="k">is</span> <span class="n">B</span> <span class="n">b2</span> <span class="p">&lt;</span> <span class="n">c</span><span class="p">);</span>
+
+            <span class="n">a</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">B</span><span class="p">();</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span> <span class="k">is</span> <span class="n">B</span> <span class="n">b5</span> <span class="p">&amp;</span> <span class="n">c</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span> <span class="k">is</span> <span class="n">B</span> <span class="n">b6</span> <span class="p">&gt;</span> <span class="n">c</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">a</span> <span class="k">is</span> <span class="n">B</span> <span class="n">b7</span> <span class="p">&lt;</span> <span class="n">c</span><span class="p">);</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也许这是全部题目里面最简单的一道题</p>
+
+<p>请看 <a href="https://blog.lindexi.com/post/c-%E5%8C%B9%E9%85%8D%E5%8F%AF%E7%A9%BA%E5%8F%98%E9%87%8F">C# 匹配可空变量</a></p>
+
+<p>其实这里的 <code class="language-plaintext highlighter-rouge">a is B</code> 用的 <code class="language-plaintext highlighter-rouge">B</code> 是 <code class="language-plaintext highlighter-rouge">class</code> 不是定义的属性，对 <code class="language-plaintext highlighter-rouge">a is B b5</code> 返回的是 <code class="language-plaintext highlighter-rouge">bool</code> 所以将会是 <code class="language-plaintext highlighter-rouge">bool</code> 与 <code class="language-plaintext highlighter-rouge">B</code> 之间的运算</p>
+
+:ET

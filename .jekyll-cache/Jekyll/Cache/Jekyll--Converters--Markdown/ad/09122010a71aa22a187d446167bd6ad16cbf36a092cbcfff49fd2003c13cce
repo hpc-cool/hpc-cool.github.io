@@ -1,0 +1,56 @@
+I"]&<p>我最近发现我的程序总是调用一些不清真的代码，于是在运行的时候就退出了，我想要拿到系统的日志知道我的程序是怎么退出的，我如何通过 PowerShell 拿到最近的10个系统日志。为什么需要拿到最新10个日志，因为在我程序退出的时候可能也有其他的几个程序也退出了，我的输入又很慢，所以我就需要这样写</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>在 PowerShell 只需要一条命令就可以拿到最近的 10 个系统日志里面的应用程序日志</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">EventLog</span> <span class="n">application</span> <span class="p">-</span><span class="n">newest</span> <span class="m">10</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">EventID</span><span class="p">,</span><span class="n">EntryType</span><span class="p">,</span><span class="n">TimeGenerated</span><span class="p">,</span><span class="n">Message</span><span class="p">,</span><span class="n">Source</span>
+</code></pre></div></div>
+
+<p>运行的时候大概的输出是这样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">EventID</span>       <span class="p">:</span> <span class="m">1001</span>
+<span class="n">EntryType</span>     <span class="p">:</span> <span class="n">Information</span>
+<span class="n">TimeGenerated</span> <span class="p">:</span> <span class="m">2019</span><span class="p">/</span><span class="m">4</span><span class="p">/</span><span class="m">29</span> <span class="m">10</span><span class="p">:</span><span class="m">38</span><span class="p">:</span><span class="m">55</span>
+<span class="n">Message</span>       <span class="p">:</span> <span class="err">故障存储段</span> <span class="m">125730739576</span><span class="err">，类型</span> <span class="m">5</span>
+                <span class="err">事件名称</span><span class="p">:</span> <span class="n">PerfWatsonVS12Data</span>
+                <span class="err">响应</span><span class="p">:</span> <span class="err">不可用</span>
+                <span class="n">Cab</span> <span class="n">ID</span><span class="p">:</span> <span class="m">2188124701481020576</span>
+
+                <span class="err">问题签名</span><span class="p">:</span>
+                <span class="n">P1</span><span class="p">:</span> <span class="n">PerfWatsonTcdb</span>
+                <span class="n">P2</span><span class="p">:</span> <span class="m">0</span>
+                <span class="n">P3</span><span class="p">:</span> <span class="m">0</span>
+                <span class="n">P4</span><span class="p">:</span> <span class="m">0</span>
+                <span class="n">P5</span><span class="p">:</span> <span class="m">0</span>
+                <span class="n">P6</span><span class="p">:</span>
+                <span class="n">P7</span><span class="p">:</span>
+                <span class="n">P8</span><span class="p">:</span>
+                <span class="n">P9</span><span class="p">:</span>
+                <span class="n">P10</span><span class="p">:</span>
+
+                <span class="err">附加文件</span><span class="p">:</span>
+                <span class="err">\\</span><span class="p">?</span><span class="err">\</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Local</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">VSTelem</span><span class="p">.</span><span class="n">Out</span><span class="err">\</span><span class="m">201904290238</span><span class="n">_D16</span><span class="p">.</span><span class="m">0</span><span class="n">_16</span><span class="p">.</span><span class="m">0.28729</span><span class="p">.</span><span class="m">10</span><span class="n">_38916_d38075ae</span><span class="p">-</span><span class="m">3d5</span><span class="n">a</span><span class="p">-</span>
+                <span class="m">45d</span><span class="n">d</span><span class="p">-</span><span class="m">818</span><span class="n">b</span><span class="p">-</span><span class="m">60761d49f451.</span><span class="n">tcdb</span>
+                <span class="err">\\</span><span class="p">?</span><span class="err">\</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">ProgramData</span><span class="err">\</span><span class="n">Microsoft</span><span class="err">\</span><span class="n">Windows</span><span class="err">\</span><span class="n">WER</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">WER5BDD</span><span class="p">.</span><span class="n">tmp</span><span class="p">.</span><span class="n">WERInternalMetadata</span><span class="p">.</span><span class="n">xml</span>
+                <span class="err">\\</span><span class="p">?</span><span class="err">\</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">ProgramData</span><span class="err">\</span><span class="n">Microsoft</span><span class="err">\</span><span class="n">Windows</span><span class="err">\</span><span class="n">WER</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">WER5C3C</span><span class="p">.</span><span class="n">tmp</span><span class="p">.</span><span class="n">xml</span>
+                <span class="err">\\</span><span class="p">?</span><span class="err">\</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">ProgramData</span><span class="err">\</span><span class="n">Microsoft</span><span class="err">\</span><span class="n">Windows</span><span class="err">\</span><span class="n">WER</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">WER5C6A</span><span class="p">.</span><span class="n">tmp</span><span class="p">.</span><span class="n">csv</span>
+                <span class="err">\\</span><span class="p">?</span><span class="err">\</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">ProgramData</span><span class="err">\</span><span class="n">Microsoft</span><span class="err">\</span><span class="n">Windows</span><span class="err">\</span><span class="n">WER</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">WER5C9A</span><span class="p">.</span><span class="n">tmp</span><span class="p">.</span><span class="n">txt</span>
+                <span class="err">\\</span><span class="p">?</span><span class="err">\</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Local</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">WER84F3</span><span class="p">.</span><span class="n">tmp</span><span class="p">.</span><span class="n">WERDataCollectionStatus</span><span class="p">.</span><span class="n">txt</span>
+
+                <span class="err">可在此处获取这些文件</span><span class="p">:</span>
+                <span class="err">\\</span><span class="p">?</span><span class="err">\</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">ProgramData</span><span class="err">\</span><span class="n">Microsoft</span><span class="err">\</span><span class="n">Windows</span><span class="err">\</span><span class="n">WER</span><span class="err">\</span><span class="n">ReportArchive</span><span class="err">\</span><span class="n">NonCritical_PerfWatsonTcdb_688f135dd185f2a8133a4</span>
+                <span class="m">74</span><span class="n">a2518efc6ce6cc4a_00000000_cab_873deabf</span>
+
+                <span class="err">分析符号</span><span class="p">:</span>
+                <span class="err">重新检查解决方案</span><span class="p">:</span> <span class="m">0</span>
+                <span class="err">原因</span><span class="p">:</span> <span class="err">林德熙太逗比</span>
+                <span class="err">报告</span> <span class="n">ID</span><span class="p">:</span> <span class="m">1</span><span class="n">cbd43b1</span><span class="p">-</span><span class="m">3f84</span><span class="p">-</span><span class="m">4940</span><span class="p">-</span><span class="m">8</span><span class="n">acd</span><span class="p">-</span><span class="m">4f2</span><span class="n">bf79599ba</span>
+                <span class="err">报告状态</span><span class="p">:</span> <span class="m">268435464</span>
+                <span class="err">哈希存储段</span><span class="p">:</span> <span class="n">fb30d2b9a7acf0305d4da51668259751nCab</span> <span class="n">GUID</span><span class="p">:</span> <span class="m">3760</span><span class="n">cd78</span><span class="p">-</span><span class="m">5646</span><span class="p">-</span><span class="m">4</span><span class="n">c0e</span><span class="p">-</span><span class="n">ae5d</span><span class="p">-</span><span class="n">c7d2a408aca0</span>
+<span class="n">Source</span>        <span class="p">:</span> <span class="n">Windows</span> <span class="n">Error</span> <span class="n">Reporting</span>
+</code></pre></div></div>
+
+:ET

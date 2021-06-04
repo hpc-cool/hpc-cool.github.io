@@ -1,0 +1,169 @@
+I"|0<p>本文告诉大家如何在控制台使用 SharpDx 创建窗口，这是一个底层的博客，我会用很多博客告诉大家如何从控制台创建一个高性能渲染程序</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/17 9:03:36 -->
+
+<div id="toc"></div>
+<!-- 标签：C#,D2D,DirectX,SharpDX,Direct2D,渲染 -->
+
+<p>如果想看更多关于底层渲染的博客，请点击<a href="https://lindexi.github.io/lindexi/post/D2D.html">渲染系列</a></p>
+
+<p>首先创建一个控制台程序，选择 dotnet framework 为 4.5 这样就可以保证下面安装的库可以使用</p>
+
+<!-- ![](image/C# 控制台创建 Sharpdx 窗口/C# 控制台创建 Sharpdx 窗口0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018618211811713.jpg" alt="" /></p>
+
+<h2 id="下载">下载</h2>
+
+<p>最好是使用 VisualStudio 2017项目格式，这样就可以直接复制下面代码放在自己的项目文件，就可以快速使用 Nuget 安装而不是需要等待 VisualStudio 的安装</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Project</span> <span class="na">Sdk=</span><span class="s">"Microsoft.NET.Sdk"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;PropertyGroup&gt;</span>
+    <span class="nt">&lt;OutputType&gt;</span>Exe<span class="nt">&lt;/OutputType&gt;</span>
+    <span class="nt">&lt;TargetFramework&gt;</span>net45<span class="nt">&lt;/TargetFramework&gt;</span>
+  <span class="nt">&lt;/PropertyGroup&gt;</span>
+  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"SharpDX"</span> <span class="na">Version=</span><span class="s">"4.1.0"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"SharpDX.D3DCompiler"</span> <span class="na">Version=</span><span class="s">"4.1.0"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"SharpDX.Desktop"</span> <span class="na">Version=</span><span class="s">"3.1.1"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"SharpDX.Direct2D1"</span> <span class="na">Version=</span><span class="s">"4.1.0"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"SharpDX.Direct3D11"</span> <span class="na">Version=</span><span class="s">"4.1.0"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"SharpDX.DXGI"</span> <span class="na">Version=</span><span class="s">"4.1.0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;Folder</span> <span class="na">Include=</span><span class="s">"Properties\"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div></div>
+
+<p>如果使用的不是 VisualStudio 2017 的就通过 Nuget 安装下面几个库</p>
+
+<ul>
+  <li>SharpDX</li>
+  <li>SharpDX.D3DCompiler</li>
+  <li>SharpDX.Desktop</li>
+  <li>SharpDX.Direct2D1</li>
+  <li>SharpDX.Direct3D11</li>
+  <li>SharpDX.DXGI</li>
+</ul>
+
+<h2 id="创建窗口">创建窗口</h2>
+
+<p>首先创建一个简单的类，这个类主要使用 RenderForm 来创建窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">class</span> <span class="nc">KikuSimairme</span> 
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="n">RenderForm</span> <span class="n">_renderForm</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">1280</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">Height</span> <span class="p">=</span> <span class="m">720</span><span class="p">;</span>
+
+       
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个类的主要就是 RenderForm ，在使用的时候需要引用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">SharpDX.Windows</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>现在还没有创建好窗口，需要在构造函数使用这个代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">KikuSimairme</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">_renderForm</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RenderForm</span><span class="p">();</span>
+            <span class="n">_renderForm</span><span class="p">.</span><span class="n">ClientSize</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">Width</span><span class="p">,</span> <span class="n">Height</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果是在 WPF 创建一个窗口，除了创建还需要显示，下面来告诉大家如何显示窗口</p>
+
+<p>在<code class="language-plaintext highlighter-rouge">KikuSimairme</code>添加两个方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">void</span> <span class="nf">Run</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">RenderLoop</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="n">_renderForm</span><span class="p">,</span> <span class="n">RenderCallback</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">RenderCallback</span><span class="p">()</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就可以在调用 Run 显示窗口，因为创建窗口需要开启循环，使用 <code class="language-plaintext highlighter-rouge">RenderLoop.Run</code> 就可以</p>
+
+<p>在不使用这个窗口时需要记得去掉</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">KikuSimairme</span> <span class="p">:</span> <span class="n">IDisposable</span>
+    <span class="p">{</span>
+    	<span class="c1">// 其他代码</span>
+    	<span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">_renderForm</span><span class="p">?.</span><span class="nf">Dispose</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 Main 函数创建类，然后显示窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">KikuSimairme</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">temp</span><span class="p">.</span><span class="nf">Run</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在按下运行就可以看到显示了一个窗口</p>
+
+<p>虽然里面还没什么东西，但是已经可以显示窗口，在窗口里面也就可以进行画东西。以前很少在一个控制台创建窗口，现在使用 sharpDx 可以很简单在控制台创建窗口</p>
+
+<p>这是<code class="language-plaintext highlighter-rouge">KikuSimairme</code>类的全部代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">KikuSimairme</span> <span class="p">:</span> <span class="n">IDisposable</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">KikuSimairme</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">_renderForm</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RenderForm</span><span class="p">();</span>
+            <span class="n">_renderForm</span><span class="p">.</span><span class="n">ClientSize</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">Width</span><span class="p">,</span> <span class="n">Height</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">Width</span> <span class="p">=</span> <span class="m">1280</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">Height</span> <span class="p">=</span> <span class="m">720</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Run</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">RenderLoop</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="n">_renderForm</span><span class="p">,</span> <span class="n">RenderCallback</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">RenderForm</span> <span class="n">_renderForm</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">RenderCallback</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">_renderForm</span><span class="p">?.</span><span class="nf">Dispose</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>虽然已经创建窗口，但是现在还没有内容，在下一篇<a href="https://lindexi.oschina.io/lindexi/post/C-%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%86%99-SharpDx-%E5%BA%94%E7%94%A8-%E5%88%9D%E5%A7%8B%E5%8C%96dx%E4%BF%AE%E6%94%B9%E9%A2%9C%E8%89%B2.html">C# 从零开始写 SharpDx 应用 初始化dx修改颜色</a>，我将会告诉大家如何在这个窗口修改颜色。更多SharpDx博客请到<a href="https://blog.lindexi.com/post/sharpdx.html">SharpDX 系列</a></p>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/519ed308/JalficearhallciCearyallcelgi">github</a> 欢迎小伙伴访问</p>
+
+<p>参见：<a href="http://www.johanfalk.eu/blog/sharpdx-tutorial-part-1-setting-up-a-sharpdx-project-in-visual-studio-2013">SharpDX Beginners Tutorial Part 1: Setting up a SharpDX project in Visual Studio 2013 - Johan Falk</a></p>
+
+<p>下一篇 <a href="https://lindexi.oschina.io/lindexi/post/C-%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E5%86%99-SharpDx-%E5%BA%94%E7%94%A8-%E5%88%9D%E5%A7%8B%E5%8C%96dx%E4%BF%AE%E6%94%B9%E9%A2%9C%E8%89%B2.html">C# 从零开始写 SharpDx 应用 初始化dx修改颜色</a></p>
+
+:ET

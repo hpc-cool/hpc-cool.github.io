@@ -1,0 +1,4 @@
+I"x<p>如果在 WPF 使用 StylusPlugIn 同时在同一个界面用多个元素都加上 StylusPlugIn 那么事件触发的顺序将会很乱
+我建议是不要让 StylusPlugIn 有重叠，在没有理解 StylusPlugIn 之前请不要写出让 StylusPlugIn 有重叠的代码。因为可能有小伙伴移动了一个元素就让你的代码的行为和之前写的不一样</p>
+
+:ET

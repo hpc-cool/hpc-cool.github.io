@@ -1,0 +1,222 @@
+I"�N<p>在 WPF 中，如果在没有开启 Dispatcher 的后台线程里面创建 WriteableBitmap 对象，在 WriteableBitmap 构造函数传入在主线程创建的 BitmapSource 也许就会锁住主线程。本文将通过 WPF 框架源代码告诉大家为什么会锁住主线程</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/4/16 16:53:15 -->
+<!-- 标签：WPF，WPF源代码 -->
+
+<!-- 发布 -->
+
+<p>这是在 WPF 开源仓库上一个小伙伴报的，详细请看 <a href="https://github.com/dotnet/wpf/issues/4396">WriteableBitmap hangs when source bitmap is rendered on other thread · Issue #4396 · dotnet/wpf</a></p>
+
+<p>复现步骤十分简单，只需要在后台线程创建完成一个 BitmapSource 分别传入给主线程显示和后台线程创建 WriteableBitmap 就会锁住主线程，最简单的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>				<span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+				<span class="p">{</span>
+					<span class="kt">var</span> <span class="n">image</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">fileName</span><span class="p">));</span>
+
+					<span class="n">image</span><span class="p">.</span><span class="nf">Freeze</span><span class="p">();</span>  <span class="c1">// locks the bitmap source, so other threads can access</span>
+
+					<span class="n">Dispatcher</span><span class="p">.</span><span class="nf">InvokeAsync</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">Image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="p">(</span><span class="n">BitmapSource</span><span class="p">)</span> <span class="n">image</span><span class="p">);</span>
+					<span class="c1">//Thread.Sleep(10);   // WPF needs time to render the bitmap. During this period, creating a WriteableBitmap makes the program hang.</span>
+
+					<span class="n">_</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">image</span><span class="p">);</span>
+				<span class="p">});</span>
+</code></pre></div></div>
+
+<p>上面代码的 Image 是一个在 XAML 定义的控件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>			<span class="nt">&lt;Image</span> <span class="na">x:Name=</span><span class="s">"Image"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>上面的 fileName 是一个文件的路径。详细的测试代码请看 <a href="https://github.com/lindexi/lindexi_gd/tree/82c1dc09816d7a15214a167cae78f215a3393d6c/BitmapSourceTest">https://github.com/SetTrend/BitmapSourceTest</a></p>
+
+<p>为什么这个后台线程和主线程会相互等待？原因是在后台线程创建 WriteableBitmap 时，会进入 <code class="language-plaintext highlighter-rouge">WriteableBitmap.InitFromBitmapSource</code> 方法，在这个方法里面获取了一个主线程后续将会等待的锁。然而后台线程后续需要等待主线程返回，才能完成创建图片，因此主线程在等待后台线程的锁而后台线程在等待主线程返回，两个线程在等待</p>
+
+<p>通过 WPF 仓库的源代码可以看到 <code class="language-plaintext highlighter-rouge">WriteableBitmap.InitFromBitmapSource</code> 方法的实现如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">WriteableBitmap</span> <span class="p">:</span> <span class="n">BitmapSource</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">InitFromBitmapSource</span><span class="p">(</span>
+            <span class="n">BitmapSource</span> <span class="n">source</span>
+            <span class="p">)</span>
+        <span class="p">{</span>
+        	<span class="c1">// Ignore code</span>
+        	 <span class="n">_syncObject</span> <span class="p">=</span> <span class="n">source</span><span class="p">.</span><span class="n">SyncObject</span><span class="p">;</span>
+            <span class="k">lock</span> <span class="p">(</span><span class="n">_syncObject</span><span class="p">)</span>
+            <span class="p">{</span>
+            	<span class="c1">// Ignore code</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是说在后台线程将会拿到创建 WriteableBitmap 构造函数传入的 BitmapSource 的 SyncObject 对象作为锁。对应测试代码的 image 变量的 SyncObject 对象先被后台线程获取，然后在主线程渲染时，也需要用到这个锁，在主线程的堆栈如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.UpdateBitmapSourceResource(System.Windows.Media.Composition.DUCE.Channel channel = {System.Windows.Media.Composition.DUCE.Channel}, bool skipOnChannelCheck)
+ 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.UpdateResource(System.Windows.Media.Composition.DUCE.Channel channel, bool skipOnChannelCheck)
+ 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.AddRefOnChannelCore(System.Windows.Media.Composition.DUCE.Channel channel = {System.Windows.Media.Composition.DUCE.Channel})
+ 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.System.Windows.Media.Composition.DUCE.IResource.AddRefOnChannel(System.Windows.Media.Composition.DUCE.Channel channel)
+ 	PresentationCore.dll!System.Windows.Media.RenderData.System.Windows.Media.Composition.DUCE.IResource.AddRefOnChannel(System.Windows.Media.Composition.DUCE.Channel channel = {System.Windows.Media.Composition.DUCE.Channel})
+ 	PresentationCore.dll!System.Windows.UIElement.RenderContent(System.Windows.Media.RenderContext ctx, bool isOnChannel)
+ 	PresentationCore.dll!System.Windows.Media.Visual.UpdateContent(System.Windows.Media.RenderContext ctx = {System.Windows.Media.RenderContext}, System.Windows.Media.VisualProxyFlags flags, bool isOnChannel)
+ 	PresentationCore.dll!System.Windows.Media.Visual.RenderRecursive(System.Windows.Media.RenderContext ctx = {System.Windows.Media.RenderContext})
+</code></pre></div></div>
+
+<p>在主线程渲染图片，需要在 <code class="language-plaintext highlighter-rouge">BitmapSource.UpdateBitmapSourceResource</code> 方法里面获取锁，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">BitmapSource</span> <span class="p">:</span> <span class="n">ImageSource</span><span class="p">,</span> <span class="n">DUCE</span><span class="p">.</span><span class="n">IResource</span>
+     <span class="p">{</span>
+        <span class="k">internal</span> <span class="k">virtual</span> <span class="k">void</span> <span class="nf">UpdateBitmapSourceResource</span><span class="p">(</span><span class="n">DUCE</span><span class="p">.</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">skipOnChannelCheck</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="c1">// Ignore code</span>
+                <span class="c1">// We may end up loading in the bitmap bits so it's necessary to take the sync lock here.</span>
+                <span class="k">lock</span> <span class="p">(</span><span class="n">_syncObject</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">channel</span><span class="p">.</span><span class="nf">SendCommandBitmapSource</span><span class="p">(</span>
+                        <span class="n">_duceResource</span><span class="p">.</span><span class="nf">GetHandle</span><span class="p">(</span><span class="n">channel</span><span class="p">),</span>
+                        <span class="n">DUCECompatiblePtr</span>
+                        <span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+     <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码的 <code class="language-plaintext highlighter-rouge">_syncObject</code> 和在后台线程获取的 SyncObject 是相同的对象，因此主线程需要等待后台线程。但是后台线程在执行到 <code class="language-plaintext highlighter-rouge">MediaSystem.Startup</code> 方法时，就需要等待主线程返回，后台线程调用堆栈如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 	[Manage to Native]	
+ 	PresentationCore.dll!System.Windows.Media.MediaSystem.Startup(System.Windows.Media.MediaContext mc = {System.Windows.Media.MediaContext})
+ 	PresentationCore.dll!System.Windows.Media.MediaContext.MediaContext(System.Windows.Threading.Dispatcher dispatcher = {System.Windows.Threading.Dispatcher})
+ 	PresentationCore.dll!System.Windows.Media.MediaContext.From(System.Windows.Threading.Dispatcher dispatcher)
+ 	PresentationCore.dll!System.Windows.Media.Imaging.WriteableBitmap.SubscribeToCommittingBatch()
+ 	PresentationCore.dll!System.Windows.Media.Imaging.WriteableBitmap.Unlock()
+ 	PresentationCore.dll!System.Windows.Media.Imaging.WriteableBitmap.InitFromBitmapSource(System.Windows.Media.Imaging.BitmapSource source)
+ 	PresentationCore.dll!System.Windows.Media.Imaging.WriteableBitmap.WriteableBitmap(System.Windows.Media.Imaging.BitmapSource source)
+&gt;	BitmapSourceTest.dll!BitmapSourceTest.MainWindow.ProcessImageAsync(string filePath)
+ 	BitmapSourceTest.dll!BitmapSourceTest.MainWindow.BrowseFile_Click.AnonymousMethod__0()
+ 	System.Private.CoreLib.dll!System.Threading.Tasks.Task.InnerInvoke()
+ 	System.Private.CoreLib.dll!System.Threading.Tasks.Task..cctor.AnonymousMethod__277_0(object obj)
+ 	System.Private.CoreLib.dll!System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(System.Threading.Thread threadPoolThread = {System.Threading.Thread}, System.Threading.ExecutionContext executionContext, System.Threading.ContextCallback callback, object state)
+ 	System.Private.CoreLib.dll!System.Threading.Tasks.Task.ExecuteWithThreadLocal(ref System.Threading.Tasks.Task currentTaskSlot = Id = 189, Status = Running, Method = "Void &lt;BrowseFile_Click&gt;b__0()", System.Threading.Thread threadPoolThread)
+ 	System.Private.CoreLib.dll!System.Threading.Tasks.Task.ExecuteEntryUnsafe(System.Threading.Thread threadPoolThread)
+ 	System.Private.CoreLib.dll!System.Threading.Tasks.Task.ExecuteFromThreadPool(System.Threading.Thread threadPoolThread)
+ 	System.Private.CoreLib.dll!System.Threading.ThreadPoolWorkQueue.Dispatch()
+ 	System.Private.CoreLib.dll!System.Threading._ThreadPoolWaitCallback.PerformWaitCallback()
+</code></pre></div></div>
+
+<p>可以从上面代码看到，主线程在等待后台线程的锁，而后台线程需要等待主线程返回才能释放锁</p>
+
+<p>其实在后台线程创建图片，同时创建的图片的参数还是在主线程使用的图片，这样的逻辑不多，更多使用的是只在后台线程创建图片然后通过 Freeze 给到主线程用来解决性能问题。但上面测试代码的逻辑也不算出错，可以算 WPF 的已知坑。也许我会尝试去修复这个问题</p>
+
+<p>如果不更改 WPF 框架代码，那么一个尝试解决的方法是在后台线程开启 UI 线程，预热一下渲染。预热用来解决后台线程创建 MediaContext 需要等待主线程，通过预先创建，此时可以等待到主线程，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>				<span class="n">Dispatcher</span> <span class="n">backgroundDispatcher</span> <span class="p">=</span> <span class="k">null</span><span class="p">!;</span>
+				<span class="n">AutoResetEvent</span> <span class="n">resetEvent</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">AutoResetEvent</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+				<span class="n">Thread</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+				<span class="p">{</span>
+					<span class="n">backgroundDispatcher</span> <span class="p">=</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="n">CurrentDispatcher</span><span class="p">;</span>
+					<span class="n">resetEvent</span><span class="p">.</span><span class="nf">Set</span><span class="p">();</span>
+					<span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Run</span><span class="p">();</span>
+				<span class="p">});</span>
+				<span class="n">thread</span><span class="p">.</span><span class="nf">SetApartmentState</span><span class="p">(</span><span class="n">ApartmentState</span><span class="p">.</span><span class="n">STA</span><span class="p">);</span>
+				<span class="n">thread</span><span class="p">.</span><span class="n">IsBackground</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+				<span class="n">thread</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+
+				<span class="n">resetEvent</span><span class="p">.</span><span class="nf">WaitOne</span><span class="p">();</span>
+
+				<span class="c1">// To Create the MediaContext which is thread static</span>
+				<span class="n">backgroundDispatcher</span><span class="p">.</span><span class="nf">InvokeAsync</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Bgr32</span><span class="p">,</span> <span class="k">null</span><span class="p">));</span>
+
+				<span class="n">backgroundDispatcher</span><span class="p">.</span><span class="nf">InvokeAsync</span><span class="p">(()</span> <span class="p">=&gt;</span>
+				<span class="p">{</span>
+					<span class="kt">var</span> <span class="n">image</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">openDialog</span><span class="p">.</span><span class="n">FileName</span><span class="p">));</span>
+
+					<span class="n">image</span><span class="p">.</span><span class="nf">Freeze</span><span class="p">();</span> <span class="c1">// locks the bitmap source, so other threads can access</span>
+
+					<span class="n">Dispatcher</span><span class="p">.</span><span class="nf">InvokeAsync</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">Image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="p">(</span><span class="n">BitmapSource</span><span class="p">)</span> <span class="n">image</span><span class="p">);</span>
+
+					<span class="n">_</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">image</span><span class="p">);</span>
+				<span class="p">});</span>
+</code></pre></div></div>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/0a8ac8dd9a61599dfa8624f73dfd22fd4b1bc539/BitmapSourceTest">github</a> 欢迎小伙伴访问</p>
+
+<!-- 
+6713
+
+Why the background task will dead lock? Because the background task will get the lock in `WriteableBitmap.InitFromBitmapSource` method.
+
+```csharp
+    public sealed class WriteableBitmap : BitmapSource
+    {
+        private void InitFromBitmapSource(
+            BitmapSource source
+            )
+        {
+        	// Ignore code
+        	 _syncObject = source.SyncObject;
+            lock (_syncObject)
+            {
+            	// Ignore code
+            }
+        }
+    }
+```
+
+And the `source` is a TransformedBitmap which was created in `ProcessImageAsync` method and running in background task.
+
+```csharp
+// The Demo code
+		private void ProcessImageAsync(string filePath)
+		{
+			TransformedBitmap tb = new TransformedBitmap(new BitmapImage(new Uri(filePath)), new RotateTransform(90));
+
+			CopyBitmapSourceToUi(tb);
+
+			_ = new WriteableBitmap(tb);
+		}
+```
+
+But the `source.SyncObject` will be used in main thread when Render.
+
+```
+ 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.UpdateBitmapSourceResource(System.Windows.Media.Composition.DUCE.Channel channel = {System.Windows.Media.Composition.DUCE.Channel}, bool skipOnChannelCheck)
+ 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.UpdateResource(System.Windows.Media.Composition.DUCE.Channel channel, bool skipOnChannelCheck)
+ 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.AddRefOnChannelCore(System.Windows.Media.Composition.DUCE.Channel channel = {System.Windows.Media.Composition.DUCE.Channel})
+ 	PresentationCore.dll!System.Windows.Media.Imaging.BitmapSource.System.Windows.Media.Composition.DUCE.IResource.AddRefOnChannel(System.Windows.Media.Composition.DUCE.Channel channel)
+ 	PresentationCore.dll!System.Windows.Media.RenderData.System.Windows.Media.Composition.DUCE.IResource.AddRefOnChannel(System.Windows.Media.Composition.DUCE.Channel channel = {System.Windows.Media.Composition.DUCE.Channel})
+ 	PresentationCore.dll!System.Windows.UIElement.RenderContent(System.Windows.Media.RenderContext ctx, bool isOnChannel)
+ 	PresentationCore.dll!System.Windows.Media.Visual.UpdateContent(System.Windows.Media.RenderContext ctx = {System.Windows.Media.RenderContext}, System.Windows.Media.VisualProxyFlags flags, bool isOnChannel)
+ 	PresentationCore.dll!System.Windows.Media.Visual.RenderRecursive(System.Windows.Media.RenderContext ctx = {System.Windows.Media.RenderContext})
+```
+
+The main thread will use the same SyncObject in BitmapSource.UpdateBitmapSourceResource
+
+```csharp
+     public abstract class BitmapSource : ImageSource, DUCE.IResource
+     {
+        internal virtual void UpdateBitmapSourceResource(DUCE.Channel channel, bool skipOnChannelCheck)
+        {
+                // Ignore code
+                // We may end up loading in the bitmap bits so it's necessary to take the sync lock here.
+                lock (_syncObject)
+                {
+                    channel.SendCommandBitmapSource(
+                        _duceResource.GetHandle(channel),
+                        DUCECompatiblePtr
+                        );
+                }
+            }
+        }
+     }
+```
+
+
+The main thread will waitting the `_syncObject` which be used in background task in `WriteableBitmap.InitFromBitmapSource` method.
+
+But the background task now waitting the main thread in `MediaSystem.Startup`. So the main thread wait background task to release the `_syncObject` lock and the background task wait main thread. -->
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

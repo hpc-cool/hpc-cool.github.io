@@ -1,0 +1,76 @@
+I"�<p>我最近做的软件，需要检测dll或exe是否混淆，需要反射获得类名，这时发现，C#可以加载DLL，但不能卸载DLL。于是在网上找到一个方法，可以动态加载DLL，不使用时可以卸载。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>我在写一个WPF 程序，发现可以通过 <code class="language-plaintext highlighter-rouge">Assembly.Load</code> 加载 DLL，但是如何卸载DLL？下面就来说下如何卸载。</p>
+
+<p>看到 <code class="language-plaintext highlighter-rouge">Assembly.Load</code> 是把 DLL 加载到当前程序集，这句话，我就想到了我们的主程序集和当前的不同，那么可以加载到当前不会影响主程序。那么如何新建一个程序集？他是否可以卸载，答案是可以的。</p>
+
+<p>首先，我们可以通过<code class="language-plaintext highlighter-rouge">var appDomain = AppDomain.CreateDomain(appDomainName);</code>创建 AppDomain 。他是可以卸载，卸载 AppDomain 使用 <code class="language-plaintext highlighter-rouge">AppDomain.Unload</code> ，就可以把加载在 AppDomain 的 DLL 卸载。</p>
+
+<p>于是我们需要把 DLL 加载在 AppDomain ，这样之后可以卸载 AppDomain 动态删掉 加载的DLL。</p>
+
+<p>如果要把 DLL 加载在 AppDomain 需要先写一个类，继承<code class="language-plaintext highlighter-rouge">MarshalByRefObject</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">internal</span> <span class="k">class</span> <span class="nc">ApplicationProxy</span> <span class="p">:</span> <span class="n">MarshalByRefObject</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">DoSomething</span><span class="p">()</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="kt">var</span> <span class="n">proxy</span> <span class="p">=</span>
+                <span class="n">appDomain</span><span class="p">.</span><span class="nf">CreateInstanceAndUnwrap</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetAssembly</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">ApplicationProxy</span><span class="p">)).</span><span class="n">FullName</span><span class="p">,</span>
+                <span class="k">typeof</span><span class="p">(</span><span class="n">ApplicationProxy</span><span class="p">).</span><span class="nf">ToString</span><span class="p">())</span> <span class="k">as</span> <span class="n">ApplicationProxy</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>我们可以在 DoSomething 函数加载 DLL ，加载的 DLL 在 AppDomain ，不在主程序，所以卸载 AppDomain 可以卸载 DLL</p>
+
+<p>假如是从 文件加载，可以使用 LoadFile</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                  <span class="kt">var</span> <span class="n">assembly</span>  <span class="p">=</span> <span class="n">Assembly</span><span class="p">.</span><span class="nf">LoadFile</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">FullName</span><span class="p">);</span>
+</code></pre></div></div>
+<p>assembly 可以获得所有的类和方法。</p>
+
+<p>然后需要卸载时，可以使用<code class="language-plaintext highlighter-rouge"> AppDomain.Unload(appDomain);</code></p>
+
+<p>建议写<code class="language-plaintext highlighter-rouge">var assembly  = Assembly.LoadFile(file.FullName);</code>在 try，写<code class="language-plaintext highlighter-rouge"> AppDomain.Unload(appDomain);</code>在 finally</p>
+
+<p>上面的 appDomainName 是我自己给他的。</p>
+
+<p>http://stackoverflow.com/questions/2132649/loading-unloading-assembly-in-different-appdomain</p>
+
+<p>我们可以验证，如果不使用新建一个 AppDomain 加载的 DLL 会在主程序集，如果使用了，就会在我们新建的 AppDomain 。</p>
+
+<p>首先我们使用 <code class="language-plaintext highlighter-rouge">Assembly.LoadFile(file)</code> 加载，再用反射获得当前程序集，然后获取他的所有 type ，当然我们是知道加载的 File 包含的 type，一会可以验证使用已经加载他。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">System</span><span class="p">.</span><span class="n">Reflection</span><span class="p">.</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">LoadFile</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">assembly</span> <span class="k">in</span> <span class="n">AppDomain</span><span class="p">.</span><span class="n">CurrentDomain</span><span class="p">.</span><span class="nf">GetAssemblies</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="c1">//查看type               </span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到 file 包含的 type 在主程序。</p>
+
+<p>我们使用新建 appDomain</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>              <span class="k">const</span> <span class="kt">string</span> <span class="n">appDomainName</span> <span class="p">=</span> <span class="s">"ConfuseChecker"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">appDomain</span> <span class="p">=</span> <span class="n">AppDomain</span><span class="p">.</span><span class="nf">CreateDomain</span><span class="p">(</span><span class="n">appDomainName</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">proxy</span> <span class="p">=</span>
+                       <span class="n">appDomain</span><span class="p">.</span><span class="nf">CreateInstanceAndUnwrap</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetAssembly</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">ApplicationProxy</span><span class="p">)).</span><span class="n">FullName</span><span class="p">,</span>
+                           <span class="k">typeof</span><span class="p">(</span><span class="n">ApplicationProxy</span><span class="p">).</span><span class="nf">ToString</span><span class="p">())</span> <span class="k">as</span> <span class="n">ApplicationProxy</span><span class="p">;</span>
+            <span class="n">proxy</span><span class="p">.</span><span class="nf">DoSomething</span><span class="p">(</span><span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">file</span><span class="p">));</span>
+
+            <span class="n">AppDomain</span><span class="p">.</span><span class="nf">Unload</span><span class="p">(</span><span class="n">appDomain</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这时可以看到，我们的主程序没有包含 file 的 type 。</p>
+
+:ET

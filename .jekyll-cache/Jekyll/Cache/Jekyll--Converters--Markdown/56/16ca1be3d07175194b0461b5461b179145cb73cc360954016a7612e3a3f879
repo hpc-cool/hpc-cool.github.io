@@ -1,0 +1,175 @@
+I"\R<p>本文将告诉大家，如何做一个带文字的进度条，这个进度条可以用在游戏，现在我做的挂机游戏就使用了他。
+<img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2FMarquez.gif" alt="" /></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<div id="toc"></div>
+
+<p>如何做上图的效果，实际需要的是两个控件，一个是显示文字 的 TextBlock  一个是进度条。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201764111545.jpg" alt="" /></p>
+
+<p>那么如何让 文字和左边的距离变化？使用 TranslateTransform</p>
+
+<p>看起来 Marquez 的界面就是：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="p">&lt;</span><span class="n">ProgressBar</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Mcdon"</span> <span class="n">Maximum</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Minimum</span><span class="p">=</span><span class="s">"0"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"20"</span>
+                     <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Stretch"</span><span class="p">&gt;&lt;/</span><span class="n">ProgressBar</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"scrohn"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"100/100"</span>
+                   <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TranslateTransform</span>  <span class="n">X</span><span class="p">=</span><span class="s">"0"</span><span class="p">&gt;&lt;/</span><span class="n">TranslateTransform</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>进度条的名字就是 Marquez ，写完界面，后台也不难</p>
+
+<p>需要使用几个依赖属性设置最大值、当前值、最小值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     标识 &lt;see cref="Maximum" /&gt; 的依赖项属性。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">MaximumProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Maximum"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Marquez</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="m">100d</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">s</span> <span class="k">as</span> <span class="n">Marquez</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="nf">Scrhrentran</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">scrohn</span><span class="p">,</span> <span class="n">t</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">,</span> <span class="n">t</span><span class="p">.</span><span class="n">Value</span><span class="p">,</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">e</span><span class="p">.</span><span class="n">NewValue</span><span class="p">,</span> <span class="n">t</span><span class="p">.</span><span class="n">Mcdon</span><span class="p">);</span>
+            <span class="p">}));</span>
+
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     标识 &lt;see cref="Minimum" /&gt; 的依赖项属性。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">MinimumProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Minimum"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Marquez</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">)));</span>
+
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     标识 &lt;see cref="Value" /&gt; 的依赖项属性。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ValueProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Value"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Marquez</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="m">20d</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">s</span> <span class="k">as</span> <span class="n">Marquez</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="nf">Scrhrentran</span><span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="n">scrohn</span><span class="p">,</span> <span class="n">t</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">,</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">e</span><span class="p">.</span><span class="n">NewValue</span><span class="p">,</span> <span class="n">t</span><span class="p">.</span><span class="n">Maximum</span><span class="p">,</span> <span class="n">t</span><span class="p">.</span><span class="n">Mcdon</span><span class="p">);</span>
+            <span class="p">}));</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获取或设置</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Value</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">ValueProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">ValueProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获取或设置最小值</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Minimum</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">MinimumProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">MinimumProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获取或设置最大值</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Maximum</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">MaximumProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">MaximumProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>所有值变化时，需要修改文字和进度条，因为进度条没有绑定值到代码，Scrhrentran 函数修改所有值。</p>
+
+<p>为什么不使用绑定，因为绑定容易重复，而且有些值不是简单绑定就可以，这个控件使用绑定还是可以做到，如果自己感兴趣，可以修改他绑定。</p>
+
+<p>从属性可以看到，值变化自动调用 Scrhrentran 于是函数需要修改进度条的值，修改进度条很简单，只需要使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Scrhrentran</span><span class="p">(</span><span class="n">TextBlock</span> <span class="n">scrohn</span><span class="p">,</span> <span class="kt">double</span> <span class="n">w</span><span class="p">,</span> <span class="kt">double</span> <span class="n">v</span><span class="p">,</span> <span class="kt">double</span> <span class="n">t</span><span class="p">,</span> <span class="n">ProgressBar</span> <span class="n">mcdon</span><span class="p">)</span>
+            <span class="p">{</span>
+                        <span class="n">mcdon</span><span class="p">.</span><span class="n">Value</span> <span class="p">=</span> <span class="n">v</span><span class="p">;</span>
+                        <span class="n">mcdon</span><span class="p">.</span><span class="n">Maximum</span> <span class="p">=</span> <span class="n">t</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+<p>可以看到，上面的代码没修改最小值，因为最小值没有在依赖属性写，我不写最小值因为我想讲下如何获得依赖属性修改。</p>
+
+<p>依赖属性是很好用的，他自己就带了绑定，如果想用绑定，那么可以使用依赖属性，依赖属性可以使用 dep 和tab打出来，一般的依赖属性是比较长的，最小值用的就是 vs 自带的依赖属性，也就是经常这样写。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     标识 Minimum 的依赖项属性。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">MinimumProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Minimum"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Marquez</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">)));</span>
+
+         <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获取或设置最小值</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Minimum</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">MinimumProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">MinimumProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<p>实际依赖属性是上面的静态属性，他使用了注册，注册的第一个参数表示变量的名字，因为是自己生成的，就是字符串，但是字符串有问题，如果我修改了 Minimum 名称，那么字符串就无法使用，为了在修改名称可以使用，我建议使用 nameof 这个可以获得变量名称。</p>
+
+<p>其中第二个参数是 类型，第三个是类，这个参数指定是哪个类，如果复制了别人的 依赖属性，容易出错，因为他的类没有修改为自己的类。最后一个属性是指定默认值，在这个属性可以指定属性修改时的函数。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">MinimumProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Minimum"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Marquez</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                
+            <span class="p">}</span> <span class="p">));</span>
+</code></pre></div></div>
+<p>现在就可以在里面写属性修改的函数，第一个参数 s 是哪个触发，也就是 Marquez ，使用第一个参数就可以获得 Marquez，第二个参数是获得之前的值和当前的值，通过<code class="language-plaintext highlighter-rouge">e.NewValue</code>可以获得修改后的值。</p>
+
+<p>但是不可以通过这个函数修改 <code class="language-plaintext highlighter-rouge">e.NewValue</code> 的值。</p>
+
+<p>于是这个控件比较难的地方就是修改文字，下面来开始做这部分。</p>
+
+<p>显示文字可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">scrohn</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="n">v</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"F"</span><span class="p">)</span> <span class="p">+</span> <span class="s">"/"</span> <span class="p">+</span> <span class="n">t</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"F"</span><span class="p">);</span>
+
+</code></pre></div></div>
+<p>可以看到，只看代码是不知道 v 是什么， t 是什么，所以在命名时最好不要这样写，建议写为 value 和 maximum，这样看代码就可以知道两个值。</p>
+
+<p>修改文字之前，判断RenderTransform</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">sc</span> <span class="p">=</span> <span class="n">scrohn</span><span class="p">.</span><span class="n">RenderTransform</span> <span class="k">as</span> <span class="n">TranslateTransform</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>在value为最大值，文字显示在中间，于是文字最大的就是 ` w / 2<code class="language-plaintext highlighter-rouge"> ，w就是控件宽度。但是还需要乘以现在的 </code>v / t`</p>
+
+<p>于是算法就是 <code class="language-plaintext highlighter-rouge">sc.X = w / 2 * v / t</code> ，但是因为文字有宽度，显示的是文字左边，所以需要减去文字，但是可能让文字在控件看不到，因为<code class="language-plaintext highlighter-rouge">sc.X &lt; 0</code>，于是代码就是</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                 <span class="n">sc</span><span class="p">.</span><span class="n">X</span> <span class="p">=</span> <span class="n">w</span> <span class="p">/</span> <span class="m">2</span> <span class="p">*</span> <span class="n">v</span> <span class="p">/</span> <span class="n">t</span> <span class="p">-</span> <span class="n">scrohn</span><span class="p">.</span><span class="n">ActualWidth</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">sc</span><span class="p">.</span><span class="n">X</span> <span class="p">&lt;</span> <span class="m">0</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">sc</span><span class="p">.</span><span class="n">X</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>总的代码放在github：https://github.com/lindexi/UWP/tree/master/uwp/control/Progress</p>
+
+<p>如果 想写一个控件，建议先在我的库找找，可能我做了，所以可以让你省点时间。</p>
+
+:ET

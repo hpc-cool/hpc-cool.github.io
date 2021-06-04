@@ -1,0 +1,99 @@
+I"�<p>本文告诉大家我收集的一些 Fluent Design System 设计，希望能给大家一些帮助
+需要知道 Fluent Design System 是微软在最近提出的，有  Light、Depth、Motion、Material、Scale 几个理念，Fluent Design System的简称是 FDS。如何设计请看 <a href="https://channel9.msdn.com/Events/Build/2017/B8034">Build Amazing Apps with Fluent Design </a></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<!-- csdn -->
+
+<p>下面是我从系统收集的界面</p>
+
+<h2 id="设置">设置</h2>
+
+<p>无边框的设计按钮在这里使用，可以看到无边框的按钮会在之后很多使用，如果大家在设计按钮的时候，试试直接使用。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201812585415.jpg" alt="" /></p>
+
+<p>无边框按钮请看 <a href="http://www.cnblogs.com/dino623/p/Reveal.html">[UWP]使用Reveal - dino.c - 博客园</a>，里面的代码直接拿就可以做出无边框的按钮，下面是 dino 大神做出的界面</p>
+
+<p><img src="https://images2017.cnblogs.com/blog/38937/201801/38937-20180118201118240-1586298023.gif" alt="" /></p>
+
+<p>需要知道 dino 大神的按钮使用的设计是 Reveal，Reveal 是光照效果，给应用带来深度的交互。更多关于Reveal，请到<a href="https://docs.microsoft.com/en-us/windows/uwp/design/style/reveal">Reveal highlight </a></p>
+
+<h2 id="开始">开始</h2>
+
+<p>在开始菜单也使用fds，主要是ListView 使用。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201812591821.jpg" alt="" /></p>
+
+<p>如何在软件使用毛玻璃，请看 <a href="https://lindexi.oschina.io/lindexi/post/win10-uwp-%E6%AF%9B%E7%8E%BB%E7%92%83.html">win10 uwp 毛玻璃 - 林德熙</a></p>
+
+<h2 id="创建空白界面">创建空白界面</h2>
+
+<p>下面来告诉大家如何创建一个空白页面</p>
+
+<p><img src="http://image.acmx.xyz/65fb6078-c169-4ce3-cdd9-e35752d07be0%2F20183421123.jpg" alt="" /></p>
+
+<p>首先创建一个页面，随意的命名，然后在主页面跳转到这个页面，因为这是用于测试的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">frame</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Frame</span><span class="p">();</span>
+
+            <span class="n">Content</span> <span class="p">=</span> <span class="n">frame</span><span class="p">;</span>
+
+            <span class="n">frame</span><span class="p">.</span><span class="nf">Navigate</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">DrowilHuwfevfPage</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>重写 DrowilHuwfevfPage 的 OnNavigatedTo 设置标题栏</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">SystemNavigationManager</span> <span class="n">telTtxxskne</span> <span class="p">=</span> <span class="n">SystemNavigationManager</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">();</span>
+            <span class="n">telTtxxskne</span><span class="p">.</span><span class="n">BackRequested</span> <span class="p">+=</span> <span class="n">BackRequested</span><span class="p">;</span>
+
+            <span class="n">telTtxxskne</span><span class="p">.</span><span class="n">AppViewBackButtonVisibility</span> <span class="p">=</span>
+                <span class="n">AppViewBackButtonVisibility</span><span class="p">.</span><span class="n">Visible</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面的代码就是打开后退按钮，后退按钮的大小大概是高度30，宽度50</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">CoreApplication</span><span class="p">.</span><span class="nf">GetCurrentView</span><span class="p">().</span><span class="n">TitleBar</span><span class="p">.</span><span class="n">ExtendViewIntoTitleBar</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>上面代码是扩展页面到标题栏，现在就不存在标题栏了，可以完全自己定义</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="kt">var</span> <span class="n">dmbyzkfscDycoue</span> <span class="p">=</span> <span class="n">ApplicationView</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">();</span>
+
+            <span class="n">dmbyzkfscDycoue</span><span class="p">.</span><span class="n">TitleBar</span><span class="p">.</span><span class="n">BackgroundColor</span> <span class="p">=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">Black</span><span class="p">;</span>
+
+            <span class="n">dmbyzkfscDycoue</span><span class="p">.</span><span class="n">TitleBar</span><span class="p">.</span><span class="n">ButtonBackgroundColor</span> <span class="p">=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">Transparent</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面代码设置最小化按钮的背景，但是<code class="language-plaintext highlighter-rouge">dmbyzkfscDycoue.TitleBar.BackgroundColor</code>无论设置为什么都没有什么用</p>
+
+<p>然后去到页面，使用毛玻璃</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource SystemControlChromeMediumAcrylicWindowMediumBrush }"</span><span class="p">&gt;</span>
+       
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>这时我找到的颜色，透明度是60%，推荐使用这个作为背景</p>
+
+<p>然后写一个标题</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource SystemControlChromeMediumAcrylicWindowMediumBrush }"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"30"</span><span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"114*"</span><span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"0"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"50,0,0,0"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span><span class="err">图床</span><span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在的页面就写好了</p>
+
+<p>当然后续 Fluent Design System 也没有后续了，因此本文就这样</p>
+
+:ET

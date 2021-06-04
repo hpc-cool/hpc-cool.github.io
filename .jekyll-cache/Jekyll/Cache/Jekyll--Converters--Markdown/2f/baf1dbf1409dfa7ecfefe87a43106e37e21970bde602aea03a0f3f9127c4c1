@@ -1,0 +1,91 @@
+I"<p>本文记录 D3Dcompiler_47 丢失问题，在安装 KB4040973 KB3178034 完成的 win7 系统可能出现 D3Dcompiler_47 丢失，让 WPF 等软件无法启动</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:22:10 -->
+
+<!-- csdn -->
+<div id="toc"></div>
+
+<h2 id="现象">现象</h2>
+
+<p>现象是无法启动，可以在事件查看器看到日志</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">错误应用程序名称</span><span class="p">:</span> <span class="n">xx</span><span class="p">.</span><span class="n">exe</span><span class="err">，版本</span><span class="p">:</span> <span class="m">5.1</span><span class="p">.</span><span class="m">3.33526</span><span class="err">，时间戳</span><span class="p">:</span> <span class="m">0x59c5951c</span>
+<span class="err">错误模块名称</span><span class="p">:</span> <span class="n">KERNELBASE</span><span class="p">.</span><span class="n">dll</span><span class="err">，版本</span><span class="p">:</span> <span class="m">6.1</span><span class="p">.</span><span class="m">7601.17514</span><span class="err">，时间戳</span><span class="p">:</span> <span class="m">0x4ce7bafa</span>
+<span class="err">异常代码</span><span class="p">:</span> <span class="m">0xe0434352</span>
+<span class="err">错误偏移量</span><span class="p">:</span> <span class="m">0x0000b727</span>
+<span class="err">错误进程</span> <span class="n">ID</span><span class="p">:</span> <span class="m">0x8c</span>
+<span class="err">错误应用程序启动时间</span><span class="p">:</span> <span class="m">0x01d339ce8c34bedb</span>
+<span class="err">错误应用程序路径</span><span class="p">:</span> <span class="n">xx</span>
+<span class="err">错误模块路径</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Windows</span><span class="err">\</span><span class="n">syswow64</span><span class="err">\</span><span class="n">KERNELBASE</span><span class="p">.</span><span class="n">dll</span>
+<span class="err">报告</span> <span class="n">ID</span><span class="p">:</span> <span class="n">cca5651f</span><span class="p">-</span><span class="n">a5c1</span><span class="p">-</span><span class="m">11</span><span class="n">e7</span><span class="p">-</span><span class="m">9921</span><span class="p">-</span><span class="m">00155d356504</span>
+</code></pre></div></div>
+
+<h2 id="调用堆栈">调用堆栈</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Framework Version: v4.0.30319
+Description: The process was terminated due to an unhandled exception.
+Exception Info: System.ComponentModel.Win32Exception
+
+Exception Info: System.DllNotFoundException
+at MS.Internal.NativeWPFDLLLoader.LoadNativeWPFDLL(UInt16*, UInt16*)
+at MS.Internal.NativeWPFDLLLoader.LoadCommonDLLsAndDwrite()
+at &lt;Module&gt;.CModuleInitialize.{ctor}(CModuleInitialize*, Void ())
+at &lt;Module&gt;.?A0x721f77f1.CreateCModuleInitialize()
+</code></pre></div></div>
+
+<h2 id="解决方法">解决方法</h2>
+
+<p>安装<a href="https://support.microsoft.com/zh-cn/help/4019990/update-for-the-d3dcompiler-47-dll-component-on-windows">在 Windows Server 2012、Windows Server 7 和 Windows Server 2008 R2 上的 d3dcompiler_47.dll 组件的更新</a></p>
+
+<p>注意，此时卸载重装 .NET 4.5 可以解除依赖，但是如果用到像素着色器依然会提示文件损坏</p>
+
+<h2 id="复现步骤">复现步骤</h2>
+
+<p>step1：安装 .NET 4.6 (4.6、4.6.1、4.6.2都会出现这个问题)</p>
+
+<p>step2：安装以下两个更新：KB4040973 KB3178034 （任意安装顺序）；</p>
+
+<p>说明：</p>
+
+<p>1、KB3178034 是 Microsoft 图形组件安全更新程序；发布时间：2016 年 8 月 9 日</p>
+
+<p><a href="https://support.microsoft.com/en-us/help/3178034/ms16-097-description-of-the-security-update-for-microsoft-graphics-com">MS16-097: Description of the security update for Microsoft Graphics Component: August 9, 2016</a></p>
+
+<p><a href="https://docs.microsoft.com/zh-cn/security-updates/Securitybulletins/2016/ms16-097?redirectedfrom=MSDN">Microsoft 安全公告 MS16-097 - 严重</a></p>
+
+<p>2、KB4040973 是 net46以上 相关更新程序；发布时间：2017 年 9 月 12 日</p>
+
+<p><a href="https://support.microsoft.com/en-us/help/4040973/description-of-the-security-and-quality-rollup-for-the-net-framework-4">Description of the Security and Quality Rollup for the .NET Framework 4.6, 4.6.1, 4.6.2, and 4.7 for Windows 7 SP1 and Windows Server 2008 R2 SP1 and for the .NET Framework 4.6 for Windows Server 2008 SP2: September 12, 2017</a></p>
+
+<p>3、上述更新安装后，计算机上并不会出现 D3Dcompiler_47.dll ，但引入了其依赖；</p>
+
+<p>4、上述更新必须同时安装，只安装其中一个不会出现问题。</p>
+
+<p>5、出现这个问题之后，重新安装.NET4.6，或者升级 .NET4.6 为 4.6.1或4.6.2不能解决问题。</p>
+
+<h2 id="影响范围">影响范围</h2>
+
+<ul>
+  <li>用 .NET 4.5 和以上版本的 WPF 程序</li>
+  <li>其他用到像素着色器的 win32 程序</li>
+</ul>
+
+<h2 id="相关链接">相关链接</h2>
+
+<p><a href="https://answers.microsoft.com/zh-hans/windows/forum/all/win7%E7%B3%BB%E7%BB%9F%E7%94%B5%E8%84%91%E4%B8%A2/85dec42a-f0ed-4b16-bb57-fd838ca1a49c?auth=1">win7系统电脑丢失D3DCOMPILER_47.DLL 怎么办 - Microsoft Community</a></p>
+
+<p><a href="https://helpx.adobe.com/cn/photoshop/kb/photoshop-error-launch-d3dcompiler.html">启动时出现 Photoshop 系统错误 - 缺少 D3DCOMPILER_47.dll</a></p>
+
+<p><a href="https://bbs.csdn.net/topics/392423671">WPF程序停止工作-CSDN论坛</a></p>
+
+<h2 id="官方措施">官方措施</h2>
+
+<p>在 .NET Core 版本修复</p>
+
+<p><a href="https://github.com/dotnet/wpf/pull/190">Adding d3d_compiler dependency to known issues by rladuca · Pull Request #190 · dotnet/wpf</a></p>
+
+<p><a href="https://github.com/dotnet/wpf/issues/37">WPF Applications require crash with System.TypeLoadException when VC++ redistributables are not present · Issue #37 · dotnet/wpf</a></p>
+
+:ET

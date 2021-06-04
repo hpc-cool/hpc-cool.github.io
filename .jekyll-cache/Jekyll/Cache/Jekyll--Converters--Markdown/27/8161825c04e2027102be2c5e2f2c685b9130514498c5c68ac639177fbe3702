@@ -1,0 +1,25 @@
+I"U<p>本文记录我写的代码逗比代码</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/13 17:48:37 -->
+
+<h2 id="c-篇">C++ 篇</h2>
+
+<p>其实我发现使用 C++ 写逗比代码比 C# 更开森</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">#define ！ ; 
+#include &lt;iostream&gt;
+</span>
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">auto</span> <span class="n">b</span> <span class="o">=</span> <span class="o">!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!</span><span class="nb">true</span> <span class="err">！</span> <span class="err">！</span> <span class="err">！</span> 
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">b</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>你猜猜输出是什么</p>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/e830acc646ec23deb806561fbe0610841c154785/HefigalnurjaircakaBilifenay">github</a> 和 <a href="https://gitee.com/lindexi/lindexi_gd/tree/e830acc646ec23deb806561fbe0610841c154785/HefigalnurjaircakaBilifenay">gitee</a> 欢迎小伙伴访问</p>
+
+:ET

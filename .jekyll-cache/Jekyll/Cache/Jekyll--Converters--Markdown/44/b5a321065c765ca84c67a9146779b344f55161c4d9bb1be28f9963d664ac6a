@@ -1,0 +1,54 @@
+I"<p>因为 WPF 在开启 Pointer 和没有开启的基础表现几乎相同，因此从业务层很难了解到当前是否开启了 Pointer 消息。本文从开发者的角度，通过 Windows 消息判断当前是否开启 Pointer 支持</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/21 8:43:29 -->
+
+<p>在 <a href="https://blog.lindexi.com/post/win10-%E6%94%AF%E6%8C%81%E9%BB%98%E8%AE%A4%E6%8A%8A%E8%A7%A6%E6%91%B8%E6%8F%90%E5%8D%87-Pointer-%E6%B6%88%E6%81%AF.html">win10 支持默认把触摸提升 Pointer 消息</a> 告诉大家如何在 Win10 下让 WPF 在 .NET 4.7 和以上框架支持 Pointer 消息</p>
+
+<p>那么如何确定这个 WPF 程序我写对了，开启了 Pointer 消息？可以通过监听 Window 消息，如果能收到 Pointer 的消息，那么算开启成功</p>
+
+<p>不需要在用户端判断，用户端只需要判断 运行的系统是 <code class="language-plaintext highlighter-rouge">Windows 10 Creators Update</code> 1703 10.0.15063 就可以。因此本文更多是给开发端，开发的时候通过此方法可以确定是否开启了 Pointer 消息</p>
+
+<p>在 <a href="https://blog.lindexi.com/post/WPF-%E6%B7%BB%E5%8A%A0%E7%AA%97%E5%8F%A3%E6%B6%88%E6%81%AF%E9%92%A9%E5%AD%90%E6%96%B9%E6%B3%95.html">WPF 添加窗口消息钩子方法</a> 这篇博客告诉大家如何拿到窗口的消息</p>
+
+<p>在这个基础上，尝试在拿到消息判断是否 Pointer 消息，如果能收到 Pointer 消息，那么证明代码没写错</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">SourceInitialized</span> <span class="p">+=</span> <span class="n">OnSourceInitialized</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnSourceInitialized</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">windowInteropHelper</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">hwnd</span> <span class="p">=</span> <span class="n">windowInteropHelper</span><span class="p">.</span><span class="n">Handle</span><span class="p">;</span>
+
+            <span class="n">HwndSource</span> <span class="n">source</span> <span class="p">=</span> <span class="n">HwndSource</span><span class="p">.</span><span class="nf">FromHwnd</span><span class="p">(</span><span class="n">hwnd</span><span class="p">);</span>
+            <span class="n">source</span><span class="p">.</span><span class="nf">AddHook</span><span class="p">(</span><span class="n">Hook</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">IntPtr</span> <span class="nf">Hook</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wparam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lparam</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">WM_POINTERDOWN</span> <span class="p">=</span> <span class="m">0x0246</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="p">==</span> <span class="n">WM_POINTERDOWN</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 开启了 Pointer 消息</span>
+                <span class="n">Debugger</span><span class="p">.</span><span class="nf">Break</span><span class="p">();</span>
+            <span class="p">}</span>
+
+
+            <span class="k">return</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果能进入 <code class="language-plaintext highlighter-rouge">msg == WM_POINTERDOWN</code> 那么就是收到 Pointer 消息了</p>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/a91924abc9c0254edfb8bb567a66c6e796d3a7dd/KemjawyecawDurbahelal">github</a> 欢迎小伙伴访问</p>
+
+<p>更多触摸请看 <a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E7%9B%B8%E5%85%B3.html">WPF 触摸相关</a></p>
+
+:ET

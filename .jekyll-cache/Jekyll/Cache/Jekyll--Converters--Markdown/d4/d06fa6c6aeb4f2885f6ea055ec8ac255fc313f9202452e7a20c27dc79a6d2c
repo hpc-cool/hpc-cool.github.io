@@ -1,0 +1,453 @@
+I""�<p>本文告诉大家如何修改图片的颜色，如去掉图片的蓝色
+<!-- 标签：WPF，图片处理 --></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<!-- csdn -->
+
+<p>在 WPF 可以使用很多图片处理的方法，本文告诉大家的是一个图片处理，可以把处理的图片保存在文件。</p>
+
+<p>在阅读本文，我假设大家是熟悉 WPF 的，至少了解 C# ，也知道图片的格式。</p>
+
+<p>在 WPF 可以使用 ARBG 数组表示图片，本文修改图片颜色的方法就是使用 ARBG 数组的方法修改，修改里面的元素的值。</p>
+
+<p>如我需要去掉图片的蓝色，就可以通过修改 ARBG 数组的元素，设置所有蓝色为 0 ，去掉蓝色。</p>
+
+<h2 id="读取图片">读取图片</h2>
+
+<p>首先找到一张好看的图片，放在解决方案</p>
+
+<!-- ![](image/WPF 修改图片颜色/WPF 修改图片颜色0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018732045136233.jpg" alt="" /></p>
+
+<p>读取解决方案的图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">Application</span><span class="p">.</span><span class="nf">GetResourceStream</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"pack://application:,,,/1.jpg"</span><span class="p">)).</span><span class="n">Stream</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>如果找不到图片，就是没有设置图片生成是 Resource</p>
+
+<h2 id="解析文件">解析文件</h2>
+
+<p>创建 WriteableBitmap 需要使用 ImageSource 所以需要先解析</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 其他忽略代码</span>
+            <span class="kt">var</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">BeginInit</span><span class="p">();</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="n">StreamSource</span> <span class="p">=</span> <span class="n">stream</span><span class="p">;</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">EndInit</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>使用 BitmapImage 解析文件</p>
+
+<h2 id="创建图片">创建图片</h2>
+
+<p>在读取图片之后就可以创建图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">writeableBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<h2 id="转换图片格式">转换图片格式</h2>
+
+<p>如果读取到的图片不是 BGRA 的格式，就需要转换图片格式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">formatConvertedBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FormatConvertedBitmap</span><span class="p">();</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="nf">BeginInit</span><span class="p">();</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">bitmapImage</span><span class="p">;</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="n">DestinationFormat</span> <span class="p">=</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Bgra32</span><span class="p">;</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="nf">EndInit</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>使用这个代码可以把格式转为<code class="language-plaintext highlighter-rouge">PixelFormats.Bgra32</code>，需要重新创建图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">Application</span><span class="p">.</span><span class="nf">GetResourceStream</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"pack://application:,,,/1.jpg"</span><span class="p">)).</span><span class="n">Stream</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">BeginInit</span><span class="p">();</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="n">StreamSource</span> <span class="p">=</span> <span class="n">stream</span><span class="p">;</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">EndInit</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">formatConvertedBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FormatConvertedBitmap</span><span class="p">();</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="nf">BeginInit</span><span class="p">();</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">bitmapImage</span><span class="p">;</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="n">DestinationFormat</span> <span class="p">=</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Bgra32</span><span class="p">;</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="nf">EndInit</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">writeableBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">formatConvertedBitmap</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>尝试显示图片，可以看到图片还是很好看</p>
+
+<!-- ![](image/WPF 修改图片颜色/WPF 修改图片颜色1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20187320571094.jpg" alt="" /></p>
+
+<h2 id="读取数组">读取数组</h2>
+
+<p>在图片可以看到图片是使用 BGRA 的格式数组，所以只需要读取图片数组就可以修改图片</p>
+
+<p>读取图片需要使用不安全代码，需要右击项目属性，点击生成，允许不安全代码。</p>
+
+<p>在修改图片之前需要使用 Lock 函数，读取图片的数组长度可以使用这个代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span> <span class="p">*</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span> <span class="p">*</span>
+                         <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">Format</span><span class="p">.</span><span class="n">BitsPerPixel</span> <span class="p">/</span> <span class="m">8</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>这里知道使用的是 BGRA 也就是一个像素使用 4 个 byte ，一个图片的像素就是<code class="language-plaintext highlighter-rouge">writeableBitmap.PixelWidth * writeableBitmap.PixelHeight</code> 。这里 <code class="language-plaintext highlighter-rouge">writeableBitmap.Format.BitsPerPixel</code> 就是拿到一个像素的 bit 数。</p>
+
+<p>转换数组</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">backBuffer</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">*)</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">BackBuffer</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>读取颜色就是从数组拿到值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span> <span class="p">&lt;</span> <span class="n">length</span><span class="p">;</span> <span class="n">i</span> <span class="p">=</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">blue</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">green</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">1</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">red</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">2</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">alpha</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">3</span><span class="p">];</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>修改颜色就是修改对应的值然后设置数组，如设置蓝色是 0 去掉蓝色</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span> <span class="p">&lt;</span> <span class="n">length</span><span class="p">;</span> <span class="n">i</span> <span class="p">=</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">blue</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">green</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">1</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">red</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">2</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">alpha</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">3</span><span class="p">];</span>
+
+                <span class="n">blue</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">blue</span><span class="p">;</span>
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">green</span><span class="p">;</span>
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">2</span><span class="p">]</span> <span class="p">=</span> <span class="n">red</span><span class="p">;</span>
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">3</span><span class="p">]</span> <span class="p">=</span> <span class="n">alpha</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>设置之后需要设置图片显示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">AddDirtyRect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">));</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>所以去掉图片的蓝色可以使用 RemoveBlue 函数，设置蓝色为 0 的方法就是读取蓝色然后修改数组</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">RemoveBlue</span><span class="p">(</span><span class="n">WriteableBitmap</span> <span class="n">writeableBitmap</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Lock</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span> <span class="p">*</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span> <span class="p">*</span>
+                         <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">Format</span><span class="p">.</span><span class="n">BitsPerPixel</span> <span class="p">/</span> <span class="m">8</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">backBuffer</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">*)</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">BackBuffer</span><span class="p">;</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span> <span class="p">&lt;</span> <span class="n">length</span><span class="p">;</span> <span class="n">i</span> <span class="p">=</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">blue</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">green</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">1</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">red</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">2</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">alpha</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">3</span><span class="p">];</span>
+
+                <span class="n">blue</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">blue</span><span class="p">;</span>
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">green</span><span class="p">;</span>
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">2</span><span class="p">]</span> <span class="p">=</span> <span class="n">red</span><span class="p">;</span>
+                <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">3</span><span class="p">]</span> <span class="p">=</span> <span class="n">alpha</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">AddDirtyRect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">));</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">();</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>去掉蓝色的图片</p>
+
+<!-- ![](image/WPF 修改图片颜色/WPF 修改图片颜色2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20187321933857.jpg" alt="" /></p>
+
+<p>代码：<a href="https://download.csdn.net/download/lindexi_gd/10517437">WPF 修改图片颜色 1.2-CSDN下载</a></p>
+
+<p>现在的程序看起来还不能使用，尝试添加几个依赖属性，用来修改图片的颜色</p>
+
+<!-- ![](image/WPF 修改图片颜色/WPF 修改图片颜色3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018741612135373.jpg" alt="" /></p>
+
+<p>可以点击这里下载程序</p>
+
+<p><a href="http://image.acmx.xyz/WallmadeJexawoPejakairkas.exe">WPF 修改图片</a></p>
+
+<p>首先在 xaml 添加几个控件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"485*"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"308*"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Image</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Image"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"Slider"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"Width"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"100"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Center"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"Margin"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"Minimum"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"-255"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"Maximum"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"255"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+
+                    <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"TextBlock"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"Margin"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Center"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+
+                    <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">DoubleConvert</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"DoubleConvert"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;/</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+
+                <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                    <span class="p">&lt;</span><span class="n">RowDefinition</span> <span class="n">Height</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span><span class="p">&gt;</span><span class="err">蓝色</span><span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span><span class="p">&gt;</span><span class="err">绿色</span><span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"2"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span><span class="p">&gt;</span><span class="err">红色</span><span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"3"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span><span class="p">&gt;</span><span class="err">透明度</span><span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+
+                <span class="p">&lt;!--</span> <span class="err">蓝色</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"0"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"{Binding Path=Blue,Mode=TwoWay}"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;!--</span> <span class="err">绿色</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"{Binding Path=Green,Mode=TwoWay}"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;!--</span> <span class="err">红色</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"2"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"{Binding Path=Red,Mode=TwoWay}"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;!--</span> <span class="err">透明度</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"3"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"{Binding Path=Alpha,Mode=TwoWay}"</span> <span class="p">/&gt;</span>
+
+                <span class="p">&lt;!--</span> <span class="err">蓝色</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"0"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span>
+                           <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding Path=Blue,Mode=OneWay,Converter={StaticResource DoubleConvert}}"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;!--</span> <span class="err">绿色</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span>
+                           <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding Path=Green,Mode=OneWay,Converter={StaticResource DoubleConvert}}"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;!--</span> <span class="err">红色</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"2"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span>
+                           <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding Path=Red,Mode=OneWay,Converter={StaticResource DoubleConvert}}"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;!--</span> <span class="err">透明度</span> <span class="p">--&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"3"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span>
+                           <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding Path=Alpha,Mode=OneWay,Converter={StaticResource DoubleConvert}}"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Bottom"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"替换图片"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>注意在页面设置数据</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DataContext="{Binding RelativeSource={RelativeSource Self}}"
+</code></pre></div></div>
+
+<p>然后打开 cs 添加代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="k">private</span> <span class="n">WriteableBitmap</span> <span class="n">_writeableBitmap</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">Image</span><span class="p">.</span><span class="n">Margin</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thickness</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">Application</span><span class="p">.</span><span class="nf">GetResourceStream</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"pack://application:,,,/1.jpg"</span><span class="p">)).</span><span class="n">Stream</span><span class="p">;</span>
+
+            <span class="nf">ChangeImage</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">BlueProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Blue"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">((</span><span class="n">MainWindow</span><span class="p">)</span> <span class="n">s</span><span class="p">).</span><span class="nf">ChangeArray</span><span class="p">()));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Blue</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">BlueProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">BlueProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">GreenProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Green"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">((</span><span class="n">MainWindow</span><span class="p">)</span> <span class="n">s</span><span class="p">).</span><span class="nf">ChangeArray</span><span class="p">()));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Green</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">GreenProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">GreenProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">RedProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Red"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">((</span><span class="n">MainWindow</span><span class="p">)</span> <span class="n">s</span><span class="p">).</span><span class="nf">ChangeArray</span><span class="p">()));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Red</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">RedProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">RedProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">AlphaProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Alpha"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">((</span><span class="n">MainWindow</span><span class="p">)</span> <span class="n">s</span><span class="p">).</span><span class="nf">ChangeArray</span><span class="p">()));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Alpha</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">AlphaProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">AlphaProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">ChangeImage</span><span class="p">(</span><span class="n">Stream</span> <span class="n">stream</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">BeginInit</span><span class="p">();</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="n">StreamSource</span> <span class="p">=</span> <span class="n">stream</span><span class="p">;</span>
+            <span class="n">bitmapImage</span><span class="p">.</span><span class="nf">EndInit</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">formatConvertedBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FormatConvertedBitmap</span><span class="p">();</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="nf">BeginInit</span><span class="p">();</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">bitmapImage</span><span class="p">;</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="n">DestinationFormat</span> <span class="p">=</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Bgra32</span><span class="p">;</span>
+
+            <span class="n">formatConvertedBitmap</span><span class="p">.</span><span class="nf">EndInit</span><span class="p">();</span>
+
+            <span class="n">_writeableBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">formatConvertedBitmap</span><span class="p">);</span>
+
+            <span class="nf">ChangeArray</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">ChangeArray</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">writeableBitmap</span> <span class="p">=</span> <span class="n">_writeableBitmap</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">writeableBitmap</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Lock</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span> <span class="p">*</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span> <span class="p">*</span>
+                         <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">Format</span><span class="p">.</span><span class="n">BitsPerPixel</span> <span class="p">/</span> <span class="m">8</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">backBuffer</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">*)</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">BackBuffer</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">length</span><span class="p">];</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span> <span class="p">&lt;</span> <span class="n">length</span><span class="p">;</span> <span class="n">i</span> <span class="p">=</span> <span class="n">i</span> <span class="p">+</span> <span class="m">4</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">blue</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">green</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">1</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">red</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">2</span><span class="p">];</span>
+                <span class="kt">var</span> <span class="n">alpha</span> <span class="p">=</span> <span class="n">backBuffer</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">3</span><span class="p">];</span>
+
+                <span class="n">blue</span> <span class="p">+=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="n">Blue</span><span class="p">;</span>
+                <span class="n">green</span> <span class="p">+=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="n">Green</span><span class="p">;</span>
+                <span class="n">red</span> <span class="p">+=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="n">Red</span><span class="p">;</span>
+                <span class="n">alpha</span> <span class="p">+=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="n">Alpha</span><span class="p">;</span>
+
+                <span class="n">byteList</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">blue</span><span class="p">;</span>
+                <span class="n">byteList</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">1</span><span class="p">]</span> <span class="p">=</span> <span class="n">green</span><span class="p">;</span>
+                <span class="n">byteList</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">2</span><span class="p">]</span> <span class="p">=</span> <span class="n">red</span><span class="p">;</span>
+                <span class="n">byteList</span><span class="p">[</span><span class="n">i</span> <span class="p">+</span> <span class="m">3</span><span class="p">]</span> <span class="p">=</span> <span class="n">alpha</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">();</span>
+
+
+            <span class="n">writeableBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span>
+                <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">Format</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">Palette</span><span class="p">);</span>
+
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Lock</span><span class="p">();</span>
+
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">WritePixels</span><span class="p">(</span><span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">),</span>
+                <span class="n">byteList</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">BackBufferStride</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">AddDirtyRect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">));</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">();</span>
+
+            <span class="n">Image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">writeableBitmap</span><span class="p">;</span>
+        <span class="p">}</span>
+
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">openFileDialog</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">OpenFileDialog</span><span class="p">();</span>
+            <span class="n">openFileDialog</span><span class="p">.</span><span class="n">Filter</span> <span class="p">=</span> <span class="s">"jpg(*.jpg)|*.jpg"</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">openFileDialog</span><span class="p">.</span><span class="nf">ShowDialog</span><span class="p">()</span> <span class="p">==</span> <span class="k">true</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">openFileDialog</span><span class="p">.</span><span class="nf">OpenFile</span><span class="p">();</span>
+                <span class="nf">ChangeImage</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">DoubleConvert</span> <span class="p">:</span> <span class="n">IValueConverter</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="k">is</span> <span class="kt">double</span> <span class="n">n</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">n</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"0.00"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="n">UnsetValue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="kt">object</span> <span class="nf">ConvertBack</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>代码：<a href="https://download.csdn.net/download/lindexi_gd/10519934">WPF 修改图片颜色 2.5-CSDN下载</a></p>
+
+<p>参见：</p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/framework/wpf/graphics-multimedia/how-to-convert-a-bitmapsource-to-a-different-pixelformat">How to: Convert a BitmapSource to a Different PixelFormat</a></p>
+
+:ET

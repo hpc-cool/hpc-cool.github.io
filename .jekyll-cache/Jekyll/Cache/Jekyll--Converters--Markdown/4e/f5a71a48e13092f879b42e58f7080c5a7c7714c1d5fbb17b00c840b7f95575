@@ -1,0 +1,51 @@
+I"9<p>最近在写硬件，发现有一些测试是做 16 进制的字符串，需要把他转换为整形才可以处理
+本文告诉大家如何从 16 进制转整形</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/2/28 11:51:36 -->
+
+<div id="toc"></div>
+<!-- 标签：C# -->
+
+<p>如果输入的是 <code class="language-plaintext highlighter-rouge">0xaa</code> 这时转换 int 不能使用 <code class="language-plaintext highlighter-rouge">Parse</code> 不然会出现异常</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">FormatException</span>
+</code></pre></div></div>
+
+<p>如果需要转换十六进制就需要使用 Convert 才可以转换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Convert</span><span class="p">.</span><span class="nf">ToInt32</span><span class="p">(</span><span class="s">"0xaa"</span><span class="p">,</span> <span class="m">16</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>使用这个方法才可以转换。实际使用这个方法转换不一定需要添加<code class="language-plaintext highlighter-rouge">0x</code>，直接使用<code class="language-plaintext highlighter-rouge">aa</code>也是可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Convert</span><span class="p">.</span><span class="nf">ToInt32</span><span class="p">(</span><span class="s">"0xaa"</span><span class="p">,</span> <span class="m">16</span><span class="p">)</span> <span class="p">==</span> <span class="n">Convert</span><span class="p">.</span><span class="nf">ToInt32</span><span class="p">(</span><span class="s">"aa"</span><span class="p">,</span> <span class="m">16</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>我需要转换的是一个字符串，里面有很多数值，所以我就使用下面的方法。</p>
+
+<p>如果输入的字符串是这个样子</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span>
+                <span class="s">"AA BB CC 12 01 0D 00 34 38 34 35 32 30 41 35 33 46 37 30 2C 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0A"</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>那么就需要先添加 <code class="language-plaintext highlighter-rouge">0x</code> 然后再转换，使用下面一句话可以转数组</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="kt">var</span> <span class="n">command</span> <span class="p">=</span> <span class="n">str</span><span class="p">.</span><span class="nf">Split</span><span class="p">(</span><span class="sc">' '</span><span class="p">).</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="s">"0x"</span> <span class="p">+</span> <span class="n">temp</span><span class="p">).</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="n">Convert</span><span class="p">.</span><span class="nf">ToInt32</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="m">16</span><span class="p">))</span>
+                <span class="p">.</span><span class="nf">ToArray</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>这个方法大家可以直接拿去使用。</p>
+
+<p>如果输入没有带<code class="language-plaintext highlighter-rouge">0x</code>那么另一个方法是 int.Parse ，因为这个方法可以设置如何转换，注意需要不带<code class="language-plaintext highlighter-rouge">0x</code>如果带了就出现异常</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">int</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"aa"</span><span class="p">,</span> <span class="n">System</span><span class="p">.</span><span class="n">Globalization</span><span class="p">.</span><span class="n">NumberStyles</span><span class="p">.</span><span class="n">HexNumber</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/types/how-to-convert-between-hexadecimal-strings-and-numeric-types">How to: Convert Between Hexadecimal Strings and Numeric Types </a></p>
+
+<p><img src="https://i.loli.net/2018/08/19/5b78cf969217e.jpg" alt="" /></p>
+
+:ET

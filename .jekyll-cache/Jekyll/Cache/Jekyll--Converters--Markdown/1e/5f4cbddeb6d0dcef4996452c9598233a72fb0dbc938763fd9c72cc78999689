@@ -1,0 +1,104 @@
+I"w'<p>本文告诉大家如何写同一个简单的动画。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<!-- csdn -->
+
+<h2 id="动画入门">动画入门</h2>
+
+<p>本文开始写一个简单的动画，只是移动矩形作为本文的例子。</p>
+
+<p>在 UWP 移动元素的动画，可以使用 RenderTransform 移动，然后使用动画修改 RenderTransform 进行动画。关于元素移动，请看 <a href="http://lindexi.oschina.io/lindexi/post/win10-uwp-%E6%8B%96%E5%8A%A8%E6%8E%A7%E4%BB%B6/">win10 uwp 拖动控件</a></p>
+
+<p>首先写一个简单的界面，只有一个矩形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Bret"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Rolernd"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#FFa2a2a2"</span>
+                       <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Top"</span><span class="p">&gt;</span>
+              
+            <span class="p">&lt;/</span><span class="n">Rectangle</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>然后在矩形加上  RenderTransform ，作为移动</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Bret"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Rolernd"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#FFa2a2a2"</span>
+                       <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Top"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Rectangle</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">TranslateTransform</span><span class="p">&gt;&lt;/</span><span class="n">TranslateTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Rectangle</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Rectangle</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>但是因为动画不可以直接播放，先加个按钮，点击按钮时播放。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"确定"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>现在界面看起来就是如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Bret"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Rolernd"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"#FFa2a2a2"</span>
+                       <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Top"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Rectangle</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">TranslateTransform</span><span class="p">&gt;&lt;/</span><span class="n">TranslateTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Rectangle</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Rectangle</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+        
+        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"确定"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>开始写动画。</p>
+
+<p>需要在 Resources 写动画，于是在页面写上动画，这里使用 DoubleAnimation ，注意需要 Storyboard.TargetName 说明动画的元素。因为 RenderTransform 动画有点难，于是我才写他。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="p">&lt;</span><span class="n">Page</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"Filiberto"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"Rolernd"</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"(Rectangle.RenderTransform).(TranslateTransform.X)"</span>
+                             <span class="n">From</span><span class="p">=</span><span class="s">"0"</span> <span class="n">To</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Duration</span><span class="p">=</span><span class="s">"0:0:1"</span><span class="p">&gt;</span>
+                
+            <span class="p">&lt;/</span><span class="n">DoubleAnimation</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Page</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>其中的 From 就是修改数值从多少开始，To 就是到多少，后面的属性就是动画时间。写完动画就在按钮写播放，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">s</span> <span class="p">=</span> <span class="p">(</span><span class="n">Storyboard</span><span class="p">)</span><span class="n">Resources</span><span class="p">[</span><span class="s">"Filiberto"</span><span class="p">];</span>
+            <span class="n">s</span><span class="p">.</span><span class="nf">Begin</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>点击F5就是可以看到界面出现矩形，按下按钮就向右走</p>
+
+<p><a href="https://blog.lindexi.com/post/win10-uwp-%E4%BD%BF%E7%94%A8%E5%8A%A8%E7%94%BB%E4%BF%AE%E6%94%B9-Grid-column-%E7%9A%84%E5%AE%BD%E5%BA%A6.html">win10 uwp 使用动画修改 Grid column 的宽度</a></p>
+
+<p>http://www.cnblogs.com/KeithWang/archive/2012/03/30/2425588.html</p>
+
+<p>http://www.cnblogs.com/lin277541/p/4882000.html</p>
+
+<p>http://www.cnblogs.com/lin277541/p/5059489.html</p>
+
+<p>http://www.cnblogs.com/lin277541/p/5064899.html</p>
+
+<p>http://www.cnblogs.com/lin277541/p/5068410.html</p>
+
+<p>http://www.cnblogs.com/lin277541/p/5074697.html</p>
+
+<p>http://www.cnblogs.com/lin277541/p/4881188.html</p>
+
+<p>http://www.cnblogs.com/lin277541/p/4876140.html</p>
+
+<p>http://www.cnblogs.com/mantgh/p/4437892.html</p>
+
+<p>http://www.datiancun.net/thread-1586-1-1.html</p>
+
+:ET

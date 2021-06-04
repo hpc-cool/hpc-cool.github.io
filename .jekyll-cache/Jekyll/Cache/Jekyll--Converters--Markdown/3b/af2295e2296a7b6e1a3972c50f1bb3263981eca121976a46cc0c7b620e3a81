@@ -1,0 +1,31 @@
+I"�<p>在打开一个 sln 项目包含 dotnet core 的时候，可能在打开的时候提示找不到 sdk 一般是没有在安装的时候安装对应的开发</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/6/23 10:55:09 -->
+
+<p>如果在导入一个 sln 文件的时候看到下面的提示</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.NETCore SDK Not Found
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/5c82777e-6e2b-4d9b-a07f-5d83e2ae2cd7201612485939.jpg" alt="" /></p>
+
+<p>需要判断现在使用是Vs2015或VS2017版本</p>
+
+<p>如果是2015，去 <a href="https://github.com/aspnet/Tooling/blob/master/known-issues-vs2015.md">https://github.com/aspnet/Tooling/blob/master/known-issues-vs2015.md</a> 下载对应版本</p>
+
+<p>如果是2017，去 <a href="https://github.com/aspnet/Tooling/blob/master/known-issues-vs2017.md">https://github.com/aspnet/Tooling/blob/master/known-issues-vs2017.md</a>  下载</p>
+
+<p>当然不想下载，修改<code class="language-plaintext highlighter-rouge">global.json</code>文件，将使用的版本号修改为当前你的设备已经安装的版本</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "projects": [ "src", "test" ],
+  "sdk": 
+  {
+    "version": "1.0.0-preview2-003121"  你需要的版本
+  }
+}
+</code></pre></div></div>
+
+:ET

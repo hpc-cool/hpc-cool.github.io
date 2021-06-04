@@ -1,0 +1,103 @@
+I"j.<p>在 dotnet 程序没有现有的方法可以列举当前设备的无线网卡找到的 WIFI 热点，需要写一点代码才能使用</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/30 14:42:18 -->
+
+<!-- csdn -->
+
+<p>最简单的方法是通过命令行的方法，在命令行输入下面代码可以显示计算机上可见的网络列表</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">netsh</span> <span class="n">wlan</span> <span class="n">show</span> <span class="n">networks</span>
+</code></pre></div></div>
+
+<p>在我设备上运行可以找到我附近的 WIFI 热点</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">SSID</span> <span class="m">1</span> <span class="p">:</span> <span class="n">Lindexi</span>
+    <span class="n">Network</span> <span class="n">type</span>            <span class="p">:</span> <span class="err">结构</span>
+    <span class="err">身份验证</span>                <span class="p">:</span> <span class="n">WPA2</span> <span class="p">-</span> <span class="err">个人</span>
+    <span class="err">加密</span>                    <span class="p">:</span> <span class="n">CCMP</span>
+
+<span class="n">SSID</span> <span class="m">2</span> <span class="p">:</span> <span class="n">Lvyi</span>
+    <span class="n">Network</span> <span class="n">type</span>            <span class="p">:</span> <span class="err">结构</span>
+    <span class="err">身份验证</span>                <span class="p">:</span> <span class="n">WPA2</span> <span class="p">-</span> <span class="err">个人</span>
+    <span class="err">加密</span>                    <span class="p">:</span> <span class="n">CCMP</span>
+
+<span class="n">SSID</span> <span class="m">3</span> <span class="p">:</span> <span class="err">职业技术学院</span>
+    <span class="n">Network</span> <span class="n">type</span>            <span class="p">:</span> <span class="err">结构</span>
+    <span class="err">身份验证</span>                <span class="p">:</span> <span class="err">开放式</span>
+    <span class="err">加密</span>                    <span class="p">:</span> <span class="err">无</span>
+</code></pre></div></div>
+
+<p>也就是通过命令行方式调用，然后解析命令行就可以列举设备能连接的 WIFI 热点</p>
+
+<p>另一个方法是通过本机代码</p>
+
+<p>从<a href="https://archive.codeplex.com/?p=managedwifi">网上</a>找到调用 wlanapi.dll 的方法，调用了方法可以拿到当前设备能访问的 WIFI 列表</p>
+
+<p>这里的代码都是调用 win32 方法，我将代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/a3e5b013219b6b316194cde0ca8295d536849f09/LajallwachedeNojalajuhoke">github</a> 请复制 <a href="https://github.com/lindexi/lindexi_gd/blob/a3e5b013219b6b316194cde0ca8295d536849f09/LajallwachedeNojalajuhoke/LajallwachedeNojalajuhoke/WlanApi.cs">WlanApi.cs</a> 和 <a href="https://github.com/lindexi/lindexi_gd/blob/a3e5b013219b6b316194cde0ca8295d536849f09/LajallwachedeNojalajuhoke/LajallwachedeNojalajuhoke/Interop.cs">Interop.cs</a> 到你的项目，然后使用下面代码就可以显示当前能连接的网络</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">WlanClient</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WlanClient</span><span class="p">();</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="n">WlanClient</span><span class="p">.</span><span class="n">WlanInterface</span> <span class="n">wlanIface</span> <span class="k">in</span> <span class="n">client</span><span class="p">.</span><span class="n">Interfaces</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// Lists all networks with WEP security</span>
+                <span class="n">Wlan</span><span class="p">.</span><span class="n">WlanAvailableNetwork</span><span class="p">[]</span> <span class="n">networks</span> <span class="p">=</span> <span class="n">wlanIface</span><span class="p">.</span><span class="nf">GetAvailableNetworkList</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">networks</span><span class="p">.</span><span class="n">Length</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"找到</span><span class="p">{</span><span class="n">networks</span><span class="p">.</span><span class="n">Length</span><span class="p">}</span><span class="s">热点"</span><span class="p">);</span>
+                    <span class="k">foreach</span> <span class="p">(</span><span class="n">Wlan</span><span class="p">.</span><span class="n">WlanAvailableNetwork</span> <span class="n">network</span> <span class="k">in</span> <span class="n">networks</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"WIFI </span><span class="p">{</span><span class="nf">GetStringForSSID</span><span class="p">(</span><span class="n">network</span><span class="p">.</span><span class="n">dot11Ssid</span><span class="p">)}</span><span class="s">."</span><span class="p">);</span>
+                    <span class="p">}</span>
+
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// Converts a 802.11 SSID to a string.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetStringForSSID</span><span class="p">(</span><span class="n">Wlan</span><span class="p">.</span><span class="n">Dot11Ssid</span> <span class="n">ssid</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">.</span><span class="nf">GetString</span><span class="p">(</span><span class="n">ssid</span><span class="p">.</span><span class="n">SSID</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">ssid</span><span class="p">.</span><span class="n">SSIDLength</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>当然，复制代码的方法是很逗比的，早就有大佬做出了 NuGet 库，请安装 <a href="https://www.nuget.org/packages/SimpleWifi">SimpleWifi</a> 这个库，然后使用下面代码就可以输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">wlanClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WlanClient</span><span class="p">();</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">wlanClientInterface</span> <span class="k">in</span> <span class="n">wlanClient</span><span class="p">.</span><span class="n">Interfaces</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">wlanAvailableNetwork</span> <span class="k">in</span> <span class="n">wlanClientInterface</span><span class="p">.</span><span class="nf">GetAvailableNetworkList</span><span class="p">(</span><span class="n">WlanGetAvailableNetworkFlags</span><span class="p">.</span><span class="n">IncludeAllAdhocProfiles</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"WIFI </span><span class="p">{</span><span class="nf">GetStringForSSID</span><span class="p">(</span><span class="n">wlanAvailableNetwork</span><span class="p">.</span><span class="n">dot11Ssid</span><span class="p">)}</span><span class="s">."</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// Converts a 802.11 SSID to a string.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetStringForSSID</span><span class="p">(</span><span class="n">Dot11Ssid</span> <span class="n">ssid</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">.</span><span class="nf">GetString</span><span class="p">(</span><span class="n">ssid</span><span class="p">.</span><span class="n">SSID</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">ssid</span><span class="p">.</span><span class="n">SSIDLength</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>使用库的代码也放在 <a href="https://github.com/lindexi/lindexi_gd/tree/742b30de6715bb5f21243aad8db10ce90e913793/LajallwachedeNojalajuhoke">github</a> 欢迎小伙伴下载</p>
+
+<p>是不是看的代码和复制大佬写的代码的差不多，其实这个库的代码基本和刚才复制代码的一样，如果想要使用刚才复制代码的库，可以安装 <a href="https://www.nuget.org/packages/managedwifi">managedwifi</a> 库，此时的显示可以访问的周围的网络的代码和刚才复制代码的相同</p>
+
+<p>修改的代码也放在 <a href="https://github.com/lindexi/lindexi_gd/tree/76057010dac356ce20fcacb3e016425bf1a3e8ec/LajallwachedeNojalajuhoke">github</a> 欢迎小伙伴下载</p>
+
+<p>在 UWP 有框架的方法访问 WIFI 请看 <a href="https://docs.microsoft.com/en-us/uwp/api/windows.devices.wifi.wifiadapter">WiFiAdapter Class (Windows.Devices.WiFi) - Windows UWP applications</a> 使用方法请看 <a href="https://github.com/microsoft/Windows-universal-samples/tree/master/Samples/WiFiScan">Windows-universal-samples/Samples/WiFiScan</a> 但是 Win32 如果不打包 UWP 不能调上面方法</p>
+
+<p><a href="https://blog.walterlv.com/post/windows/find-wifi-password.html">查询已连接 Wi-Fi 的密码（入门和进阶两种方法） - walterlv</a></p>
+
+:ET

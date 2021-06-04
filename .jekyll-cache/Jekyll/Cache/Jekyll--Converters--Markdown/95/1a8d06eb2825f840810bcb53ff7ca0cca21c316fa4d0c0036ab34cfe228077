@@ -1,0 +1,173 @@
+I"J<p>本文告诉大家如何使用 win32 方法创建一个全屏的窗口</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/15 9:28:02 -->
+
+<p>使用 user32.dll 的 CreateWindowExW 方法就能创建窗口，代码请看</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">internal</span> <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">customWindow</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Window</span><span class="p">(</span><span class="s">"sdf"</span><span class="p">);</span>
+            <span class="p">});</span>
+
+            <span class="n">thread</span><span class="p">.</span><span class="nf">SetApartmentState</span><span class="p">(</span><span class="n">ApartmentState</span><span class="p">.</span><span class="n">STA</span><span class="p">);</span>
+            <span class="n">thread</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadLine</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">internal</span> <span class="k">class</span> <span class="nc">Window</span> <span class="p">:</span> <span class="n">IDisposable</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">Window</span><span class="p">(</span><span class="kt">string</span> <span class="n">className</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">windClass</span> <span class="p">=</span> <span class="k">new</span> <span class="n">WNDCLASS</span>
+            <span class="p">{</span>
+                <span class="n">lpszClassName</span> <span class="p">=</span> <span class="n">className</span>
+            <span class="p">};</span>
+            <span class="n">_wndProc</span> <span class="p">=</span> <span class="n">CustomWndProc</span><span class="p">;</span>
+
+            <span class="n">windClass</span><span class="p">.</span><span class="n">lpfnWndProc</span> <span class="p">=</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">GetFunctionPointerForDelegate</span><span class="p">(</span><span class="n">_wndProc</span><span class="p">);</span>
+
+            <span class="nf">RegisterClassW</span><span class="p">(</span><span class="k">ref</span> <span class="n">windClass</span><span class="p">);</span>
+
+            <span class="c1">// Create window</span>
+            <span class="n">_mHwnd</span> <span class="p">=</span> <span class="nf">CreateWindowExW</span>
+            <span class="p">(</span>
+                <span class="m">0</span><span class="p">,</span>
+                <span class="n">className</span><span class="p">,</span>
+                <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">,</span>
+                <span class="m">0</span><span class="p">,</span>
+                <span class="m">0</span><span class="p">,</span>
+                <span class="m">0</span><span class="p">,</span>
+                <span class="m">0</span><span class="p">,</span>
+                <span class="m">0</span><span class="p">,</span>
+                <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span>
+                <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span>
+                <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span>
+                <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span>
+            <span class="p">);</span>
+
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">SW_MAXIMIZE</span> <span class="p">=</span> <span class="m">3</span><span class="p">;</span>
+            <span class="nf">ShowWindow</span><span class="p">(</span><span class="n">_mHwnd</span><span class="p">,</span> <span class="n">SW_MAXIMIZE</span><span class="p">);</span>
+
+            <span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+            <span class="k">while</span> <span class="p">((</span><span class="n">ret</span> <span class="p">=</span> <span class="nf">GetMessage</span><span class="p">(</span><span class="k">out</span> <span class="kt">var</span> <span class="n">msg</span><span class="p">,</span> <span class="n">_mHwnd</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">))</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="p">==</span> <span class="p">-</span><span class="m">1</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">//-1 indicates an error</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="nf">TranslateMessage</span><span class="p">(</span><span class="k">ref</span> <span class="n">msg</span><span class="p">);</span>
+                    <span class="nf">DispatchMessage</span><span class="p">(</span><span class="k">ref</span> <span class="n">msg</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">Dispose</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">SuppressFinalize</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">ushort</span> <span class="nf">RegisterClassW</span><span class="p">([</span><span class="n">In</span><span class="p">]</span> <span class="k">ref</span> <span class="n">WNDCLASS</span> <span class="n">lpWndClass</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">CreateWindowExW</span>
+        <span class="p">(</span>
+            <span class="kt">uint</span> <span class="n">dwExStyle</span><span class="p">,</span>
+            <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">LPWStr</span><span class="p">)]</span> <span class="kt">string</span> <span class="n">lpClassName</span><span class="p">,</span>
+            <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">LPWStr</span><span class="p">)]</span> <span class="kt">string</span> <span class="n">lpWindowName</span><span class="p">,</span>
+            <span class="kt">uint</span> <span class="n">dwStyle</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">x</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">y</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">nWidth</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">nHeight</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">hWndParent</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">hMenu</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">hInstance</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">lpParam</span>
+        <span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">DefWindowProcW</span>
+        <span class="p">(</span>
+            <span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span>
+        <span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">DestroyWindow</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">);</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">(</span><span class="kt">bool</span> <span class="n">disposing</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(!</span><span class="n">_mDisposed</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">disposing</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// Dispose managed resources</span>
+                <span class="p">}</span>
+
+                <span class="c1">// Dispose unmanaged resources</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_mHwnd</span> <span class="p">!=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">DestroyWindow</span><span class="p">(</span><span class="n">_mHwnd</span><span class="p">);</span>
+                    <span class="n">_mHwnd</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">GetMessage</span><span class="p">(</span><span class="k">out</span> <span class="kt">int</span> <span class="n">lpMsg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">wMsgFilterMin</span><span class="p">,</span>
+            <span class="kt">uint</span> <span class="n">wMsgFilterMax</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">TranslateMessage</span><span class="p">([</span><span class="n">In</span><span class="p">]</span> <span class="k">ref</span> <span class="kt">int</span> <span class="n">lpMsg</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">DispatchMessage</span><span class="p">([</span><span class="n">In</span><span class="p">]</span> <span class="k">ref</span> <span class="kt">int</span> <span class="n">lpmsg</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">ShowWindow</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nCmdShow</span><span class="p">);</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">IntPtr</span> <span class="nf">CustomWndProc</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nf">DefWindowProcW</span><span class="p">(</span><span class="n">hWnd</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">lParam</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">StructLayout</span><span class="p">(</span><span class="n">LayoutKind</span><span class="p">.</span><span class="n">Sequential</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">CharSet</span><span class="p">.</span><span class="n">Unicode</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">struct</span> <span class="nc">WNDCLASS</span>
+        <span class="p">{</span>
+            <span class="k">public</span> <span class="k">readonly</span> <span class="kt">uint</span> <span class="n">style</span><span class="p">;</span>
+            <span class="k">public</span> <span class="n">IntPtr</span> <span class="n">lpfnWndProc</span><span class="p">;</span>
+            <span class="k">public</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="n">cbClsExtra</span><span class="p">;</span>
+            <span class="k">public</span> <span class="k">readonly</span> <span class="kt">int</span> <span class="n">cbWndExtra</span><span class="p">;</span>
+            <span class="k">public</span> <span class="k">readonly</span> <span class="n">IntPtr</span> <span class="n">hInstance</span><span class="p">;</span>
+            <span class="k">public</span> <span class="k">readonly</span> <span class="n">IntPtr</span> <span class="n">hIcon</span><span class="p">;</span>
+            <span class="k">public</span> <span class="k">readonly</span> <span class="n">IntPtr</span> <span class="n">hCursor</span><span class="p">;</span>
+            <span class="k">public</span> <span class="k">readonly</span> <span class="n">IntPtr</span> <span class="n">hbrBackground</span><span class="p">;</span>
+
+            <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">LPWStr</span><span class="p">)]</span> <span class="k">public</span> <span class="k">readonly</span> <span class="kt">string</span> <span class="n">lpszMenuName</span><span class="p">;</span>
+
+            <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">LPWStr</span><span class="p">)]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">lpszClassName</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">delegate</span> <span class="n">IntPtr</span> <span class="nf">WndProc</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">);</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="n">WndProc</span> <span class="n">_wndProc</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">_mDisposed</span><span class="p">;</span>
+        <span class="k">private</span> <span class="n">IntPtr</span> <span class="n">_mHwnd</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/f0ec3890023741d337d9a9305d7d734be4b02b6c/HocolearcerecemDajaljawri">github</a> 欢迎小伙伴访问</p>
+
+:ET

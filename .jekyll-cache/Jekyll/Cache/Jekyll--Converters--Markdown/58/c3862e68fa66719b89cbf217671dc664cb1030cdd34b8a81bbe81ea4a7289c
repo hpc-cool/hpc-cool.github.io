@@ -1,0 +1,55 @@
+I"<p>在 Resharper 更改全部命名空间之后，在 xx.g.cs 文件里面的 using 用了一个之前的命名空间，但是代码里面没有地方使用，此时构建不通过，原因是 xaml 里面存在引用</p>
+
+<!--more-->
+
+<!-- CreateTime:6/18/2020 5:52:59 PM -->
+
+<p>在安装 Resharper 之后，可以右击某个文件夹或项目，点击 Refactor -&gt; AdjustNamespaces 批量更改命名空间</p>
+
+<p>尽管 Resharper 会将大量的 xaml 的元素改对了命名空间，但是有些没有用到的标签就没有改全</p>
+
+<p>如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Window</span> <span class="na">x:Class=</span><span class="s">"Lindexi.Doubi.MainWindow"</span>
+        <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+        <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+        <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+        <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+        <span class="na">xmlns:local=</span><span class="s">"clr-namespace:Lindexi.DoubiDemo"</span>
+        <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+        <span class="na">ResizeMode=</span><span class="s">"NoResize"</span>
+        <span class="na">Title=</span><span class="s">"MainWindow"</span> <span class="na">Height=</span><span class="s">"450"</span> <span class="na">Width=</span><span class="s">"800"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;Border</span> <span class="na">Background=</span><span class="s">"Gray"</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="nt">&gt;</span>
+            <span class="nt">&lt;Button</span> <span class="na">Click=</span><span class="s">"Button_OnClick"</span><span class="nt">&gt;</span>点击<span class="nt">&lt;/Button&gt;</span>
+        <span class="nt">&lt;/Border&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Window&gt;</span>
+
+</code></pre></div></div>
+
+<p>这里的 <code class="language-plaintext highlighter-rouge">local="clr-namespace:Lindexi.DoubiDemo"</code> 没有用到，我将命名空间从 <code class="language-plaintext highlighter-rouge">Lindexi</code> 修改为 <code class="language-plaintext highlighter-rouge">Lindexi.Doubi</code> 但是这里没有更改，而在生成的 MainWindow.g.cs 文件会根据 xaml 的命名空间引用添加 <code class="language-plaintext highlighter-rouge">using</code> 代码</p>
+
+<p>因此在 g.cs 文件会创建下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">Lindexi.DoubiDemo</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>构建的时候提示找不到类或命名空间</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt;obj\Debug\net45\MainWindow.g.cs(12,18): Error CS0234: The type or namespace name 'DoubiDemo' does not exist in the namespace 'Lindexi' (are you missing an assembly reference?)
+</code></pre></div></div>
+
+<p>解决方法有两个</p>
+
+<p>第一个解决方法就是删除 xaml 里面的这些引用，可以全局搜寻，替换字符串</p>
+
+<p>第二个方法是自己写一个空白的命名空间，因为如果 xaml 太多的话，需要改很久，写一个空白的命名空间就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">namespace</span> <span class="nn">Lindexi.DoubiDemo</span>
+<span class="p">{</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+:ET

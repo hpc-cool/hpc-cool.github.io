@@ -1,0 +1,230 @@
+I"/�<p>本文告诉大家，win2d 不需要从零开始做，以前做出来的很多库其实只需要做很小修改就可以做出好看的效果，而且用在 UWP 上。本文修改原先 大神写的 GDI 图形到 win2d 上，而且可以运行起来。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/9/1 16:25:40 -->
+
+<!-- 标签：uwp,win2d -->
+
+<p>一开始先发一张图片给大家看，本文就是告诉大家如何做出下面这张图的效果。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017623202940.jpg" alt="" /></p>
+
+<p>本文的算法是学习 山人大大的博客 http://blog.csdn.net/johnsuna/article/details/7981521 ，在他上面做一点修改做出来的。</p>
+
+<p>可以看到他的博客使用的方法就是 GDI ，这是古时候使用的技术，而现在的 UWP 可以在以前的技术上，做一点修改就可以使用。</p>
+
+<p>如果需要使用 win2d ，我希望大家先看这篇<a href="http://lindexi.oschina.io/lindexi/post/win10-uwp-win2d/">文章</a>，本文不会继续告诉大家如何安装 win2d 。</p>
+
+<p>首先需要了解一个技术，从 point 数组画出来。</p>
+
+<p>如果给了一个 point 数组，那么可以使用这个数组画出形状。</p>
+
+<p>在 win2d 下，可以使用 DrawGeometry 方法画出来。</p>
+
+<p>可以看到 DrawGeometry 的第一个参数是 CanvasGeometry ，第二个参数是可以选的 ，一般使用颜色就好了。</p>
+
+<p>但是 CanvasGeometry 是没有构造方法，所以 UWP 需要使用 CanvasGeometry.CreatePolygon 等方法创建出来。</p>
+
+<p>本文因为需要把  point 数组显示，所以就使用了  CanvasGeometry.CreatePolygon 。这个方法的第一个参数是 ICanvasResourceCreator ，获得 ICanvasResourceCreator 很简单，传入 draw.Device 。</p>
+
+<p>所以代码如下。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_OnDraw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">draw</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">;</span>
+            
+            <span class="kt">var</span> <span class="n">canvasGeometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePolygon</span><span class="p">(</span><span class="n">draw</span><span class="p">.</span><span class="n">Device</span><span class="p">,</span>
+                    <span class="n">point</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">temp</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">temp</span><span class="p">.</span><span class="n">Y</span><span class="p">)).</span><span class="nf">ToArray</span><span class="p">());</span>
+            <span class="n">draw</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">canvasGeometry</span><span class="p">,</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromArgb</span><span class="p">(</span><span class="m">255</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>            
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么 point 是如何得到，本文使用 http://blog.csdn.net/johnsuna/article/details/7981521  的方法获得。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="n">Point</span><span class="p">[]</span> <span class="nf">CreateStone</span><span class="p">(</span><span class="n">Point</span> <span class="n">center</span><span class="p">,</span> <span class="kt">int</span> <span class="n">outerRadius</span><span class="p">,</span> <span class="kt">int</span> <span class="n">innerRadius</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arms</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">centerX</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">center</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">centerY</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">center</span><span class="p">.</span><span class="n">Y</span><span class="p">;</span>
+            <span class="n">Point</span><span class="p">[]</span> <span class="n">points</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Point</span><span class="p">[</span><span class="n">arms</span> <span class="p">*</span> <span class="m">2</span><span class="p">];</span>
+            <span class="kt">double</span> <span class="n">offset</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">arc</span> <span class="p">=</span> <span class="m">2</span> <span class="p">*</span> <span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">/</span> <span class="n">arms</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">half</span> <span class="p">=</span> <span class="n">arc</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">arms</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">Random</span> <span class="n">randomOuter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">.</span><span class="n">Ticks</span><span class="p">);</span>
+                <span class="n">outerRadius</span> <span class="p">=</span> <span class="n">outerRadius</span> <span class="p">-</span>
+                              <span class="n">randomOuter</span><span class="p">.</span><span class="nf">Next</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.06</span> <span class="p">*</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">().</span><span class="nf">Next</span><span class="p">(-</span><span class="m">20</span><span class="p">,</span> <span class="m">20</span><span class="p">)</span> <span class="p">/</span> <span class="m">30d</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.08</span><span class="p">));</span>
+                <span class="n">Random</span> <span class="n">randomInner</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">(</span><span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">GetHashCode</span><span class="p">());</span>
+                <span class="n">innerRadius</span> <span class="p">=</span> <span class="n">innerRadius</span> <span class="p">+</span>
+                              <span class="n">randomInner</span><span class="p">.</span><span class="nf">Next</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.02</span> <span class="p">*</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">().</span><span class="nf">Next</span><span class="p">(-</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">)</span> <span class="p">/</span> <span class="m">150d</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.08</span><span class="p">));</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">&gt;</span> <span class="n">outerRadius</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">int</span> <span class="n">temp</span> <span class="p">=</span> <span class="n">outerRadius</span><span class="p">;</span>
+                    <span class="n">outerRadius</span> <span class="p">=</span> <span class="n">innerRadius</span><span class="p">;</span>
+                    <span class="n">innerRadius</span> <span class="p">=</span> <span class="n">temp</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="kt">double</span> <span class="n">angleTemp</span> <span class="p">=</span> <span class="n">arc</span> <span class="p">*</span> <span class="n">randomInner</span><span class="p">.</span><span class="nf">Next</span><span class="p">(-</span><span class="m">5</span><span class="p">,</span> <span class="m">5</span><span class="p">)</span> <span class="p">/</span> <span class="m">10d</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">angle</span> <span class="p">=</span> <span class="n">i</span> <span class="p">*</span> <span class="n">arc</span><span class="p">;</span>
+                <span class="n">angle</span> <span class="p">+=</span> <span class="n">angleTemp</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span><span class="p">].</span><span class="n">X</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerX</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="n">angle</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">outerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span><span class="p">].</span><span class="n">Y</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerY</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="n">angle</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">outerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span> <span class="p">+</span> <span class="m">1</span><span class="p">].</span><span class="n">X</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerX</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="n">angle</span> <span class="p">+</span> <span class="n">half</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">innerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span> <span class="p">+</span> <span class="m">1</span><span class="p">].</span><span class="n">Y</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerY</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="n">angle</span> <span class="p">+</span> <span class="n">half</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">innerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">points</span><span class="p">;</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>如果需要画出来图形，那么需要两个成员属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Point</span><span class="p">[</span><span class="k">]&gt;</span> <span class="n">_points</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Point</span><span class="p">[</span><span class="k">]&gt;</span><span class="p">();</span>
+
+        <span class="k">private</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">Stone</span><span class="p">&gt;</span> <span class="n">_stone</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">_points</code> 就是所有画出的点，<code class="language-plaintext highlighter-rouge">_stone</code> 就是告诉说，如何画，因为可以传入的数值 角度,长宽,胖瘦,微移间隙 等的不同，可以画出不同的图形，所以需要通过一个属性来告诉如何画</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Stone</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">Point</span><span class="p">[]</span> <span class="nf">CreateStone</span><span class="p">(</span><span class="n">Point</span> <span class="n">center</span><span class="p">,</span> <span class="kt">int</span> <span class="n">outerRadius</span><span class="p">,</span> <span class="kt">int</span> <span class="n">innerRadius</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arms</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">centerX</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">center</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">centerY</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">center</span><span class="p">.</span><span class="n">Y</span><span class="p">;</span>
+            <span class="n">Point</span><span class="p">[]</span> <span class="n">points</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Point</span><span class="p">[</span><span class="n">arms</span> <span class="p">*</span> <span class="m">2</span><span class="p">];</span>
+            <span class="kt">double</span> <span class="n">offset</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">arc</span> <span class="p">=</span> <span class="m">2</span> <span class="p">*</span> <span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">/</span> <span class="n">arms</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">half</span> <span class="p">=</span> <span class="n">arc</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">arms</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">Random</span> <span class="n">randomOuter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">.</span><span class="n">Ticks</span><span class="p">);</span>
+                <span class="n">outerRadius</span> <span class="p">=</span> <span class="n">outerRadius</span> <span class="p">-</span>
+                              <span class="n">randomOuter</span><span class="p">.</span><span class="nf">Next</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.06</span> <span class="p">*</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">().</span><span class="nf">Next</span><span class="p">(-</span><span class="m">20</span><span class="p">,</span> <span class="m">20</span><span class="p">)</span> <span class="p">/</span> <span class="m">30d</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.08</span><span class="p">));</span>
+                <span class="n">Random</span> <span class="n">randomInner</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">(</span><span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">GetHashCode</span><span class="p">());</span>
+                <span class="n">innerRadius</span> <span class="p">=</span> <span class="n">innerRadius</span> <span class="p">+</span>
+                              <span class="n">randomInner</span><span class="p">.</span><span class="nf">Next</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.02</span> <span class="p">*</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">().</span><span class="nf">Next</span><span class="p">(-</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">)</span> <span class="p">/</span> <span class="m">150d</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.08</span><span class="p">));</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">&gt;</span> <span class="n">outerRadius</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">int</span> <span class="n">temp</span> <span class="p">=</span> <span class="n">outerRadius</span><span class="p">;</span>
+                    <span class="n">outerRadius</span> <span class="p">=</span> <span class="n">innerRadius</span><span class="p">;</span>
+                    <span class="n">innerRadius</span> <span class="p">=</span> <span class="n">temp</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="kt">double</span> <span class="n">angleTemp</span> <span class="p">=</span> <span class="n">arc</span> <span class="p">*</span> <span class="n">randomInner</span><span class="p">.</span><span class="nf">Next</span><span class="p">(-</span><span class="m">5</span><span class="p">,</span> <span class="m">5</span><span class="p">)</span> <span class="p">/</span> <span class="m">10d</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">angle</span> <span class="p">=</span> <span class="n">i</span> <span class="p">*</span> <span class="n">arc</span><span class="p">;</span>
+                <span class="n">angle</span> <span class="p">+=</span> <span class="n">angleTemp</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span><span class="p">].</span><span class="n">X</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerX</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="n">angle</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">outerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span><span class="p">].</span><span class="n">Y</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerY</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="n">angle</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">outerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span> <span class="p">+</span> <span class="m">1</span><span class="p">].</span><span class="n">X</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerX</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="n">angle</span> <span class="p">+</span> <span class="n">half</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">innerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span> <span class="p">+</span> <span class="m">1</span><span class="p">].</span><span class="n">Y</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerY</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="n">angle</span> <span class="p">+</span> <span class="n">half</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">innerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">points</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">float</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="n">Point</span><span class="p">&gt;</span> <span class="n">GetCenter</span><span class="p">;</span>
+        <span class="k">public</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetinnerRadius</span><span class="p">;</span>
+        <span class="k">public</span> <span class="n">Func</span><span class="p">&lt;</span><span class="kt">float</span><span class="p">,</span> <span class="kt">int</span><span class="p">&gt;</span> <span class="n">GetouterRadius</span><span class="p">;</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">maxCorners</span> <span class="p">=</span> <span class="m">18</span><span class="p">;</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">minCorners</span> <span class="p">=</span> <span class="m">3</span><span class="p">;</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>所以在构造使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">_stone</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">Stone</span><span class="p">&gt;()</span>
+            <span class="p">{</span>
+                <span class="p">{</span>
+                    <span class="s">"星"</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Stone</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">minCorners</span> <span class="p">=</span> <span class="m">3</span><span class="p">,</span>
+                        <span class="n">maxCorners</span> <span class="p">=</span> <span class="m">20</span><span class="p">,</span>
+                        <span class="n">GetCenter</span> <span class="p">=</span> <span class="p">(</span><span class="n">perX</span><span class="p">,</span> <span class="n">perY</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">perX</span> <span class="p">*</span> <span class="n">j</span><span class="p">),</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">perY</span> <span class="p">*</span> <span class="n">i</span><span class="p">)),</span>
+                        <span class="n">GetouterRadius</span> <span class="p">=</span> <span class="n">perX</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">perX</span> <span class="p">*</span> <span class="m">0.18f</span><span class="p">),</span>
+                        <span class="n">GetinnerRadius</span> <span class="p">=</span> <span class="n">perX</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">perX</span> <span class="p">*</span> <span class="m">0.06f</span><span class="p">)</span>
+                    <span class="p">}</span>
+                <span class="p">},</span>
+            <span class="p">};</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>在界面弄个按钮</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">xaml</span><span class="p">:</span><span class="n">CanvasControl</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"canvas"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"600"</span> <span class="n">ClearColor</span><span class="p">=</span><span class="s">"White"</span> <span class="n">Draw</span><span class="p">=</span><span class="s">"Canvas_OnDraw"</span><span class="p">&gt;&lt;/</span><span class="n">xaml</span><span class="p">:</span><span class="n">CanvasControl</span><span class="p">&gt;</span>
+
+         <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,600,10,10"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"星"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>           
+            
+</code></pre></div></div>
+
+<p>然后写他的点击代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="p">((</span><span class="n">Button</span><span class="p">)</span> <span class="n">sender</span><span class="p">).</span><span class="n">Content</span><span class="p">?.</span><span class="nf">ToString</span><span class="p">();</span>
+
+            <span class="n">_points</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Point</span><span class="p">[</span><span class="k">]&gt;</span><span class="p">();</span>
+
+            <span class="kt">int</span> <span class="n">width</span> <span class="p">=</span> <span class="m">500</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">height</span> <span class="p">=</span> <span class="m">500</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">numX</span> <span class="p">=</span> <span class="m">10</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">numY</span> <span class="p">=</span> <span class="m">10</span><span class="p">;</span>
+            <span class="kt">float</span> <span class="n">perX</span> <span class="p">=</span> <span class="n">width</span> <span class="p">*</span> <span class="m">1f</span> <span class="p">/</span> <span class="n">numX</span><span class="p">;</span>
+            <span class="kt">float</span> <span class="n">perY</span> <span class="p">=</span> <span class="n">height</span> <span class="p">*</span> <span class="m">1f</span> <span class="p">/</span> <span class="n">numY</span><span class="p">;</span>
+
+            <span class="kt">int</span> <span class="n">minCorners</span> <span class="p">=</span> <span class="n">_stone</span><span class="p">[</span><span class="n">str</span><span class="p">].</span><span class="n">minCorners</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">maxCorners</span> <span class="p">=</span> <span class="n">_stone</span><span class="p">[</span><span class="n">str</span><span class="p">].</span><span class="n">maxCorners</span><span class="p">;</span>
+
+            <span class="kt">int</span> <span class="n">lastCorners</span> <span class="p">=</span> <span class="n">minCorners</span><span class="p">;</span>
+            <span class="n">Random</span> <span class="n">random</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">();</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">numX</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="n">numY</span><span class="p">;</span> <span class="n">j</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="kt">int</span> <span class="n">corners</span> <span class="p">=</span> <span class="n">random</span><span class="p">.</span><span class="nf">Next</span><span class="p">(</span><span class="n">minCorners</span><span class="p">,</span> <span class="n">maxCorners</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">Math</span><span class="p">.</span><span class="nf">Abs</span><span class="p">(</span><span class="n">corners</span> <span class="p">-</span> <span class="n">lastCorners</span><span class="p">)</span> <span class="p">&lt;</span> <span class="p">(</span><span class="n">maxCorners</span> <span class="p">-</span> <span class="n">minCorners</span><span class="p">)</span> <span class="p">/</span> <span class="m">2</span><span class="p">)</span>
+                        <span class="n">corners</span> <span class="p">=</span> <span class="nf">RetrievRandomCorners</span><span class="p">(</span><span class="n">minCorners</span><span class="p">,</span> <span class="n">maxCorners</span><span class="p">);</span>
+                    <span class="n">lastCorners</span> <span class="p">=</span> <span class="n">corners</span><span class="p">;</span>
+                    <span class="n">Point</span> <span class="n">point</span> <span class="p">=</span> <span class="n">_stone</span><span class="p">[</span><span class="n">str</span><span class="p">].</span><span class="nf">GetCenter</span><span class="p">(</span><span class="n">perX</span><span class="p">,</span> <span class="n">perY</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">);</span>
+                    <span class="kt">int</span> <span class="n">outerRadius</span> <span class="p">=</span> <span class="n">_stone</span><span class="p">[</span><span class="n">str</span><span class="p">].</span><span class="nf">GetouterRadius</span><span class="p">(</span><span class="n">perX</span><span class="p">);</span>
+                    <span class="kt">int</span> <span class="n">innerRadius</span> <span class="p">=</span> <span class="n">_stone</span><span class="p">[</span><span class="n">str</span><span class="p">].</span><span class="nf">GetinnerRadius</span><span class="p">(</span><span class="n">perX</span><span class="p">);</span>
+                    <span class="kt">var</span> <span class="n">points</span> <span class="p">=</span> <span class="n">Stone</span><span class="p">.</span><span class="nf">CreateStone</span><span class="p">(</span><span class="n">point</span><span class="p">,</span> <span class="n">outerRadius</span><span class="p">,</span>
+                        <span class="n">innerRadius</span><span class="p">,</span> <span class="n">corners</span><span class="p">);</span>
+                    <span class="n">_points</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">points</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="n">canvas</span><span class="p">.</span><span class="nf">Invalidate</span><span class="p">();</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>尝试跑一下，点击一次按钮就会有不同的图形，是不是感觉世界都是假的。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201762321046.jpg" alt="" /></p>
+
+<p>是不是觉得这样已经完成？实际上不要忘记很重要一步，win2d在不使用需要自己手动把他从视觉树释放，所以在后台代码页面跳出使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Page_OnUnloaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">canvas</span><span class="p">.</span><span class="nf">RemoveFromVisualTree</span><span class="p">();</span>
+            <span class="n">canvas</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>感觉这个星期的时间很快，我仔细想了从 2015 年开始 UWP 的研究到现在，实际我一个软件都没做出来，就是在写写博客。如果你觉得有哪个地方不想去看，或者垃圾微软写的不太好的，但你不想去研究的，就可以告诉我，我去研究一下，如果我学会了，我就会写一篇博客，虽然我写出来肯定比不上微软的。</p>
+
+<p>代码：<a href="https://github.com/lindexi/UWP/tree/master/uwp/control/win2d/Dclutterpalan">https://github.com/lindexi/UWP/tree/master/uwp/control/win2d/Dclutterpalan</a></p>
+
+:ET

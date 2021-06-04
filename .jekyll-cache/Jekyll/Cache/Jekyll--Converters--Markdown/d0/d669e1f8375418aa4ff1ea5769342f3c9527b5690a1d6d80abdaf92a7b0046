@@ -1,0 +1,116 @@
+I"�)<p>在写命令行程序的时候，会遇到命令行解析的问题，以及参数的使用和规范化等坑。现在社区开源了命令行项目，可以帮助小伙伴快速开发命令行程序，支持自动的命令行解析和规范的参数</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:33:49 -->
+
+<p>我写过一篇关于命令行解析的博客<a href="https://blog.lindexi.com/post/C-%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%A7%A3%E6%9E%90%E5%B7%A5%E5%85%B7.html">C＃命令行解析工具</a> 但是这个方法不是很好用</p>
+
+<p>在社区找到了 <a href="https://github.com/dotnet/command-line-api">System.CommandLine</a> 这是一个还在开发过程的很好用的一个库，里面用了很多很黑的写法</p>
+
+<p>我创建了一个项目，我删除了原来的 Main 函数，使用下面的代码替换原来的 Main 函数，然后居然是可以编译通过运行的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span> <span class="n">name</span><span class="p">,</span> <span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"</span><span class="p">{</span><span class="n">name</span><span class="p">}{</span><span class="n">text</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>当然在开始之前我需要安装两个 Nuget 库</p>
+
+<ul>
+  <li>System.CommandLine.DragonFruit</li>
+  <li>System.CommandLine.Rendering</li>
+</ul>
+
+<p>可以通过创建一个 dotnet core 项目，编辑项目文件，添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"System.CommandLine.DragonFruit"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"0.2.0-alpha.19174.3"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"System.CommandLine.Rendering"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"0.2.0-alpha.19174.3"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在尝试使用 dotnet 命令行运行，请使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">run</span> <span class="p">--</span> <span class="p">--</span><span class="n">name</span> <span class="err">林德熙</span> <span class="p">--</span><span class="n">text</span> <span class="err">是逗比</span>
+</code></pre></div></div>
+
+<p>在 dotnet 命令使用 <code class="language-plaintext highlighter-rouge">--</code> 分割调用的参数，也就是在 <code class="language-plaintext highlighter-rouge">--</code> 后面的参数将会传递到程序里面</p>
+
+<p>于是就相当于运行了测试项目，传入参数 <code class="language-plaintext highlighter-rouge">--name 林德熙 --text 是逗比</code> 可以看到输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">林德熙是逗比</span>
+</code></pre></div></div>
+
+<p>这个例子的项目请看<a href="https://github.com/lindexi/lindexi_gd/tree/48f39319a18cc99f0f92a08ac446fd43b193c187/DallairhacelKurbegofa">测试程序</a></p>
+
+<p>当然命令行的参数写法有很多，上面的程序也支持下面的参数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">run</span> <span class="p">--</span> <span class="p">--</span><span class="n">name</span><span class="p">:</span><span class="err">林德熙</span> <span class="p">--</span><span class="n">text</span><span class="p">:</span><span class="err">是逗比</span>
+</code></pre></div></div>
+
+<p>当然一个命令行程序，如果就一个 exe 发给小伙伴，那么小伙伴怎么知道如何使用？在软件工程里面，在这一行默认的就是输入 <code class="language-plaintext highlighter-rouge">--help</code> 就输出帮助信息</p>
+
+<p>于是我在主函数添加一点注释</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 欢迎访问我的博客 http://blog.lindexi.com 从入门到精通</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="name"&gt;逗比名&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="text"&gt;逗比&lt;/param&gt;</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span> <span class="n">name</span><span class="p">,</span> <span class="kt">string</span> <span class="n">text</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>此时输入 <code class="language-plaintext highlighter-rouge">dotnet run -- --help</code> 就可以看到下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">DallairhacelKurbegofa</span><span class="p">:</span>
+  <span class="err">欢迎访问我的博客</span> <span class="n">http</span><span class="p">:</span><span class="c1">//blog.lindexi.com 从入门到精通</span>
+
+<span class="n">Usage</span><span class="p">:</span>
+  <span class="n">DallairhacelKurbegofa</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span>
+
+<span class="n">Options</span><span class="p">:</span>
+  <span class="p">--</span><span class="n">name</span> <span class="p">&lt;</span><span class="n">NAME</span><span class="p">&gt;</span>    <span class="err">逗比名</span>
+  <span class="p">--</span><span class="n">text</span> <span class="p">&lt;</span><span class="n">TEXT</span><span class="p">&gt;</span>    <span class="err">逗比</span>
+  <span class="p">--</span><span class="n">version</span>        <span class="n">Display</span> <span class="n">version</span> <span class="n">information</span>
+</code></pre></div></div>
+
+<p>那么这个库是如何做黑科技让你的主函数可以修改参数的？</p>
+
+<p>打开<a href="https://github.com/dotnet/command-line-api/blob/master/src/System.CommandLine.DragonFruit/targets/System.CommandLine.DragonFruit.targets">System.CommandLine.DragonFruit.targets</a> 就可以看到 <a href="https://github.com/dotnet/command-line-api/blob/166610c56ff732093f0145a2911d4f6c40b786da/src/System.CommandLine.DragonFruit/targets/System.CommandLine.DragonFruit.targets#L13-L20">GenerateRealEntryPointType</a> 修改启动项目</p>
+
+<p>修改 StartupObject 可以指定调用的主函数是哪个类里的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">StartupObject</span><span class="p">&gt;</span><span class="n">AutoGeneratedProgram</span><span class="p">&lt;/</span><span class="n">StartupObject</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>创建动态代码写入到 <code class="language-plaintext highlighter-rouge">obj</code> 文件夹里面的 xx.g.cs 文件，写入下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// &lt;auto-generated&gt;This file was created automatically&lt;/auto-generated&gt;</span>
+<span class="k">using</span> <span class="nn">System.CommandLine.DragonFruit</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Runtime.CompilerServices</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+
+<span class="p">[</span><span class="n">CompilerGenerated</span><span class="p">]</span>
+<span class="k">internal</span> <span class="k">class</span> <span class="nc">AutoGeneratedProgram</span>
+<span class="p">{</span>
+  <span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="k">await</span> <span class="n">CommandLine</span><span class="p">.</span><span class="nf">ExecuteAssemblyAsync</span><span class="p">(</span>
+      <span class="n">entryAssembly</span><span class="p">:</span> <span class="k">typeof</span><span class="p">(</span><span class="k">global</span><span class="p">::</span><span class="n">AutoGeneratedProgram</span><span class="p">).</span><span class="n">Assembly</span><span class="p">,</span>
+      <span class="n">args</span><span class="p">:</span> <span class="n">args</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>因为运行的启动函数就是 AutoGeneratedProgram 里面的主函数，所以其实你写的主函数不是主函数</p>
+
+<p>如果想自己也修改主函数，请看<a href="https://blog.lindexi.com/post/roslyn-%E9%80%9A%E8%BF%87-nuget-%E5%BA%93%E4%BF%AE%E6%94%B9%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%85%A5%E5%8F%A3%E5%87%BD%E6%95%B0">Roslyn 通过 NuGet 库修改应用程序入口函数</a></p>
+
+<p>想知道这个库是如何做的，请看源代码<a href="https://github.com/dotnet/command-line-api">dotnet/command-line-api: System.CommandLine: Command line parsing, invocation, and rendering of terminal output.</a></p>
+
+:ET

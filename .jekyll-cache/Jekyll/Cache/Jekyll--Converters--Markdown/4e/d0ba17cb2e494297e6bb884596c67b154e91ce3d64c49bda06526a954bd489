@@ -1,0 +1,307 @@
+I"�v<p>在 C# 9.0 里面添加的一个新特性是支持协变返回类型，也就说子类重写了基类的抽象或虚拟方法，可以在返回值里面返回协变的类型，也就是返回值的类型可以是继承原本子类返回值类型的子类。本文将来从 IL 的层面和运行时告诉大家这个新特性为什么需要 dotnet 5.0 才能支持</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/3/9 19:10:07 -->
+
+<!-- 发布 -->
+
+<p>在开始之前，必须说明的是 C# 语言和 .NET 框架是分开的，不能因为 C# 9.0 用到了某些只有在 dotnet 5.0 的运行时才能提供的功能就说 C# 和 .NET 绑定。实际上在 .NET Framework 4.5 都能使用大量的 C# 9.0 语法。准确来说是 C# 9.0 语法里面的有一些新的特性需要在新的运行时和框架下才能使用起来，此部分新特性将需要 .NET 5.0 的支持，其他的部分只需要编译器支持就可以，依然可以在旧版本的 .NET 运行</p>
+
+<p>本文依然是底层知识，本文内容不适合新手阅读。如果不想了解底层的原理，那么只需要知道这个新特性需要 IL 的支持，因为生成的 IL 代码语法上和之前的相同，但 IL 代码逻辑和之前不兼容。因为 IL 逻辑的变更，自然也需要 CLR 运行时的特别支持。这个新特性需要 IL 和运行时的支持，在旧版本的 .NET 是不能使用的</p>
+
+<p>在开始之前，大家看一下新的语法的写法。如以下代码，从 Animal 继承的 Tiger 类重写了 GetFood 方法，但是在 Tiger 的 GetFood 方法的方法返回值和 Animal 的 GetFood 方法定义的不相同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">virtual</span> <span class="n">Food</span> <span class="nf">GetFood</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Tiger</span> <span class="p">:</span> <span class="n">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="n">Meat</span> <span class="nf">GetFood</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Meat</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>或者说是如下写法，在 Animal 类的 GetFood 是抽象的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">abstract</span> <span class="n">Food</span> <span class="nf">GetFood</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Tiger</span> <span class="p">:</span> <span class="n">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="n">Meat</span> <span class="nf">GetFood</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Meat</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面两个代码的不同在于 Animal 类使用的是 abstract 或 virtual 的方法被重写，在重写的时候可以返回协变的类。以下是返回值 Food 类型定义</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Food</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Meat</span> <span class="p">:</span> <span class="n">Food</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到 Meat 是继承 Food 的类型，也就是说允许子类的返回值类型是重写的方法的子类。这是一个不错的特性，可惜在 .NET Framework 下是用不了的，因为需要 CLR 运行时和框架的支持</p>
+
+<p>上面开源，可以在 <a href="https://github.com/lindexi/lindexi_gd/tree/99f55216/BairbacearbakurgaicairCearlellerfenall">github</a> 或 <a href="https://gitee.com/lindexi/lindexi_gd/tree/99f55216/BairbacearbakurgaicairCearlellerfenall">gitee</a> 下载全部代码</p>
+
+<p>先从 IL 的层面来聊聊这个新特性的不同，如下面的 C# 代码，这是不使用新特性的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">abstract</span> <span class="n">Food</span> <span class="nf">GetFood</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Tiger</span> <span class="p">:</span> <span class="n">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="n">Food</span> <span class="nf">GetFood</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Meat</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码生成的 IL 代码大概如下</p>
+
+<pre><code class="language-IL">  .method public hidebysig virtual instance class Lindexi.Food
+    GetFood() cil managed
+  {
+    .maxstack 8
+
+    // [20 43 - 20 53]
+    IL_0000: newobj       instance void Lindexi.Meat::.ctor()
+    IL_0005: ret
+
+  } // end of method Tiger::GetFood
+</code></pre>
+
+<p>上面的 IL 代码咱现在还不需要去阅读他，接下来生成一下使用新特性的如以下 C# 代码的 IL 代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">abstract</span> <span class="n">Food</span> <span class="nf">GetFood</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Tiger</span> <span class="p">:</span> <span class="n">Animal</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="n">Meat</span> <span class="nf">GetFood</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Meat</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面 C# 生成的 IL 代码如下</p>
+
+<pre><code class="language-IL">  .method public hidebysig virtual newslot instance class Lindexi.Meat
+    GetFood() cil managed
+  {
+    .custom instance void [System.Runtime]System.Runtime.CompilerServices.PreserveBaseOverridesAttribute::.ctor()
+      = (01 00 00 00 )
+    .override method instance class Lindexi.Food Lindexi.Animal::GetFood()
+    .maxstack 8
+
+    // [20 43 - 20 53]
+    IL_0000: newobj       instance void Lindexi.Meat::.ctor()
+    IL_0005: ret
+
+  } // end of method Tiger::GetFood
+</code></pre>
+
+<p>对比和没有使用新特性的 IL 代码，从方法的定义上，就可以看到一些不同点，下面是两个 IL 的对比</p>
+
+<pre><code class="language-IL">.method public hidebysig virtual         instance class Lindexi.Food GetFood() cil managed
+.method public hidebysig virtual newslot instance class Lindexi.Meat GetFood() cil managed
+</code></pre>
+
+<p>可以看到使用新特性的 IL 代码多了 <code class="language-plaintext highlighter-rouge">newslot</code> 关键字，这个 IL 关键词其实就相当于使用 <code class="language-plaintext highlighter-rouge">new</code> 关键字进行重写子类的方法，可以认为和子类的方法是两个不同的方法。但实际上又是在做继承方法，在 IL 的设计里面，为了让方法返回值不相同，此时就使用 <code class="language-plaintext highlighter-rouge">newslot</code> 关键字表示这是一个新的独立的方法，但又不能让这个方法和原本的代码逻辑不同，因此又需要让这个子类方法继承基类方法，于是就再加上了以下两行代码</p>
+
+<pre><code class="language-IL">    .custom instance void [System.Runtime]System.Runtime.CompilerServices.PreserveBaseOverridesAttribute::.ctor() = (01 00 00 00 )
+    .override method instance class Lindexi.Food Lindexi.Animal::GetFood()
+</code></pre>
+
+<p>上面 IL 的第一句话是添加了 PreserveBaseOverridesAttribute 这个特性，也就是在 Roslyn 生成 IL 逻辑自动给这个函数加上了 PreserveBaseOverridesAttribute 特性，相当于以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Tiger</span> <span class="p">:</span> <span class="n">Animal</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="n">PreserveBaseOverridesAttribute</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="n">Meat</span> <span class="nf">GetFood</span><span class="p">()</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Meat</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的 PreserveBaseOverridesAttribute 特性是自动添加的，不需要手动加上。在这个方法的下一句是 <code class="language-plaintext highlighter-rouge">.override method</code> 表示实际这个方法是有继承某个方法的，代码如下</p>
+
+<pre><code class="language-IL">    .override method instance class Lindexi.Food Lindexi.Animal::GetFood()
+</code></pre>
+
+<p>通过上面的 IL 代码就可以在 CLR 找到重写的方法</p>
+
+<p>上面代码的 PreserveBaseOverridesAttribute 特性是 .NET 5 框架提供的类型，也就是说 .NET Framework 4.8 等是没有这个类的</p>
+
+<p>接着从 CLR 层面来讲这个新特性，如上面 IL 代码，和原本的 IL 不是兼容的，需要 CLR 层面做一些逻辑才能了解上面的 IL 的逻辑含义。需要说明的是，上面 IL 的语法含义依然是兼容的，但是逻辑含义不是兼容的，需要运行时做一些逻辑才能了解这个 IL 代码表示 GetFood 方法继承的方法</p>
+
+<p>在 <code class="language-plaintext highlighter-rouge">src\coreclr\vm\class.cpp</code> 的 <code class="language-plaintext highlighter-rouge">ClassLoader::PropagateCovariantReturnMethodImplSlots</code> 方法里面是处理这个新特性的核心逻辑，在 PropagateCovariantReturnMethodImplSlots 方法会先判断是否存在 PreserveBaseOverridesAttribute 特性，如果存在那么继续通过 IL 里面记录的 <code class="language-plaintext highlighter-rouge">.override method</code> 找到实际的关系，代码如下</p>
+
+<div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="n">ClassLoader</span><span class="o">::</span><span class="n">PropagateCovariantReturnMethodImplSlots</span><span class="p">(</span><span class="n">MethodTable</span><span class="o">*</span> <span class="n">pMT</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">CONTRACTL</span>
+    <span class="p">{</span>
+        <span class="n">STANDARD_VM_CHECK</span><span class="p">;</span>
+        <span class="n">PRECONDITION</span><span class="p">(</span><span class="n">CheckPointer</span><span class="p">(</span><span class="n">pMT</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="n">CONTRACTL_END</span><span class="p">;</span>
+
+    <span class="c1">// 以下代码的逻辑是如果 MethodImpl 具有 PreserveBaseOverridesAttribute 特性，则将重写的 MethodImpl 传播到所有适用的虚表空间槽。在 C# 的抽象或虚拟方法都相当于定义了函数的虚表，存放在虚表空间槽。 这是为了确保如果我们使用基类型方法之一的签名来调用覆盖方法，我们仍然执行覆盖方法。</span>
+    <span class="c1">// 例如下面注释的代码例子</span>
+    <span class="c1">//</span>
+    <span class="c1">// Propagate an overriding MethodImpl to all applicable vtable slots if the MethodImpl</span>
+    <span class="c1">// has the PreserveBaseOverrides attribute. This is to ensure that if we use the signature of one of</span>
+    <span class="c1">// the base type methods to call the overriding method, we still execute the overriding method.</span>
+    <span class="c1">//</span>
+    <span class="c1">// Consider this case:</span>
+    <span class="c1">//</span>
+    <span class="c1">//      class A </span>
+    <span class="c1">//      {</span>
+    <span class="c1">//          RetType VirtualFunction() { }</span>
+    <span class="c1">//      }</span>
+    <span class="c1">//      class B : A </span>
+    <span class="c1">//      {</span>
+    <span class="c1">//          [PreserveBaseOverrides]</span>
+    <span class="c1">//          DerivedRetType VirtualFunction() { .override A.VirtualFuncion }</span>
+    <span class="c1">//      }</span>
+    <span class="c1">//      class C : B </span>
+    <span class="c1">//      {</span>
+    <span class="c1">//          MoreDerivedRetType VirtualFunction() { .override A.VirtualFunction }</span>
+    <span class="c1">//      }</span>
+    <span class="c1">//</span>
+    <span class="c1">// NOTE: Typically the attribute would be added to the MethodImpl on C, but was omitted in this example to</span>
+    <span class="c1">//       illustrate how its presence on a MethodImpl on the base type can propagate as well. In other words,</span>
+    <span class="c1">//       think of it as applying to the vtable slot itself, so any MethodImpl that overrides this slot on a</span>
+    <span class="c1">//       derived type will propagate to all other applicable vtable slots.</span>
+    <span class="c1">//</span>
+    <span class="c1">// Given an object of type C, the attribute will ensure that:</span>
+    <span class="c1">//      callvirt RetType A::VirtualFunc()               -&gt; executes the MethodImpl on C</span>
+    <span class="c1">//      callvirt DerivedRetType B::VirtualFunc()        -&gt; executes the MethodImpl on C</span>
+    <span class="c1">//      callvirt MoreDerivedRetType C::VirtualFunc()    -&gt; executes the MethodImpl on C</span>
+    <span class="c1">//</span>
+    <span class="c1">// Without the attribute, the second callvirt would normally execute the MethodImpl on B (the MethodImpl on</span>
+    <span class="c1">// C does not override the vtable slot of B's MethodImpl, but only overrides the declaring method's vtable slot.</span>
+    <span class="c1">//</span>
+
+    <span class="c1">// Validation not applicable to interface types and value types, since these are not currently</span>
+    <span class="c1">// supported with the covariant return feature</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">pMT</span><span class="o">-&gt;</span><span class="n">IsInterface</span><span class="p">()</span> <span class="o">||</span> <span class="n">pMT</span><span class="o">-&gt;</span><span class="n">IsValueType</span><span class="p">())</span>
+        <span class="k">return</span><span class="p">;</span>
+
+    <span class="n">MethodTable</span><span class="o">*</span> <span class="n">pParentMT</span> <span class="o">=</span> <span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetParentMethodTable</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pParentMT</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">;</span>
+
+    <span class="c1">// Propagate overriding MethodImpls to applicable vtable slots if the declaring method has the attribute</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetClass</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">HasVTableMethodImpl</span><span class="p">())</span>
+    <span class="p">{</span>
+        <span class="n">MethodTable</span><span class="o">::</span><span class="n">MethodDataWrapper</span> <span class="n">hMTData</span><span class="p">(</span><span class="n">MethodTable</span><span class="o">::</span><span class="n">GetMethodData</span><span class="p">(</span><span class="n">pMT</span><span class="p">,</span> <span class="n">FALSE</span><span class="p">));</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">WORD</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">pParentMT</span><span class="o">-&gt;</span><span class="n">GetNumVirtuals</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetRestoredSlot</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="n">pParentMT</span><span class="o">-&gt;</span><span class="n">GetRestoredSlot</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="c1">// The real check is that the MethodDesc's must not match, but a simple VTable check will</span>
+                <span class="c1">// work most of the time, and is far faster than the GetMethodDescForSlot method.</span>
+                <span class="n">_ASSERTE</span><span class="p">(</span><span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetMethodDescForSlot</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">==</span> <span class="n">pParentMT</span><span class="o">-&gt;</span><span class="n">GetMethodDescForSlot</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+                <span class="k">continue</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">MethodDesc</span><span class="o">*</span> <span class="n">pMD</span> <span class="o">=</span> <span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetMethodDescForSlot</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+            <span class="n">MethodDesc</span><span class="o">*</span> <span class="n">pParentMD</span> <span class="o">=</span> <span class="n">pParentMT</span><span class="o">-&gt;</span><span class="n">GetMethodDescForSlot</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pMD</span> <span class="o">==</span> <span class="n">pParentMD</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>
+
+            <span class="c1">// If the bit is not set on this method, but we reach here because it's been set on the method at the same slot on</span>
+            <span class="c1">// the base type, set the bit for the current method to ensure any future overriding method down the chain gets checked.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pMD</span><span class="o">-&gt;</span><span class="n">RequiresCovariantReturnTypeChecking</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">pParentMD</span><span class="o">-&gt;</span><span class="n">RequiresCovariantReturnTypeChecking</span><span class="p">())</span>
+                <span class="n">pMD</span><span class="o">-&gt;</span><span class="n">SetRequiresCovariantReturnTypeChecking</span><span class="p">();</span>
+
+            <span class="c1">// The attribute is only applicable to MethodImpls. For anything else, it will be treated as a no-op</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pMD</span><span class="o">-&gt;</span><span class="n">IsMethodImpl</span><span class="p">())</span>
+                <span class="k">continue</span><span class="p">;</span>
+
+            <span class="c1">// Search if the attribute has been applied on this vtable slot, either by the current MethodImpl, or by a previous</span>
+            <span class="c1">// MethodImpl somewhere in the base type hierarchy.</span>
+            <span class="kt">bool</span> <span class="n">foundAttribute</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+            <span class="n">MethodTable</span><span class="o">*</span> <span class="n">pCurrentMT</span> <span class="o">=</span> <span class="n">pMT</span><span class="p">;</span>
+            <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">foundAttribute</span> <span class="o">&amp;&amp;</span> <span class="n">pCurrentMT</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">pCurrentMT</span><span class="o">-&gt;</span><span class="n">GetNumVirtuals</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">MethodDesc</span><span class="o">*</span> <span class="n">pCurrentMD</span> <span class="o">=</span> <span class="n">pCurrentMT</span><span class="o">-&gt;</span><span class="n">GetMethodDescForSlot</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+
+                <span class="c1">// The attribute is only applicable to MethodImpls. For anything else, it will be treated as a no-op</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">pCurrentMD</span><span class="o">-&gt;</span><span class="n">IsMethodImpl</span><span class="p">())</span>
+                <span class="p">{</span>
+                	<span class="c1">// 下面两个变量是没有使用的，只是让 GetCustomAttribute 函数可以调</span>
+                    <span class="n">BYTE</span><span class="o">*</span> <span class="n">pVal</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+                    <span class="n">ULONG</span> <span class="n">cbVal</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                    <span class="c1">// 这里就是判断是否存在特性，如果存在，那么设置 foundAttribute 变量</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">pCurrentMD</span><span class="o">-&gt;</span><span class="n">GetCustomAttribute</span><span class="p">(</span><span class="n">WellKnownAttribute</span><span class="o">::</span><span class="n">PreserveBaseOverridesAttribute</span><span class="p">,</span> <span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">**</span><span class="p">)</span><span class="o">&amp;</span><span class="n">pVal</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">cbVal</span><span class="p">)</span> <span class="o">==</span> <span class="n">S_OK</span><span class="p">)</span>
+                        <span class="n">foundAttribute</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="n">pCurrentMT</span> <span class="o">=</span> <span class="n">pCurrentMT</span><span class="o">-&gt;</span><span class="n">GetParentMethodTable</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">foundAttribute</span><span class="p">)</span>
+                <span class="k">continue</span><span class="p">;</span>
+
+            <span class="c1">// Search for any vtable slot still pointing at the parent method, and update it with the current overriding method</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">WORD</span> <span class="n">j</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">pParentMT</span><span class="o">-&gt;</span><span class="n">GetNumVirtuals</span><span class="p">();</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">MethodDesc</span><span class="o">*</span> <span class="n">pCurrentMD</span> <span class="o">=</span> <span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetMethodDescForSlot</span><span class="p">(</span><span class="n">j</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">pCurrentMD</span> <span class="o">==</span> <span class="n">pParentMD</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// This is a vtable slot that needs to be updated to the new overriding method because of the</span>
+                    <span class="c1">// presence of the attribute.</span>
+                    <span class="n">pMT</span><span class="o">-&gt;</span><span class="n">SetSlot</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetSlot</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+                    <span class="n">_ASSERT</span><span class="p">(</span><span class="n">pMT</span><span class="o">-&gt;</span><span class="n">GetMethodDescForSlot</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">==</span> <span class="n">pMD</span><span class="p">);</span>
+
+                    <span class="n">hMTData</span><span class="o">-&gt;</span><span class="n">UpdateImplMethodDesc</span><span class="p">(</span><span class="n">pMD</span><span class="p">,</span> <span class="n">j</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码在 dotnet 的运行时开源仓库里面，请看 <a href="https://github.com/dotnet/runtime/">https://github.com/dotnet/runtime/</a> 源代码</p>
+
+<p>在 Mono 里面，当前的 Mono 也是放在 <a href="https://github.com/dotnet/runtime/">https://github.com/dotnet/runtime/</a> 里面，也对这个新特性做了自己的实现，在 Mono 的 <code class="language-plaintext highlighter-rouge">src\mono\mono\metadata\class-init.c</code> 里面将会使用如下代码判断某个方法是否有 PreserveBaseOverridesAttribute 特性</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gboolean</span>
+<span class="nf">mono_class_setup_method_has_preserve_base_overrides_attribute</span> <span class="p">(</span><span class="n">MonoMethod</span> <span class="o">*</span><span class="n">method</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="n">MonoImage</span> <span class="o">*</span><span class="n">image</span> <span class="o">=</span> <span class="n">m_class_get_image</span> <span class="p">(</span><span class="n">method</span><span class="o">-&gt;</span><span class="n">klass</span><span class="p">);</span>
+	<span class="cm">/* FIXME: implement well known attribute check for dynamic images */</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">image_is_dynamic</span> <span class="p">(</span><span class="n">image</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">FALSE</span><span class="p">;</span>
+	<span class="k">return</span> <span class="n">method_has_wellknown_attribute</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="s">"System.Runtime.CompilerServices"</span><span class="p">,</span> <span class="s">"PreserveBaseOverridesAttribute"</span><span class="p">,</span> <span class="n">TRUE</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果判断存在 PreserveBaseOverridesAttribute 也就在 <code class="language-plaintext highlighter-rouge">src\mono\mono\metadata\class-setup-vtable.c</code> 的 <code class="language-plaintext highlighter-rouge">mono_class_setup_vtable_general</code> 方法里面进行后续的逻辑，因为 mono_class_setup_vtable_general 方法太长了，而我对 Mono 的实现也不熟悉，更多细节还请大家阅读源代码</p>
+
+<p>特别感谢 <a href="https://blog.sdlsj.net/">少珺</a> 小伙伴给我的协助</p>
+
+<p>文档请看</p>
+
+<ul>
+  <li><a href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/proposals/csharp-9.0/covariant-returns?WT.mc_id=WD-MVP-5003260">Covariant return types - C# 9.0 specification proposals</a></li>
+  <li><a href="https://docs.microsoft.com/zh-cn/dotnet/csharp/whats-new/csharp-9?WT.mc_id=WD-MVP-5003260">C# 9.0 中的新增功能 - C# 指南</a></li>
+  <li><a href="https://docs.microsoft.com/zh-cn/dotnet/csharp/programming-guide/classes-and-structs/inheritance?WT.mc_id=WD-MVP-5003260">继承 - C# 编程指南</a></li>
+</ul>
+
+:ET

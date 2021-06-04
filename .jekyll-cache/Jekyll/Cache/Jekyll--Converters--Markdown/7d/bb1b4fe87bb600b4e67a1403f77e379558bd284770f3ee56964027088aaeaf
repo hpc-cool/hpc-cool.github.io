@@ -1,0 +1,201 @@
+I",h<p>本文告诉大家如何在 dotnet core 获取 Mac 地址</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/10/5 10:44:10 -->
+
+<p>因为在 dotnetcore 是没有直接和硬件相关的，所以无法通过 WMI 的方法获取当前设备的 Mac 地址</p>
+
+<p>但是在 dotnet core 可以使用下面的代码拿到本机所有的网卡地址，包括物理网卡和虚拟网卡</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">IPGlobalProperties</span> <span class="n">computerProperties</span> <span class="p">=</span> <span class="n">IPGlobalProperties</span><span class="p">.</span><span class="nf">GetIPGlobalProperties</span><span class="p">();</span>
+            <span class="n">NetworkInterface</span><span class="p">[]</span> <span class="n">nics</span> <span class="p">=</span> <span class="n">NetworkInterface</span><span class="p">.</span><span class="nf">GetAllNetworkInterfaces</span><span class="p">();</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Interface information for {0}.{1}     "</span><span class="p">,</span>
+                <span class="n">computerProperties</span><span class="p">.</span><span class="n">HostName</span><span class="p">,</span> <span class="n">computerProperties</span><span class="p">.</span><span class="n">DomainName</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">nics</span> <span class="p">==</span> <span class="k">null</span> <span class="p">||</span> <span class="n">nics</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;</span> <span class="m">1</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"  No network interfaces found."</span><span class="p">);</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"  Number of interfaces .................... : {0}"</span><span class="p">,</span> <span class="n">nics</span><span class="p">.</span><span class="n">Length</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="n">NetworkInterface</span> <span class="n">adapter</span> <span class="k">in</span> <span class="n">nics</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">();</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">adapter</span><span class="p">.</span><span class="n">Name</span> <span class="p">+</span> <span class="s">","</span> <span class="p">+</span> <span class="n">adapter</span><span class="p">.</span><span class="n">Description</span><span class="p">);</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="n">Empty</span><span class="p">.</span><span class="nf">PadLeft</span><span class="p">(</span><span class="n">adapter</span><span class="p">.</span><span class="n">Description</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span> <span class="sc">'='</span><span class="p">));</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"  Interface type .......................... : {0}"</span><span class="p">,</span> <span class="n">adapter</span><span class="p">.</span><span class="n">NetworkInterfaceType</span><span class="p">);</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="s">"  Physical address ........................ : "</span><span class="p">);</span>
+                <span class="n">PhysicalAddress</span> <span class="n">address</span> <span class="p">=</span> <span class="n">adapter</span><span class="p">.</span><span class="nf">GetPhysicalAddress</span><span class="p">();</span>
+                <span class="kt">byte</span><span class="p">[]</span> <span class="n">bytes</span> <span class="p">=</span> <span class="n">address</span><span class="p">.</span><span class="nf">GetAddressBytes</span><span class="p">();</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">bytes</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="c1">// Display the physical address in hexadecimal.</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="s">"{0}"</span><span class="p">,</span> <span class="n">bytes</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X2"</span><span class="p">));</span>
+                    <span class="c1">// Insert a hyphen after each byte, unless we are at the end of the </span>
+                    <span class="c1">// address.</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="p">!=</span> <span class="n">bytes</span><span class="p">.</span><span class="n">Length</span> <span class="p">-</span> <span class="m">1</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="s">"-"</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">();</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行代码，下面是控制台</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>               <span class="n">Interface</span> <span class="n">information</span> <span class="k">for</span> <span class="n">lindexi</span><span class="p">.</span><span class="n">github</span>
+               <span class="n">Number</span> <span class="n">of</span> <span class="n">interfaces</span> <span class="p">....................</span> <span class="p">:</span> <span class="m">6</span>
+
+               <span class="n">Hyper</span><span class="p">-</span><span class="n">V</span> <span class="n">Virtual</span> <span class="n">Ethernet</span> <span class="n">Adapter</span> <span class="err">#</span><span class="m">4</span>
+               <span class="p">===================================</span>
+               <span class="n">Interface</span> <span class="n">type</span> <span class="p">..........................</span> <span class="p">:</span> <span class="n">Ethernet</span>
+               <span class="n">Physical</span> <span class="n">address</span> <span class="p">........................</span> <span class="p">:</span> <span class="m">00</span><span class="p">-</span><span class="m">15</span><span class="p">-</span><span class="m">5D</span><span class="p">-</span><span class="m">96</span><span class="p">-</span><span class="m">39</span><span class="p">-</span><span class="m">03</span>
+
+               <span class="n">Hyper</span><span class="p">-</span><span class="n">V</span> <span class="n">Virtual</span> <span class="n">Ethernet</span> <span class="n">Adapter</span> <span class="err">#</span><span class="m">3</span>
+               <span class="p">===================================</span>
+               <span class="n">Interface</span> <span class="n">type</span> <span class="p">..........................</span> <span class="p">:</span> <span class="n">Ethernet</span>
+               <span class="n">Physical</span> <span class="n">address</span> <span class="p">........................</span> <span class="p">:</span> <span class="m">1</span><span class="n">C</span><span class="p">-</span><span class="m">1</span><span class="n">B</span><span class="p">-</span><span class="m">0D</span><span class="p">-</span><span class="m">3</span><span class="n">C</span><span class="p">-</span><span class="m">47</span><span class="p">-</span><span class="m">91</span>
+
+               <span class="n">Software</span> <span class="n">Loopback</span> <span class="n">Interface</span> <span class="m">1</span>
+               <span class="p">=============================</span>
+               <span class="n">Interface</span> <span class="n">type</span> <span class="p">..........................</span> <span class="p">:</span> <span class="n">Loopback</span>
+               <span class="n">Physical</span> <span class="n">address</span> <span class="p">........................</span> <span class="p">:</span>
+
+               <span class="n">Microsoft</span> <span class="n">Teredo</span> <span class="n">Tunneling</span> <span class="n">Adapter</span>
+               <span class="p">==================================</span>
+               <span class="n">Interface</span> <span class="n">type</span> <span class="p">..........................</span> <span class="p">:</span> <span class="n">Tunnel</span>
+               <span class="n">Physical</span> <span class="n">address</span> <span class="p">........................</span> <span class="p">:</span> <span class="m">00</span><span class="p">-</span><span class="m">00</span><span class="p">-</span><span class="m">00</span><span class="p">-</span><span class="m">00</span><span class="p">-</span><span class="m">00</span><span class="p">-</span><span class="m">00</span><span class="p">-</span><span class="m">00</span><span class="p">-</span><span class="n">E0</span>
+
+               <span class="n">Hyper</span><span class="p">-</span><span class="n">V</span> <span class="n">Virtual</span> <span class="n">Ethernet</span> <span class="n">Adapter</span>
+               <span class="p">================================</span>
+               <span class="n">Interface</span> <span class="n">type</span> <span class="p">..........................</span> <span class="p">:</span> <span class="n">Ethernet</span>
+               <span class="n">Physical</span> <span class="n">address</span> <span class="p">........................</span> <span class="p">:</span> <span class="m">5</span><span class="n">A</span><span class="p">-</span><span class="m">15</span><span class="p">-</span><span class="m">31</span><span class="p">-</span><span class="m">73</span><span class="p">-</span><span class="n">B0</span><span class="p">-</span><span class="m">9F</span>
+
+               <span class="n">Hyper</span><span class="p">-</span><span class="n">V</span> <span class="n">Virtual</span> <span class="n">Ethernet</span> <span class="n">Adapter</span> <span class="err">#</span><span class="m">2</span>
+               <span class="p">===================================</span>
+               <span class="n">Interface</span> <span class="n">type</span> <span class="p">..........................</span> <span class="p">:</span> <span class="n">Ethernet</span>
+               <span class="n">Physical</span> <span class="n">address</span> <span class="p">........................</span> <span class="p">:</span> <span class="m">5</span><span class="n">A</span><span class="p">-</span><span class="m">15</span><span class="p">-</span><span class="m">31</span><span class="p">-</span><span class="m">08</span><span class="p">-</span><span class="m">13</span><span class="p">-</span><span class="n">B1</span>
+</code></pre></div></div>
+
+<p>但是可以看到里面有很多不需要使用的网卡，从<a href="https://stackoverflow.com/a/50386894/6116637">堆栈</a>网找到的方法获取当前有活跃的 ip 的网卡可以通过先判断是不是本地巡回网络等，然后判断有没有网络</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">foreach</span> <span class="p">(</span><span class="n">NetworkInterface</span> <span class="n">adapter</span> <span class="k">in</span> <span class="n">nics</span><span class="p">.</span><span class="nf">Where</span><span class="p">(</span><span class="n">c</span> <span class="p">=&gt;</span>
+                <span class="n">c</span><span class="p">.</span><span class="n">NetworkInterfaceType</span> <span class="p">!=</span> <span class="n">NetworkInterfaceType</span><span class="p">.</span><span class="n">Loopback</span> <span class="p">&amp;&amp;</span> <span class="n">c</span><span class="p">.</span><span class="n">OperationalStatus</span> <span class="p">==</span> <span class="n">OperationalStatus</span><span class="p">.</span><span class="n">Up</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>获取当前的网卡有没 ip 有 ip 才是需要的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">IPInterfaceProperties</span> <span class="n">properties</span> <span class="p">=</span> <span class="n">adapter</span><span class="p">.</span><span class="nf">GetIPProperties</span><span class="p">();</span>
+
+                <span class="kt">var</span> <span class="n">unicastAddresses</span> <span class="p">=</span> <span class="n">properties</span><span class="p">.</span><span class="n">UnicastAddresses</span><span class="p">;</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">unicastAddresses</span><span class="p">.</span><span class="nf">Where</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span>
+                    <span class="n">temp</span><span class="p">.</span><span class="n">Address</span><span class="p">.</span><span class="n">AddressFamily</span> <span class="p">==</span> <span class="n">AddressFamily</span><span class="p">.</span><span class="n">InterNetwork</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="c1">// 这个才是需要的网卡</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>简单输出网卡使用 adapter.GetPhysicalAddress().ToString() 输出，如果需要输出带连接的请使用 GetAddressBytes 然后自己输出</p>
+
+<p>我将代码作为 SourceYard 的包发布到 Nuget 通过在 Nuget 搜 <a href="https://www.nuget.org/packages/lindexi.src.MacAddress.Source/">lindexi.src.MacAddress.Source</a> 就可以下载，因为这是一个源代码包，不会多引用一个程序集，也就是这个库会编译到相同的一个 dll 或 exe 这样可以提高运行性能。</p>
+
+<p>下面的代码是我抽出来的，可以直接使用，建议使用 Nuget 包，而不是复制代码，因为我可能发现下面的代码需要修改，但是如果小伙伴复制了我的代码，我不知道有哪些小伙伴复制了，修改了也无法告诉他</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">GetActiveMacAddress</span><span class="p">(</span><span class="kt">string</span> <span class="n">separator</span> <span class="p">=</span> <span class="s">"-"</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">NetworkInterface</span><span class="p">[]</span> <span class="n">nics</span> <span class="p">=</span> <span class="n">NetworkInterface</span><span class="p">.</span><span class="nf">GetAllNetworkInterfaces</span><span class="p">();</span>
+
+            <span class="c1">//Debug.WriteLine("Interface information for {0}.{1}     ",</span>
+            <span class="c1">//    computerProperties.HostName, computerProperties.DomainName);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">nics</span> <span class="p">==</span> <span class="k">null</span> <span class="p">||</span> <span class="n">nics</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;</span> <span class="m">1</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"  No network interfaces found."</span><span class="p">);</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">macAddress</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
+
+            <span class="c1">//Debug.WriteLine("  Number of interfaces .................... : {0}", nics.Length);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="n">NetworkInterface</span> <span class="n">adapter</span> <span class="k">in</span> <span class="n">nics</span><span class="p">.</span><span class="nf">Where</span><span class="p">(</span><span class="n">c</span> <span class="p">=&gt;</span>
+                <span class="n">c</span><span class="p">.</span><span class="n">NetworkInterfaceType</span> <span class="p">!=</span> <span class="n">NetworkInterfaceType</span><span class="p">.</span><span class="n">Loopback</span> <span class="p">&amp;&amp;</span> <span class="n">c</span><span class="p">.</span><span class="n">OperationalStatus</span> <span class="p">==</span> <span class="n">OperationalStatus</span><span class="p">.</span><span class="n">Up</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="c1">//Debug.WriteLine("");</span>
+                <span class="c1">//Debug.WriteLine(adapter.Name + "," + adapter.Description);</span>
+                <span class="c1">//Debug.WriteLine(string.Empty.PadLeft(adapter.Description.Length, '='));</span>
+                <span class="c1">//Debug.WriteLine("  Interface type .......................... : {0}", adapter.NetworkInterfaceType);</span>
+                <span class="c1">//Debug.Write("  Physical address ........................ : ");</span>
+                <span class="c1">//PhysicalAddress address = adapter.GetPhysicalAddress();</span>
+                <span class="c1">//byte[] bytes = address.GetAddressBytes();</span>
+                <span class="c1">//for (int i = 0; i &lt; bytes.Length; i++)</span>
+                <span class="c1">//{</span>
+                <span class="c1">//    // Display the physical address in hexadecimal.</span>
+                <span class="c1">//    Debug.Write($"{bytes[i]:X2}");</span>
+                <span class="c1">//    // Insert a hyphen after each byte, unless we are at the end of the </span>
+                <span class="c1">//    // address.</span>
+                <span class="c1">//    if (i != bytes.Length - 1)</span>
+                <span class="c1">//    {</span>
+                <span class="c1">//        Debug.Write("-");</span>
+                <span class="c1">//    }</span>
+                <span class="c1">//}</span>
+
+                <span class="c1">//Debug.WriteLine("");</span>
+
+                <span class="c1">//Debug.WriteLine(address.ToString());</span>
+
+                <span class="n">IPInterfaceProperties</span> <span class="n">properties</span> <span class="p">=</span> <span class="n">adapter</span><span class="p">.</span><span class="nf">GetIPProperties</span><span class="p">();</span>
+
+                <span class="kt">var</span> <span class="n">unicastAddresses</span> <span class="p">=</span> <span class="n">properties</span><span class="p">.</span><span class="n">UnicastAddresses</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">unicastAddresses</span><span class="p">.</span><span class="nf">Any</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span><span class="p">.</span><span class="n">Address</span><span class="p">.</span><span class="n">AddressFamily</span> <span class="p">==</span> <span class="n">AddressFamily</span><span class="p">.</span><span class="n">InterNetwork</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">address</span> <span class="p">=</span> <span class="n">adapter</span><span class="p">.</span><span class="nf">GetPhysicalAddress</span><span class="p">();</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">separator</span><span class="p">))</span>
+                    <span class="p">{</span>
+                        <span class="n">macAddress</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">address</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+                    <span class="p">}</span>
+                    <span class="k">else</span>
+                    <span class="p">{</span>
+                        <span class="n">macAddress</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="n">separator</span><span class="p">,</span> <span class="n">address</span><span class="p">.</span><span class="nf">GetAddressBytes</span><span class="p">()));</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的方法不仅是在 dotnet core 可以使用，在 dotnet framework 程序同样调用，但是在 dotnet framework 还可以通过 WMI 获取</p>
+
+<p>在 dotnet framework 使用 WMI 获取 MAC 地址方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    <span class="kt">var</span> <span class="n">managementClass</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ManagementClass</span><span class="p">(</span><span class="s">"Win32_NetworkAdapterConfiguration"</span><span class="p">);</span>
+                    <span class="kt">var</span> <span class="n">managementObjectCollection</span> <span class="p">=</span> <span class="n">managementClass</span><span class="p">.</span><span class="nf">GetInstances</span><span class="p">();</span>
+                    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">managementObject</span> <span class="k">in</span> <span class="n">managementObjectCollection</span><span class="p">.</span><span class="n">OfType</span><span class="p">&lt;</span><span class="n">ManagementObject</span><span class="p">&gt;())</span>
+                    <span class="p">{</span>
+                        <span class="k">using</span> <span class="p">(</span><span class="n">managementObject</span><span class="p">)</span>
+                        <span class="p">{</span>
+                            <span class="k">if</span> <span class="p">((</span><span class="kt">bool</span><span class="p">)</span> <span class="n">managementObject</span><span class="p">[</span><span class="s">"IPEnabled"</span><span class="p">])</span>
+                            <span class="p">{</span>
+                                <span class="k">if</span> <span class="p">(</span><span class="n">managementObject</span><span class="p">[</span><span class="s">"MacAddress"</span><span class="p">]</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                                <span class="p">{</span>
+                                    <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+                                <span class="p">}</span>
+
+                                <span class="k">return</span> <span class="n">managementObject</span><span class="p">[</span><span class="s">"MacAddress"</span><span class="p">].</span><span class="nf">ToString</span><span class="p">().</span><span class="nf">ToUpper</span><span class="p">();</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>输出的格式是 5A:15:31:73:B0:9F 同时输出是一个网卡</p>
+
+<p>分开虚拟网卡和物理网卡方法请看 <a href="https://huangtengxiao.gitee.io/post/%E4%B8%BA%E4%BB%80%E4%B9%88MessageBox%E4%BC%9A%E8%B7%91%E5%88%B0%E7%AA%97%E5%8F%A3%E4%B8%8B%E9%9D%A2.html">如何利用c#找到物理网卡的Mac地址 - huangtengxiao</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.net.networkinformation.networkinterface.getphysicaladdress?view=netframework-4.7.2">NetworkInterface.GetPhysicalAddress Method (System.Net.NetworkInformation)</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.net.networkinformation.physicaladdress?view=netframework-4.7.2">PhysicalAddress Class (System.Net.NetworkInformation)</a></p>
+
+<p><a href="https://stackoverflow.com/questions/50386546/net-core-2-x-how-to-get-the-current-active-local-network-ipv4-address">c# - .NET Core 2.x how to get the current active local network IPv4 address? - Stack Overflow</a></p>
+
+:ET

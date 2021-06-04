@@ -1,0 +1,21 @@
+I"�<p>默认在触摸滑动 ListView 等控件的时候，如果滑动到控件底部，会让 WPF 窗口也跟随触摸惯性滑动</p>
+
+<!--more-->
+
+<!-- CreateTime:6/10/2020 5:05:38 PM -->
+
+<p>解决方法是通过在 Window 里面重写 OnManipulationBoundaryFeedback 方法，进行禁用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnManipulationBoundaryFeedback</span><span class="p">(</span><span class="n">ManipulationBoundaryFeedbackEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 方法里面不需要写任何代码，就能解决这个问题</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>详细请看</p>
+
+<p><a href="https://www.cnblogs.com/luohengstudy/p/4139445.html">wpf listbox touch 整个窗口移动 - 三叶草╮ - 博客园</a></p>
+
+<p><a href="https://cloud.tencent.com/developer/article/1518374">dotnet Framework 源代码 · ScrollViewer - 云+社区 - 腾讯云</a></p>
+
+:ET

@@ -1,0 +1,70 @@
+I"<p>本文告诉大家如何在 VisualStudio 打开最新的 C#，现在的微软更新 C# 很快，那么如何让 VisualStudio 在项目使用最新的</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:58:50 -->
+
+<!-- csdn -->
+<!-- 标签：VisualStudio -->
+
+<p>本文会告诉大家三个不同的方法，最后的方法是最推荐的</p>
+
+<h2 id="第一个方法">第一个方法</h2>
+
+<p>第一个方法是最简单的方法，右击项目属性，选择生成，可以看到下面界面</p>
+
+<!-- ![](image/VisualStudio 使用三个方法启动最新 C# 功能/VisualStudio 使用三个方法启动最新 C# 功能0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018716204091447.jpg" alt="" /></p>
+
+<p>然后点击高级，选择最新语言版本，建议选择最新次要版本而不是直接选择是哪个版本</p>
+
+<!-- ![](image/VisualStudio 使用三个方法启动最新 C# 功能/VisualStudio 使用三个方法启动最新 C# 功能1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20187162041124256.jpg" alt="" /></p>
+
+<p>现在就可以使用最新的 C# 做出奇诡的业务，但是不告诉你除了在 Debug 需要设计还需要切换 Release 也设置，不然在 Debug 下可以使用，但是在 Release 就无法用最新的 C# 代码</p>
+
+<h2 id="第二个方法">第二个方法</h2>
+
+<p>如果升级了自己的 VisualStudio 项目为 VisualStudio 2017 项目格式，那么就很建议使用下面的方法，如何升级请看 <a href="https://blog.lindexi.com/post/%E4%BB%8E%E4%BB%A5%E5%89%8D%E7%9A%84%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F%E8%BF%81%E7%A7%BB%E5%88%B0-VS2017-%E6%96%B0%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F.html">从以前的项目格式迁移到 VS2017 新项目格式</a></p>
+
+<p>打开项目的 csproj 文件，在一个<code class="language-plaintext highlighter-rouge">PropertyGroup</code>随便一个地方添加下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;LangVersion&gt;latest&lt;/LangVersion&gt;
+</code></pre></div></div>
+
+<p>看起来的代码就是</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> &lt;PropertyGroup&gt;
+    &lt;TargetFrameworks&gt;netcoreapp2.0;net47&lt;/TargetFrameworks&gt;
+    &lt;LangVersion&gt;latest&lt;/LangVersion&gt;
+    &lt;PackageId&gt;lindexi.wpf.Mvvm&lt;/PackageId&gt;
+    &lt;RootNamespace&gt;lindexi.wpf.Mvvm&lt;/RootNamespace&gt;
+    &lt;GeneratePackageOnBuild&gt;true&lt;/GeneratePackageOnBuild&gt;
+    &lt;Authors&gt;lindexi&lt;/Authors&gt;
+    &lt;RepositoryUrl&gt;https://github.com/lindexi/UWP&lt;/RepositoryUrl&gt;
+    &lt;Description&gt;
+      欢迎来我博客 lindexi.gitee.io
+    &lt;/Description&gt;
+  &lt;/PropertyGroup&gt;
+</code></pre></div></div>
+
+<h2 id="第三个方法">第三个方法</h2>
+
+<p>在上面一个方法，可以看到在一个新的项目都需要添加一句代码，这个方法是在新项目添加一个文件。</p>
+
+<p>在项目文件所在的文件夹创建一个文件<code class="language-plaintext highlighter-rouge">Directory.Build.props</code>，需要注意这个文件的名字是特殊，不能随便改</p>
+
+<p>在这里文件添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Project</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">LangVersion</span><span class="p">&gt;</span><span class="n">latest</span><span class="p">&lt;/</span><span class="n">LangVersion</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Project</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>因为 VisualStudio 会寻找文件夹存在的 <code class="language-plaintext highlighter-rouge">Directory.Build.props</code> 把这里的内容作为选项</p>
+
+:ET

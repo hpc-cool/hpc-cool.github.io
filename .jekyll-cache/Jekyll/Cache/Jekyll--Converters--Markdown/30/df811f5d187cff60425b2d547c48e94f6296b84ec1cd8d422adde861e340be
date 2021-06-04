@@ -1,0 +1,113 @@
+I"�<p>通过自定义命令，可以在 VisualStudio 加上一些自定义命令，可以快速启动 git 或者做其他的事情
+<img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017102417838.jpg" alt="" /></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<div id="toc"></div>
+
+<h2 id="添加命令">添加命令</h2>
+
+<p>首先打开工具 外部命令，点击添加，然后在弹出的窗口输入下面内容</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171024171253.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017102417130.jpg" alt="" /></p>
+
+<p>例如添加内容是打开 git 、打开资源管理器、打开 git blame</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>des</th>
+      <th>Title</th>
+      <th>Command</th>
+      <th>Arguments</th>
+      <th>Initial directory</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>在此仓库运行</td>
+      <td>Git Bash</td>
+      <td><code class="language-plaintext highlighter-rouge">C:\Program Files\Git\git-bash.exe</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"--cd=$(SolutionDir)/.."</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"$(SolutionDir)/.."</code></td>
+    </tr>
+    <tr>
+      <td>在资源管理器中打开仓库</td>
+      <td><code class="language-plaintext highlighter-rouge">C:\Windows\explorer.exe</code></td>
+      <td><code class="language-plaintext highlighter-rouge">/select,"$(SolutionDir)\."</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"$(SolutionDir)\."</code></td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td>追溯这个文件</td>
+      <td><code class="language-plaintext highlighter-rouge">C:\Program Files\TortoiseGit\bin\TortoiseGitBlame.exe</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"$(ItemPath)"</code></td>
+      <td><code class="language-plaintext highlighter-rouge">/line:$(CurLine)</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"$(ItemDir)"</code></td>
+    </tr>
+    <tr>
+      <td>显示此文件的日志</td>
+      <td><code class="language-plaintext highlighter-rouge">C:\Program Files\TortoiseGit\bin\TortoiseGitProc.exe</code></td>
+      <td><code class="language-plaintext highlighter-rouge">/command:log /path:"$(ItemPath)"</code></td>
+      <td><code class="language-plaintext highlighter-rouge">"$(ItemDir)"</code></td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 id="添加到visualstudio">添加到VisualStudio</h2>
+
+<ol>
+  <li>在工具栏最后点击 [添加并删除按钮]，选择 [自定义]；</li>
+  <li>在对话框中点击 [添加命令]，添加 Tools→外部命令 12345……(就是你之前步骤里显示的那个顺序，从 1 开始计数)；</li>
+  <li>点击修改，改个显示的名字，调整下前后顺序。</li>
+</ol>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171024175519.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171024175526.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171024175552.jpg" alt="" /></p>
+
+<h2 id="在-visualstudio-添加-blame">在 VisualStudio 添加 Blame</h2>
+
+<p>在 VisualStudio ，我看到了自带的 Blame 很烂，于是如何在 VisualStudio 添加一个强大的 Blame？</p>
+
+<p>我选择了<a href="http://www.syntevo.com/deepgit/tour">deepgit</a> ，我把它安装在 C 盘，安装完成可以使用外部命令把他放在 VisualStudio，下面就是方法</p>
+
+<ol>
+  <li>
+    <p>确定 deepgit 的路径，记为 path ，我这里的是<code class="language-plaintext highlighter-rouge">C:\Program Files (x86)\DeepGit\bin\deepgit.exe</code></p>
+  </li>
+  <li>
+    <p>打开 VisualStudio 工具 外部工具</p>
+  </li>
+  <li>
+    <p>点击添加</p>
+  </li>
+  <li>
+    <p>输入标题，标题可以随意写。命令就是 path 安装路径，参数写<code class="language-plaintext highlighter-rouge">$(ItemPath)</code></p>
+  </li>
+</ol>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017101010119.jpg" alt="" /></p>
+
+<ol>
+  <li>点击添加或移除按钮 自定义</li>
+</ol>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171010101234.jpg" alt="" /></p>
+
+<ol>
+  <li>添加命令 这里选择工具的外部命令4，外部命令和添加命令所在有关，我这里添加的是第4个</li>
+</ol>
+
+<p>感谢 <a href="https://walterlv.gitee.io/">吕毅 </a></p>
+
+<p>更多自定义外部工具请看 <a href="https://www.cnblogs.com/jasongrass/p/14682527.html">Visual Studio 自定义外部命令 (External Tools) - J.晒太阳的猫 - 博客园</a></p>
+
+:ET

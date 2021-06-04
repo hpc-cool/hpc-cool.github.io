@@ -1,0 +1,34 @@
+I"�<p>在网络编程可以使用 PostAsJsonAsync 这个方便的方法将一个对象作为 json 推送到服务器，这个方法是一个扩展方法，在之前的框架，可以在 System.Net.Http.dll 找到这个好用的扩展方法，但是在 4.5 的时候就被移除了。本文告诉大家如何安装这个扩展方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/19 14:53:58 -->
+
+<!-- csdn -->
+
+<p>在新的版本，可以通过安装 <a href="https://www.nuget.org/packages/Microsoft.AspNet.WebApi.Client/">Microsoft.AspNet.WebApi.Client</a> 这个库使用，支持 .NETFramework 4.5 和 .NETStandard 2.0 另外不要看这个库的命名空间包含了 AspNet 其实这个库就是一些扩展方法，没有引用任何 AspNet 代码</p>
+
+<p>在使用的时候，需要引用 <code class="language-plaintext highlighter-rouge">System.Net.Http</code> 命名空间，然后就可以使用下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="k">await</span> <span class="n">httpClient</span><span class="p">.</span><span class="nf">PostAsJsonAsync</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">obj</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>其实自己写一个扩展方法也是不错，例如我就需要通过 Get 一个对象，可以这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System.Net.Http</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Newtonsoft.Json</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">HttpClientExtensions</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">GetObjectAsync</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">HttpClient</span> <span class="n">httpClient</span><span class="p">,</span> <span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">await</span> <span class="n">httpClient</span><span class="p">.</span><span class="nf">GetStringAsync</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">JsonConvert</span><span class="p">.</span><span class="n">DeserializeObject</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">str</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过自己定义扩展方法，可以让网络编程的时候减少重复代码</p>
+
+:ET

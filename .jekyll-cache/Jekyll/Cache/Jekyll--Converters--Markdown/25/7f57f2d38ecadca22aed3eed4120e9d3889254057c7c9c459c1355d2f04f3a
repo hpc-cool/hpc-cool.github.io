@@ -1,0 +1,330 @@
+I"(�<p>咱可以使用 Win32 的 SetWindowPos 修改窗口的坐标和大小，此时 WPF 的窗口的 Left 和 Top 和 Width 和 Height 依赖属性也会受到影响，本文将会告诉大家在啥时候会同步更改 WPF 依赖属性的值，而什么时候不会</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/1/6 11:58:25 -->
+
+<!-- 标签：WPF，WPF源代码 -->
+<!-- 发布 -->
+
+<p>本文将会用到很多 Win32 方法，在 dotnet 基金会开源了对 win32 等的调用的封装库，请看 <a href="https://github.com/dotnet/pinvoke">https://github.com/dotnet/pinvoke</a></p>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/002e0b7c/FurnaheaneHejichaijair">github</a> 欢迎小伙伴访问</p>
+
+<p>在开始之前，咱先写一个 XAML 界面，用来绑定 Window 的依赖属性。以及加上几个按钮，用来使用 Win32 方法修改窗口坐标或大小</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Window</span> <span class="na">x:Class=</span><span class="s">"FurnaheaneHejichaijair.MainWindow"</span>
+        <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+        <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+        <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+        <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+        <span class="na">xmlns:local=</span><span class="s">"clr-namespace:FurnaheaneHejichaijair"</span>
+        <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+        <span class="na">x:Name=</span><span class="s">"Root"</span>
+        <span class="na">Title=</span><span class="s">"MainWindow"</span> <span class="na">Height=</span><span class="s">"450"</span> <span class="na">Width=</span><span class="s">"800"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;Grid&gt;</span>
+    <span class="nt">&lt;StackPanel&gt;</span>
+      <span class="nt">&lt;TextBlock</span> <span class="na">FontSize=</span><span class="s">"50"</span> <span class="na">Text=</span><span class="s">"{Binding ElementName=Root,Path=Left}"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;TextBlock</span> <span class="na">FontSize=</span><span class="s">"50"</span> <span class="na">Text=</span><span class="s">"{Binding ElementName=Root,Path=Top}"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;TextBlock</span> <span class="na">FontSize=</span><span class="s">"50"</span> <span class="na">Text=</span><span class="s">"{Binding ElementName=Root,Path=Width}"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;TextBlock</span> <span class="na">FontSize=</span><span class="s">"50"</span> <span class="na">Text=</span><span class="s">"{Binding ElementName=Root,Path=Height}"</span> <span class="nt">/&gt;</span>
+
+      <span class="nt">&lt;Button</span> <span class="na">x:Name=</span><span class="s">"PositionButton"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> 
+              <span class="na">HorizontalAlignment=</span><span class="s">"Left"</span> <span class="na">Content=</span><span class="s">"修改坐标"</span> 
+              <span class="na">Click=</span><span class="s">"PositionButton_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+      <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> 
+              <span class="na">HorizontalAlignment=</span><span class="s">"Left"</span> <span class="na">Content=</span><span class="s">"修改大小"</span> 
+              <span class="na">Click=</span><span class="s">"SizeButton_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+      <span class="nt">&lt;Button</span> <span class="na">x:Name=</span><span class="s">"SetWindowLongPtrButton"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> 
+              <span class="na">HorizontalAlignment=</span><span class="s">"Left"</span> <span class="na">Content=</span><span class="s">"SetWindowLongPtr"</span>
+              <span class="na">Click=</span><span class="s">"SetWindowLongPtrButton_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+    <span class="nt">&lt;/StackPanel&gt;</span>
+  <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Window&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到在完成了上面界面之后，在拖动窗口，以及修改窗口大小的时候，都可以看到值是对应变化的。接下来咱来试试 Win32 的方法来修改</p>
+
+<p>在 PositionButton_OnClick 方法里面添加对窗口修改坐标的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">LibraryName</span> <span class="p">=</span> <span class="s">"user32"</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">PositionButton_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">windowInteropHelper</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">SWP_NOSIZE</span> <span class="p">=</span> <span class="m">0x0001</span><span class="p">;</span>
+            <span class="nf">SetWindowPos</span><span class="p">(</span><span class="n">windowInteropHelper</span><span class="p">.</span><span class="n">Handle</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">Left</span> <span class="p">+</span> <span class="m">10</span><span class="p">),</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">Top</span> <span class="p">+</span> <span class="m">10</span><span class="p">),</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">SWP_NOSIZE</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 改变一个子窗口、弹出式窗口和顶层窗口的尺寸、位置和 Z 序。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="hWnd"&gt;窗口句柄。&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="hWndInsertAfter"&gt;</span>
+        <span class="c1">/// 在z序中的位于被置位的窗口前的窗口句柄。该参数必须为一个窗口句柄，或下列值之一：</span>
+        <span class="c1">/// &lt;para&gt;HWND_BOTTOM：将窗口置于 Z 序的底部。如果参数hWnd标识了一个顶层窗口，则窗口失去顶级位置，并且被置在其他窗口的底部。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;HWND_NOTOPMOST：将窗口置于所有非顶层窗口之上（即在所有顶层窗口之后）。如果窗口已经是非顶层窗口则该标志不起作用。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;HWND_TOP：将窗口置于Z序的顶部。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;HWND_TOPMOST：将窗口置于所有非顶层窗口之上。即使窗口未被激活窗口也将保持顶级位置。&lt;/para&gt;</span>
+        <span class="c1">/// 如无须更改，请使用 IntPtr.Zero 的值</span>
+        <span class="c1">/// &lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="x"&gt;以客户坐标指定窗口新位置的左边界。&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="y"&gt;以客户坐标指定窗口新位置的顶边界。&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="cx"&gt;以像素指定窗口的新的宽度。如无须更改，请在 &lt;paramref name="wFlagslong"/&gt; 设置 &lt;see cref="WindowPositionFlags.SWP_NOSIZE"/&gt; 的值 &lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="cy"&gt;以像素指定窗口的新的高度。如无须更改，请在 &lt;paramref name="wFlagslong"/&gt; 设置 &lt;see cref="WindowPositionFlags.SWP_NOSIZE"/&gt; 的值&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="wFlagslong"&gt;</span>
+        <span class="c1">/// 可传入 &lt;see cref="WindowPositionFlags"/&gt; 枚举中的值</span>
+        <span class="c1">/// 窗口尺寸和定位的标志。该参数可以是下列值的组合：</span>
+        <span class="c1">/// &lt;para&gt;SWP_ASYNCWINDOWPOS：如果调用进程不拥有窗口，系统会向拥有窗口的线程发出需求。这就防止调用线程在其他线程处理需求的时候发生死锁。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_DEFERERASE：防止产生 WM_SYNCPAINT 消息。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_DRAWFRAME：在窗口周围画一个边框（定义在窗口类描述中）。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_FRAMECHANGED：给窗口发送 WM_NCCALCSIZE 消息，即使窗口尺寸没有改变也会发送该消息。如果未指定这个标志，只有在改变了窗口尺寸时才发送 WM_NCCALCSIZE。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_HIDEWINDOW：隐藏窗口。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOACTIVATE：不激活窗口。如果未设置标志，则窗口被激活，并被设置到其他最高级窗口或非最高级组的顶部（根据参数hWndlnsertAfter设置）。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOCOPYBITS：清除客户区的所有内容。如果未设置该标志，客户区的有效内容被保存并且在窗口尺寸更新和重定位后拷贝回客户区。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOMOVE：维持当前位置（忽略X和Y参数）。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOOWNERZORDER：不改变 Z 序中的所有者窗口的位置。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOREDRAW：不重画改变的内容。如果设置了这个标志，则不发生任何重画动作。适用于客户区和非客户区（包括标题栏和滚动条）和任何由于窗回移动而露出的父窗口的所有部分。如果设置了这个标志，应用程序必须明确地使窗口无效并区重画窗口的任何部分和父窗口需要重画的部分。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOREPOSITION：与 SWP_NOOWNERZORDER 标志相同。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOSENDCHANGING：防止窗口接收 WM_WINDOWPOSCHANGING 消息。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOSIZE：维持当前尺寸（忽略 cx 和 cy 参数）。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_NOZORDER：维持当前 Z 序（忽略 hWndlnsertAfter 参数）。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;para&gt;SWP_SHOWWINDOW：显示窗口。&lt;/para&gt;</span>
+        <span class="c1">/// &lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;如果函数成功，返回值为非零；如果函数失败，返回值为零。若想获得更多错误消息，请调用 GetLastError 函数。&lt;/returns&gt;</span>
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">LibraryName</span><span class="p">,</span> <span class="n">ExactSpelling</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">Int32</span> <span class="nf">SetWindowPos</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">hWndInsertAfter</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">x</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">y</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">cx</span><span class="p">,</span>
+            <span class="n">Int32</span> <span class="n">cy</span><span class="p">,</span> <span class="n">Int32</span> <span class="n">wFlagslong</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>可以看到点击修改坐标按钮，就可以修改窗口的坐标，此时点击的时候，依赖属性也跟随变化</p>
+
+<p>再来实现修改窗口大小的方法，点击方法将调用 SetWindowPos 方法修改窗口的宽度和高度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">SizeButton_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">windowInteropHelper</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">SWP_NOMOVE</span> <span class="p">=</span> <span class="m">0x0002</span><span class="p">;</span>
+            <span class="nf">SetWindowPos</span><span class="p">(</span><span class="n">windowInteropHelper</span><span class="p">.</span><span class="n">Handle</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">Width</span> <span class="p">+</span> <span class="m">10</span><span class="p">),</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">Height</span> <span class="p">+</span> <span class="m">10</span><span class="p">),</span> <span class="n">SWP_NOMOVE</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时点击修改窗口大小的按钮，通过 Win32 方法修改窗口大小，也可以看到依赖属性也进行变化。但如果此时咱点击一下最大化，那么点击修改窗口坐标按钮，是可以修改窗口坐标的，同时窗口的状态依然是最大化。但是此时的依赖属性没有跟随变化</p>
+
+<p>原因还需要从完全开源的 WPF 仓库里面了解，官方的开源仓库放在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 欢迎大家下载所有源代码</p>
+
+<p>在 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\PresentationFramework\System\Windows\Window.cs</code> 文件里面有以下的定义</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     This is the hook to HwndSource that is called when window messages related to</span>
+        <span class="c1">///     this window occur. Currently, we listen to the following messages</span>
+        <span class="c1">///</span>
+        <span class="c1">///         WM_CLOSE        : We listen to this message in order to fire the Closing event.</span>
+        <span class="c1">///                           If the user cancels window closing, we set handled to true so</span>
+        <span class="c1">///                           that the DefWindowProc does not handle this message. Otherwise,</span>
+        <span class="c1">///                           we set handled to false.</span>
+        <span class="c1">///         WM_DESTROY      : We listen to this message in order to fire the Closed event.</span>
+        <span class="c1">///                           Handled is always set to false.</span>
+        <span class="c1">///         WM_ACTIVATE     : Used for Activated and deactivated events</span>
+        <span class="c1">///         WM_SIZE         : Used for SizeChanged, StateChanged events. Also, helps us keep our</span>
+        <span class="c1">///                           size updated</span>
+        <span class="c1">///         WM_MOVE:        : Used for location changed event and to keep our cached top/left</span>
+        <span class="c1">///                           updated</span>
+        <span class="c1">///         WM_GETMINMAXINFO: Used to enforce Max/MinHeight and Max/MinWidth</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="hwnd"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="msg"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="wParam"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="lParam"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="handled"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">private</span> <span class="n">IntPtr</span> <span class="nf">WindowFilterMessage</span><span class="p">(</span> <span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span>
+            <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在这个方法里面，将会从 Win 消息拿到对应的值分发给对应的方法处理，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">switch</span> <span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_CLOSE</span><span class="p">:</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmClose</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_DESTROY</span><span class="p">:</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmDestroy</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_ACTIVATE</span><span class="p">:</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmActivate</span><span class="p">(</span><span class="n">wParam</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_MOVE</span><span class="p">:</span> <span class="c1">// 窗口移动</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmMoveChanged</span><span class="p">();</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_NCHITTEST</span><span class="p">:</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmNcHitTest</span><span class="p">(</span><span class="n">lParam</span><span class="p">,</span> <span class="k">ref</span> <span class="n">retInt</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_SHOWWINDOW</span><span class="p">:</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmShowWindow</span><span class="p">(</span><span class="n">wParam</span><span class="p">,</span> <span class="n">lParam</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_COMMAND</span><span class="p">:</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmCommand</span><span class="p">(</span><span class="n">wParam</span><span class="p">,</span> <span class="n">lParam</span><span class="p">);</span>
+        <span class="k">break</span><span class="p">;</span>
+    <span class="k">default</span><span class="p">:</span>
+        <span class="n">handled</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+        <span class="k">break</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 <code class="language-plaintext highlighter-rouge">WindowMessage.WM_MOVE</code> 消息里面，将会调用到 WmMoveChanged 方法，这个方法的逻辑大概如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">bool</span> <span class="nf">WmMoveChanged</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="c1">// 在 WindowBounds 属性里面，将会获取当前 Win32 窗口的坐标和大小</span>
+            <span class="c1">// the input lparam gives the client location,</span>
+            <span class="c1">// so just call GetWindowRect for Left and Top.</span>
+            <span class="n">NativeMethods</span><span class="p">.</span><span class="n">RECT</span> <span class="n">rc</span> <span class="p">=</span> <span class="n">WindowBounds</span><span class="p">;</span>
+
+            <span class="c1">// 此时需要将屏幕的坐标转换为 WPF 的坐标</span>
+            <span class="n">Point</span> <span class="n">ptLogicalUnits</span> <span class="p">=</span> <span class="nf">DeviceToLogicalUnits</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="n">rc</span><span class="p">.</span><span class="n">left</span><span class="p">,</span> <span class="n">rc</span><span class="p">.</span><span class="n">top</span><span class="p">));</span>
+
+            <span class="c1">// 如果值更新了，那么将会更新 _actualLeft 和 _actualTop 属性</span>
+            <span class="k">if</span> <span class="p">(!</span><span class="n">DoubleUtil</span><span class="p">.</span><span class="nf">AreClose</span><span class="p">(</span><span class="n">_actualLeft</span><span class="p">,</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">X</span><span class="p">)</span> <span class="p">||</span>
+                <span class="p">!</span><span class="n">DoubleUtil</span><span class="p">.</span><span class="nf">AreClose</span><span class="p">(</span><span class="n">_actualTop</span><span class="p">,</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">Y</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">_actualLeft</span> <span class="p">=</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+                <span class="n">_actualTop</span> <span class="p">=</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">Y</span><span class="p">;</span>
+
+                <span class="c1">// In Window, WmMoveChangedHelper write the local value of Top/Left</span>
+                <span class="c1">// (if necessary) or updates the property system values for</span>
+                <span class="c1">// Top/Left by calling CoerceValue.  Furthermore, it fires the</span>
+                <span class="c1">// LocationChanged event.  RBW overrides WmMoveChangedHelper to do</span>
+                <span class="c1">// nothing as writing Top/Left is not supported for RBW and</span>
+                <span class="c1">// LocationChanged is never fired for it either.</span>
+                <span class="nf">WmMoveChangedHelper</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">RECT</span> <span class="n">WindowBounds</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span> <span class="n">_swh</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">);</span>
+                <span class="k">return</span> <span class="n">_swh</span><span class="p">.</span><span class="n">WindowBounds</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 <code class="language-plaintext highlighter-rouge">_swh.WindowBounds</code> 通用也是一个只有 get 的属性，定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">class</span> <span class="nc">SourceWindowHelper</span>
+        <span class="p">{</span>
+                <span class="k">internal</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">RECT</span> <span class="n">WindowBounds</span>
+                <span class="p">{</span>
+                    <span class="k">get</span>
+                    <span class="p">{</span>
+                        <span class="n">NativeMethods</span><span class="p">.</span><span class="n">RECT</span> <span class="n">rc</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="nf">RECT</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">);</span>
+                        <span class="n">SafeNativeMethods</span><span class="p">.</span><span class="nf">GetWindowRect</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">CriticalHandle</span><span class="p">),</span> <span class="k">ref</span> <span class="n">rc</span><span class="p">);</span>
+
+                        <span class="k">return</span> <span class="n">rc</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是说本质是通过 User32.dll 的 GetWindowRect 方法获取 Win32 窗口的坐标和大小</p>
+
+<p>而更改依赖属性的逻辑是放在 WmMoveChangedHelper 方法的，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">void</span> <span class="nf">WmMoveChangedHelper</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="c1">// 如果窗口是最大化，不更新依赖属性，但是窗口最大化可以通过 Win32 方法修改窗口坐标和大小，此时的依赖属性就没有和实际窗口的坐标相同</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">WindowState</span> <span class="p">==</span> <span class="n">WindowState</span><span class="p">.</span><span class="n">Normal</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">try</span>
+                <span class="p">{</span>
+                    <span class="n">_updateHwndLocation</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+                    <span class="c1">// 更新依赖属性</span>
+                    <span class="nf">SetValue</span><span class="p">(</span><span class="n">LeftProperty</span><span class="p">,</span> <span class="n">_actualLeft</span><span class="p">);</span>
+                    <span class="nf">SetValue</span><span class="p">(</span><span class="n">TopProperty</span><span class="p">,</span> <span class="n">_actualTop</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">finally</span>
+                <span class="p">{</span>
+                    <span class="n">_updateHwndLocation</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="c1">// Event handler exception continuality: if exception occurs in LocationChanged event handler, our state will not be</span>
+                <span class="c1">// corrupted because the states related to LocationChanged, LeftProperty, TopProperty, Left and Top are set before the event is fired.</span>
+                <span class="c1">// Please check event handler exception continuality if the logic changes.</span>
+                <span class="nf">OnLocationChanged</span><span class="p">(</span><span class="n">EventArgs</span><span class="p">.</span><span class="n">Empty</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到在 WmMoveChangedHelper 方法里面会判断 <code class="language-plaintext highlighter-rouge">WindowState == WindowState.Normal</code> 才会更新 Left 和 Top 依赖属性。这就是为什么最大化的时候修改坐标不会更新依赖属性</p>
+
+<p>另外在 WmMoveChanged 方法的实现里面，可以看到一个坑，在判断是否需要更新的时候，是采用 <code class="language-plaintext highlighter-rouge">_actualLeft</code> 和 <code class="language-plaintext highlighter-rouge">_actualTop</code> 判断的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1">// 如果值更新了，那么将会更新 _actualLeft 和 _actualTop 属性</span>
+ <span class="k">if</span> <span class="p">(!</span><span class="n">DoubleUtil</span><span class="p">.</span><span class="nf">AreClose</span><span class="p">(</span><span class="n">_actualLeft</span><span class="p">,</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">X</span><span class="p">)</span> <span class="p">||</span>
+     <span class="p">!</span><span class="n">DoubleUtil</span><span class="p">.</span><span class="nf">AreClose</span><span class="p">(</span><span class="n">_actualTop</span><span class="p">,</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">Y</span><span class="p">))</span>
+ <span class="p">{</span>
+ 	<span class="c1">// 忽略代码</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果此时我在使用 Win32 更改的过程中，也修改了 Left 和 Top 依赖属性呢？可以看到此时的 <code class="language-plaintext highlighter-rouge">_actualLeft</code> 和 <code class="language-plaintext highlighter-rouge">_actualTop</code> 和 Win32 相同，此时就不会再次调用更新了，此时的 Left 和 Top 依赖属性就没有和 Win32 同步了</p>
+
+<p>上面是说到的是修改窗口的坐标，那如果修改的是窗口的大小呢？在 WindowFilterMessage 方法里面，除了调用 WmMoveChanged 方法外，还有以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">switch</span> <span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_GETMINMAXINFO</span><span class="p">:</span>
+                    <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmGetMinMaxInfo</span><span class="p">(</span><span class="n">lParam</span><span class="p">);</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_SIZE</span><span class="p">:</span>
+                    <span class="n">handled</span> <span class="p">=</span> <span class="nf">WmSizeChanged</span><span class="p">(</span><span class="n">wParam</span><span class="p">);</span>
+                    <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到在消息是 <code class="language-plaintext highlighter-rouge">WindowMessage.WM_SIZE</code> 将会调用 WmSizeChanged 方法，这个方法的逻辑如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">bool</span> <span class="nf">WmSizeChanged</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 调用 WindowBounds 属性，获取当前的坐标</span>
+            <span class="n">NativeMethods</span><span class="p">.</span><span class="n">RECT</span> <span class="n">rc</span> <span class="p">=</span> <span class="n">WindowBounds</span><span class="p">;</span>
+            <span class="c1">// 计算窗口的大小，尽管使用的是 Point 但实际含义是 Size 哦，原因是为了重复调用 DeviceToLogicalUnits 方法而已</span>
+            <span class="n">Point</span> <span class="n">windowSize</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="n">rc</span><span class="p">.</span><span class="n">right</span> <span class="p">-</span> <span class="n">rc</span><span class="p">.</span><span class="n">left</span><span class="p">,</span> <span class="n">rc</span><span class="p">.</span><span class="n">bottom</span> <span class="p">-</span> <span class="n">rc</span><span class="p">.</span><span class="n">top</span><span class="p">);</span>
+            <span class="c1">// 转换为 WPF 坐标，这里的 Point 其实是 Size 哈，只是 WPF 的开发者 hack 一下，使用 DeviceToLogicalUnits 方法返回的 Point 而已</span>
+            <span class="n">Point</span> <span class="n">ptLogicalUnits</span> <span class="p">=</span> <span class="nf">DeviceToLogicalUnits</span><span class="p">(</span><span class="n">windowSize</span><span class="p">);</span>
+
+            <span class="k">try</span>
+            <span class="p">{</span>
+            	<span class="c1">// 修改依赖属性</span>
+                <span class="n">_updateHwndSize</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+                <span class="nf">SetValue</span><span class="p">(</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">WidthProperty</span><span class="p">,</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">X</span><span class="p">);</span>
+                <span class="nf">SetValue</span><span class="p">(</span><span class="n">FrameworkElement</span><span class="p">.</span><span class="n">HeightProperty</span><span class="p">,</span> <span class="n">ptLogicalUnits</span><span class="p">.</span><span class="n">Y</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">finally</span>
+            <span class="p">{</span>
+                <span class="n">_updateHwndSize</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 忽略代码</span>
+
+            <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>因此 WPF 的依赖属性是根据 Windows 消息，更新依赖属性的，而在 Left 和 Top 属性的更新里面，会先判断 <code class="language-plaintext highlighter-rouge">_actualLeft</code> 和 <code class="language-plaintext highlighter-rouge">_actualTop</code> 是否和 Win32 的相同，如果相同就不更新，因此行为上和宽度和高度的属性有点差别。另外最大化也会影响 Left 和 Top 属性，因为在更新这两个属性之前会先判断窗口，如果是最大化的，将不会更新这两个依赖属性。但是宽度和高度属性就没有这个判断</p>
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

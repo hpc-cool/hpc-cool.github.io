@@ -1,0 +1,38 @@
+I"�<p>本文告诉大家如何通过 WMI 获取用户已经安装的驱动程序</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/30 8:58:39 -->
+
+<!-- 标签：PowerShell,WMI -->
+
+<p>通过下面代码可以获取用户已经安装的驱动程序</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="n">Win32_SystemDriver</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">Caption</span><span class="p">,</span><span class="n">Name</span><span class="p">,</span><span class="n">State</span>
+</code></pre></div></div>
+
+<p>运行代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Caption</span> <span class="p">:</span> <span class="n">Windows</span> <span class="n">Driver</span> <span class="n">Foundation</span> <span class="p">-</span> <span class="n">User</span><span class="p">-</span><span class="n">mode</span> <span class="n">Driver</span> <span class="n">Framework</span> <span class="n">Reflector</span>
+<span class="n">Name</span>    <span class="p">:</span> <span class="n">WUDFRd</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Running</span>
+
+<span class="n">Caption</span> <span class="p">:</span> <span class="n">WPD</span> <span class="err">文件系统驱动程序</span>
+<span class="n">Name</span>    <span class="p">:</span> <span class="n">WUDFWpdFs</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Running</span>
+
+<span class="n">Caption</span> <span class="p">:</span> <span class="n">XINPUT</span> <span class="n">HID</span> <span class="err">筛选器驱动程序</span>
+<span class="n">Name</span>    <span class="p">:</span> <span class="n">xinputhid</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Stopped</span>
+</code></pre></div></div>
+
+<p>驱动的内容很多，我就不全部放在代码</p>
+
+<p>如果需要通过 PowerShell 获取系统安装的驱动的日期和安装的路径，请加上 InstallDate 驱动日期 PathName 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="n">Win32_SystemDriver</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">Caption</span><span class="p">,</span><span class="n">Name</span><span class="p">,</span><span class="n">State</span><span class="p">,</span><span class="n">InstallDate</span><span class="p">,</span><span class="n">PathName</span>
+</code></pre></div></div>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/win32-systemdriver">Win32_SystemDriver class - Windows applications</a></p>
+
+:ET

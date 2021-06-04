@@ -1,0 +1,85 @@
+I"�<p>如果对一个值可以包含多个，那么可以使用枚举，加上Flags
+本文告诉大家如何写一个 Flags。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/2 12:57:37 -->
+
+<div id="toc"></div>
+
+<p>在写前，需要知道一些基础知识，取反、或、与，如果不知道的话，请去看看基础。</p>
+
+<p>当然，这些太复杂了，我也不会在这里解释。</p>
+
+<p>假如有类型 Show 的定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">Flags</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">enum</span> <span class="n">Show</span>
+    <span class="p">{</span>
+        <span class="n">A</span> <span class="p">=</span> <span class="m">0x00000001</span><span class="p">,</span>
+        <span class="n">B</span> <span class="p">=</span> <span class="m">0x00000010</span><span class="p">,</span>
+        <span class="n">C</span> <span class="p">=</span> <span class="m">0x00000100</span><span class="p">,</span>
+        <span class="n">D</span> <span class="p">=</span> <span class="m">0x00001000</span><span class="p">,</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="合并多个值">合并多个值</h2>
+
+<p>合并多个，使用 <code class="language-plaintext highlighter-rouge">|</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">Show</span> <span class="n">show</span><span class="p">=</span><span class="n">Show</span><span class="p">.</span><span class="n">A</span> <span class="p">|</span> <span class="n">Show</span><span class="p">.</span><span class="n">B</span>
+</code></pre></div></div>
+
+<p>枚举通过这个方法可以在一个变量包含多个值</p>
+
+<h2 id="判断是否存在某个值">判断是否存在某个值</h2>
+
+<p>一个简单方法是用 HasFlag，但是一个方法是用 <code class="language-plaintext highlighter-rouge">&amp;</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">Show</span> <span class="n">show</span> <span class="p">=</span> <span class="n">Show</span><span class="p">.</span><span class="n">A</span> <span class="p">|</span> <span class="n">Show</span><span class="p">.</span><span class="n">B</span><span class="p">;</span>
+  <span class="n">show</span><span class="p">.</span><span class="nf">HasFlag</span><span class="p">(</span><span class="n">Show</span><span class="p">.</span><span class="n">A</span><span class="p">);</span>
+  <span class="c1">//其他</span>
+  <span class="kt">bool</span> <span class="err">包含</span> <span class="p">=</span> <span class="p">(</span><span class="n">show</span> <span class="p">&amp;</span> <span class="n">Show</span><span class="p">.</span><span class="n">A</span><span class="p">)</span> <span class="p">!=</span><span class="m">0</span> <span class="p">;</span>
+</code></pre></div></div>
+
+<p>从性能上看通过 <code class="language-plaintext highlighter-rouge">&amp;</code> 的性能会比 HasFlag 高，但是从可读性上 HasFlag 更友好，如果你的代码没有性能问题推荐使用 HasFlag 方法</p>
+
+<p>只要一个 enum 使用了 Flags 标记就可以使用 HasFlag 方法</p>
+
+<h2 id="去掉一个值">去掉一个值</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">Show</span> <span class="n">show</span><span class="p">=</span><span class="n">Show</span><span class="p">.</span><span class="n">A</span> <span class="p">|</span> <span class="n">Show</span><span class="p">.</span><span class="n">B</span><span class="p">;</span>
+  <span class="n">show</span><span class="p">=</span><span class="n">show</span> <span class="p">&amp;</span> <span class="p">(~</span><span class="n">Show</span><span class="p">.</span><span class="n">A</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="取反一个值">取反一个值</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">Show</span> <span class="n">show</span><span class="p">=</span><span class="n">Show</span><span class="p">.</span><span class="n">A</span> <span class="p">|</span> <span class="n">Show</span><span class="p">.</span><span class="n">B</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="err">包含</span><span class="p">=(</span><span class="n">show</span> <span class="p">&amp;</span> <span class="n">Show</span><span class="p">.</span><span class="n">A</span><span class="p">)!=</span><span class="m">0</span><span class="p">;</span>
+  <span class="k">if</span><span class="p">(</span><span class="err">包含</span><span class="p">)</span>
+  <span class="p">{</span>
+     <span class="n">show</span><span class="p">=</span><span class="n">show</span> <span class="p">&amp;</span> <span class="p">(~</span><span class="n">Show</span><span class="p">.</span><span class="n">A</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+     <span class="n">show</span><span class="p">=</span><span class="n">show</span> <span class="p">|</span> <span class="n">Show</span><span class="p">.</span><span class="n">A</span><span class="p">;</span>
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要知道在以前，写枚举的值，不是二进制，现在C#7可使用二进制</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">Flags</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">enum</span> <span class="n">Show</span>
+    <span class="p">{</span>
+        <span class="n">A</span> <span class="p">=</span> <span class="m">0</span><span class="n">b00000001</span><span class="p">,</span>
+        <span class="n">B</span> <span class="p">=</span> <span class="m">0</span><span class="n">b00000010</span><span class="p">,</span>
+        <span class="n">C</span> <span class="p">=</span> <span class="m">0</span><span class="n">b00000100</span><span class="p">,</span>
+        <span class="n">D</span> <span class="p">=</span> <span class="m">0</span><span class="n">b00001000</span><span class="p">,</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>于是这样就可以合并多个值，用一个 byte 表示一个值</p>
+
+<p>参见：http://www.cnblogs.com/jhxk/articles/1738831.html</p>
+
+:ET

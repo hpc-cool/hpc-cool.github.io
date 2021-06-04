@@ -1,0 +1,144 @@
+I"�U<p>我有一个控件，这个控件放在滚动条里面，如果在滚动条滚动到这个控件可以被用户看见的时候，我能知道这个事件，或从什么时机可以拿到用户可以看见的范围修改？</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/4/29 9:42:02 -->
+
+<!-- csdn -->
+
+<p>昨天<a href="https://www.cnblogs.com/hupo376787">星期八再娶你</a> 大佬问我如何判断在滚动条内可以看到某个元素，他需要在滚动条里面放一个视频播放器，在用户看不到这个播放器的时候自动停下这个播放器</p>
+
+<p>在 WPF 可以通过 ScrollChanged 拿到当前的滚动到哪同时拿到滚动条可见的宽度和高度</p>
+
+<p>在 ScrollChangedEventArgs 提供了多个属性用于拿到当前的滚动条的可见的宽度和高度，滚动条的水平移动和垂直的移动，具体请看下图</p>
+
+<!-- ![](image/WPF 如何判断一个控件在滚动条的里面是用户可见/WPF 如何判断一个控件在滚动条的里面是用户可见0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201942992659886" alt="" /></p>
+
+<p>在用户修改外层控件的宽度或高度让滚动条的高度或宽度进行修改的时候，可以从 ViewportWidthChange 和 ViewportHeightChange 属性知道滚动条的可视宽度和高度修改了多少</p>
+
+<p>在用户修改滚动条里面的控件的宽度或高度的时候，可以从 ExtentWidthChange 等属性知道用户修改了多少</p>
+
+<p>那么如果判断某个控件在滚动条可见内就可以拿到某个控件的外接矩形和滚动条可见大小进行矩形判断，请看下图</p>
+
+<!-- ![](image/WPF 如何判断一个控件在滚动条的里面是用户可见/WPF 如何判断一个控件在滚动条的里面是用户可见1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201942993112871" alt="" /></p>
+
+<p>那么如何拿到一个控件的外接矩形？首先需要知道这个控件在外层的垂直或水平偏移，也就是这个控件在外层控件的左上角坐标是多少，然后还需要知道这个控件的宽度和高度，这样就可以知道这个控件的外接矩形，拿到一个元素在外层控件的左上角坐标可以通过拿到这个控件的<code class="language-plaintext highlighter-rouge">(0,0)</code> 坐标转换到外层控件，计算出这个坐标是相对外层控件的大小</p>
+
+<p>例如我有一个控件是 control 他的外层控件是 StackPanel 通过下面代码就可以看到控件的左上角的大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">top</span> <span class="p">=</span> <span class="n">control</span><span class="p">.</span><span class="nf">TranslatePoint</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(),</span> <span class="n">StackPanel</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>我拿到了左上角还需要拿到控件的宽度和高度才能计算出矩形，可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">// 控件的宽度和高度</span>
+            <span class="kt">var</span> <span class="n">controlBounds</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">control</span><span class="p">.</span><span class="n">DesiredSize</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>此时计算滚动条的用户可见的大小，通过滚动条的水平和垂直移动加上宽度和高度，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">viewBounds</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">HorizontalOffset</span><span class="p">,</span> <span class="n">e</span><span class="p">.</span><span class="n">VerticalOffset</span><span class="p">),</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">ViewportWidth</span><span class="p">,</span> <span class="n">e</span><span class="p">.</span><span class="n">ViewportHeight</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>判断 controlBounds 和 viewBounds 是否相交就可以知道用户是否可以看到这个控件，当然如果是想要判断用户可以完全看到这个控件，就是判断滚动条是否完全显示里面的控件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">if</span> <span class="p">(</span><span class="n">viewBounds</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="n">controlBounds</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"控件完全显示"</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">viewBounds</span><span class="p">.</span><span class="nf">IntersectsWith</span><span class="p">(</span><span class="n">controlBounds</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"用户可以看到控件"</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>下面是我实际写的代码</p>
+
+<p>我在滚动添加了一个控件，在里面添加了很多文本，其中有一个是歪楼的文本</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">ScrollViewer</span> <span class="n">ScrollChanged</span><span class="p">=</span><span class="s">"ScrollViewer_OnScrollChanged"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"StackPanel"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"TextBlock"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"歪楼"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"123"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ScrollViewer</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>我需要在歪楼的文本被用户看到的时候输出，于是我就在后台代码通过本文上面提供的方法拿到这个元素的矩形判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">ScrollViewer_OnScrollChanged</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ScrollChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">UIElement</span> <span class="n">control</span> <span class="p">=</span> <span class="n">TextBlock</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">top</span> <span class="p">=</span> <span class="n">control</span><span class="p">.</span><span class="nf">TranslatePoint</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(),</span> <span class="n">StackPanel</span><span class="p">);</span>
+            <span class="c1">// 控件的宽度和高度</span>
+            <span class="kt">var</span> <span class="n">controlBounds</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="n">top</span><span class="p">,</span> <span class="n">control</span><span class="p">.</span><span class="n">DesiredSize</span><span class="p">);</span>
+
+            <span class="c1">// 用户可以看到的大小</span>
+            <span class="kt">var</span> <span class="n">viewBounds</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">HorizontalOffset</span><span class="p">,</span> <span class="n">e</span><span class="p">.</span><span class="n">VerticalOffset</span><span class="p">),</span>
+                <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">ViewportWidth</span><span class="p">,</span> <span class="n">e</span><span class="p">.</span><span class="n">ViewportHeight</span><span class="p">));</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">viewBounds</span><span class="p">.</span><span class="nf">IntersectsWith</span><span class="p">(</span><span class="n">controlBounds</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"歪楼"</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"不歪楼"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/d7dcb508e81184a76441834113159761646de5d9/BallkowhejallColalljaygairwair">github</a></p>
+
+:ET

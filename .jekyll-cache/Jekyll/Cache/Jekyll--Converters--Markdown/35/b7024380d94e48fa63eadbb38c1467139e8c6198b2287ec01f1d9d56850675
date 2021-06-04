@@ -1,0 +1,236 @@
+I"�V<p>很多时候一些简单的使用绑定需要对绑定的源做处理就需要通过转换器，这样的代码写起来不好看
+本文告诉大家通过一个简单的库可以实现在界面绑定的时候通过表达式不需要转换</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/12/22 16:12:56 -->
+
+<!-- csdn -->
+
+<p>首先通过 Nuget 安装 CalcBinding 库，注意 Nuget 的地址是 <a href="https://api.nuget.org/v3/index.json">https://api.nuget.org/v3/index.json</a> 如果没有找到这个库就请复制链接点击更新，再输入 <code class="language-plaintext highlighter-rouge">CalcBinding</code> 寻找</p>
+
+<!-- ![](image/WPF 在绑定表达式添加计算/WPF 在绑定表达式添加计算0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201812221544983" alt="" /></p>
+
+<p>在使用这个库之前需要引用命名空间，打开 MainWindow.xaml 文件，添加命名空间</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xmlns</span><span class="p">:</span><span class="n">c</span><span class="p">=</span><span class="s">"clr-namespace:CalcBinding;assembly=CalcBinding"</span>
+</code></pre></div></div>
+
+<p>然后创建一个数据用来绑定</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">ViewModel</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">A</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">=&gt;</span> <span class="n">_a</span><span class="p">;</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">_a</span><span class="p">))</span> <span class="k">return</span><span class="p">;</span>
+                <span class="n">_a</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="nf">OnPropertyChanged</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">B</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">=&gt;</span> <span class="n">_b</span><span class="p">;</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">_b</span><span class="p">))</span> <span class="k">return</span><span class="p">;</span>
+                <span class="n">_b</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="nf">OnPropertyChanged</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">C</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">=&gt;</span> <span class="n">_c</span><span class="p">;</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">_c</span><span class="p">))</span> <span class="k">return</span><span class="p">;</span>
+                <span class="n">_c</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="nf">OnPropertyChanged</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">double</span> <span class="n">_a</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">double</span> <span class="n">_b</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">double</span> <span class="n">_c</span><span class="p">;</span>
+
+        <span class="p">[</span><span class="n">NotifyPropertyChangedInvocator</span><span class="p">]</span>
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnPropertyChanged</span><span class="p">([</span><span class="n">CallerMemberName</span><span class="p">]</span> <span class="kt">string</span> <span class="n">propertyName</span> <span class="p">=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">PropertyChanged</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PropertyChangedEventArgs</span><span class="p">(</span><span class="n">propertyName</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>这时在界面如果需要创建一个 TextBlock 绑定三个值 A + B + C 就可以通过下面的方法</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{c:Binding A+B+C}"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="na">VerticalAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+
+</code></pre></div></div>
+
+<p>通过直接写表达式的方式就可以，十分简单</p>
+
+<p>那如果需要加上一些常量怎么做，如计算 <code class="language-plaintext highlighter-rouge">0.5*A+B</code> 可以怎么写？</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{c:Binding 0.5*A+B}"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>修改一下界面然后运行</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;StackPanel&gt;</span>
+                <span class="nt">&lt;TextBlock&gt;</span>
+                    <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"A="</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"{Binding A}"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;TextBlock&gt;</span>
+                    <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"B="</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"{Binding B}"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;TextBlock&gt;</span>
+                    <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"C="</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"{Binding C}"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"0.5*A+B"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{c:Binding 0.5*A+B}"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;/StackPanel&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 在绑定表达式添加计算/WPF 在绑定表达式添加计算1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20181222155732456" alt="" /></p>
+
+<p>如果此时的还有一些布尔量怎么办？打开 ViewModel 类添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="kt">bool</span> <span class="n">BoolA</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">=&gt;</span> <span class="n">_boolA</span><span class="p">;</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">==</span> <span class="n">_boolA</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+                <span class="n">_boolA</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="nf">OnPropertyChanged</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">bool</span> <span class="n">BoolB</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">=&gt;</span> <span class="n">_boolB</span><span class="p">;</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">==</span> <span class="n">_boolB</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+                <span class="n">_boolB</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="nf">OnPropertyChanged</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">_boolB</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">_boolA</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>如果需要绑定 A 和 B 可以这样写</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;TextBlock Text="{c:Binding BoolA and BoolB}" /&gt;
+&lt;TextBlock Text="{c:Binding BoolA or BoolB}" /&gt;
+&lt;TextBlock Text="{c:Binding BoolA and BoolB or BoolB}" /&gt;
+</code></pre></div></div>
+
+<p>修改一下界面</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            &lt;StackPanel&gt;
+                &lt;TextBlock&gt;
+                    &lt;Run Text="A=" /&gt;
+                    &lt;Run Text="{Binding BoolA}" /&gt;
+                &lt;/TextBlock&gt;
+                &lt;TextBlock&gt;
+                    &lt;Run Text="B=" /&gt;
+                    &lt;Run Text="{Binding BoolB}" /&gt;
+                &lt;/TextBlock&gt;
+                &lt;TextBlock Text="A and B" /&gt;
+                &lt;TextBlock Text="{c:Binding BoolA and BoolB}" /&gt;
+                &lt;TextBlock Text="A or B" /&gt;
+                &lt;TextBlock Text="{c:Binding BoolA or BoolB}" /&gt;
+            &lt;/StackPanel&gt;
+
+</code></pre></div></div>
+
+<!-- ![](image/WPF 在绑定表达式添加计算/WPF 在绑定表达式添加计算2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018122216214143" alt="" /></p>
+
+<p>其他可以写的是表达式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding A+B+C}"</span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding A-B-C}"</span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding A*(B+C)}"</span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding 2*A-B*0.5}"</span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding A/B, StringFormat={}{0:n2} --StringFormat is used}"</span><span class="p">/&gt;</span> <span class="p">{</span><span class="n">with</span> <span class="kt">string</span> <span class="n">format</span><span class="p">}</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding A%B}"</span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding '(A == 1) ? 10 : 20'}"</span><span class="p">/&gt;</span> <span class="p">{</span><span class="n">ternary</span> <span class="k">operator</span><span class="p">}</span>
+</code></pre></div></div>
+
+<p>判断布尔</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">CheckBox</span> <span class="n">Content</span><span class="p">=</span><span class="s">"!IsChecked"</span> <span class="n">IsChecked</span><span class="p">=</span><span class="s">"{c:Binding !IsChecked}"</span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding 'IsChecked and IsFull'}"</span><span class="p">/&gt;</span> <span class="p">{</span><span class="err">'</span><span class="n">and</span><span class="err">'</span> <span class="k">is</span> <span class="n">equvalent</span> <span class="n">of</span> <span class="err">'</span><span class="p">&amp;&amp;</span><span class="err">'</span><span class="p">}</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding '!IsChecked or (A &gt; B)'}"</span><span class="p">/&gt;</span> <span class="p">{</span><span class="err">'</span><span class="n">or</span><span class="err">'</span> <span class="k">is</span> <span class="n">equvalent</span> <span class="n">of</span> <span class="err">'</span><span class="p">||</span><span class="err">'</span><span class="p">,</span> <span class="n">but</span> <span class="n">you</span> <span class="n">can</span> <span class="n">leave</span> <span class="err">'</span><span class="p">||</span><span class="err">'</span><span class="p">}</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding '(A == 1) and (B less= 5)'}"</span><span class="p">/&gt;</span> <span class="p">{</span><span class="err">'</span><span class="n">less</span><span class="p">=</span><span class="err">'</span> <span class="k">is</span> <span class="n">equvalent</span> <span class="n">of</span> <span class="err">'</span><span class="p">&lt;=</span><span class="err">'</span><span class="p">}</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding (IsChecked || !IsFull)}"</span><span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>因为在 xaml 不能使用 <code class="language-plaintext highlighter-rouge">&amp;&amp;</code> <code class="language-plaintext highlighter-rouge">||</code> <code class="language-plaintext highlighter-rouge">&lt;=</code> 所以需要使用 and or ‘less=’ 替换</p>
+
+<p>另外对于 <code class="language-plaintext highlighter-rouge">:</code> 之前需要添加空格，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding '(A == 2)?IsChecked : IsFull}"</span><span class="p">/&gt;</span> <span class="p">&lt;!--</span> <span class="n">right</span> <span class="p">--&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding '(A == 2)?IsChecked :!IsFull}"</span><span class="p">/&gt;</span> <span class="p">&lt;!--</span> <span class="n">right</span> <span class="p">--&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding '(A == 2) ? IsChecked :4 + IsFull}"</span><span class="p">/&gt;</span> <span class="p">&lt;!--</span> <span class="n">right</span> <span class="p">--&gt;</span>
+</code></pre></div></div>
+
+<p>这些都是对的，但是下面的代码是无法运行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding '(A == 2)?IsChecked:IsFull}"</span><span class="p">/&gt;</span> <span class="p">&lt;!--</span> <span class="n">wrong</span> <span class="p">--&gt;</span>
+</code></pre></div></div>
+
+<p>可以绑定静态的值，静态的值的写法 <code class="language-plaintext highlighter-rouge">xmlNamespace:Class.StaticProperty.NestedProperty</code> 命名空间下的类的静态属性的属性</p>
+
+<p>对于经常计算值这里也可以简单使用，如 Math 里面的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding Math.Sin(A*Math.PI/180), StringFormat={}{0:n5} }"</span><span class="p">/&gt;</span>
+<span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{c:Binding A*Math.PI}"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>枚举值也可以点命名空间的枚举的值，可以用来判断 <code class="language-plaintext highlighter-rouge">xmlNamespace:EnumClass.Value</code> 如在 Foo 枚举里面有 A 这个值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">CheckBox</span> <span class="n">IsChecked</span><span class="p">=</span><span class="s">"{c:Binding 'Foo==local:Foo.A'}"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>经常会将 bool 转换为 Visibility 这个库也有简单的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"TargetButton"</span> <span class="n">Visibility</span><span class="p">=</span><span class="s">"{c:Binding HasPrivileges, FalseToVisibility=Collapsed}"</span><span class="p">/&gt;</span>
+<span class="n">or</span> <span class="n">just</span>
+<span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"TargetButton"</span> <span class="n">Visibility</span><span class="p">=</span><span class="s">"{c:Binding !HasPrivileges}"</span><span class="p">/&gt;</span>
+
+<span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"TargetButton"</span> <span class="n">Visibility</span><span class="p">=</span><span class="s">"{c:Binding !HasPrivileges, FalseToVisibility=Hidden}"</span><span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>如果需要在样式使用，需要通过 RelativeSource 找到方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"Button"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Button</span><span class="p">.</span><span class="n">Template</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ControlTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">Width</span><span class="p">=</span><span class="s">"{c:Binding Width+10, RelativeSource={RelativeSource TemplatedParent} }"</span><span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ControlTemplate</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Button</span><span class="p">.</span><span class="n">Template</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Button</span><span class="p">&gt;</span> 
+</code></pre></div></div>
+
+<p><a href="https://github.com/Alex141/CalcBinding">Alex141/CalcBinding: Advanced WPF Binding which supports expressions in Path property and other features</a></p>
+
+:ET

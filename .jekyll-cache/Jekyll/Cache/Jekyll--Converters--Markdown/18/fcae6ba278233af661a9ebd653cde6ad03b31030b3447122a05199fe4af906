@@ -1,0 +1,115 @@
+I"V,<p>本文介绍 Magick.NET ，这是 ImageMagick 的 .Net 封装，他支持 100 多种格式的图片，而 gif 也是他支持的。本文告诉大家如何使用这个库播放 gif 。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/30 8:59:45 -->
+
+<!-- 标签：WPF，gif -->
+<div id="toc"></div>
+
+<p>先给大家看一下播放下面这个图片需要的内存。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017%25E5%25B9%25B49%25E6%259C%25881%25E6%2597%25A5%252016.gif" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017102319153.jpg" alt="" /></p>
+
+<p>这个库的好处是可以在解析的时候使用比较多的内存，解析完成就不需要那么多的内存。而其他的库解析或播放都需要很多内存。从上面的图看到，解析图片需要使用800M内存，解析完成需要200M内存，有很多资源都被释放。</p>
+
+<p>下面告诉大家如何使用这个库。</p>
+
+<p>使用 Nuget 搜索 Magick.NET 就可以找到。如果看到了很多版本，不要害怕。这个库需要说明是哪个版本，其中Qn就是表示质量，推荐使用Q8，而这个库需要指定cpu，于是就可以找到需要的库。</p>
+
+<p>使用Nuget安装之后就可以使用，例如需要播放 <code class="language-plaintext highlighter-rouge">E:\temp\2017年9月1日 16.gif </code> 那么需要写一个Image控件和在后台写很少代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Image</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"G"</span><span class="p">&gt;&lt;/</span><span class="n">Image</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>后台需要使用<code class="language-plaintext highlighter-rouge">collection = new MagickImageCollection(str)</code>获得文件，然后使用<code class="language-plaintext highlighter-rouge">ToBitmapSource</code>获得图片。使用之前需要给缓存文件夹<code class="language-plaintext highlighter-rouge">MagickAnyCPU.CacheDirectory = "E:\\temp";</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">"E:\\temp\\2017年9月1日 16.gif"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">image</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">BitmapSource</span><span class="p">&gt;();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="n">collection</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MagickImageCollection</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">collection</span><span class="p">.</span><span class="nf">Coalesce</span><span class="p">();</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">magickImage</span> <span class="k">in</span> <span class="n">collection</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">image</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">magickImage</span><span class="p">.</span><span class="nf">ToBitmapSource</span><span class="p">());</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接下来就是播放图片，使用一个循环播放</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">InvokeAsync</span><span class="p">(()</span> <span class="p">=&gt;</span>
+                    <span class="p">{</span>
+                        <span class="n">G</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">image</span><span class="p">[</span><span class="n">n</span><span class="p">];</span>
+                    <span class="p">});</span>
+                    <span class="n">n</span><span class="p">++;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="p">==</span> <span class="n">image</span><span class="p">.</span><span class="n">Count</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">n</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">});</span>
+</code></pre></div></div>
+
+<p>运行就可以看到，播放图片。就是上面的截图。但是程序有小问题，就是没有拿到图片播放间隔，这个可以通过 <code class="language-plaintext highlighter-rouge">magickImage.AnimationDelay</code>拿到，这个数是 1/100 秒，所以一般使用 <code class="language-plaintext highlighter-rouge">*10</code> 结果是毫秒 。</p>
+
+<p>一般在使用<code class="language-plaintext highlighter-rouge">ToBitmapSource</code>需要使用<code class="language-plaintext highlighter-rouge">AdaptiveResize</code>这个方法可以让gif显示播放的图片大小，使用这个函数可以获得比较少的内存。</p>
+
+<p>于是播放 gif 的代码很简单，打开 gif ，解析，播放。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">"E:\\temp\\2017年9月1日 16.gif"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">image</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;(</span><span class="n">BitmapSource</span> <span class="n">image</span><span class="p">,</span><span class="kt">int</span> <span class="n">delay</span><span class="p">)&gt;();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="n">collection</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MagickImageCollection</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">collection</span><span class="p">.</span><span class="nf">Coalesce</span><span class="p">();</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">magickImage</span> <span class="k">in</span> <span class="n">collection</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">magickImage</span><span class="p">.</span><span class="nf">AdaptiveResize</span><span class="p">(</span><span class="m">100</span><span class="p">,</span><span class="m">100</span><span class="p">);</span>
+                    <span class="n">image</span><span class="p">.</span><span class="nf">Add</span><span class="p">((</span><span class="n">magickImage</span><span class="p">.</span><span class="nf">ToBitmapSource</span><span class="p">(),</span> <span class="n">magickImage</span><span class="p">.</span><span class="n">AnimationDelay</span> <span class="p">*</span> <span class="m">10</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">InvokeAsync</span><span class="p">(()</span> <span class="p">=&gt;</span>
+                    <span class="p">{</span>
+                        <span class="n">G</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">image</span><span class="p">[</span><span class="n">n</span><span class="p">].</span><span class="n">image</span><span class="p">;</span>
+                    <span class="p">});</span>
+                    <span class="n">n</span><span class="p">++;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="p">==</span> <span class="n">image</span><span class="p">.</span><span class="n">Count</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">n</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="n">n</span><span class="p">].</span><span class="n">delay</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">});</span>
+</code></pre></div></div>
+
+<p>我把最近写的 gif 使用方法写到一个博客，欢迎大家来看这个博客 <a href="https://lindexi.github.io/lindexi/post/WPF-%E6%92%AD%E6%94%BE-gif.html">WPF 播放 gif</a></p>
+
+<p>参见：<a href="http://www.cnblogs.com/dunitian/p/5895133.html#undefined">水印第三版 ~ 变态水印（这次用Magick.NET来实现，附需求分析和源码） - 毒逆天 - 博客园</a></p>
+
+<p>https://github.com/dlemstra/Magick.NET</p>
+
+<p>其他解析gif 的方法：<a href="http://blog.csdn.net/gqqnb/article/details/7215408">【续】WPF支持GIF的各种方法 - CSDN博客</a></p>
+
+<p><a href="http://blog.csdn.net/wcc27857285/article/details/52993099">WPF 如何显示gif - CSDN博客</a></p>
+
+<p><a href="http://blog.csdn.net/libby1984/article/details/52535085">WPF播放GIF控件完整代码 - CSDN博客</a></p>
+
+<p><a href="http://blog.csdn.net/qq_31971935/article/details/49402129">WPF中显示GIF图片 - CSDN博客</a></p>
+
+:ET

@@ -1,0 +1,61 @@
+I"I<p>在阅读本文之前，我期望你能了解基础的 PPT 解析内容，或看我的入门级博客。本文将告诉大家如何从 PPT 里面解析出通用元素的 x 和 y 的值，以及元素的宽度和高度的值</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/16 16:35:42 -->
+
+<p>在开始之前请看 <a href="https://blog.lindexi.com/post/C-dotnet-%E4%BD%BF%E7%94%A8-OpenXml-%E8%A7%A3%E6%9E%90-PPT-%E6%96%87%E4%BB%B6.html">C# dotnet 使用 OpenXml 解析 PPT 文件</a> 在拿到 slidePart.Slide.CommonSlideData.ShapeTree 里面的元素，几乎所有元素都存在坐标和宽度高度，这里的元素我称为通用元素，也就是不是特定的如形状、图片元素</p>
+
+<p>此时的元素应该是继承 OpenXmlElement 类，在这个类里面可以通过 GetFirstChild 找到 ShapeProperties 的值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">shapeProperties</span> <span class="p">=</span> <span class="n">element</span><span class="p">.</span><span class="n">GetFirstChild</span><span class="p">&lt;</span><span class="n">ShapeProperties</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>上面代码的 element 是 OpenXmlElement 类</p>
+
+<p>拿到了 ShapeProperties 实际上就是 PPT 文件的 p:sppr 内容，在 PPT 里面将会用如下格式设置元素里面的值中 a:xfrm 就是 Transform2D 请看下面</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p:sppr&gt;</span>
+    <span class="nt">&lt;a:xfrm&gt;</span>
+        <span class="nt">&lt;a:off</span> <span class="na">x=</span><span class="s">"3292475"</span> <span class="na">y=</span><span class="s">"1300390"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/a:off&gt;</span>
+        <span class="nt">&lt;a:ext</span> <span class="na">cx=</span><span class="s">"6096000"</span> <span class="na">cy=</span><span class="s">"3429000"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/a:ext&gt;</span>
+    <span class="nt">&lt;/a:xfrm&gt;</span>
+    <span class="nt">&lt;a:prstgeom</span> <span class="na">prst=</span><span class="s">"rect"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;a:avlst&gt;</span>
+        <span class="nt">&lt;/a:avlst&gt;</span>
+    <span class="nt">&lt;/a:prstgeom&gt;</span>
+<span class="nt">&lt;/p:sppr&gt;</span>
+</code></pre></div></div>
+
+<p>此时通过 <code class="language-plaintext highlighter-rouge">var transform2D = shapeProperties.GetFirstChild&lt;Drawing.Transform2D&gt;();</code> 就能拿到 <code class="language-plaintext highlighter-rouge">a:xfrm</code> 的值</p>
+
+<p>等等，这里的 Drawing.Transform2D 是什么意思，我在命名空间里面添加这个代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">Presentation</span> <span class="p">=</span> <span class="n">DocumentFormat</span><span class="p">.</span><span class="n">OpenXml</span><span class="p">.</span><span class="n">Presentation</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Drawing</span> <span class="p">=</span> <span class="n">DocumentFormat</span><span class="p">.</span><span class="n">OpenXml</span><span class="p">.</span><span class="n">Drawing</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">ShapeProperties</span> <span class="p">=</span> <span class="n">DocumentFormat</span><span class="p">.</span><span class="n">OpenXml</span><span class="p">.</span><span class="n">Presentation</span><span class="p">.</span><span class="n">ShapeProperties</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>拿到 Transform2D 可以再获取 Offset 也就是 <code class="language-plaintext highlighter-rouge">a:off</code> 拿到 x 和 y 的大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">offset</span> <span class="p">=</span> <span class="n">transform2D</span><span class="p">.</span><span class="n">GetFirstChild</span><span class="p">&lt;</span><span class="n">Drawing</span><span class="p">.</span><span class="n">Offset</span><span class="p">&gt;();</span>
+            <span class="kt">var</span> <span class="n">offsetX</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Emu</span><span class="p">(</span><span class="n">offset</span><span class="p">.</span><span class="n">X</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">offsetY</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Emu</span><span class="p">(</span><span class="n">offset</span><span class="p">.</span><span class="n">Y</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在 PPT 里面，通用元素的 x 和 y 值单位是 Emu 上面的类是我自己定义的，有可以抄的代码，请看 <a href="https://blog.lindexi.com/post/C-dontet-Office-Open-XML-Unit-Converter.html">C# dontet Office Open XML Unit Converter</a> 我定义了和像素转换的代码</p>
+
+<p>可以通过 Extents 也就是 <code class="language-plaintext highlighter-rouge">a:ext</code> 获取元素的宽度和高度，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">extents</span> <span class="p">=</span> <span class="n">transform2D</span><span class="p">.</span><span class="n">GetFirstChild</span><span class="p">&lt;</span><span class="n">Drawing</span><span class="p">.</span><span class="n">Extents</span><span class="p">&gt;();</span>
+            <span class="kt">var</span> <span class="n">extentWidth</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Emu</span><span class="p">(</span><span class="n">extents</span><span class="p">.</span><span class="n">Cx</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">extentHeight</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Emu</span><span class="p">(</span><span class="n">extents</span><span class="p">.</span><span class="n">Cy</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/documentformat.openxml.drawing.pictures.shapeproperties?view=openxml-2.8.1">ShapeProperties Class (DocumentFormat.OpenXml.Drawing.Pictures)</a></p>
+
+<p>知道了元素的坐标如何在 UWP 中设置元素的坐标请看 <a href="https://blog.lindexi.com/post/win10-uwp-%E6%8B%96%E5%8A%A8%E6%8E%A7%E4%BB%B6.html">win10 uwp 拖动控件</a></p>
+
+:ET

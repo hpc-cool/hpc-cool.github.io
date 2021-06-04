@@ -1,0 +1,36 @@
+I"�<p>本文告诉大家在 WPF 内部的5个窗口的 MediaContextNotificationWindow 是做什么的</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/3 11:16:19 -->
+
+<!-- csdn -->
+<!-- 标签：WPF，渲染 -->
+
+<p>在本文开始之前，希望大家先看下面的博客</p>
+
+<p><a href="http://www.cnblogs.com/powertoolsteam/archive/2010/12/30/1921426.html">WPF的消息机制（一）- 让应用程序动起来</a></p>
+
+<p><a href="https://www.cnblogs.com/powertoolsteam/archive/2010/12/31/1922794.html">WPF的消息机制（二）- WPF内部的5个窗口之隐藏消息窗口</a></p>
+
+<p><a href="https://www.cnblogs.com/powertoolsteam/archive/2011/01/12/1933896.html">WPF的消息机制（三）- WPF内部的5个窗口之处理激活和关闭的消息窗口以及系统资源通知窗口</a></p>
+
+<p>而 MediaContextNotificationWindow 是在 MediaContext 的构造函数创建的，用来提供给创建他的 MediaContext 可以有接收和转发向顶级窗口广播的窗口消息的能力</p>
+
+<p>在 MediaContextNotificationWindow 的代码核心是</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">HwndWrapper</span> <span class="n">hwndNotification</span><span class="p">;</span>
+            <span class="n">hwndNotification</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HwndWrapper</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_POPUP</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="s">"MediaContextNotificationWindow"</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+ 
+            <span class="n">_hwndNotificationHook</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HwndWrapperHook</span><span class="p">(</span><span class="n">MessageFilter</span><span class="p">);</span>
+ 
+            <span class="n">hwndNotification</span><span class="p">.</span><span class="nf">AddHook</span><span class="p">(</span><span class="n">_hwndNotificationHook</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这里代码是创建在最顶层的窗口，这个窗口是不可见的，这样就可以接受到 <code class="language-plaintext highlighter-rouge">WM_DWMCOMPOSITIONCHANGED</code> 和其他的 DWM 通知。因为 DWM 通知只是广播给最顶层的窗口。</p>
+
+<p>通过这个方式就可以让 WPF 的 MediaContext 接收到最顶层窗口的消息</p>
+
+<p>代码请看 https://referencesource.microsoft.com/#PresentationCore/Core/CSharp/System/Windows/Media/MediaContextNotificationWindow.cs,969a2072bf29a084</p>
+
+:ET

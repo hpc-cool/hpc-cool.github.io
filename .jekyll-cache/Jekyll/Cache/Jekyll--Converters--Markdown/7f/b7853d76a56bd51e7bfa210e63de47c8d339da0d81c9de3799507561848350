@@ -1,0 +1,328 @@
+I"΅<p>在 WPF 中，常用的画刷里面有纯色画刷 SolidColorBrush 类。因为画刷会对应到 DirectX 的资源，因此之前我以为纯色画刷其实会比 Color 会占用更多的资源。在 WPF 中 Color 其实是结构体，创建速度快。而 SolidColorBrush 是画刷，会对应 DirectX 资源，相对来说性能会比较差。但在通过阅读 WPF 的源代码，发现其实 SolidColorBrush 的创建的性能其实是特别好的，因此请不要担心创建了太多的纯色画刷类</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/4/14 8:31:10 -->
+<!-- 标签：WPF，WPF源代码 -->
+<!-- 发布 -->
+
+<p>在 WPF 中，画刷 Brush 有很多实现，本文的内容是纯色画刷的实现。在 WPF 的纯色画刷是继承 Brush 的类，这个类自己定义的只有一个字段 <code class="language-plaintext highlighter-rouge">_duceResource</code> 和 Color 一个属性，而 Color 属性是一个依赖属性。从这里可以看到 SolidColorBrush 类占用的托管内存空间其实很小</p>
+
+<p>那在日常调试内存的时候，遇到的 SolidColorBrush 类占用非托管内存，这里的非托管内存是在什么时候申请的？其实非托管内存的申请是在 SolidColorBrush 被使用的时候，准确来说是被调用到 AddRefOnChannelCore 方法的时候，才会申请非托管内存。而如果只是构建出来，那么纯色画刷不会申请任何的非托管内存。也就是说此时创建纯色画刷仅仅只会用到很少量的托管内存</p>
+
+<p>在 WPF 设计里面，所有继承 System.Windows.Media.Composition.DUCE.IResource 接口的类型，都可以表示这是一个 DirectX 资源类，将会在渲染过程中，申请或使用 DirectX 资源。而 DirectX 资源就是非托管资源。在 WPF 的机制，将会在 WPF 资源被使用的时候，如画刷被附加到某个元素上，在此元素渲染的时候（准确来说是之前）将会通过 IResource 接口的 AddRefOnChannel 方法让资源通过 System.Windows.Media.Composition.DUCE.Channel 申请到 DirectX 资源。以下是 IResource 接口代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">///&lt;summary&gt;</span>
+        <span class="c1">/// DUCE.IResource</span>
+        <span class="c1">///&lt;/summary&gt;</span>
+        <span class="k">internal</span> <span class="k">interface</span> <span class="nc">IResource</span>
+        <span class="p">{</span>
+            <span class="n">DUCE</span><span class="p">.</span><span class="n">ResourceHandle</span> <span class="nf">AddRefOnChannel</span><span class="p">(</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">);</span>
+
+            <span class="kt">int</span> <span class="nf">GetChannelCount</span><span class="p">();</span>
+
+            <span class="n">DUCE</span><span class="p">.</span><span class="n">Channel</span> <span class="nf">GetChannel</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">);</span>
+
+            <span class="k">void</span> <span class="nf">ReleaseOnChannel</span><span class="p">(</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">);</span>
+
+            <span class="n">DUCE</span><span class="p">.</span><span class="n">ResourceHandle</span> <span class="nf">GetHandle</span><span class="p">(</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">);</span>
+
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// Only Vieport3DVisual and Visual3D implement this.</span>
+            <span class="c1">/// Vieport3DVisual has two handles. One stored in _proxy</span>
+            <span class="c1">/// and the other one stored in _proxy3D. This function returns</span>
+            <span class="c1">/// the handle stored in _proxy3D.</span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="n">DUCE</span><span class="p">.</span><span class="n">ResourceHandle</span> <span class="nf">Get3DHandle</span><span class="p">(</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">);</span>
+
+            <span class="c1">/// &lt;summary&gt;</span>
+            <span class="c1">/// Sends a command to compositor to remove the child</span>
+            <span class="c1">/// from its parent on the channel.</span>
+            <span class="c1">/// &lt;/summary&gt;</span>
+            <span class="k">void</span> <span class="nf">RemoveChildFromParent</span><span class="p">(</span><span class="n">IResource</span> <span class="n">parent</span><span class="p">,</span> <span class="n">DUCE</span><span class="p">.</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 Brush 类将会重写 AddRefOnChannel 方法，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">abstract</span> <span class="n">DUCE</span><span class="p">.</span><span class="n">ResourceHandle</span> <span class="nf">AddRefOnChannelCore</span><span class="p">(</span><span class="n">DUCE</span><span class="p">.</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">);</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// AddRefOnChannel</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="n">DUCE</span><span class="p">.</span><span class="n">ResourceHandle</span> <span class="n">DUCE</span><span class="p">.</span><span class="n">IResource</span><span class="p">.</span><span class="nf">AddRefOnChannel</span><span class="p">(</span><span class="n">DUCE</span><span class="p">.</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// Reconsider the need for this lock when removing the MultiChannelResource.</span>
+            <span class="k">using</span> <span class="p">(</span><span class="n">CompositionEngineLock</span><span class="p">.</span><span class="nf">Acquire</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nf">AddRefOnChannelCore</span><span class="p">(</span><span class="n">channel</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到在 Brush 类中，其实是调用了 AddRefOnChannelCore 抽象方法，在 SolidColorBrush 里面实现了 AddRefOnChannelCore 申请非托管资源</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">override</span> <span class="n">DUCE</span><span class="p">.</span><span class="n">ResourceHandle</span> <span class="nf">AddRefOnChannelCore</span><span class="p">(</span><span class="n">DUCE</span><span class="p">.</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_duceResource</span><span class="p">.</span><span class="nf">CreateOrAddRefOnChannel</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Media</span><span class="p">.</span><span class="n">Composition</span><span class="p">.</span><span class="n">DUCE</span><span class="p">.</span><span class="n">ResourceType</span><span class="p">.</span><span class="n">TYPE_SOLIDCOLORBRUSH</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="n">Transform</span> <span class="n">vTransform</span> <span class="p">=</span> <span class="n">Transform</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">vTransform</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="p">((</span><span class="n">DUCE</span><span class="p">.</span><span class="n">IResource</span><span class="p">)</span><span class="n">vTransform</span><span class="p">).</span><span class="nf">AddRefOnChannel</span><span class="p">(</span><span class="n">channel</span><span class="p">);</span>
+                    <span class="n">Transform</span> <span class="n">vRelativeTransform</span> <span class="p">=</span> <span class="n">RelativeTransform</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">vRelativeTransform</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="p">((</span><span class="n">DUCE</span><span class="p">.</span><span class="n">IResource</span><span class="p">)</span><span class="n">vRelativeTransform</span><span class="p">).</span><span class="nf">AddRefOnChannel</span><span class="p">(</span><span class="n">channel</span><span class="p">);</span>
+
+                    <span class="nf">AddRefOnChannelAnimations</span><span class="p">(</span><span class="n">channel</span><span class="p">);</span>
+
+
+                    <span class="nf">UpdateResource</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="k">true</span> <span class="cm">/* skip "on channel" check - we already know that we're on channel */</span> <span class="p">);</span>
+                <span class="p">}</span>
+
+                <span class="k">return</span> <span class="n">_duceResource</span><span class="p">.</span><span class="nf">GetHandle</span><span class="p">(</span><span class="n">channel</span><span class="p">);</span>
+<span class="p">}</span> <span class="c1">// 这个花括号在 WPF 代码里面就没对齐</span>
+</code></pre></div></div>
+
+<p>上面代码核心就是 <code class="language-plaintext highlighter-rouge">_duceResource.CreateOrAddRefOnChannel</code> 创建 ResourceHandle 以及通过 UpdateResource 将颜色更新到 DirectX 资源</p>
+
+<p>在 UpdateResource 里面，将会通过如下代码在非托管层注册纯色画刷</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">UpdateResource</span><span class="p">(</span><span class="n">DUCE</span><span class="p">.</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">skipOnChannelCheck</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="c1">// 忽略代码</span>
+
+                <span class="n">DUCE</span><span class="p">.</span><span class="n">MILCMD_SOLIDCOLORBRUSH</span> <span class="n">data</span><span class="p">;</span>
+                <span class="k">unsafe</span>
+                <span class="p">{</span>
+                    <span class="n">data</span><span class="p">.</span><span class="n">Type</span> <span class="p">=</span> <span class="n">MILCMD</span><span class="p">.</span><span class="n">MilCmdSolidColorBrush</span><span class="p">;</span>
+                    <span class="n">data</span><span class="p">.</span><span class="n">Handle</span> <span class="p">=</span> <span class="n">_duceResource</span><span class="p">.</span><span class="nf">GetHandle</span><span class="p">(</span><span class="n">channel</span><span class="p">);</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">hOpacityAnimations</span><span class="p">.</span><span class="n">IsNull</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">data</span><span class="p">.</span><span class="n">Opacity</span> <span class="p">=</span> <span class="n">Opacity</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="n">data</span><span class="p">.</span><span class="n">hOpacityAnimations</span> <span class="p">=</span> <span class="n">hOpacityAnimations</span><span class="p">;</span>
+                    <span class="n">data</span><span class="p">.</span><span class="n">hTransform</span> <span class="p">=</span> <span class="n">hTransform</span><span class="p">;</span>
+                    <span class="n">data</span><span class="p">.</span><span class="n">hRelativeTransform</span> <span class="p">=</span> <span class="n">hRelativeTransform</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">hColorAnimations</span><span class="p">.</span><span class="n">IsNull</span><span class="p">)</span>
+                    <span class="p">{</span>
+                    	<span class="c1">// 将颜色给到非托管层</span>
+                        <span class="n">data</span><span class="p">.</span><span class="n">Color</span> <span class="p">=</span> <span class="n">CompositionResourceManager</span><span class="p">.</span><span class="nf">ColorToMilColorF</span><span class="p">(</span><span class="n">Color</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    <span class="c1">// 如果有动画，那么设置动画的颜色</span>
+                    <span class="n">data</span><span class="p">.</span><span class="n">hColorAnimations</span> <span class="p">=</span> <span class="n">hColorAnimations</span><span class="p">;</span>
+
+                    <span class="c1">// Send packed command structure</span>
+                    <span class="n">channel</span><span class="p">.</span><span class="nf">SendCommand</span><span class="p">(</span>
+                        <span class="p">(</span><span class="kt">byte</span><span class="p">*)&amp;</span><span class="n">data</span><span class="p">,</span>
+                        <span class="k">sizeof</span><span class="p">(</span><span class="n">DUCE</span><span class="p">.</span><span class="n">MILCMD_SOLIDCOLORBRUSH</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>回到主题，在创建 SolidColorBrush 时，在 WPF 框架里面做了什么？通过上文可以看到申请非托管资源是在使用到画刷的时候，如果我创建的纯色画刷只是存放而已，而不会使用他去参加渲染，那么纯色画刷将不会占用任何非托管资源，也不需要有任何逻辑调用到非托管的 DirectX 层</p>
+
+<p>在 SolidColorBrush 的构造函数里面，可以选择传入或不传入 Color 参数。如上文可以了解到在 SolidColorBrush 的颜色属性是依赖属性，假定没有传入构造参数，那么将会使用依赖属性默认值，也就是说此实例仅仅只使用到字段 <code class="language-plaintext highlighter-rouge">_duceResource</code> 的内存。从性能角度上，如果没有传入构造参数，那么如下面代码，这是一个空白的构造函数，啥都没有做</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">SolidColorBrush</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>当然了 SolidColorBrush 继承了 Brush 类，咱也需要看一下 Brush 类的构造函数的定义</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="nf">Brush</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到 Brush 也是空白。但 Brush 继承了 Animatable 类，咱继续看接下来的继承的类的构造</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">abstract</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">Animatable</span> <span class="p">:</span> <span class="n">Freezable</span><span class="p">,</span> <span class="n">IAnimatable</span><span class="p">,</span> <span class="n">DUCE</span><span class="p">.</span><span class="n">IResource</span>
+    <span class="p">{</span>
+        <span class="k">protected</span> <span class="nf">Animatable</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 忽略代码</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">Freezable</span> <span class="p">:</span> <span class="n">DependencyObject</span><span class="p">,</span> <span class="n">ISealable</span>
+    <span class="p">{</span>
+
+      	<span class="k">protected</span> <span class="nf">Freezable</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(!</span><span class="n">Freezable_Frozen</span>
+                    <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">Freezable_HasMultipleInheritanceContexts</span>
+                    <span class="p">&amp;&amp;</span> <span class="p">!(</span><span class="n">HasHandlers</span> <span class="p">||</span> <span class="n">HasContextInformation</span><span class="p">),</span>
+                    <span class="s">"Initial state is incorrect"</span><span class="p">);</span>
+        <span class="p">}</span> 
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">DependencyObject</span> <span class="p">:</span> <span class="n">DispatcherObject</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">DependencyObject</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">Initialize</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Initialize</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">CanBeInheritanceContext</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="n">CanModifyEffectiveValues</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">internal</span> <span class="kt">bool</span> <span class="n">CanBeInheritanceContext</span>
+        <span class="p">{</span>
+            <span class="p">[</span><span class="n">FriendAccessAllowed</span><span class="p">]</span> <span class="c1">// Built into Base, also used by Framework.</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">_packedData</span> <span class="p">&amp;</span> <span class="m">0x00200000</span><span class="p">)</span> <span class="p">!=</span> <span class="m">0</span><span class="p">;</span> <span class="p">}</span>
+
+            <span class="p">[</span><span class="n">FriendAccessAllowed</span><span class="p">]</span> <span class="c1">// Built into Base, also used by Framework.</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">_packedData</span> <span class="p">|=</span> <span class="m">0x00200000</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">_packedData</span> <span class="p">&amp;=</span> <span class="m">0xFFDFFFFF</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">CanModifyEffectiveValues</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">_packedData</span> <span class="p">&amp;</span> <span class="m">0x00080000</span><span class="p">)</span> <span class="p">!=</span> <span class="m">0</span><span class="p">;</span> <span class="p">}</span>
+
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(!</span><span class="n">DO_Sealed</span><span class="p">,</span> <span class="s">"A Sealed DO cannot be modified"</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">_packedData</span> <span class="p">|=</span> <span class="m">0x00080000</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">_packedData</span> <span class="p">&amp;=</span> <span class="m">0xFFF7FFFF</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">DispatcherObject</span>
+    <span class="p">{</span>
+        <span class="k">protected</span> <span class="nf">DispatcherObject</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">_dispatcher</span> <span class="p">=</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="n">CurrentDispatcher</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到性能层面上，几乎构造函数是啥都没有做。通过上面的代码也可以看到，如果一个类的继承很长，那么构造函数的调用性能，也许需要关注。在另一个仓库，也算是跨平台版本的 WPF 仓库 <a href="https://github.com/AvaloniaUI/Avalonia">https://github.com/AvaloniaUI/Avalonia</a> 这里面的元素定义，元素的类型继承十分长，这是设计上的缺点</p>
+
+<p>那如果在 SolidColorBrush 的构造加上参数，传入颜色，此时发生了什么？在 SolidColorBrush 的构造函数将会给依赖属性设置值，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">SolidColorBrush</span><span class="p">(</span><span class="n">Color</span> <span class="n">color</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Color</span> <span class="p">=</span> <span class="n">color</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">Color</span> <span class="n">Color</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">Color</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">ColorProperty</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="nf">SetValueInternal</span><span class="p">(</span><span class="n">ColorProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ColorProperty</span><span class="p">;</span>
+
+
+        <span class="k">static</span> <span class="nf">SolidColorBrush</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// We check our static default fields which are of type Freezable</span>
+            <span class="c1">// to make sure that they are not mutable, otherwise we will throw</span>
+            <span class="c1">// if these get touched by more than one thread in the lifetime</span>
+            <span class="c1">// of your app. </span>
+
+
+
+            <span class="c1">// Initializations</span>
+            <span class="n">Type</span> <span class="n">typeofThis</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">SolidColorBrush</span><span class="p">);</span>
+            <span class="n">ColorProperty</span> <span class="p">=</span>
+                  <span class="nf">RegisterProperty</span><span class="p">(</span><span class="s">"Color"</span><span class="p">,</span>
+                                   <span class="k">typeof</span><span class="p">(</span><span class="n">Color</span><span class="p">),</span>
+                                   <span class="n">typeofThis</span><span class="p">,</span>
+                                   <span class="n">Colors</span><span class="p">.</span><span class="n">Transparent</span><span class="p">,</span>
+                                   <span class="k">new</span> <span class="nf">PropertyChangedCallback</span><span class="p">(</span><span class="n">ColorPropertyChanged</span><span class="p">),</span>
+                                   <span class="k">null</span><span class="p">,</span>
+                                   <span class="cm">/* isIndependentlyAnimated  = */</span> <span class="k">true</span><span class="p">,</span>
+                                   <span class="cm">/* coerceValueCallback */</span> <span class="k">null</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ColorPropertyChanged</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">d</span><span class="p">,</span> <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">SolidColorBrush</span> <span class="n">target</span> <span class="p">=</span> <span class="p">((</span><span class="n">SolidColorBrush</span><span class="p">)</span> <span class="n">d</span><span class="p">);</span>
+
+
+            <span class="n">target</span><span class="p">.</span><span class="nf">PropertyChanged</span><span class="p">(</span><span class="n">ColorProperty</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从上面代码可以看到给依赖属性设置值将会触发 ColorPropertyChanged 函数。在这个函数调用了 PropertyChanged 方法。这是定义在 Animatable 的方法，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">void</span> <span class="nf">PropertyChanged</span><span class="p">(</span><span class="n">DependencyProperty</span> <span class="n">dp</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">AnimationStorage</span> <span class="n">animationStorage</span> <span class="p">=</span> <span class="n">AnimationStorage</span><span class="p">.</span><span class="nf">GetStorage</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">dp</span><span class="p">);</span>
+            <span class="n">IndependentAnimationStorage</span> <span class="n">independentAnimationStorage</span> <span class="p">=</span> <span class="n">animationStorage</span> <span class="k">as</span> <span class="n">IndependentAnimationStorage</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">independentAnimationStorage</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">independentAnimationStorage</span><span class="p">.</span><span class="nf">InvalidateResource</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="nf">RegisterForAsyncUpdateResource</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>刚创建的 SolidColorBrush 是不存在 AnimationStorage 的，因此 independentAnimationStorage 一定是空，将会调用 RegisterForAsyncUpdateResource 方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">void</span> <span class="nf">RegisterForAsyncUpdateResource</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">DUCE</span><span class="p">.</span><span class="n">IResource</span> <span class="n">resource</span> <span class="p">=</span> <span class="k">this</span> <span class="k">as</span> <span class="n">DUCE</span><span class="p">.</span><span class="n">IResource</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">resource</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">((</span><span class="n">Dispatcher</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="n">Animatable_IsResourceInvalidationNecessary</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">MediaContext</span> <span class="n">mediaContext</span> <span class="p">=</span> <span class="n">MediaContext</span><span class="p">.</span><span class="nf">From</span><span class="p">(</span><span class="n">Dispatcher</span><span class="p">);</span>
+
+                    <span class="c1">//</span>
+                    <span class="c1">// Only register for a deferred resource update if this</span>
+                    <span class="c1">// is actually on the channel.</span>
+                    <span class="c1">//</span>
+                    <span class="k">if</span> <span class="p">(!</span><span class="n">resource</span><span class="p">.</span><span class="nf">GetHandle</span><span class="p">(</span><span class="n">mediaContext</span><span class="p">.</span><span class="n">Channel</span><span class="p">).</span><span class="n">IsNull</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="c1">// Add this handler to this event means that the handler will be</span>
+                        <span class="c1">// called on the next UIThread render for this Dispatcher.</span>
+                        <span class="n">mediaContext</span><span class="p">.</span><span class="n">ResourcesUpdated</span> <span class="p">+=</span> <span class="k">new</span> <span class="n">MediaContext</span><span class="p">.</span><span class="nf">ResourcesUpdatedHandler</span><span class="p">(</span><span class="n">UpdateResource</span><span class="p">);</span>
+                        <span class="n">Animatable_IsResourceInvalidationNecessary</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在上面代码中，因为 Animatable_IsResourceInvalidationNecessary 默认值是 false 因此这个函数啥都没有做</p>
+
+<p>可以看到无论是在 SolidColorBrush 的构造函数有没有设置参数，执行的代码逻辑都非常少，执行时间基本都可以忽略。从执行性能层面，可以认为创建 SolidColorBrush 的性能是特别好的，以上代码的执行时间预计不会比创建一个空对象慢多少。从内存层面，在 SolidColorBrush 类本身，不算继承类的情况下，只有一个字段和一个依赖属性，占用内存量不会比 Color 结构体多多少。所以可以放心创建 SolidColorBrush 对象。好吧，本文说的是创建的性能，如果要将 SolidColorBrush 用上，这就是另一个坑了，建议如果是要使用的 SolidColorBrush 对象，还是使用缓存比较好，非托管的占用还是比较多的</p>
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

@@ -1,0 +1,80 @@
+I"�(<p>在我们的应用需求很常见的，我们需要使用md5算法。
+uwp的 md5 和 WPF 的使用差不多。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/7/29 12:02:42 -->
+
+<div id="toc"></div>
+
+<p>在 WPF ，我们使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">string</span> <span class="nf">GetMD5</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">System</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">MD5CryptoServiceProvider</span> <span class="n">md5</span> <span class="p">=</span> <span class="k">new</span> <span class="n">System</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="nf">MD5CryptoServiceProvider</span><span class="p">();</span>
+            <span class="kt">byte</span><span class="p">[]</span> <span class="n">temp</span><span class="p">;</span>
+            <span class="n">StringBuilder</span> <span class="n">strb</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+            <span class="n">temp</span> <span class="p">=</span> <span class="n">md5</span><span class="p">.</span><span class="nf">ComputeHash</span><span class="p">(</span><span class="n">Encoding</span><span class="p">.</span><span class="n">Unicode</span><span class="p">.</span><span class="nf">GetBytes</span><span class="p">(</span><span class="n">str</span><span class="p">));</span>
+            <span class="n">md5</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">temp</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span> 
+                <span class="n">strb</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">temp</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X"</span><span class="p">).</span><span class="nf">PadLeft</span><span class="p">(</span><span class="m">2</span> <span class="p">,</span> <span class="sc">'0'</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">strb</span><span class="p">.</span><span class="nf">ToString</span><span class="p">().</span><span class="nf">ToLower</span><span class="p">();</span>            
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然而在 UWP ，没有<code class="language-plaintext highlighter-rouge">System.Security.Cryptography.MD5CryptoServiceProvider</code>，新的加密类放在<code class="language-plaintext highlighter-rouge">Windows.Security.Cryptography.Core.CryptographicHash</code></p>
+
+<p>UWP 的 md5使用很简单</p>
+
+<p>首先添加在类的最前，让我们打的时候减少一些。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">Windows.Security.Cryptography</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.Security.Cryptography.Core</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Windows.Storage.Streams</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>然后把输入的字符串转为 md5 需要的二进制，注意编码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Windows</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">HashAlgorithmProvider</span> <span class="n">objAlgProv</span> <span class="p">=</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">HashAlgorithmProvider</span><span class="p">.</span><span class="nf">OpenAlgorithm</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">HashAlgorithmNames</span><span class="p">.</span><span class="n">Md5</span><span class="p">);</span>
+            <span class="n">Windows</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">CryptographicHash</span> <span class="n">md5</span> <span class="p">=</span> <span class="n">objAlgProv</span><span class="p">.</span><span class="nf">CreateHash</span><span class="p">();</span>
+            <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Streams</span><span class="p">.</span><span class="n">IBuffer</span> <span class="n">buffMsg1</span> <span class="p">=</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">CryptographicBuffer</span><span class="p">.</span><span class="nf">ConvertStringToBinary</span><span class="p">(</span><span class="n">str</span> <span class="p">,</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">BinaryStringEncoding</span><span class="p">.</span><span class="n">Utf16BE</span><span class="p">);</span>
+            <span class="n">md5</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">buffMsg1</span><span class="p">);</span>
+            <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Streams</span><span class="p">.</span><span class="n">IBuffer</span> <span class="n">buffHash1</span> <span class="p">=</span> <span class="n">md5</span><span class="p">.</span><span class="nf">GetValueAndReset</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">buffHash1</code>就是转换后的二进制，我们可以把它转为 base64 或 Hex</p>
+
+<p>网上很多都是 Hex ，基本看到 md5 就是二进制转 Hex， Hex 就是16进制。</p>
+
+<p>我们先说下如何转为 Base64</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Windows</span><span class="p">.</span><span class="n">Security</span><span class="p">.</span><span class="n">Cryptography</span><span class="p">.</span><span class="n">CryptographicBuffer</span><span class="p">.</span><span class="nf">EncodeToBase64String</span><span class="p">(</span><span class="n">buffHash1</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>那么如何转为 Hex ？</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">CryptographicBuffer</span><span class="p">.</span><span class="nf">EncodeToHexString</span><span class="p">(</span><span class="n">buffHash1</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>下面写出代码，测试通过，在站长工具转换结果一样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">Md5</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">HashAlgorithmProvider</span> <span class="n">algorithm</span> <span class="p">=</span> <span class="n">HashAlgorithmProvider</span><span class="p">.</span><span class="nf">OpenAlgorithm</span><span class="p">(</span><span class="n">HashAlgorithmNames</span><span class="p">.</span><span class="n">Md5</span><span class="p">);</span>
+            <span class="n">CryptographicHash</span> <span class="n">md5</span> <span class="p">=</span> <span class="n">algorithm</span><span class="p">.</span><span class="nf">CreateHash</span><span class="p">();</span>
+            <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Streams</span><span class="p">.</span><span class="n">IBuffer</span> <span class="n">buffer</span> <span class="p">=</span> <span class="n">CryptographicBuffer</span><span class="p">.</span><span class="nf">ConvertStringToBinary</span><span class="p">(</span><span class="n">str</span><span class="p">,</span> <span class="n">BinaryStringEncoding</span><span class="p">.</span><span class="n">Utf16BE</span><span class="p">);</span>
+            <span class="n">md5</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">buffer</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">CryptographicBuffer</span><span class="p">.</span><span class="nf">EncodeToHexString</span><span class="p">(</span><span class="n">md5</span><span class="p">.</span><span class="nf">GetValueAndReset</span><span class="p">());</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<script src="https://gist.github.com/lindexi/0ecf1d8de7a222cda5f058e74de335c1.js"></script>
+
+:ET

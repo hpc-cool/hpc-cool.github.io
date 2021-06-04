@@ -1,0 +1,3 @@
+I"8<p>在 C# 里面配合 dotnet 的 Task 可以作出 AsyncAutoResetEvent 高性能多线程工具，从命名可以看到 AsyncAutoResetEvent 的意思就是支持异步的自动线程等待事件，用于多线程竞争访问执行权，可以用在消费队列或用在限制有限线程执行的业务上</p>
+
+:ET

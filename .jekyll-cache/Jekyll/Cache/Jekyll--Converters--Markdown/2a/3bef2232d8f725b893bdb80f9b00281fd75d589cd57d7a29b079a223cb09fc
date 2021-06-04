@@ -1,0 +1,76 @@
+I"�<p>微软想把 WPF 作为 win7 的触摸好用的框架，所以微软做了很多特殊的兼容。为了获得真实的触摸消息，微软提供了 OnStylusDown, OnStylusUp, 和 OnStylusMove 事件。
+本文告诉大家如何使用代码禁用 WPF 的触摸消息，解决一些问题。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 10:20:52 -->
+
+<!-- csdn -->
+<!-- 标签：WPF，触摸 -->
+
+<p>在 win7 还提供了多点触摸 windows 消息 WM_TOUCH ，通过这两个 API 一个是 OnStylusDown 这些事件，另一个就是 WM_TOUCH ，用户可以拿到触摸消息。</p>
+
+<p>这两个 API 是相互独立，依靠相同的 HWND 。</p>
+
+<p>那么为什么需要禁用 WPF 的 RealTimeStylus ，因为在 WPF 触摸平台会禁用 WM_TOUCH 消息。如果想要使用 WM_TOUCH ，在 WPF 需要禁用 WPF 的触摸事件。</p>
+
+<p>如果没有禁用，就无法拿到 WM_TOUCH 消息，这个方法可以让自己定义自己的触摸。</p>
+
+<p>禁用的方法使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">DisableWPFTabletSupport</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// Get a collection of the tablet devices for this window.  </span>
+    <span class="n">TabletDeviceCollection</span> <span class="n">devices</span> <span class="p">=</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">Tablet</span><span class="p">.</span><span class="n">TabletDevices</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">devices</span><span class="p">.</span><span class="n">Count</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+    <span class="p">{</span>   
+        <span class="c1">// Get the Type of InputManager.</span>
+        <span class="n">Type</span> <span class="n">inputManagerType</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">InputManager</span><span class="p">);</span>
+        
+        <span class="c1">// Call the StylusLogic method on the InputManager.Current instance.</span>
+        <span class="kt">object</span> <span class="n">stylusLogic</span> <span class="p">=</span> <span class="n">inputManagerType</span><span class="p">.</span><span class="nf">InvokeMember</span><span class="p">(</span><span class="s">"StylusLogic"</span><span class="p">,</span>
+                    <span class="n">BindingFlags</span><span class="p">.</span><span class="n">GetProperty</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">,</span>
+                    <span class="k">null</span><span class="p">,</span> <span class="n">InputManager</span><span class="p">.</span><span class="n">Current</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">stylusLogic</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//  Get the type of the stylusLogic returned from the call to StylusLogic.</span>
+            <span class="n">Type</span> <span class="n">stylusLogicType</span> <span class="p">=</span> <span class="n">stylusLogic</span><span class="p">.</span><span class="nf">GetType</span><span class="p">();</span>
+            
+            <span class="c1">// Loop until there are no more devices to remove.</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">devices</span><span class="p">.</span><span class="n">Count</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// Remove the first tablet device in the devices collection.</span>
+                <span class="n">stylusLogicType</span><span class="p">.</span><span class="nf">InvokeMember</span><span class="p">(</span><span class="s">"OnTabletRemoved"</span><span class="p">,</span>
+                        <span class="n">BindingFlags</span><span class="p">.</span><span class="n">InvokeMethod</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">,</span>
+                        <span class="k">null</span><span class="p">,</span> <span class="n">stylusLogic</span><span class="p">,</span> <span class="k">new</span> <span class="kt">object</span><span class="p">[]</span> <span class="p">{</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span><span class="m">0</span> <span class="p">});</span>
+            <span class="p">}</span>                
+        <span class="p">}</span>
+               
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>代码直接可以直接放在项目，代码是在微软文档复制。</p>
+
+<p>虽然禁用微软提供的触摸事件，可以修复很多坑，但是禁用了也是有很多新的坑，不过我就不在这里告诉大家。自己尝试运行下面代码，然后试试程序。</p>
+
+<p>为什么这样就可以禁用触摸，请看<a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E5%88%B0%E4%BA%8B%E4%BB%B6.html">WPF 触摸到事件</a></p>
+
+<p><a href="https://msdn.microsoft.com/en-us/library/dd901337(v=vs.90).aspx">Disable the RealTimeStylus for WPF Applications</a></p>
+
+<p>如果想要 WPF 一启动就禁用触摸，请使用 App.config 添加如下代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;configuration&gt;</span>
+  <span class="nt">&lt;runtime&gt;</span>
+    <span class="nt">&lt;AppContextSwitchOverrides</span> <span class="na">value=</span><span class="s">"Switch.System.Windows.Input.Stylus.DisableStylusAndTouchSupport=true"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/runtime&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre></div></div>
+
+<p>详细请看 <a href="https://blog.walterlv.com/post/wpf-disable-stylus-and-touch-support.html">通过 AppSwitch 禁用 WPF 内置的触摸让 WPF 程序可以处理 Windows 触摸消息 - walterlv</a></p>
+
+<p>更多触摸请看 <a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E7%9B%B8%E5%85%B3.html">WPF 触摸相关</a></p>
+
+:ET

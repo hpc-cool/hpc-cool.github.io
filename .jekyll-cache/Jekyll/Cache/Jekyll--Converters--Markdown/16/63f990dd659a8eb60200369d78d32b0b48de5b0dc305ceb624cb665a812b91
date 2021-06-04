@@ -1,0 +1,4 @@
+I"*<p>微软想把 WPF 作为 win7 的触摸好用的框架，所以微软做了很多特殊的兼容。为了获得真实的触摸消息，微软提供了 OnStylusDown, OnStylusUp, 和 OnStylusMove 事件。
+本文告诉大家如何使用代码禁用 WPF 的触摸消息，解决一些问题。</p>
+
+:ET

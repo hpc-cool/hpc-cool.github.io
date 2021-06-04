@@ -1,0 +1,103 @@
+I"� <p>本文来告诉大家一个好用的控件库，这个控件库可以方便用在自己编写示例项目中使用。使用 ShowMeTheXAML 控件库可以将某段 XAML 内容作为字符串文本内容显示出来，方便让其他开发者看到界面以及对应的内容</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/4/1 8:47:14 -->
+
+<!-- 发布 -->
+
+<p>此控件库 ShowMeTheXAML 不仅支持 WPF 同时也支持 UNO 项目</p>
+
+<p>使用此控件的界面逻辑大概如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;showMeTheXaml:XamlDisplay</span> <span class="na">UniqueKey=</span><span class="s">"SomeUniqueString"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Grid&gt;</span>
+      <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"9*"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"1*"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+      <span class="nt">&lt;Label</span> <span class="na">Content=</span><span class="s">"Hello .NET Core!"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="na">VerticalAlignment=</span><span class="s">"Center"</span>
+             <span class="na">FontSize=</span><span class="s">"40"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"Exit"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">FontSize=</span><span class="s">"20"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+  <span class="nt">&lt;/showMeTheXaml:XamlDisplay&gt;</span>
+</code></pre></div></div>
+
+<p>界面显示效果如下</p>
+
+<!-- ![](image/dotnet 使用 ShowMeTheXAML 显示 WPF 的 XAML 控件内容/dotnet 使用 ShowMeTheXAML 显示 WPF 的 XAML 控件内容0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202141848155823.jpg" alt="" /></p>
+
+<p>可以看到在界面将写在 XamlDisplay 控件里面的代码显示出来，这样就方便库的开发者提供示例项目给其他开发者阅读，可以看到界面逻辑</p>
+
+<p>以下是使用方法，通过 NuGet 安装以下三个库</p>
+
+<ul>
+  <li>ShowMeTheXAML</li>
+  <li>ShowMeTheXAML.MSBuild</li>
+  <li>ShowMeTheXAML.AvalonEdit</li>
+</ul>
+
+<p>如果使用新的 csproj 项目格式，可以在 csproj 添加如下代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"ShowMeTheXAML.AvalonEdit"</span> <span class="na">Version=</span><span class="s">"2.0.0"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"ShowMeTheXAML.MSBuild"</span> <span class="na">Version=</span><span class="s">"2.0.0"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"ShowMeTheXAML"</span> <span class="na">Version=</span><span class="s">"2.0.0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>打开 App.xaml.cs 文件，添加如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStartup</span><span class="p">(</span><span class="n">StartupEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">XamlDisplay</span><span class="p">.</span><span class="nf">Init</span><span class="p">();</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnStartup</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到 App.xaml.cs 文件内容如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">App</span> <span class="p">:</span> <span class="n">Application</span>
+    <span class="p">{</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStartup</span><span class="p">(</span><span class="n">StartupEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">XamlDisplay</span><span class="p">.</span><span class="nf">Init</span><span class="p">();</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnStartup</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接着在需要使用 XamlDisplay 的界面添加命名空间</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        xmlns:showMeTheXaml="clr-namespace:ShowMeTheXAML;assembly=ShowMeTheXAML"
+</code></pre></div></div>
+
+<p>如我的 MainWindow.xaml 代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Window</span> <span class="na">x:Class=</span><span class="s">"GihihenalbemHemkearcurearcu.MainWindow"</span>
+        <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+        <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+        <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+        <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+        <span class="na">xmlns:local=</span><span class="s">"clr-namespace:GihihenalbemHemkearcurearcu"</span>
+        <span class="na">xmlns:showMeTheXaml=</span><span class="s">"clr-namespace:ShowMeTheXAML;assembly=ShowMeTheXAML"</span>
+        <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+        <span class="na">Title=</span><span class="s">"MainWindow"</span> <span class="na">Height=</span><span class="s">"450"</span> <span class="na">Width=</span><span class="s">"800"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;showMeTheXaml:XamlDisplay</span> <span class="na">UniqueKey=</span><span class="s">"SomeUniqueString"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Grid&gt;</span>
+      <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"9*"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"1*"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+      <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"Hello .NET Core!"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="na">VerticalAlignment=</span><span class="s">"Center"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"Exit"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">FontSize=</span><span class="s">"20"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+  <span class="nt">&lt;/showMeTheXaml:XamlDisplay&gt;</span>
+<span class="nt">&lt;/Window&gt;</span>
+</code></pre></div></div>
+
+<p>这个控件库在 GitHub 上完全开源，请看 <a href="https://github.com/Keboo/ShowMeTheXAML">https://github.com/Keboo/ShowMeTheXAML</a></p>
+
+:ET

@@ -1,0 +1,3 @@
+I"�<p>在 C# 的语法，可以提供自动将某个类的数组自动转这个类的基类数组的方法，但是这样的转换在 Resharper 会提示 Co-variant array conversion 这是什么问题？</p>
+
+:ET

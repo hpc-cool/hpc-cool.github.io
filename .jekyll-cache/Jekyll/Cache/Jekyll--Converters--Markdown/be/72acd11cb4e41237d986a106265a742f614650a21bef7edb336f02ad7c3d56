@@ -1,0 +1,83 @@
+I"�<p>在不联网情况下，从 url 获取文件名也就是只能靠 url 本身了，如果是 get 的链接很多链接后面都是带上了文件名，那么如何用最短的代码获取链接里面的文件名</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/16 14:44:30 -->
+
+<p>如我有链接 https://blog.lindexi.com/lindexi.html 我想要拿到 lindexi.html 这个文件名可以如何写代码最少</p>
+
+<p>请看下面方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">string</span> <span class="nf">GetFileName</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">FileInfo</span> <span class="n">fileInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">fileInfo</span><span class="p">.</span><span class="n">Name</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>是不是看错代码了，居然用了 FileInfo 的方法，小伙伴请试试用下面代码跑起来</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.IO</span><span class="p">;</span>
+
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Program</span> <span class="n">program</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Program</span><span class="p">();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">program</span><span class="p">.</span><span class="nf">GetFileName</span><span class="p">(</span><span class="s">"https://blog.lindexi.com/lindexi.html"</span><span class="p">));</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时可以看到输出了 lindexi.html 就这样返回了 url 链接里面的文件名，那么还有更短的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">string</span> <span class="nf">GetFileName</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">Path</span><span class="p">.</span><span class="nf">GetFileName</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>没错用 System.IO.Path.GetFileName 就可以了，不需要做任何的字符串修改，直接一个库方法就解决了</p>
+
+<p>在个人的小项目或工具项目，或脚本里面，可以使用上面方法解析 url 的文件名</p>
+
+<p>我可以做到不开 vs 不用任何 ide 只需要记事本加上命令行就完成了上面的玩法</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet new console -o KugaybafalJerekunaycerecha
+cd KugaybafalJerekunaycerecha
+notepad Program.cs
+
+&gt;using System;
+&gt;using System.IO;
+&gt;
+&gt;namespace KugaybafalJerekunaycerecha
+&gt;{
+&gt;    class Program
+&gt;    {
+&gt;        static void Main(string[] args)
+&gt;        {
+&gt;            Console.WriteLine(Path.GetFileName("https://blog.lindexi.com/lindexi.html"));
+&gt;        }
+&gt;    }
+&gt;}
+
+保存
+dotnet run
+</code></pre></div></div>
+
+<p>我建议在设备上面安装 dotnet 工具，从<a href="https://dotnet.microsoft.com/">官网 https://dotnet.microsoft.com/</a>下载安装 dotnet 工具，就可以在命令行玩起来，在熟悉之后可以提高逗比技能</p>
+
+<p>等等还有一个问题，如果添加了参数呢，如 https://blog.lindexi.com/doubi/lindexi.html?13216546 上面代码返回的是什么？</p>
+
+<p>试试下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">string</span> <span class="nf">GetFileName</span><span class="p">(</span><span class="kt">string</span> <span class="n">url</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Uri</span> <span class="n">uri</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">url</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">Path</span><span class="p">.</span><span class="nf">GetFileName</span><span class="p">(</span><span class="n">uri</span><span class="p">.</span><span class="n">AbsolutePath</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到上面的 AbsolutePath 就可以去掉了链接参数，不过用 uri 需要小心一些问题，请看 <a href="https://www.cnblogs.com/jasongrass/p/12284564.html">C#/.NET Framework 使用 Uri 类型表示文件路径时需要注意的问题 - J.晒太阳的猫 - 博客园</a></p>
+
+<p>等等，我拿到的链接里面如果有中文名呢，请看 <a href="https://blog.lindexi.com/post/win10-uwp-url-encode.html">win10 uwp url encode</a></p>
+
+:ET

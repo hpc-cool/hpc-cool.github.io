@@ -1,0 +1,166 @@
+I"	?<p>本文告诉大家一个黑科技，这个黑科技在 .NET 框架外无法使用，这就是 UncommonField 类。下面将会告诉大家这个类有什么用。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/3/8 16:25:02 -->
+
+<!-- csdn -->
+
+<!-- 标签：WPF，.net framework,WPF源代码,源代码分析 -->
+
+<p>如果大家有反编译 UIElement 那么就会看到下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">internal</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">UncommonField</span><span class="p">&lt;</span><span class="n">EventHandlersStore</span><span class="p">&gt;</span> <span class="n">EventHandlersStoreField</span> <span class="p">=</span> <span class="k">new</span> <span class="n">UncommonField</span><span class="p">&lt;</span><span class="n">EventHandlersStore</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>那么这个<code class="language-plaintext highlighter-rouge">UncommonField</code>是什么？这个类是解决<code class="language-plaintext highlighter-rouge">DependencyObject </code>使用很多内存。使用这个类可以作为轻量的<code class="language-plaintext highlighter-rouge">DependencyObject </code>因为他使用很少的内存。</p>
+
+<p>因为使用了<code class="language-plaintext highlighter-rouge">DependencyObject </code>就会创建很多默认的值，无论使用的是<code class="language-plaintext highlighter-rouge">TextBox.Text</code>的依赖属性还是<code class="language-plaintext highlighter-rouge">Grid.Row</code>附加的，都会有很多不需要使用的值。但是在框架，需要使用很少的内存，所以就使用<code class="language-plaintext highlighter-rouge">UncommonField</code>。</p>
+
+<p>如果使用<code class="language-plaintext highlighter-rouge">UncommonField</code>就会去掉很多元数据、校验、通知，<code class="language-plaintext highlighter-rouge">UncommonField</code>会使用和<code class="language-plaintext highlighter-rouge">DependencyObject </code>相同的机制，让他可以存放在<code class="language-plaintext highlighter-rouge">DependencyObject </code>中和其他存放的属性一样，在没有改变值的时候会使用上一级、默认的值。所以可以减少一些内存。</p>
+
+<p>因为现在很少人会写出和框架一样的那么多使用依赖属性，所以就不需要使用这个功能。</p>
+
+<p>下面就是<code class="language-plaintext highlighter-rouge">UncommonField</code>代码，我添加一些注释</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="c1">//这个类可以减少内存使用，比使用 DependencyObject 少的内存，这个类在框架使用，不在外面使用</span>
+  <span class="p">[</span><span class="n">FriendAccessAllowed</span><span class="p">]</span> <span class="c1">// Built into Base, used by Core and Framework</span>
+    <span class="k">internal</span> <span class="k">class</span> <span class="nc">UncommonField</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     Create a new UncommonField.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="nf">UncommonField</span><span class="p">()</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="n">T</span><span class="p">))</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+ 
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     Create a new UncommonField.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="defaultValue"&gt;The default value of the field.&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="nf">UncommonField</span><span class="p">(</span><span class="n">T</span> <span class="n">defaultValue</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_defaultValue</span> <span class="p">=</span> <span class="n">defaultValue</span><span class="p">;</span>
+            <span class="n">_hasBeenSet</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+ 
+            <span class="k">lock</span> <span class="p">(</span><span class="n">DependencyProperty</span><span class="p">.</span><span class="n">Synchronized</span><span class="p">)</span>
+            <span class="p">{</span>
+            	<span class="c1">//注册方法和依赖属性相同</span>
+                <span class="n">_globalIndex</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">GetUniqueGlobalIndex</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+ 
+                <span class="n">DependencyProperty</span><span class="p">.</span><span class="n">RegisteredPropertyList</span><span class="p">.</span><span class="nf">Add</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+ 
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     从下面代码可以看到，设置值代码和依赖属性相同</span>
+        <span class="c1">///     Write the given value onto a DependencyObject instance.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="instance"&gt;The DependencyObject on which to set the value.&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="value"&gt;The value to set.&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">instance</span><span class="p">,</span> <span class="n">T</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+        	<span class="c1">//如果传入的值是空，会有异常</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">instance</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">EntryIndex</span> <span class="n">entryIndex</span> <span class="p">=</span> <span class="n">instance</span><span class="p">.</span><span class="nf">LookupEntry</span><span class="p">(</span><span class="n">_globalIndex</span><span class="p">);</span>
+ 
+                <span class="c1">//设置的值如果和默认的相同，那么就直接跳过</span>
+                <span class="c1">// Set the value if it's not the default, otherwise remove the value.</span>
+                <span class="k">if</span> <span class="p">(!</span><span class="kt">object</span><span class="p">.</span><span class="nf">ReferenceEquals</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="n">_defaultValue</span><span class="p">))</span>
+                <span class="p">{</span>
+                	<span class="c1">//下面的代码进行设置值</span>
+                    <span class="n">instance</span><span class="p">.</span><span class="nf">SetEffectiveValue</span><span class="p">(</span><span class="n">entryIndex</span><span class="p">,</span> <span class="k">null</span> <span class="cm">/* dp */</span><span class="p">,</span> <span class="n">_globalIndex</span><span class="p">,</span> <span class="k">null</span> <span class="cm">/* metadata */</span><span class="p">,</span> <span class="k">value</span><span class="p">,</span> <span class="n">BaseValueSourceInternal</span><span class="p">.</span><span class="n">Local</span><span class="p">);</span>
+                    <span class="n">_hasBeenSet</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">instance</span><span class="p">.</span><span class="nf">UnsetEffectiveValue</span><span class="p">(</span><span class="n">entryIndex</span><span class="p">,</span> <span class="k">null</span> <span class="cm">/* dp */</span><span class="p">,</span> <span class="k">null</span> <span class="cm">/* metadata */</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="s">"instance"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+ 
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     如果没有设置值，就从默认获取，或者上一级，方法和依赖属性相同</span>
+        <span class="c1">///     Read the value of this field on a DependencyObject instance.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="instance"&gt;The DependencyObject from which to get the value.&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="n">T</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">instance</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">instance</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_hasBeenSet</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">EntryIndex</span> <span class="n">entryIndex</span> <span class="p">=</span> <span class="n">instance</span><span class="p">.</span><span class="nf">LookupEntry</span><span class="p">(</span><span class="n">_globalIndex</span><span class="p">);</span>
+ 
+                    <span class="k">if</span> <span class="p">(</span><span class="n">entryIndex</span><span class="p">.</span><span class="n">Found</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="kt">object</span> <span class="k">value</span> <span class="p">=</span> <span class="n">instance</span><span class="p">.</span><span class="n">EffectiveValues</span><span class="p">[</span><span class="n">entryIndex</span><span class="p">.</span><span class="n">Index</span><span class="p">].</span><span class="n">LocalValue</span><span class="p">;</span>
+ 
+                        <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">!=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="n">UnsetValue</span><span class="p">)</span>
+                        <span class="p">{</span>
+                            <span class="k">return</span> <span class="p">(</span><span class="n">T</span><span class="p">)</span><span class="k">value</span><span class="p">;</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                    <span class="k">return</span> <span class="n">_defaultValue</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">_defaultValue</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="s">"instance"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+ 
+ 
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     Clear this field from the given DependencyObject instance.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="instance"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">ClearValue</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">instance</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">instance</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">EntryIndex</span> <span class="n">entryIndex</span> <span class="p">=</span> <span class="n">instance</span><span class="p">.</span><span class="nf">LookupEntry</span><span class="p">(</span><span class="n">_globalIndex</span><span class="p">);</span>
+ 
+                <span class="n">instance</span><span class="p">.</span><span class="nf">UnsetEffectiveValue</span><span class="p">(</span><span class="n">entryIndex</span><span class="p">,</span> <span class="k">null</span> <span class="cm">/* dp */</span><span class="p">,</span> <span class="k">null</span> <span class="cm">/* metadata */</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="s">"instance"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+ 
+        <span class="k">internal</span> <span class="kt">int</span> <span class="n">GlobalIndex</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">_globalIndex</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+ 
+        <span class="err">#</span><span class="n">region</span> <span class="n">Private</span> <span class="n">Fields</span>
+ 
+        <span class="k">private</span> <span class="n">T</span> <span class="n">_defaultValue</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">int</span> <span class="n">_globalIndex</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">_hasBeenSet</span><span class="p">;</span>
+ 
+        <span class="err">#</span><span class="n">endregion</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从上面的代码可以自己定义一个和他一样的类，用来存放比较少的属性，但是使用不多，因为现在的软件很少需要减少那么少的内存。</p>
+
+<p>参见 <a href="https://stackoverflow.com/a/18280136/6116637">https://stackoverflow.com/a/18280136/6116637</a></p>
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

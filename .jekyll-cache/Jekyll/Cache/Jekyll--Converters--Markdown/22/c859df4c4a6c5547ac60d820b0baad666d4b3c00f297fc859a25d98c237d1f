@@ -1,0 +1,319 @@
+I"��<p>在写笔迹的过程，我需要做橡皮的功能，橡皮是一个矩形在移动，因为移动的过程是不连续的，需要将多个矩形组合为连续的几何</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/12/24 20:51:49 -->
+
+<!-- csdn -->
+<!-- math -->
+
+<p>大概的做法就是连接两个矩形作为一个六边形或者一个大的矩形的方法，这个方法最简单是求闭包的方法</p>
+
+<!-- ![](image/win10 uwp 求两个矩形相连的几何/win10 uwp 求两个矩形相连的几何.gif) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20181224205047425" alt="" /></p>
+
+<p>本文采用的坐标是左上角是 (0,0) 点，从左向右坐标变大，从上到下坐标变大</p>
+
+<p>但是对于矩形可以做到特殊算法，提高速度，方法就是取矩形的左上角进行判断，如果判断两个矩形中的一个矩形的左边小于另一个矩形的左边，同时这个矩形的上边小于另一个矩形的上边。</p>
+
+<p>也就是两个矩形中，满足下面公式，其中 rect1 和 rect2 的值可以互换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span>
+</code></pre></div></div>
+
+<p>此时就可以认为两个矩形按照从左上角到右下角的坐标</p>
+
+<p>于是连接 rect1 的左上角点 rect1 的右上角点 rect2 的右上角点 rect2 的右下角点 rect2 的左下角点 rect1 的左下角点就可以连接处理这个六边形或矩形</p>
+
+<p>另一个是两个矩形是按照从左下角到右上角的坐标，需要判断两个矩形的左下角。如果存在一个矩形的左下角的左边比另一个矩形的左边小，同时这个矩形的下边比另一个矩形的下边大</p>
+
+<p>在两个矩形中，满足下面方法，其中 rect1 和 rect2 的值可以互换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">&gt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span>
+</code></pre></div></div>
+
+<p>通过连接 rect1 的左上角 rect2 的左上角 rect2 的右上角 rect2 的右下角 rect1 的右下角 rect1 的左下角就可以连接处理这个六边形或矩形</p>
+
+<p>下面是我写的一个呆磨，代码是通过 win2d 写的，需要通过 Nuget 安装 Win2d 然后在 xaml 设置 Grid 的 Name 为 Grid 在代码可以添加</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	        <span class="kt">var</span> <span class="n">canvas</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasAnimatedControl</span><span class="p">();</span>
+            <span class="n">Grid</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">canvas</span><span class="p">);</span>
+
+            <span class="n">canvas</span><span class="p">.</span><span class="n">Draw</span> <span class="p">+=</span> <span class="n">Canvas_Draw</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>在鼠标移动的时候拿到坐标，作为第二个矩形的左上角</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnPointerMoved</span><span class="p">(</span><span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_move</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="n">Grid</span><span class="p">).</span><span class="n">Position</span><span class="p">;</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnPointerMoved</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">Point</span> <span class="n">_move</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>然后在 <code class="language-plaintext highlighter-rouge">Canvas_Draw</code> 创建两个矩形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	        <span class="n">Rect</span> <span class="n">rect1</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+            <span class="n">Rect</span> <span class="n">rect2</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="n">_move</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>可以看到矩形 1 是固定的，但是矩形2会安装鼠标的左上角作为矩形，所以可以通过鼠标看自己的方法是否符合</p>
+
+<p>先将两个矩形画出来</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	            <span class="n">ds</span><span class="p">.</span><span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">rect1</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">IndianRed</span><span class="p">);</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">rect2</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Color</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="n">R</span> <span class="p">=</span> <span class="m">0x6f</span><span class="p">,</span>
+                    <span class="n">B</span> <span class="p">=</span> <span class="m">0x5f</span><span class="p">,</span>
+                    <span class="n">G</span> <span class="p">=</span> <span class="m">0x26</span><span class="p">,</span>
+                    <span class="n">A</span> <span class="p">=</span> <span class="m">0xff</span>
+                <span class="p">});</span>
+
+</code></pre></div></div>
+
+<p>这里的 ds 就是通过 args.DrawingSession 创建</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	    <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_Draw</span><span class="p">(</span><span class="n">ICanvasAnimatedControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasAnimatedDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后开始判断，两个矩形有两个不同的方法，按照不同对角线，这里直接开始写判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	            <span class="k">if</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">)</span>
+                <span class="p">{</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">)</span>
+                <span class="p">{</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这就是第一个方法的判断，创建一个方法用于绘制，因为两个矩形的计算需要互换，通过创建方法的方法可以减少代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	    <span class="k">private</span> <span class="k">void</span> <span class="nf">VerpallWayhi</span><span class="p">(</span><span class="n">Rect</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">Rect</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">CanvasDrawingSession</span> <span class="n">ds</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasPathBuilder</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasPathBuilder</span><span class="p">(</span><span class="n">ds</span><span class="p">.</span><span class="n">Device</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">BeginFigure</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">EndFigure</span><span class="p">(</span><span class="n">CanvasFigureLoop</span><span class="p">.</span><span class="n">Closed</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">geometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePath</span><span class="p">(</span><span class="n">canvasPathBuilder</span><span class="p">);</span>
+            <span class="n">ds</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">geometry</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Color</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">R</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">B</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">G</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">A</span> <span class="p">=</span> <span class="m">0xff</span>
+            <span class="p">});</span>
+
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+            <span class="n">geometry</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>请不要认为上面的代码很复杂，自己画一下就知道上面的方法</p>
+
+<p>在调用的时候，需要互换矩形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	            <span class="k">if</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">VerpallWayhi</span><span class="p">(</span><span class="n">rect1</span><span class="p">,</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">VerpallWayhi</span><span class="p">(</span><span class="n">rect2</span><span class="p">,</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为两个矩形的相对关系只有两种，可以在下面判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">&gt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">)</span>
+                <span class="p">{</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">&gt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">)</span>
+                <span class="p">{</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>同时创建新的方法，对不同的矩形画出六边形或矩形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Stoutiheagea</span><span class="p">(</span><span class="n">Rect</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">Rect</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">CanvasDrawingSession</span> <span class="n">ds</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasPathBuilder</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasPathBuilder</span><span class="p">(</span><span class="n">ds</span><span class="p">.</span><span class="n">Device</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">BeginFigure</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">EndFigure</span><span class="p">(</span><span class="n">CanvasFigureLoop</span><span class="p">.</span><span class="n">Closed</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">geometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePath</span><span class="p">(</span><span class="n">canvasPathBuilder</span><span class="p">);</span>
+            <span class="n">ds</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">geometry</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Color</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">R</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">B</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">G</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">A</span> <span class="p">=</span> <span class="m">0xff</span>
+            <span class="p">});</span>
+
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+            <span class="n">geometry</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在互换矩形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">&gt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">Stoutiheagea</span><span class="p">(</span><span class="n">rect1</span><span class="p">,</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">&gt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">Stoutiheagea</span><span class="p">(</span><span class="n">rect2</span><span class="p">,</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行代码可以看到有一个矩形跟随鼠标，同时会连接两个矩形</p>
+
+<p>用到的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainPage</span> <span class="p">:</span> <span class="n">Page</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">canvas</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasAnimatedControl</span><span class="p">();</span>
+            <span class="n">Grid</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">canvas</span><span class="p">);</span>
+
+            <span class="n">canvas</span><span class="p">.</span><span class="n">Draw</span> <span class="p">+=</span> <span class="n">Canvas_Draw</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnPointerMoved</span><span class="p">(</span><span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_move</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="n">Grid</span><span class="p">).</span><span class="n">Position</span><span class="p">;</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnPointerMoved</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">Point</span> <span class="n">_move</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_Draw</span><span class="p">(</span><span class="n">ICanvasAnimatedControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasAnimatedDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">cl</span> <span class="p">=</span> <span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">cl</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">CanvasCommandList</span> <span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">ICanvasResourceCreator</span> <span class="n">sender</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Rect</span> <span class="n">rect1</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+            <span class="n">Rect</span> <span class="n">rect2</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="n">_move</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">));</span>
+
+            <span class="kt">var</span> <span class="n">cl</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">cl</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">rect1</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">IndianRed</span><span class="p">);</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">rect2</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Color</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="n">R</span> <span class="p">=</span> <span class="m">0x6f</span><span class="p">,</span>
+                    <span class="n">B</span> <span class="p">=</span> <span class="m">0x5f</span><span class="p">,</span>
+                    <span class="n">G</span> <span class="p">=</span> <span class="m">0x26</span><span class="p">,</span>
+                    <span class="n">A</span> <span class="p">=</span> <span class="m">0xff</span>
+                <span class="p">});</span>
+
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">VerpallWayhi</span><span class="p">(</span><span class="n">rect1</span><span class="p">,</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">VerpallWayhi</span><span class="p">(</span><span class="n">rect2</span><span class="p">,</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">&gt;=</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">Stoutiheagea</span><span class="p">(</span><span class="n">rect1</span><span class="p">,</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">rect2</span><span class="p">.</span><span class="n">Left</span> <span class="p">&lt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span> <span class="p">&amp;&amp;</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span> <span class="p">&gt;</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">Stoutiheagea</span><span class="p">(</span><span class="n">rect2</span><span class="p">,</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">ds</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">cl</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Stoutiheagea</span><span class="p">(</span><span class="n">Rect</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">Rect</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">CanvasDrawingSession</span> <span class="n">ds</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasPathBuilder</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasPathBuilder</span><span class="p">(</span><span class="n">ds</span><span class="p">.</span><span class="n">Device</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">BeginFigure</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">EndFigure</span><span class="p">(</span><span class="n">CanvasFigureLoop</span><span class="p">.</span><span class="n">Closed</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">geometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePath</span><span class="p">(</span><span class="n">canvasPathBuilder</span><span class="p">);</span>
+            <span class="n">ds</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">geometry</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Color</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">R</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">B</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">G</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">A</span> <span class="p">=</span> <span class="m">0xff</span>
+            <span class="p">});</span>
+
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+            <span class="n">geometry</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">VerpallWayhi</span><span class="p">(</span><span class="n">Rect</span> <span class="n">rect1</span><span class="p">,</span> <span class="n">Rect</span> <span class="n">rect2</span><span class="p">,</span> <span class="n">CanvasDrawingSession</span> <span class="n">ds</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasPathBuilder</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasPathBuilder</span><span class="p">(</span><span class="n">ds</span><span class="p">.</span><span class="n">Device</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">BeginFigure</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Top</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Right</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect2</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">AddLine</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">rect1</span><span class="p">.</span><span class="n">Bottom</span><span class="p">);</span>
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">EndFigure</span><span class="p">(</span><span class="n">CanvasFigureLoop</span><span class="p">.</span><span class="n">Closed</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">geometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePath</span><span class="p">(</span><span class="n">canvasPathBuilder</span><span class="p">);</span>
+            <span class="n">ds</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">geometry</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Color</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">R</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">B</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">G</span> <span class="p">=</span> <span class="m">0x56</span><span class="p">,</span>
+                <span class="n">A</span> <span class="p">=</span> <span class="m">0xff</span>
+            <span class="p">});</span>
+
+            <span class="n">canvasPathBuilder</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+            <span class="n">geometry</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<script type="text/javascript" async="" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+
+</script>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+</script>
+
+:ET

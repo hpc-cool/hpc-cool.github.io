@@ -1,0 +1,23 @@
+I"x<p>我从 dotnet core 1 的版本到 3.1 的版本，中间安装了超级多的预览版，此时我的硬盘已经空间不够了。干的漂亮的 dotnet 提供了 .NET Core 卸载工具专门用来卸载 .NET Core 的 SDK 和运行时</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/12 12:02:44 -->
+
+<p>一款好的语言或框架一定要提供好让你放弃时卸载干净的工具</p>
+
+<p>通过官方<a href="https://github.com/dotnet/cli-lab/releases/download/1.0.115603/dotnet-core-uninstall-1.0.115603.msi">github</a>下载，或我的<a href="https://download.csdn.net/download/lindexi_gd/12243595">csdn</a>下载</p>
+
+<p>安装之后可以通过下面命令删除干净除了最新版本的SDK和运行时</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span><span class="p">-</span><span class="n">core</span><span class="p">-</span><span class="n">uninstall</span> <span class="k">remove</span> <span class="p">--</span><span class="n">all</span><span class="p">-</span><span class="n">but</span><span class="p">-</span><span class="n">latest</span>
+</code></pre></div></div>
+
+<p>如果不是想清理，而是想要放弃了，全部删除，包括 Visual Studio 可能需要的 SDK 请用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span><span class="p">-</span><span class="n">core</span><span class="p">-</span><span class="n">uninstall</span> <span class="k">remove</span> <span class="p">--</span><span class="n">all</span> <span class="p">--</span><span class="n">sdk</span> <span class="p">--</span><span class="n">force</span>
+</code></pre></div></div>
+
+<p>更多命令请看 <a href="https://docs.microsoft.com/zh-cn/dotnet/core/additional-tools/uninstall-tool?tabs=windows">Microsoft .NET Core 卸载工具</a></p>
+
+:ET

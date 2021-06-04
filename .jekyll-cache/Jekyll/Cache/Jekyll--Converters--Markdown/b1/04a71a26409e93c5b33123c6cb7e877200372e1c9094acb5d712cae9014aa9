@@ -1,0 +1,90 @@
+I"�'<p>在 Windows 提供很底层的方法接收硬件设备的裸数据，通过接收裸数据可以做到性能更高的全局键盘，还能支持多个鼠标。但是用这个方法需要自己解析裸数据，同时会因为接受到很多消息降低性能</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/23 16:41:52 -->
+
+<!-- csdn -->
+
+<p>在微软官方很少有文档说如何使用<a href="https://docs.microsoft.com/en-us/windows/win32/inputdev/about-raw-input">Raw Input</a>不过我在 github 上找到小伙伴的 <a href="https://github.com/mfakane/rawinput-sharp">rawinput-sharp: C# wrapper library for Raw Input</a> 项目，简单通过 NuGet 安装就能使用</p>
+
+<p>使用 NuGet 安装 <a href="https://www.nuget.org/packages/RawInput.Sharp">RawInput.Sharp 0.0.2</a> 如果是新项目可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"RawInput.Sharp"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"0.0.2"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>在 MainWindows 注册事件，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">SourceInitialized</span> <span class="p">+=</span> <span class="n">MainWindow_SourceInitialized</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_SourceInitialized</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">windowInteropHelper</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">hwnd</span> <span class="p">=</span> <span class="n">windowInteropHelper</span><span class="p">.</span><span class="n">Handle</span><span class="p">;</span>
+
+            <span class="c1">// Get the devices that can be handled with Raw Input.</span>
+            <span class="kt">var</span> <span class="n">devices</span> <span class="p">=</span> <span class="n">RawInputDevice</span><span class="p">.</span><span class="nf">GetDevices</span><span class="p">();</span>
+
+            <span class="c1">// register the keyboard device and you can register device which you need like mouse</span>
+            <span class="n">RawInputDevice</span><span class="p">.</span><span class="nf">RegisterDevice</span><span class="p">(</span><span class="n">HidUsageAndPage</span><span class="p">.</span><span class="n">Keyboard</span><span class="p">,</span>
+                <span class="n">RawInputDeviceFlags</span><span class="p">.</span><span class="n">ExInputSink</span> <span class="p">|</span> <span class="n">RawInputDeviceFlags</span><span class="p">.</span><span class="n">NoLegacy</span><span class="p">,</span> <span class="n">hwnd</span><span class="p">);</span>
+
+            <span class="n">HwndSource</span> <span class="n">source</span> <span class="p">=</span> <span class="n">HwndSource</span><span class="p">.</span><span class="nf">FromHwnd</span><span class="p">(</span><span class="n">hwnd</span><span class="p">);</span>
+            <span class="n">source</span><span class="p">.</span><span class="nf">AddHook</span><span class="p">(</span><span class="n">Hook</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过 RawInputDevice.GetDevices 可以知道当前可以注册的设备有哪些，使用 RawInputDevice.RegisterDevice 可以注册事件，这里注册的是键盘事件，小伙伴自己修改 HidUsageAndPage 的值可以注册不同的事件</p>
+
+<p>注册事件就可以在 Hook 函数接收到 WM_INPUT 消息，通过这个消息解析就可以拿到裸数据，对裸数据处理就可以收到输入，如果需要接入 WPF 可以使用<a href="https://blog.lindexi.com/post/WPF-%E6%A8%A1%E6%8B%9F%E8%A7%A6%E6%91%B8%E8%AE%BE%E5%A4%87.html">WPF 模拟触摸设备</a>将收到的消息模拟触摸</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">IntPtr</span> <span class="nf">Hook</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wparam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lparam</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">WM_INPUT</span> <span class="p">=</span> <span class="m">0x00FF</span><span class="p">;</span>
+
+            <span class="c1">// You can read inputs by processing the WM_INPUT message.</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="p">==</span> <span class="n">WM_INPUT</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// Create an RawInputData from the handle stored in lParam.</span>
+                <span class="kt">var</span> <span class="n">data</span> <span class="p">=</span> <span class="n">RawInputData</span><span class="p">.</span><span class="nf">FromHandle</span><span class="p">(</span><span class="n">lparam</span><span class="p">);</span>
+
+                <span class="c1">// You can identify the source device using Header.DeviceHandle or just Device.</span>
+                <span class="kt">var</span> <span class="n">sourceDeviceHandle</span> <span class="p">=</span> <span class="n">data</span><span class="p">.</span><span class="n">Header</span><span class="p">.</span><span class="n">DeviceHandle</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">sourceDevice</span> <span class="p">=</span> <span class="n">data</span><span class="p">.</span><span class="n">Device</span><span class="p">;</span>
+
+                <span class="c1">// The data will be an instance of either RawInputMouseData, RawInputKeyboardData, or RawInputHidData.</span>
+                <span class="c1">// They contain the raw input data in their properties.</span>
+                <span class="k">switch</span> <span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">case</span> <span class="n">RawInputMouseData</span> <span class="n">mouse</span><span class="p">:</span>
+                        <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">mouse</span><span class="p">.</span><span class="n">Mouse</span><span class="p">);</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="k">case</span> <span class="n">RawInputKeyboardData</span> <span class="n">keyboard</span><span class="p">:</span>
+                        <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">keyboard</span><span class="p">.</span><span class="n">Keyboard</span><span class="p">);</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="k">case</span> <span class="n">RawInputHidData</span> <span class="n">hid</span><span class="p">:</span>
+                        <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">hid</span><span class="p">.</span><span class="n">Hid</span><span class="p">);</span>
+                        <span class="k">break</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>用 RawInput 就是通过 <a href="https://docs.microsoft.com/zh-cn/windows/win32/api/winuser/nf-winuser-registerrawinputdevices?redirectedfrom=MSDN">RegisterRawInputDevices</a> 告诉系统当前进程需要支持裸数据，系统将会根据传入的参数将裸数据转发给应用。应用在消息解析数据拿到裸数据，然后按照业务解析裸数据。这个方法可以解决一些特殊设备支持，因为 HID 设备是独占设备，只能让系统独占，如果想要应用也接收硬件发过来的消息，就需要额外通道给应用。另外应用如果需要解决其他应用钩了消息，可以注册裸数据解决其他应用勾了键盘消息</p>
+
+<p>本文的例子代码在 <a href="https://github.com/mfakane/rawinput-sharp/pull/5">github</a> 欢迎小伙伴访问</p>
+
+<p>现在这个项目只支持 dotnet standard 2.0 我将这个项目升级兼容 .NET 4.5 我提交了 MR 请看 <a href="https://github.com/mfakane/rawinput-sharp/pull/3">Pull Request #3 rawinput-sharp</a> 如何合并了就能兼容</p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/inputdev/using-raw-input">Using Raw Input</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/inputdev/about-raw-input">About Raw Input</a></p>
+
+:ET

@@ -1,0 +1,3 @@
+I"<p>在 WPF 中，常用的画刷里面有纯色画刷 SolidColorBrush 类。因为画刷会对应到 DirectX 的资源，因此之前我以为纯色画刷其实会比 Color 会占用更多的资源。在 WPF 中 Color 其实是结构体，创建速度快。而 SolidColorBrush 是画刷，会对应 DirectX 资源，相对来说性能会比较差。但在通过阅读 WPF 的源代码，发现其实 SolidColorBrush 的创建的性能其实是特别好的，因此请不要担心创建了太多的纯色画刷类</p>
+
+:ET

@@ -1,0 +1,17 @@
+I"�<p>使用 Xamarin 项目，添加一个额外的库项目，被 Xamarin.Form 引用，构建时提示“XamlCTask”任务不支持“ValidateOnly”参数。请确认该参数存在于此任务中，并且是可设置的公共实例属性</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/2 8:23:13 -->
+<!-- 标签：Xamarin -->
+
+<p>英文的提示如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MSB4064</span><span class="p">:</span> <span class="n">The</span> <span class="s">"ValidateOnly"</span> <span class="n">parameter</span> <span class="k">is</span> <span class="n">not</span> <span class="n">supported</span> <span class="k">by</span> <span class="n">the</span> <span class="s">"XamlCTask"</span> <span class="n">task</span>
+</code></pre></div></div>
+
+<p>这个算 Xamarin 4.3 的坑，解决方法是在 NuGet 升级到 4.5 就可以了</p>
+
+<p><a href="https://github.com/xamarin/Xamarin.Forms/issues/8209">[Bug] Mixed Xamarin.Forms versions causes error MSB4064: The “ValidateOnly” parameter is not supported by the “XamlCTask” task · Issue #8209 · xamarin/Xamarin.Forms</a></p>
+
+:ET

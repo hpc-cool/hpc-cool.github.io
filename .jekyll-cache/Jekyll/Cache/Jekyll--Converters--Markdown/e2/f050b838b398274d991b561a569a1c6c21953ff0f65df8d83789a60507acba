@@ -1,0 +1,3 @@
+I"v<p>在加上 IL Link 的项目里面，在升级到 .NET 6 预览版，有一些项目将会构建不通过，或者有些 C++ CLI 项目加载失败。提示 元素 UsingTask 中“AssemblyFile”特性的值“$(ILLinkTasksAssembly)”的计算结果“”无效。原因就是 .NET 6 预览版里面，或者自己的设备上 ILLinkTasksAssembly 属性定义失效</p>
+
+:ET

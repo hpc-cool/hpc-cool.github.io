@@ -1,0 +1,188 @@
+I"�N<p>看到标题的小伙伴是不是想知道什么是魔法书，如果你需要写一段代码，这段代码是在做神奇的业务，只有你查询到了魔法书你才能找到这个对象，同时你还需要实现自己的接口，通过自己实现的接口调用才能用到有趣的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>在 C# 里面是不能直接让两个有相同方法的但没有继承的接口直接转换，但是通过透明代理和反射可以做到在不同的程序集定义的两个接口，这两个接口有相同的方法，那么将可以用另一个程序集的接口调用到传入程序集里面的接口</p>
+
+<p>在本文开始之前，期望的读者是了解透明代理的，通过透明代理可以让每个调用方法之前先调用透明代理的方法。在透明代理的方法可以知道用户调用的是哪个方法，同时传入的参数是什么</p>
+
+<p>先封装一个类，在这个类里面放一些定义好的实例，在透明代理方法里面通过传入用户调用的方法，使用反射调用对应实例的方法，然后将方法返回值返回</p>
+
+<p>每次用户可以通过一个 Guid 才能获取透明代理，因为用户获取的是透明代理，是无法直接拿到对应的实例里面的字段，同时需要用户传入自己定义的接口，不想让用户访问的内容，用户是很难猜到的</p>
+
+<p>这样的写法其实就和 COM 一样，从文档找到 COM 的 GUID 然后自己定义一个接口获取</p>
+
+<p>先看我定义的使用方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">// 在第一个程序集注入了 F1 代码</span>
+
+            <span class="kt">var</span> <span class="n">guid</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Guid</span><span class="p">(</span><span class="s">"{97C70651-EE85-4AED-9E2F-AD73AF34CF5D}"</span><span class="p">);</span>
+
+            <span class="n">DynamicProxy</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">guid</span><span class="p">,</span><span class="k">new</span> <span class="nf">F1</span><span class="p">());</span>
+
+            <span class="c1">// 自己实现两个接口</span>
+            <span class="kt">var</span> <span class="n">f2</span> <span class="p">=</span> <span class="n">DynamicProxy</span><span class="p">.</span><span class="n">GetObject</span><span class="p">&lt;</span><span class="n">IF2</span><span class="p">&gt;(</span><span class="n">guid</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">f2</span><span class="p">.</span><span class="nf">GetName</span><span class="p">());</span>
+
+            <span class="kt">var</span> <span class="n">f3</span> <span class="p">=</span> <span class="n">DynamicProxy</span><span class="p">.</span><span class="n">GetObject</span><span class="p">&lt;</span><span class="n">IF3</span><span class="p">&gt;(</span><span class="n">guid</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">f3</span><span class="p">.</span><span class="nf">GetName</span><span class="p">());</span>
+</code></pre></div></div>
+
+<p>期望的写法是调用 DynamicProxy.Add 在一个程序集，获取变量在另一个程序集</p>
+
+<p>这里的 F1 和接口 IF2 IF3 都没有继承关系</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">interface</span> <span class="nc">IF3</span>
+    <span class="p">{</span>
+        <span class="kt">string</span> <span class="nf">GetName</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">interface</span> <span class="nc">IF2</span>
+    <span class="p">{</span>
+        <span class="kt">string</span> <span class="nf">GetName</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">F1</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">GetName</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="s">"林德熙是逗比"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>只要两个接口之间有定义相同的，那么这两个接口之间就可以相互转换，也就是在用户自己写的代码，是可以做到从文档里面找到其中需要使用的几个方法，然后定义自己的接口，通过上面方法就可以拿到</p>
+
+<p>这个方法每次返回的对象都不相同，用户也不知道是不相同的对象，例如我可以将相同的一个对象作为两个不同的 Guid 传入，然后告诉用户两个不同的接口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">guid1</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Guid</span><span class="p">(</span><span class="s">"{97C70651-EE85-4AED-9E2F-AD73AF34CF5D}"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">guid2</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Guid</span><span class="p">(</span><span class="s">"{05D1936F-7121-43BA-B986-A42A56555AAE}"</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">f1</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">F1</span><span class="p">();</span>
+            <span class="n">DynamicProxy</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">guid1</span><span class="p">,</span> <span class="n">f1</span><span class="p">);</span>
+            <span class="n">DynamicProxy</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">guid2</span><span class="p">,</span> <span class="n">f1</span><span class="p">);</span>
+
+            <span class="c1">// 自己实现两个接口</span>
+            <span class="kt">var</span> <span class="n">f2</span> <span class="p">=</span> <span class="n">DynamicProxy</span><span class="p">.</span><span class="n">GetObject</span><span class="p">&lt;</span><span class="n">IF2</span><span class="p">&gt;(</span><span class="n">guid1</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">f2</span><span class="p">.</span><span class="nf">GetName</span><span class="p">());</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">f2</span><span class="p">.</span><span class="nf">GetName</span><span class="p">(</span><span class="k">new</span> <span class="nf">F3</span><span class="p">()));</span>
+
+            <span class="kt">var</span> <span class="n">f3</span> <span class="p">=</span> <span class="n">DynamicProxy</span><span class="p">.</span><span class="n">GetObject</span><span class="p">&lt;</span><span class="n">IF3</span><span class="p">&gt;(</span><span class="n">guid2</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">f3</span><span class="p">.</span><span class="nf">GetName</span><span class="p">());</span>
+</code></pre></div></div>
+
+<p>如果是在不同的业务上，估计小伙伴很难知道其实使用的 f2 和 f3 是相同一个类</p>
+
+<p>这是我从 VisualStudio 学到的黑科技，通过这个方式定义，可以隐藏很多用户不需要了解的，同时可以随意的变动逻辑，只需要保持存在对应的接口就可以</p>
+
+<p>例如现在我通过 F1 传入，但是我发现其中的某几个 Guid 获取的对应方法我需要修改了，于是我可以再创建一个 F2 的类，修改原因的 Guid 的值。还是使用上面的代码，我发现了通过 guid2 获取到的 IF3 的 GetName 方法需要修改。但是我不能影响到 IF2 的逻辑，于是我可以在传入的时候修改代码</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">- DynamicProxy.Add(guid2, f1);
+</span><span class="gi">+ DynamicProxy.Add(guid2, new F2());
+</span></code></pre></div></div>
+
+<p>这样就可以做到原有的 IF2 的逻辑不变，同时修改了另一个接口的方法</p>
+
+<p>这里 DynamicProxy 的代码其实很简单，只是重写 Invoke 方法，从方法里面拿到用户调用的方法，通过反射调用实例的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">class</span> <span class="nc">Express</span>
+        <span class="p">{</span>
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="nf">Express</span><span class="p">(</span><span class="n">Lazy</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">instance</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">_instance</span> <span class="p">=</span> <span class="n">instance</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">public</span> <span class="kt">object</span> <span class="n">Instance</span> <span class="p">=&gt;</span> <span class="n">_instance</span><span class="p">.</span><span class="n">Value</span><span class="p">;</span>
+
+            <span class="k">private</span> <span class="k">readonly</span> <span class="n">Lazy</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">_instance</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">class</span> <span class="nc">Proxy</span> <span class="p">:</span> <span class="n">RealProxy</span>
+        <span class="p">{</span>
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="nf">Proxy</span><span class="p">(</span><span class="n">Type</span> <span class="n">classToProxy</span><span class="p">,</span> <span class="n">Express</span> <span class="n">express</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">classToProxy</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Express</span> <span class="p">=</span> <span class="n">express</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">public</span> <span class="n">Express</span> <span class="n">Express</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="k">override</span> <span class="n">IMessage</span> <span class="nf">Invoke</span><span class="p">(</span><span class="n">IMessage</span> <span class="n">msg</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">MethodCallMessageWrapper</span> <span class="n">callMessageWrapper</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MethodCallMessageWrapper</span><span class="p">((</span><span class="n">IMethodCallMessage</span><span class="p">)</span> <span class="n">msg</span><span class="p">);</span>
+                <span class="n">MethodInfo</span> <span class="n">methodBase</span> <span class="p">=</span> <span class="n">callMessageWrapper</span><span class="p">.</span><span class="n">MethodBase</span> <span class="k">as</span> <span class="n">MethodInfo</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">methodBase</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+
+                <span class="kt">var</span> <span class="n">instance</span> <span class="p">=</span> <span class="n">Express</span><span class="p">.</span><span class="n">Instance</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="n">instance</span><span class="p">.</span><span class="nf">GetType</span><span class="p">();</span>
+
+                <span class="n">Type</span><span class="p">[]</span> <span class="n">argumentTypeList</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">callMessageWrapper</span><span class="p">.</span><span class="n">Args</span><span class="p">?.</span><span class="nf">Any</span><span class="p">()</span> <span class="k">is</span> <span class="k">true</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">argumentTypeList</span> <span class="p">=</span> <span class="n">callMessageWrapper</span><span class="p">.</span><span class="n">Args</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span><span class="p">.</span><span class="nf">GetType</span><span class="p">()).</span><span class="nf">ToArray</span><span class="p">();</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">argumentTypeList</span> <span class="p">=</span> <span class="n">Type</span><span class="p">.</span><span class="n">EmptyTypes</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="kt">var</span> <span class="n">method</span> <span class="p">=</span> <span class="n">type</span><span class="p">.</span><span class="nf">GetMethod</span><span class="p">(</span><span class="n">methodBase</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span> <span class="n">argumentTypeList</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">method</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">(</span><span class="s">"调用方法不匹配，找不到"</span> <span class="p">+</span> <span class="n">methodBase</span> <span class="p">+</span> <span class="s">"方法"</span><span class="p">);</span>
+                <span class="p">}</span>
+
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">ReturnMessage</span><span class="p">(</span>
+                    <span class="n">method</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">callMessageWrapper</span><span class="p">.</span><span class="n">Args</span><span class="p">),</span>
+                    <span class="n">callMessageWrapper</span><span class="p">.</span><span class="n">Args</span><span class="p">,</span> <span class="n">callMessageWrapper</span><span class="p">.</span><span class="n">ArgCount</span><span class="p">,</span> <span class="n">callMessageWrapper</span><span class="p">.</span><span class="n">LogicalCallContext</span><span class="p">,</span>
+                    <span class="n">callMessageWrapper</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>创建 DynamicProxy 类，这个类就是给用户用的，当然实际的命名将会修改</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">DynamicProxy</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">Guid</span> <span class="n">guid</span><span class="p">,</span> <span class="kt">object</span> <span class="n">instance</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_dictionary</span><span class="p">[</span><span class="n">guid</span><span class="p">]</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Express</span><span class="p">(</span><span class="k">new</span> <span class="n">Lazy</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;(()</span> <span class="p">=&gt;</span> <span class="n">instance</span><span class="p">));</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="n">T</span> <span class="n">GetObject</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;(</span><span class="n">Guid</span> <span class="n">guid</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(!</span><span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">).</span><span class="n">IsInterface</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="k">new</span> <span class="nf">Proxy</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">),</span> <span class="n">_dictionary</span><span class="p">[</span><span class="n">guid</span><span class="p">]).</span><span class="nf">GetTransparentProxy</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 实际代码请使用缓存池</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="n">Guid</span><span class="p">,</span> <span class="n">Express</span><span class="p">&gt;</span> <span class="n">_dictionary</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="n">Guid</span><span class="p">,</span> <span class="n">Express</span><span class="p">&gt;();</span>
+
+        <span class="k">class</span> <span class="nc">Express</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+
+        <span class="k">class</span> <span class="nc">Proxy</span> <span class="p">:</span> <span class="n">RealProxy</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在实际使用上面代码还需要做很多更改，例如支持 Express 里面添加多个实例，也就是给用户一个 Guid 和接口调用的方法，不同的方法实际可以从多个类里面调用</p>
+
+<p>本文代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/1e65084e8a8f56695ab6580f20dee74e6c10353b/LebaicocaqeregelHojajaycal">github</a>欢迎小伙伴访问</p>
+
+:ET

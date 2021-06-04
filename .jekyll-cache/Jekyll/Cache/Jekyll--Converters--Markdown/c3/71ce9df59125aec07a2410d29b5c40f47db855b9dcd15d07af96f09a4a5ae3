@@ -1,0 +1,152 @@
+I"�*<p>有很多方法都是异步，那么如何从异步转到同步？</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/5 10:18:40 -->
+
+<div id="toc"></div>
+
+<p>在本文开始，我必须告诉大家，这个方法可能立即死锁，所以使用的时候需要满足下面的条件</p>
+
+<h2 id="使用的条件">使用的条件</h2>
+
+<ol>
+  <li>
+    <p>异步转同步的线程不是 UI 线程</p>
+  </li>
+  <li>
+    <p>如果线程是UI线程，那么异步方法不能在另外一个线程。</p>
+  </li>
+</ol>
+
+<p>看到这里也许你会疑惑，为何异步方法可以不在另一个线程？实际上对于 IO 等的异步方法，都是没有创建线程，请看<a href="http://blog.stephencleary.com/2013/11/there-is-no-thread.html">There Is No Thread</a></p>
+
+<p>关于这条件是如何来的，请看<a href="https://walterlv.gitee.io/post/deadlock-in-task-wait.html">使用 Task.Wait()？立刻死锁（deadlock） - walterlv</a></p>
+
+<h2 id="使用方法">使用方法</h2>
+
+<p>可以使用的方法需要获得是否有返回值，返回值是否需要。</p>
+
+<p>如果需要返回值，使用<code class="language-plaintext highlighter-rouge">GetResults</code></p>
+
+<p>如从文件夹获取文件：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">StorageFolder</span> <span class="n">folder</span> <span class="p">=</span> <span class="n">StorageFolder</span><span class="p">.</span><span class="nf">GetFolderFromPathAsync</span><span class="p">(</span><span class="s">""</span><span class="p">).</span><span class="nf">GetResults</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>这是同步方法，几乎不需要做什么修改</p>
+
+<p>如果是没有返回值或不需要返回值的，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">StorageFolder</span><span class="p">.</span><span class="nf">GetFolderFromPathAsync</span><span class="p">(</span><span class="s">""</span><span class="p">).</span><span class="nf">AsTask</span><span class="p">().</span><span class="nf">Wait</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>假设一个方法是没返回的，可以使用<code class="language-plaintext highlighter-rouge">Wait</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+            <span class="nf">Foo</span><span class="p">().</span><span class="nf">Wait</span><span class="p">();</span>
+
+
+    <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">Foo</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>通过这个方法就可以把异步方法转同步。</p>
+
+<p>如果需要反过来，把同步转异步，可以使用 <a href="http://blog.csdn.net/lindexi_gd/article/details/57897162">同步方法转异步</a></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+               <span class="err">写你的代码</span>
+            <span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="使用taskwait-时需要小心死锁">使用<code class="language-plaintext highlighter-rouge">Task.Wait</code> 时需要小心死锁</h2>
+
+<h3 id="不会出现死锁的代码">不会出现死锁的代码</h3>
+
+<p>直接在UI使用<code class="language-plaintext highlighter-rouge">Task.Run</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+              <span class="p">{</span>
+                  <span class="k">return</span> <span class="m">2</span><span class="p">;</span>
+              <span class="p">}).</span><span class="n">Result</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>使用<code class="language-plaintext highlighter-rouge">Task.Delay</code>等待</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">).</span><span class="nf">Wait</span><span class="p">();</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>即使使用方法，里面使用 io 也有可能死锁</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">DoAsync</span><span class="p">().</span><span class="nf">Wait</span><span class="p">();</span>
+        <span class="p">}</span>
+
+
+        <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoAsync</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 调用这个方法在 10.0.17134 / 10.0.16299 概率的死锁</span>
+            <span class="c1">// 在 10.0.17763 基本就会死锁</span>
+            <span class="k">await</span> <span class="n">ApplicationData</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">LocalFolder</span><span class="p">.</span><span class="nf">CreateFileAsync</span><span class="p">(</span><span class="s">"lin"</span><span class="p">,</span> <span class="n">CreationCollisionOption</span><span class="p">.</span><span class="n">ReplaceExisting</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="会出现死锁的写法">会出现死锁的写法</h3>
+
+<p>在UI使用异步会创建线程的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">DoAsync</span><span class="p">().</span><span class="nf">Wait</span><span class="p">();</span>
+        <span class="p">}</span>
+
+
+        <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoAsync</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="p">});</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">DoAsync</span><span class="p">().</span><span class="nf">Wait</span><span class="p">();</span>
+        <span class="p">}</span>
+
+
+        <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoAsync</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">DoAsync</span><span class="p">().</span><span class="nf">Wait</span><span class="p">();</span>
+        <span class="p">}</span>
+
+
+
+        <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">DoAsync</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span> <span class="p">()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">ApplicationData</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">LocalFolder</span><span class="p">.</span><span class="nf">CreateFileAsync</span><span class="p">(</span><span class="s">"123"</span><span class="p">,</span>
+                    <span class="n">CreationCollisionOption</span><span class="p">.</span><span class="n">ReplaceExisting</span><span class="p">).</span><span class="nf">GetResults</span><span class="p">();</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>参见：<a href="https://walterlv.gitee.io/post/deadlock-in-task-wait.html">使用 Task.Wait()？立刻死锁（deadlock） - walterlv</a></p>
+
+:ET

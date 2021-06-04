@@ -1,0 +1,163 @@
+I"�9<p>最近遇到一个问题，经常有小伙伴在类A的构造里调用静态函数B，但是这时B依赖于A的初始化完成，于是就无限循环。所以我需要在判断小伙伴调用B时是否在A的构造方法里，如果是就给他异常。
+本文告诉大家如何使用 StackTrace 获得调用堆栈，并且判断当前是否构造调用</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<!-- 标签：wpf,黑科技 -->
+
+<p>假设有方法 Foo ，如果需要判断 Foo 的调用有哪些，可以使用下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">stackTrace</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StackTrace</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>使用<code class="language-plaintext highlighter-rouge">var n = stackTrace.FrameCount;</code>可以得到当前的栈有几个，最顶部就是最近调用。</p>
+
+<p>例如调用是 <code class="language-plaintext highlighter-rouge">lindexi-&gt;A-&gt;csdn-&gt;Foo</code> 那么对应的栈就是下表</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>序号</th>
+      <th>方法</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>3</td>
+      <td>lindexi</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>A</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>csdn</td>
+    </tr>
+    <tr>
+      <td>0</td>
+      <td>Foo</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>如果要判断当前的调用是构造函数，那么需要知道，构造函数就是<code class="language-plaintext highlighter-rouge">.ctor</code> 那么使用下面的代码就可以判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">stackTrace</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StackTrace</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">stackTrace</span><span class="p">.</span><span class="n">FrameCount</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="c1">//判断构造</span>
+                <span class="kt">var</span> <span class="n">cto</span> <span class="p">=</span> <span class="s">".ctor"</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">f</span> <span class="p">=</span> <span class="n">stackTrace</span><span class="p">.</span><span class="nf">GetFrame</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="nf">GetMethod</span><span class="p">();</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">cto</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"构造使用"</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">stackTrace</span><span class="p">.</span><span class="nf">GetFrame</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="nf">GetMethod</span><span class="p">().</span><span class="n">Name</span><span class="p">);</span>
+            <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>建议把上面的代码复制到一个项目，自己跑一下就知道了</p>
+
+<p>如果还需要判断是指定类型的构造函数，那么需要使用下面的代码，下面代码判断是类型<code class="language-plaintext highlighter-rouge">GqpluGkmoanvp</code>的构造调用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">stackTrace</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StackTrace</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">stackTrace</span><span class="p">.</span><span class="n">FrameCount</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="c1">//判断构造</span>
+                <span class="kt">var</span> <span class="n">cto</span> <span class="p">=</span> <span class="s">".ctor"</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">f</span> <span class="p">=</span> <span class="n">stackTrace</span><span class="p">.</span><span class="nf">GetFrame</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="nf">GetMethod</span><span class="p">();</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">cto</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">f</span><span class="p">.</span><span class="n">DeclaringType</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="p">.</span><span class="nf">IsSubclassOf</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">GqpluGkmoanvp</span><span class="p">))</span> <span class="p">||</span> <span class="n">t</span> <span class="p">==</span> <span class="k">typeof</span><span class="p">(</span><span class="n">GqpluGkmoanvp</span><span class="p">))</span>
+                    <span class="p">{</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"构造使用"</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">stackTrace</span><span class="p">.</span><span class="nf">GetFrame</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="nf">GetMethod</span><span class="p">().</span><span class="n">Name</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>实际使用<code class="language-plaintext highlighter-rouge">t.IsSubclassOf(typeof(GqpluGkmoanvp))</code>有些多余，但是写了也可以。因为如果写在构造，那么就会先调用基类的构造方法，所以已经会出现判断到基类的构造方法。</p>
+
+<p>例如有下面的类，在构造方法调用<code class="language-plaintext highlighter-rouge">Foo</code>，那么调用堆栈就是 <code class="language-plaintext highlighter-rouge">Foo</code>-<code class="language-plaintext highlighter-rouge">A1</code>-<code class="language-plaintext highlighter-rouge">A</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">A1</span><span class="p">:</span><span class="n">A</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="nf">A1</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nf">Foo</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="k">class</span> <span class="nc">A</span>
+<span class="p">{</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>下面是我封装的一个方法，用于判断当前调用是否在某个类里的某个方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 查看调用这个方式是否在某个类的某个方法</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="class"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="method"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">CheckStackClassMethod</span><span class="p">(</span><span class="n">Type</span> <span class="n">@class</span><span class="p">,</span> <span class="kt">string</span> <span class="n">method</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">stackTrace</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StackTrace</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">stackTrace</span><span class="p">.</span><span class="n">FrameCount</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">f</span> <span class="p">=</span> <span class="n">stackTrace</span><span class="p">.</span><span class="nf">GetFrame</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="nf">GetMethod</span><span class="p">();</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">f</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">t</span> <span class="p">=</span> <span class="n">f</span><span class="p">.</span><span class="n">DeclaringType</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">t</span> <span class="p">==</span> <span class="n">@class</span> <span class="p">||</span> <span class="n">t</span><span class="p">.</span><span class="nf">IsSubclassOf</span><span class="p">(</span><span class="n">@class</span><span class="p">)</span> <span class="p">||</span> <span class="p">(</span><span class="n">@class</span><span class="p">.</span><span class="n">IsInterface</span> <span class="p">&amp;&amp;</span> <span class="n">@class</span><span class="p">.</span><span class="nf">IsAssignableFrom</span><span class="p">(</span><span class="n">t</span><span class="p">)))</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>代码放在<a href="https://gitee.com/lindexi/codes/qigv3dt12js9ywoakpbu631">WPF 判断调用方法堆栈</a></p>
+
+<script src="https://gitee.com/lindexi/codes/qigv3dt12js9ywoakpbu631/widget_preview?title=CheckStackClassMethod"></script>
+
+<p>因为传入的类型可能是接口，所以类型判断就需要加上接口继承的，所有代码已经给了大家。</p>
+
+<p>使用这个方法，可以把判断是否在某个类的某个方法调用这个函数就可以修改为下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nf">CheckStackClassMethod</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">GqpluGkmoanvp</span><span class="p">),</span> <span class="s">".d"</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"构造使用"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我经过测试下使用这个函数，判断是否我要保护的方法在我不想要被调用的类调用，如果是就抛出异常。接着我的朋友的代码跑不过，就把我祭天。</p>
+
+<p>感谢 <a href="https://walterlv.oschina.io/">walterlv</a></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017101220537.jpg" alt="" /></p>
+
+:ET

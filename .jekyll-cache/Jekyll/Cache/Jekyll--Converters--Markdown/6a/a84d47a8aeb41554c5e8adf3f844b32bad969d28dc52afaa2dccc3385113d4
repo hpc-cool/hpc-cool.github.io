@@ -1,0 +1,68 @@
+I"o<p>好多小伙伴说 WPF 的程序有五个窗口，但是我尝试使用了 EnumThreadWindows 去获取的时候居然拿到了 10 多个窗口</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/12/18 21:16:40 -->
+
+<!-- csdn -->
+
+<p>在 <a href="https://lindexi.gitee.io/post/WPF-%E5%86%85%E9%83%A8%E7%9A%845%E4%B8%AA%E7%AA%97%E5%8F%A3%E4%B9%8B-MediaContextNotificationWindow.html">WPF 内部的5个窗口之 MediaContextNotificationWindow</a> 听说有五个窗口</p>
+
+<p>可以通过 user32 的 EnumThreadWindows 找到一个线程的窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">delegate</span> <span class="kt">bool</span> <span class="nf">EnumThreadDelegate</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">EnumThreadWindows</span><span class="p">(</span><span class="kt">int</span> <span class="n">dwThreadId</span><span class="p">,</span> <span class="n">EnumThreadDelegate</span> <span class="n">lpfn</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>获取线程的 id 的方法需要先获取进程，在 Loaded 之后尝试获取 WPF 的进程，通过 <code class="language-plaintext highlighter-rouge">Process.GetCurrentProcess()</code> 可以拿到当前的进程</p>
+
+<p>通过 process.Threads 可以拿到进程的线程，封装为一个方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">delegate</span> <span class="kt">bool</span> <span class="nf">EnumThreadDelegate</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">EnumThreadWindows</span><span class="p">(</span><span class="kt">int</span> <span class="n">dwThreadId</span><span class="p">,</span> <span class="n">EnumThreadDelegate</span> <span class="n">lpfn</span><span class="p">,</span>
+            <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">);</span>
+
+        <span class="k">static</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IntPtr</span><span class="p">&gt;</span> <span class="nf">EnumerateProcessWindowHandles</span><span class="p">(</span><span class="n">Process</span> <span class="n">process</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">handleList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">IntPtr</span><span class="p">&gt;();</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="n">ProcessThread</span> <span class="n">thread</span> <span class="k">in</span> <span class="n">process</span><span class="p">.</span><span class="n">Threads</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">EnumThreadWindows</span><span class="p">(</span><span class="n">thread</span><span class="p">.</span><span class="n">Id</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">hWnd</span><span class="p">,</span> <span class="n">lParam</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="n">handleList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">hWnd</span><span class="p">);</span> <span class="k">return</span> <span class="k">true</span><span class="p">;</span> <span class="p">},</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">handleList</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>调用 EnumerateProcessWindowHandles 输出进程就可以拿到这个进程内的所有窗口，于是输入当前的 WPF 的进程，获取一下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_Loaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">handleList</span> <span class="p">=</span> <span class="nf">EnumerateProcessWindowHandles</span><span class="p">(</span><span class="n">Process</span><span class="p">.</span><span class="nf">GetCurrentProcess</span><span class="p">());</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">handleList</span><span class="p">.</span><span class="nf">Count</span><span class="p">());</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>返回的是 14 个窗口，但是如果将代码移动到 WPF 的构造函数，会发现只有两个窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">handleList</span> <span class="p">=</span> <span class="nf">EnumerateProcessWindowHandles</span><span class="p">(</span><span class="n">Process</span><span class="p">.</span><span class="nf">GetCurrentProcess</span><span class="p">());</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">handleList</span><span class="p">.</span><span class="nf">Count</span><span class="p">());</span>
+
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">Loaded</span> <span class="p">+=</span> <span class="n">MainWindow_Loaded</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><a href="https://lindexi.gitee.io/post/WPF-%E5%86%85%E9%83%A8%E7%9A%845%E4%B8%AA%E7%AA%97%E5%8F%A3%E4%B9%8B-MediaContextNotificationWindow.html">WPF 内部的5个窗口之 MediaContextNotificationWindow</a></p>
+
+:ET

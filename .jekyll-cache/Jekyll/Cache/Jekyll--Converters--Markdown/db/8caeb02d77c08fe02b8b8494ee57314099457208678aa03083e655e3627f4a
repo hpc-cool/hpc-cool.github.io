@@ -1,0 +1,48 @@
+I"�<p>在使用 Autofac 作为 IoC 容器，因为 Autofac 默认的创建时机是在主机运行时。而在此 Module 被 Load 时注入的对象的注入的时机，将会在单元测试 Fake 注入之后，这就意味着 Load 时注入的对象将会覆盖 Fake 的对象。可以通过调用 Autofac 的 PreserveExistingDefaults 方法解决覆盖的问题</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/6 20:20:20 -->
+
+<!-- 发布 -->
+
+<p>在进行集成测试，需要注入一些 Fake 的或者 Mock 的等用来测试的对象，这些对象期望替换掉原有的业务逻辑的对象。而在使用 Autofac 框架，将因为对象创建时机的问题，而让单元测试不好玩</p>
+
+<p>单元测试注入的顺序，是在业务对象注入之前，因此业务对象将会替换掉单元测试注入的对象</p>
+
+<p>通过 PreserveExistingDefaults 方法，可以在框架判断，如果在此之前已有注册，那么将不再进行注册，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">builder</span><span class="p">.</span><span class="n">RegisterType</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;().</span><span class="n">As</span><span class="p">&lt;</span><span class="n">IFoo</span><span class="p">&gt;()</span>
+                <span class="c1">// 通过 PreserveExistingDefaults 可以在已经注册过了的应用，不会被覆盖为 Foo 类型</span>
+                <span class="c1">// 在单元测试使用，单元测试注入了测试用的消费者，可以不被覆盖</span>
+                <span class="p">.</span><span class="nf">PreserveExistingDefaults</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>此时就可以在单元测试中，通过如下代码注入 FakeFoo 对象</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Microsoft</span><span class="p">.</span><span class="n">Extensions</span><span class="p">.</span><span class="n">Hosting</span><span class="p">.</span><span class="n">Host</span><span class="p">.</span><span class="nf">CreateDefaultBuilder</span><span class="p">()</span>
+                <span class="p">.</span><span class="nf">ConfigureWebHostDefaults</span><span class="p">(</span><span class="n">webBuilder</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">webBuilder</span><span class="p">.</span><span class="n">UseStartup</span><span class="p">&lt;</span><span class="n">Startup</span><span class="p">&gt;();</span>
+                    <span class="n">webBuilder</span><span class="p">.</span><span class="nf">UseTestServer</span><span class="p">();</span> <span class="c1">//关键是多了这一行建立TestServer</span>
+                <span class="p">})</span>
+                <span class="c1">// 使用 auto fac 代替默认的 IOC 容器 </span>
+                <span class="p">.</span><span class="nf">UseServiceProviderFactory</span><span class="p">(</span><span class="k">new</span> <span class="nf">AutofacServiceProviderFactory</span><span class="p">(</span><span class="n">builder</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">builder</span><span class="p">.</span><span class="nf">RegisterModule</span><span class="p">(</span><span class="k">new</span> <span class="nf">FakeFooModule</span><span class="p">());</span>
+                <span class="p">}))</span>
+
+    <span class="k">class</span> <span class="nc">FakeFooModule</span> <span class="p">:</span> <span class="n">Autofac</span><span class="p">.</span><span class="n">Module</span>
+    <span class="p">{</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Load</span><span class="p">(</span><span class="n">ContainerBuilder</span> <span class="n">builder</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">builder</span><span class="p">.</span><span class="n">RegisterType</span><span class="p">&lt;</span><span class="n">FakeFoo</span><span class="p">&gt;().</span><span class="n">As</span><span class="p">&lt;</span><span class="n">FakeFoo</span><span class="p">&gt;().</span><span class="n">As</span><span class="p">&lt;</span><span class="n">IFoo</span><span class="p">&gt;().</span><span class="nf">SingleInstance</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码就是尝试注入 FakeFoo 作为 IFoo 服务，在业务逻辑里面，将判断 IFoo 服务是否已注册，如果没有被注册，才注册为 Foo 对象</p>
+
+<p>更多集成测试请看 <a href="https://blog.lindexi.com/post/asp-dotnet-core-%E5%9F%BA%E4%BA%8E-TestServer-%E5%81%9A%E9%9B%86%E6%88%90%E6%B5%8B%E8%AF%95.html">asp dotnet core 基于 TestServer 做集成测试</a></p>
+
+:ET

@@ -1,0 +1,80 @@
+I"l<p>现在完全开源的 Xamarin Forms 是支持使用 WPF 进行承载，也就是使用 Xamarin 开发的控件等是可以在 WPF 项目使用的。本文来告诉大家如何在 WPF 中运行 Xamarin Forms 项目，让 Xamarin Forms 构建为 WPF 应用</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/8 9:14:15 -->
+
+<p>默认的 VS 没有加上 WPF 的模版，而官方文档 <a href="https://docs.microsoft.com/en-us/xamarin/xamarin-forms/platform/other/wpf">WPF Platform Setup - Xamarin</a> 旧了一点，因为社区的开发比较激进，而文档没有更新</p>
+
+<p>如果你按照官方文档玩，预计会在构建的时候看到如下提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">App</span><span class="p">.</span><span class="n">xaml</span> <span class="p">:</span> <span class="n">error</span> <span class="p">:</span>  <span class="p">:</span> <span class="n">XamlC</span> <span class="n">error</span> <span class="n">XFC0000</span> <span class="p">:</span> <span class="n">Cannot</span> <span class="n">resolve</span> <span class="n">type</span> <span class="s">"Application"</span>
+</code></pre></div></div>
+
+<p>当然，现在是 2020.07.31 也许你看本文的博客，官方文档更新了，而本文也失效了。此时请不要以为我在骗你</p>
+
+<p>上面代码的原因是此时不需要使用 App.xaml 了，也不需要使用 MainWindow.xaml 了，让咱手动从零开始创建</p>
+
+<p>当然，需要先存在一个 Xamarin Forms 项目哈，最好这是一个使用模版重新创建的项目，使用的版本都是 4.8 以上。我推荐是新创建一个，这样你通过之后，才进行修改，能解决因为自己原有的 Xamarin Forms 项目的坑让代码构建失败</p>
+
+<p>新建一个叫 Xx.WPF.csproj 的项目，请将 Xx 替换为你自己的名字。使用 WPF 项目没有安卓项目那么弱，对命名长度要求比较多，在安卓项目里面如果你敢将名字命名比较长，那么将会因为路径太长炸掉，详细请看 <a href="https://blog.lindexi.com/post/Xamarin-%E6%9E%84%E5%BB%BA%E5%AE%89%E5%8D%93%E5%A4%B1%E8%B4%A5-%E5%9B%A0%E4%B8%BA%E8%B7%AF%E5%BE%84%E5%A4%AA%E9%95%BF.html">Xamarin 构建安卓失败 因为路径太长</a></p>
+
+<p>在 Xx.WPF.csproj 添加如下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Project Sdk="Microsoft.NET.Sdk.WindowsDesktop"&gt;
+
+  &lt;PropertyGroup&gt;
+    &lt;OutputType&gt;WinExe&lt;/OutputType&gt;
+    &lt;TargetFramework&gt;net472&lt;/TargetFramework&gt;
+    &lt;UseWPF&gt;true&lt;/UseWPF&gt;
+  &lt;/PropertyGroup&gt;
+
+  &lt;ItemGroup&gt;
+    &lt;PackageReference Include="Xamarin.Forms.Platform.WPF" Version="4.8.0.1269" /&gt;
+  &lt;/ItemGroup&gt;
+
+&lt;/Project&gt;
+</code></pre></div></div>
+
+<p>可以看到上面代码的是十分简单的逻辑代码。但是如上面代码写的，使用的 TargetFramework 版本是 .NET Framework 4.7.2 这就意味着最低支持的系统是 Win7 带 Sp1 的系统。因为 Win7 非 sp1 最高版本 .NET Framework 是 4.5.2 同时不支持 .NET Core 任何版本，而 Win7 加上 Sp1 的系统能支持到 .NET Framework 4.8 的版本和 .NET Core 版本</p>
+
+<p>那为什么需要采用 .NET Framework 4.7.2 的版本？因为 需要有 <a href="https://github.com/dotnet-campus/opentk">OpenTK</a> 的支持，而 OpenTK 最低是 .NET Framework 4.6.1 因此暂时无法降级到 .NET Framework 4.5 版本用来支持 Win7 非 sp1 系统</p>
+
+<p>好，继续写一个叫 Program.cs 的类，小伙伴可以看到，一个 WPF 程序是只有 csproj 文件和 Program.cs 文件就可以完成对 Xamarin Forms 项目的承载</p>
+
+<p>在 Program.cs 创建主函数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意需要给 Main 添加 STA 线程</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">STAThread</span><span class="p">]</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果没有加上这个特性，那么将会在运行提示如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">InvalidOperationException</span><span class="p">:</span><span class="err">“调用线程必须为</span> <span class="n">STA</span><span class="err">，因为许多</span> <span class="n">UI</span> <span class="err">组件都需要。”</span>
+</code></pre></div></div>
+
+<p>接下来就是创建 Application 创建 WPF 应用，然后运行消息调度，接着加载 Xamarin Forms 应用作为界面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">application</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Application</span><span class="p">();</span>
+            <span class="n">Forms</span><span class="p">.</span><span class="nf">Init</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">formsApplicationPage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FormsApplicationPage</span><span class="p">();</span>
+            <span class="n">formsApplicationPage</span><span class="p">.</span><span class="nf">LoadApplication</span><span class="p">(</span><span class="k">new</span> <span class="n">XamarinNeller</span><span class="p">.</span><span class="nf">App</span><span class="p">());</span>
+            <span class="n">application</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="n">formsApplicationPage</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>此时就完成了，试试运行一下</p>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/96c9063fdba9fe318eb099da67422de5cc9ae5af/XamarinNeller/XamarinNeller.WPF">github</a> 欢迎小伙伴访问</p>
+
+:ET

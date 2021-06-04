@@ -1,0 +1,39 @@
+I"�<p>本文告诉大家如何获得设备的usb来进行判断是否有哪些usb和找不到usb可能是什么。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<p>需要在项目右击引用，点击程序集，搜索 System.Management 然后安装他</p>
+
+<p>然后使用下面的代码就可以获得设备的 usb 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">static</span> <span class="n">List</span><span class="p">&lt;(</span><span class="kt">string</span> <span class="n">DeviceID</span><span class="p">,</span> <span class="kt">string</span> <span class="n">PNPDeviceID</span><span class="p">,</span> <span class="kt">string</span> <span class="n">Description</span><span class="p">)&gt;</span> <span class="nf">GetUSBDevices</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">List</span><span class="p">&lt;(</span><span class="kt">string</span> <span class="n">DeviceID</span><span class="p">,</span> <span class="kt">string</span> <span class="n">PNPDeviceID</span><span class="p">,</span> <span class="kt">string</span> <span class="n">Description</span><span class="p">)&gt;</span> <span class="n">devices</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;(</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">)&gt;();</span>
+
+            <span class="n">ManagementObjectCollection</span> <span class="n">collection</span><span class="p">;</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">searcher</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ManagementObjectSearcher</span><span class="p">(</span><span class="s">@"Select * From Win32_USBHub"</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">collection</span> <span class="p">=</span> <span class="n">searcher</span><span class="p">.</span><span class="nf">Get</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">device</span> <span class="k">in</span> <span class="n">collection</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">devices</span><span class="p">.</span><span class="nf">Add</span><span class="p">(((</span><span class="kt">string</span><span class="p">)</span> <span class="n">device</span><span class="p">.</span><span class="nf">GetPropertyValue</span><span class="p">(</span><span class="s">"DeviceID"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="n">device</span><span class="p">.</span><span class="nf">GetPropertyValue</span><span class="p">(</span><span class="s">"PNPDeviceID"</span><span class="p">),</span>
+                    <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="n">device</span><span class="p">.</span><span class="nf">GetPropertyValue</span><span class="p">(</span><span class="s">"Description"</span><span class="p">)));</span>
+            <span class="p">}</span>
+
+            <span class="n">collection</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+            <span class="k">return</span> <span class="n">devices</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果需要判断是否存在某个 usb ，就通过 pid vid 判断，判断的方法是拿<code class="language-plaintext highlighter-rouge">PNPDeviceID</code>字符串比较</p>
+
+<p>参见：<a href="http://www.cnblogs.com/coolkiss/p/3328825.html">c# 获取移动硬盘信息、监听移动设备的弹出与插入事件 - Chris Cheung - 博客园</a></p>
+
+<p>如果发现找不到 usb ，可能是在开机的时候进行找usb，一般需要开机之后很久才会把所有的设备添加，所以如果找不到，就看开机的时间，如果太短，那么可能是因为程序太快去查。</p>
+
+:ET

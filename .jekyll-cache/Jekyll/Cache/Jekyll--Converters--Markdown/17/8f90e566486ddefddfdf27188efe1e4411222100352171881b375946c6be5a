@@ -1,0 +1,123 @@
+I"�/<p>有时候应用需要打开后缀名为x的文件，那么如何从文件打开应用？</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/17 10:20:15 -->
+
+<div id="toc"></div>
+
+<p>首先，需要打开 Package.appxmanifest 在声明添加文件</p>
+
+<!-- ![](image/win10 uwp 关联文件/win10 uwp 关联文件0.png) -->
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV+BQA28wYAAQAEAK4+AQBmQwIAaOgJAOjZ/2017223193546.jpg" alt="" /></p>
+
+<p>添加一个功能，需要写的最少的项是名称，文件类型两个。</p>
+
+<p>上面的图就是我添加 jpg 关联的方法，建议是写多一些。如果是作为测试，想看这个功能是如何使用，就只需要写文件类型。</p>
+
+<p>现在我的应用可以打开 jpg 文件，在一个 jpg 文件右击打开方式，在这个项目部署之后就可以设置是使用这个项目打开。在实际的项目我也有一个应用是需要这个功能，这个就是 UWP图床: https://www.microsoft.com/store/apps/9nblggh562r2 这个软件可以快速将图片上传到图床，图床可以使用默认的也可以自己设置。在写博客时使用这个软件可以快速上传图片创建连接。</p>
+
+<p>添加完，打开 App.xaml.cs 添加一个函数，通过 OnFileActivated 调用就是用户使用这个应用打开关联文件，打开的文件可以从 FileActivatedEventArgs 找到</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnFileActivated</span><span class="p">(</span><span class="n">FileActivatedEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnFileActivated</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个函数现在还没代码，需要对他做一点修改</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnFileActivated</span><span class="p">(</span><span class="n">FileActivatedEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">Files</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+            <span class="n">Frame</span> <span class="n">frame</span> <span class="p">=</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Content</span> <span class="k">as</span> <span class="n">Frame</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">frame</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">frame</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Frame</span><span class="p">();</span>
+                <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Content</span> <span class="p">=</span> <span class="n">frame</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">frame</span><span class="p">.</span><span class="nf">Navigate</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">MainPage</span><span class="p">),</span> <span class="n">file</span><span class="p">);</span>
+             <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="nf">Activate</span><span class="p">();</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的 file 可能是空，但是上面只是告诉大家一个最简单方法，不考虑可能存在的软件已经打开等。</p>
+
+<p>如果已经打开了软件，通过 <code class="language-plaintext highlighter-rouge">frame.Navigate</code> 重新跳转到主页面，页面跳转就是这样，页面传入可以是 StorageFile 但是需要在对应的页面使用对应类型。</p>
+
+<p>现在软件在用户打开对应文件直接显示在 MainPage ，如果需要显示在别的窗口，就可以通过<code class="language-plaintext highlighter-rouge">frame.Navigate</code>跳转到其他的页面，对于跳转传参数，建议使用本渣的 MVVM 框架，请看<a href="https://blog.lindexi.com/post/win10-uwp-MVVM%E5%85%A5%E9%97%A8.html">win10 uwp MVVM入门</a>。</p>
+
+<p>我没有在博客说如何传参，但是这个对大家也不难。</p>
+
+<p>打开 MainPage.xaml 写一个 Image 在这个 Image 显示打开的图片</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;Image</span> <span class="na">x:Name=</span><span class="s">"Image"</span><span class="nt">&gt;&lt;/Image&gt;</span>
+
+</code></pre></div></div>
+
+<p>打开 xaml.cs ，把app启动的file显示在刚才的图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">Parameter</span> <span class="k">as</span> <span class="n">StorageFile</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">file</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">file</span><span class="p">.</span><span class="nf">OpenAsync</span><span class="p">(</span><span class="n">FileAccessMode</span><span class="p">.</span><span class="n">Read</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="n">BitmapImage</span> <span class="n">img</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">();</span>
+                    <span class="k">await</span> <span class="n">img</span><span class="p">.</span><span class="nf">SetSourceAsync</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+                    <span class="n">Image</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">img</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>UWP 从文件显示图片很简单，打开放在img就好。</p>
+
+<p>现在尝试运行一下这个项目，然后找到一张 jpg 图片，右击打开方式选择这个项目，这时就可以看到 UWP 应用显示图片。可以看到关联的代码很简单，实际上也是很简单</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV+BQA28wYAAQAEAK4+AQBmQwIAaOgJAOjZ/%E6%96%87%E4%BB%B6%E6%89%93%E5%BC%80.gif" alt="" /></p>
+
+<p>刚才只是用最简单的方式写了显示的名称，但是一个好看的应用，需要在关联文件加上图片。</p>
+
+<p>加上图片就是在刚才打开的功能可以看到图标，选择一个好看的图片，在用户将打开这个文件的默认应用设置为自己的应用时，就会使用这个应用设置的图标</p>
+
+<p>添加 Verb 也就是在文件右键菜单里面显示多个其他选项，注意此时的 UWP 应用虽然可以在文件里面显示右键菜单，但是仅限于被关联的文件。如我编辑 Package.appxmanifest 的代码，添加了 <code class="language-plaintext highlighter-rouge">&lt;uap:FileType ContentType="foo/foo"&gt;.x&lt;/uap:FileType&gt;</code> 也就是关联了后缀名是 x 的文件，我才可以修改 x 的文件右键菜单显示其他内容</p>
+
+<p>如在 x 文件右键菜单显示<code class="language-plaintext highlighter-rouge">逗比</code> 和 <code class="language-plaintext highlighter-rouge">林德熙是逗比</code> 两个选项，需要右击编辑 Package.appxmanifest 的代码</p>
+
+<!-- ![](image/win10 uwp 关联文件/win10 uwp 关联文件1.png) -->
+
+<p>先添加命名空间</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">xmlns</span><span class="p">:</span><span class="n">uap2</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/appx/manifest/uap/windows10/2"</span>
+  <span class="n">xmlns</span><span class="p">:</span><span class="n">uap3</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/appx/manifest/uap/windows10/3"</span>
+</code></pre></div></div>
+
+<p>然后添加下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;uap3:Extension</span> <span class="na">Category=</span><span class="s">"windows.fileTypeAssociation"</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;uap3:FileTypeAssociation</span> <span class="na">Name=</span><span class="s">"lindexi"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;uap:SupportedFileTypes&gt;</span>
+              <span class="nt">&lt;uap:FileType</span> <span class="na">ContentType=</span><span class="s">"foo/foo"</span><span class="nt">&gt;</span>.x<span class="nt">&lt;/uap:FileType&gt;</span>
+            <span class="nt">&lt;/uap:SupportedFileTypes&gt;</span>
+              <span class="nt">&lt;uap2:SupportedVerbs&gt;</span>
+                  <span class="nt">&lt;uap3:Verb</span> <span class="na">Id=</span><span class="s">"doubi"</span><span class="nt">&gt;</span>逗比<span class="nt">&lt;/uap3:Verb&gt;</span>
+                  <span class="nt">&lt;uap3:Verb</span> <span class="na">Id=</span><span class="s">"Print"</span><span class="nt">&gt;</span>林德熙是逗比<span class="nt">&lt;/uap3:Verb&gt;</span>
+              <span class="nt">&lt;/uap2:SupportedVerbs&gt;</span>
+            <span class="nt">&lt;uap:DisplayName&gt;</span>林德熙逗比<span class="nt">&lt;/uap:DisplayName&gt;</span>
+            <span class="nt">&lt;uap:EditFlags</span> <span class="na">OpenIsSafe=</span><span class="s">"true"</span><span class="nt">/&gt;</span>
+          <span class="nt">&lt;/uap3:FileTypeAssociation&gt;</span>
+        <span class="nt">&lt;/uap3:Extension&gt;</span>
+</code></pre></div></div>
+
+<p>现在部署完成了应用，将 x 打开关联到应用，就可以在 x 的文件右击看到了逗比和林德熙是逗比而这两个如何在应用判断用户想要的是什么打开不同页面</p>
+
+<p>在 App.xaml.cs 里面可以重写 OnFileActivated 方法，在这个方法可以用参数 FileActivatedEventArgs 的 Verb 判断</p>
+
+<p>在 FileActivatedEventArgs 的 Verb 会设置为刚才设置的 Id 的值，如 <code class="language-plaintext highlighter-rouge">&lt;uap3:Verb Id="doubi"&gt;逗比&lt;/uap3:Verb&gt;</code> 在 Verb 的值就是 doubi 可以通过这个值判断</p>
+
+<p>本文有部分逻辑都推荐小伙伴去看我的代码，本文代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/84466f2af53538ecdc8d51952f4ac5ceb893771d/NoweenanemkoGefefenaijel">github</a>欢迎小伙伴访问</p>
+
+:ET

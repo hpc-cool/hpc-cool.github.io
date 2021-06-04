@@ -1,0 +1,115 @@
+I"�,<p>这是一个 wpf 的bug，在弹出Popup之后，如果 Popup 里面有 TextBox ，这时无法在里面输入文字。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/12/21 18:10:30 -->
+
+<!-- csdn -->
+
+<p>因为 Popup 的句柄具有 WS_EX_NOACTIVATE 的特性，所以 Popup 是无法获得焦点。在微软的系统，所有的窗口、控件都是有句柄，句柄就是一个指针，获得他才知道是哪个控件。</p>
+
+<p>古老的输入法就是通过判断获得焦点的句柄是支持输入和判断他需要什么输入，如果在 win7 的搜狗，就是这样判断，于是搜狗很难在 Popup 的 TextBox 输入文字。</p>
+
+<p>这个问题实际很好解决，最简单的方法是把程序修改为 .net 4.6.2 以上，这个 bug 已经在 .net 4.6.2 修复了。或者升级到 win10 系统。如果刚好两个方法都不能使用，那么通过代码也可以解决。</p>
+
+<p>解决的方法是让输入法知道控件的句柄，这需要一个 win32 的 dll ，传说中的 User32.dll ，这个dll有<code class="language-plaintext highlighter-rouge">SetFocus</code>这个方法，请通过下面的代码在Popup打开时调用。代码的 ThePopup 就是需要打开的。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"User32.dll"</span><span class="p">)]</span>
+<span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">SetFocus</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">);</span>
+
+<span class="n">IntPtr</span> <span class="nf">GetHwnd</span><span class="p">(</span><span class="n">Popup</span> <span class="n">popup</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">HwndSource</span> <span class="n">source</span> <span class="p">=</span> <span class="p">(</span><span class="n">HwndSource</span><span class="p">)</span><span class="n">PresentationSource</span><span class="p">.</span><span class="nf">FromVisual</span><span class="p">(</span><span class="n">popup</span><span class="p">.</span><span class="n">Child</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">source</span><span class="p">.</span><span class="n">Handle</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">private</span> <span class="k">void</span> <span class="nf">ShowPopupButtonClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">ThePopup</span><span class="p">.</span><span class="n">IsOpen</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+    <span class="n">IntPtr</span> <span class="n">handle</span> <span class="p">=</span> <span class="nf">GetHwnd</span><span class="p">(</span><span class="n">ThePopup</span><span class="p">);</span>
+    <span class="nf">SetFocus</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>这是一个简单的方法。当然还有另一个方法，使用<code class="language-plaintext highlighter-rouge">SetForegroundWindow</code>方法。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"USER32.DLL"</span><span class="p">)]</span>
+<span class="p">[</span><span class="k">return</span><span class="p">:</span> <span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">Bool</span><span class="p">)]</span>
+<span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">SetForegroundWindow</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">);</span>
+ 
+<span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ActivatePopup</span><span class="p">(</span><span class="n">Popup</span> <span class="n">popup</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">HwndSource</span> <span class="n">source</span> <span class="p">=</span> <span class="p">(</span><span class="n">HwndSource</span><span class="p">)</span><span class="n">PresentationSource</span><span class="p">.</span><span class="nf">FromVisual</span><span class="p">(</span><span class="n">popup</span><span class="p">.</span><span class="n">Child</span><span class="p">);</span>
+    <span class="n">IntPtr</span> <span class="n">handle</span> <span class="p">=</span> <span class="n">source</span><span class="p">.</span><span class="n">Handle</span><span class="p">;</span>
+ 
+    <span class="nf">SetForegroundWindow</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>参见：https://www.codeproject.com/Questions/184429/Text-box-is-not-working-in-WPF-Popup</p>
+
+<p>如果发现使用了我的方法还是无法输入，那么需要看一下 TextBox 是否禁用输入法。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">InputMethod</span><span class="p">.</span><span class="n">SetIsInputMethodSuspended</span>
+</code></pre></div></div>
+
+<p>和这个类的其他属性都可以设置输入法，请尝试修改他的值。</p>
+
+<p>这个问题已经反馈 https://connect.microsoft.com/VisualStudio/feedback/details/389998/wpf-popup-messes-with-ime-switching ，微软已经修复</p>
+
+<h2 id="修复在-popup-输入法不跟随">修复在 Popup 输入法不跟随</h2>
+
+<p>在 Popup 里的 TextBox 输入可能出现输入法未跟随编辑框，这时需要调用 Win32 的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"User32.dll"</span><span class="p">)]</span>
+<span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">SetFocus</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">);</span>
+
+<span class="n">IntPtr</span> <span class="nf">GetHwnd</span><span class="p">(</span><span class="n">Popup</span> <span class="n">popup</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">HwndSource</span> <span class="n">source</span> <span class="p">=</span> <span class="p">(</span><span class="n">HwndSource</span><span class="p">)</span><span class="n">PresentationSource</span><span class="p">.</span><span class="nf">FromVisual</span><span class="p">(</span><span class="n">popup</span><span class="p">.</span><span class="n">Child</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">source</span><span class="p">.</span><span class="n">Handle</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 TextBox 获得焦点的时候调用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xxPopup</span><span class="p">.</span><span class="n">GotFocus</span> <span class="p">+=</span> <span class="n">Popup_GotFocus</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Popup_GotFocus</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// WPF BUG Fix：TextBox 在 Popup 中，IME 备选框不跟随</span>
+            <span class="n">Win32</span><span class="p">.</span><span class="nf">SetFocus</span><span class="p">(</span><span class="nf">GetHwnd</span><span class="p">(</span><span class="n">RenamePopup</span><span class="p">.</span><span class="n">Child</span><span class="p">));</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<h2 id="在-winforms-弹出的-wpf-的-textbox-无法输入问题">在 WinForms 弹出的 WPF 的 TextBox 无法输入问题</h2>
+
+<p>刚刚 Siberia 问了我一个问题，为什么 WinForms 弹出的 WPF 的文本框无法输入数字，但是可以输入其他的内容</p>
+
+<p>一开始我认为的是绑定的问题，如果一个控件绑定了另一个控件，或者有后台代码绑定，有另一个控件绑定了输入框都有方法让用户输入的数字不显示</p>
+
+<p>如果是我在调试，我会先拿到 TextChanged 事件，看是不显示还是没有接收到输入</p>
+
+<p>另外需要判断当前的焦点是否在 TextBox 上</p>
+
+<p>按照这个方法会发现有焦点，但是没有 TextChanged 收到输入，这时因为 WinForms 弹出的 WPF 程序消息循环的键盘事件的问题，对于中文的输入，有输入法在 HasKeyboardFocusCore 拿到输入，但是如果数字不经过输入法就在 WinForms 收到数字</p>
+
+<p>解决的方法是调用 EnableModelessKeyboardInterop 传入 WPF 就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Window</span><span class="err"> </span><span class="n">winWPF</span> <span class="p">=</span><span class="err"> </span><span class="k">new</span><span class="err"> </span><span class="nf">Window</span><span class="p">();</span> <span class="err"> </span><span class="c1">//WinWPF为想要显示的WPF窗体。</span>
+<span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Forms</span><span class="p">.</span><span class="n">Integration</span><span class="p">.</span><span class="n">ElementHost</span><span class="p">.</span><span class="nf">EnableModelessKeyboardInterop</span><span class="p">(</span><span class="n">winWPF</span><span class="p">);</span><span class="err">     </span>
+<span class="n">winWPF</span><span class="p">.</span><span class="nf">Show</span><span class="p">();</span><span class="err"> </span>
+
+</code></pre></div></div>
+
+<p><a href="https://www.cnblogs.com/kybs0/archive/2018/12/21/10154433.html">WPF 禁用TextBox的触摸后自动弹出虚拟键盘 - 唐宋元明清2188 - 博客园</a></p>
+
+<p><a href="https://blog.csdn.net/feiying008/article/details/9928441">解决Winform中弹出WPF窗体不能在文本框中输入的问题 - 飞鹰的专栏 - CSDN博客</a></p>
+
+<p><a href="https://blog.csdn.net/lovexiaoxiao/article/details/8862334">Windows 窗体和 WPF 互操作性输入 - 小而美 - CSDN博客</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.windows.forms.integration.elementhost.enablemodelesskeyboardinterop?view=netframework-4.7.2">ElementHost.EnableModelessKeyboardInterop(Window) Method (System.Windows.Forms.Integration)</a></p>
+
+:ET

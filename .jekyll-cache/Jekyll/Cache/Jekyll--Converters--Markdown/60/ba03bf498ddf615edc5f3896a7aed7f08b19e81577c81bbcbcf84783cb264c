@@ -1,0 +1,174 @@
+I"8<p>在 WPF 中按钮 Button 将会吃掉路由事件，此时的 EventTrigger 如果通过 RoutedEvent 是 MouseLeftButtonDown 那么将会拿不到路由事件，也就触发不了，因此样式将不会变更。简单的解决方法就是通过 VisualStateManager 配合 VisualState 来实现</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/26 10:30:27 -->
+
+<p>实现效果如下，所有代码都是 XAML 代码</p>
+
+<!-- ![](image/WPF 点击按钮时更改按钮样式界面效果的 XAML 实现方法/WPF 点击按钮时更改按钮样式界面效果的 XAML 实现方法.gif) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2FWPF%2520%25E7%2582%25B9%25E5%2587%25BB%25E6%258C%2589%25E9%2592%25AE%25E6%2597%25B6%25E6%259B%25B4%25E6%2594%25B9%25E6%258C%2589%25E9%2592%25AE%25E6%25A0%25B7%25E5%25BC%258F%25E7%2595%258C%25E9%259D%25A2%25E6%2595%2588%25E6%259E%259C%25E7%259A%2584%2520XAML%2520%25E5%25AE%259E%25E7%258E%25B0%25E6%2596%25B9%25E6%25B3%2595.gif" alt="" /></p>
+
+<p>实现方式为给 Button 定义一个样式，通过如下代码可以定义</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/Style&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码没有定义样式资源的 key 因此会对容器内所有的 Button 按钮样式生效，因此我将这个样式放在需要使用的容器里面，这样才不会干扰其他容器内的元素</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;StackPanel&gt;</span>
+    <span class="nt">&lt;StackPanel.Resources&gt;</span>
+        <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;&lt;/Style&gt;</span>
+    <span class="nt">&lt;/StackPanel.Resources&gt;</span>
+<span class="nt">&lt;/StackPanel&gt;</span>
+</code></pre></div></div>
+
+<p>接着新建一个按钮，如下代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;StackPanel&gt;</span>
+    <span class="nt">&lt;StackPanel.Resources&gt;</span>
+        <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;&lt;/Style&gt;</span>
+    <span class="nt">&lt;/StackPanel.Resources&gt;</span>
+    <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Content=</span><span class="s">"Button 1"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span>
+                    <span class="na">VerticalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/StackPanel&gt;</span>
+</code></pre></div></div>
+
+<p>接下来就是核心逻辑了，通过重写 Button 的 Template 内容，给内容的 Border 添加一些必要样式</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Template"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Setter.Value&gt;</span>
+            <span class="nt">&lt;ControlTemplate</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;Border</span> <span class="na">x:Name=</span><span class="s">"Border"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;Border.RenderTransform&gt;</span>
+                        <span class="nt">&lt;ScaleTransform</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/Border.RenderTransform&gt;</span>
+                    <span class="nt">&lt;Grid&gt;</span>
+                        <span class="nt">&lt;Rectangle</span> <span class="na">Fill=</span><span class="s">"Blue"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;ContentPresenter</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="na">VerticalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/Grid&gt;</span>
+                <span class="nt">&lt;/Border&gt;</span>
+            <span class="nt">&lt;/ControlTemplate&gt;</span>
+        <span class="nt">&lt;/Setter.Value&gt;</span>
+    <span class="nt">&lt;/Setter&gt;</span>
+<span class="nt">&lt;/Style&gt;</span>
+</code></pre></div></div>
+
+<p>接着在 Border 添加 VisualStateManager 如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Border</span> <span class="na">x:Name=</span><span class="s">"Border"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Border.RenderTransform&gt;</span>
+        <span class="nt">&lt;ScaleTransform</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Border.RenderTransform&gt;</span>
+    <span class="nt">&lt;VisualStateManager.VisualStateGroups&gt;</span>
+        <span class="nt">&lt;VisualStateGroup</span> <span class="na">x:Name=</span><span class="s">"CommonStates"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Normal"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Pressed"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/VisualStateGroup&gt;</span>
+    <span class="nt">&lt;/VisualStateManager.VisualStateGroups&gt;</span>
+    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;Rectangle</span> <span class="na">Fill=</span><span class="s">"Blue"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;ContentPresenter</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="na">VerticalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Border&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到上面代码有两个 VisualState 分别是 Normal 和 Pressed 两个，其中 Pressed 表示的是鼠标按下，因此可以通过在 Pressed 添加动画实现更改样式</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;VisualStateManager.VisualStateGroups&gt;</span>
+    <span class="nt">&lt;VisualStateGroup</span> <span class="na">x:Name=</span><span class="s">"CommonStates"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Normal"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Pressed"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Storyboard&gt;</span>
+                <span class="nt">&lt;DoubleAnimation</span> <span class="na">Storyboard.TargetProperty=</span><span class="s">"(RenderTransform).(ScaleTransform.ScaleX)"</span>
+                                 <span class="na">To=</span><span class="s">"0.5"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;DoubleAnimation</span> <span class="na">Storyboard.TargetProperty=</span><span class="s">"(RenderTransform).(ScaleTransform.ScaleY)"</span>
+                                 <span class="na">To=</span><span class="s">"0.5"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;/Storyboard&gt;</span>
+        <span class="nt">&lt;/VisualState&gt;</span>
+    <span class="nt">&lt;/VisualStateGroup&gt;</span>
+<span class="nt">&lt;/VisualStateManager.VisualStateGroups&gt;</span>
+</code></pre></div></div>
+
+<p>如上面代码是更改缩放</p>
+
+<p>那么抬起呢？其实抬起就是非 Pressed 也就是 Normal 状态，啥都不写将会自动还原为属性的值。原理是在依赖属性里面，其实属性是一个属性列表，将会取优先级最高的一个，而优先级是这样排序的</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>属性系统强制
+
+活动动画或具有 Hold 行为的动画
+
+本地值
+
+TemplatedParent 模板属性
+
+隐式样式
+
+样式触发器
+
+模板触发器
+
+样式资源库
+
+默认（主题）样式
+
+继承
+
+来自依赖属性元数据的默认值
+</code></pre></div></div>
+
+<p>详细请看 <a href="https://docs.microsoft.com/zh-cn/dotnet/framework/wpf/advanced/dependency-property-value-precedence">依赖项属性值优先级</a></p>
+
+<p>所有代码如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;StackPanel&gt;</span>
+            <span class="nt">&lt;StackPanel.Resources&gt;</span>
+                <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Template"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;Setter.Value&gt;</span>
+                            <span class="nt">&lt;ControlTemplate</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+                                <span class="nt">&lt;Border</span> <span class="na">x:Name=</span><span class="s">"Border"</span><span class="nt">&gt;</span>
+                                    <span class="nt">&lt;Border.RenderTransform&gt;</span>
+                                        <span class="nt">&lt;ScaleTransform</span> <span class="nt">/&gt;</span>
+                                    <span class="nt">&lt;/Border.RenderTransform&gt;</span>
+                                    <span class="nt">&lt;VisualStateManager.VisualStateGroups&gt;</span>
+                                        <span class="nt">&lt;VisualStateGroup</span> <span class="na">x:Name=</span><span class="s">"CommonStates"</span><span class="nt">&gt;</span>
+                                            <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Normal"</span> <span class="nt">/&gt;</span>
+                                            <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Pressed"</span><span class="nt">&gt;</span>
+                                                <span class="nt">&lt;Storyboard&gt;</span>
+                                                    <span class="nt">&lt;DoubleAnimation</span>
+                                                        <span class="na">Storyboard.TargetProperty=</span><span class="s">"(RenderTransform).(ScaleTransform.ScaleX)"</span>
+                                                        <span class="na">To=</span><span class="s">"0.5"</span> <span class="nt">/&gt;</span>
+                                                    <span class="nt">&lt;DoubleAnimation</span>
+                                                        <span class="na">Storyboard.TargetProperty=</span><span class="s">"(RenderTransform).(ScaleTransform.ScaleY)"</span>
+                                                        <span class="na">To=</span><span class="s">"0.5"</span> <span class="nt">/&gt;</span>
+                                                <span class="nt">&lt;/Storyboard&gt;</span>
+                                            <span class="nt">&lt;/VisualState&gt;</span>
+                                        <span class="nt">&lt;/VisualStateGroup&gt;</span>
+                                    <span class="nt">&lt;/VisualStateManager.VisualStateGroups&gt;</span>
+
+                                    <span class="nt">&lt;Grid&gt;</span>
+                                        <span class="nt">&lt;Rectangle</span> <span class="na">Fill=</span><span class="s">"Blue"</span><span class="nt">/&gt;</span>
+                                        <span class="nt">&lt;ContentPresenter</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="na">VerticalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+                                    <span class="nt">&lt;/Grid&gt;</span>
+                                <span class="nt">&lt;/Border&gt;</span>
+                            <span class="nt">&lt;/ControlTemplate&gt;</span>
+                        <span class="nt">&lt;/Setter.Value&gt;</span>
+                    <span class="nt">&lt;/Setter&gt;</span>
+                <span class="nt">&lt;/Style&gt;</span>
+            <span class="nt">&lt;/StackPanel.Resources&gt;</span>
+
+            <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Content=</span><span class="s">"Button 1"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span>
+                    <span class="na">VerticalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/StackPanel&gt;</span>
+
+</code></pre></div></div>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/46dd1572/Babukeelleneeoai">github</a> 欢迎小伙伴访问</p>
+
+<p>当然，本文有很多知识点没有聊到，包括 Style 是什么，以及属性的配置应该如何写，还有动画 DoubleAnimation 是什么等等。我特别推荐小伙伴入门的时候看 <a href="https://space.bilibili.com/32497462">微软技术教程 - 哔哩哔哩 ( ゜- ゜)つロ 乾杯~ Bilibili</a> 的免费教程视频，包含了这些细节</p>
+
+:ET

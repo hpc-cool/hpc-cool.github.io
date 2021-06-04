@@ -1,0 +1,26 @@
+I"2<p>本文来安利大家一个好用的库 AsyncEx 库。这个库有一个强大的功能是支持 AsyncLock 异步锁。小伙伴都知道，在 C# 里面的 lock 关键字，在 2020 年也就是 C# 9.0 都没有让这个关键字能支持锁内部添加异步方法。此时在一些需要做异步线程安全的业务就比较坑了，而 AsyncEx 库提供了 AsyncLock 异步锁的功能，可以支持在锁里面使用异步</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/23 8:58:31 -->
+
+<p>使用之前先安装 <a href="http://www.nuget.org/packages/Nito.AsyncEx">Nito.AsyncEx</a> NuGet 库，如果是 SDK 风格的项目格式，可以在 csproj 添加下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"Nito.AsyncEx"</span> <span class="na">Version=</span><span class="s">"5.0.0"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>简单的使用方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">readonly</span> <span class="n">AsyncLock</span> <span class="n">_mutex</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">AsyncLock</span><span class="p">();</span>
+<span class="k">public</span> <span class="k">async</span> <span class="n">Task</span> <span class="nf">UseLockAsync</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">using</span> <span class="p">(</span><span class="k">await</span> <span class="n">_mutex</span><span class="p">.</span><span class="nf">LockAsync</span><span class="p">())</span>
+  <span class="p">{</span>
+    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">));</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>而 AsyncLock 其实是 <a href="http://www.nuget.org/packages/Nito.AsyncEx">Nito.AsyncEx</a> 库的基础，在 AsyncEx 库还包括了  <code class="language-plaintext highlighter-rouge">AsyncManualResetEvent</code>, <code class="language-plaintext highlighter-rouge">AsyncAutoResetEvent</code>, <code class="language-plaintext highlighter-rouge">AsyncConditionVariable</code>, <code class="language-plaintext highlighter-rouge">AsyncMonitor</code>, <code class="language-plaintext highlighter-rouge">AsyncSemaphore</code>, <code class="language-plaintext highlighter-rouge">AsyncCountdownEvent</code> 和 <code class="language-plaintext highlighter-rouge">AsyncReaderWriterLock</code> 的实现</p>
+
+:ET

@@ -1,0 +1,29 @@
+I"�<p>进行HttpClient post参数错误
+从“Windows.Web.Http.HttpStringContent”转换为“System.Net.Http.HttpContent”</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+<!-- csdn -->
+
+<p>原因</p>
+
+<p>用了<code class="language-plaintext highlighter-rouge">System.Net.Http.HttpClient</code>其实HttpStringContent是可以在错误看到，不是System.Net.Http</p>
+
+<p>方法</p>
+
+<p>使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Http</span><span class="p">.</span><span class="n">HttpClient</span> <span class="n">webHttpClient</span><span class="p">=</span>
+                <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Http</span><span class="p">.</span><span class="nf">HttpClient</span><span class="p">();</span>
+
+           <span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Http</span><span class="p">.</span><span class="n">HttpStringContent</span> <span class="n">httpString</span><span class="p">=</span>
+                <span class="k">new</span> <span class="nf">HttpStringContent</span><span class="p">(</span><span class="s">"a"</span><span class="p">);</span>
+            <span class="k">await</span> <span class="n">webHttpClient</span><span class="p">.</span><span class="nf">PostAsync</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">url</span><span class="p">),</span> <span class="n">httpString</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><a href="https://www.codeproject.com/script/Articles/BlogFeedList.aspx?amid=12520573" rel="tag">CodeProject</a></p>
+
+:ET

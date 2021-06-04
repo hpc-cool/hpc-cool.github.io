@@ -1,0 +1,17 @@
+I"�<p>本文告诉大家在一个连续的 commit 树中统计两个 commit 之间的差异的 commit 数量，也就是存在 A commit 存在而 B commit 不存在的 commit 的数量</p>
+
+<!--more-->
+
+<!-- CreateTime:5/15/2020 9:00:18 AM -->
+
+<p>可以使用下面代码统计两个 commit 或分支之间的差异的次数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">log</span> <span class="p">--</span><span class="n">oneline</span> <span class="n">A</span> <span class="p">^</span><span class="n">B</span> <span class="p">|</span> 
+</code></pre></div></div>
+
+<p>这里的 A 和 B 可以替换为分支或 commit 号，如 <code class="language-plaintext highlighter-rouge">origin/dev</code> 等，下面代码统计的是 <code class="language-plaintext highlighter-rouge">19ef3265</code> 和远端的 dev 的差异数量</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">log</span> <span class="p">--</span><span class="n">oneline</span> <span class="n">origin</span><span class="p">/</span><span class="n">dev</span> <span class="p">^</span><span class="m">19</span><span class="n">ef3265</span> <span class="p">|</span> <span class="n">wc</span> <span class="p">-</span><span class="n">l</span>
+</code></pre></div></div>
+
+:ET

@@ -1,0 +1,135 @@
+I"�.<p>在 WPF 中触摸只是框架的一层，可以通过代码模拟触摸</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:47:53 -->
+
+<!-- csdn -->
+
+<p>创建一个类继承 TouchDevice 然后重写 GetTouchPoint 和 GetIntermediateTouchPoints 方法，可以在这个类里面通过调用 ReportDown 等方法模拟触摸的按下和移动</p>
+
+<p>最简单的实现请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">BurnerkadelWallnadarli</span> <span class="p">:</span> <span class="n">TouchDevice</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">BurnerkadelWallnadarli</span><span class="p">(</span><span class="kt">int</span> <span class="n">deviceId</span><span class="p">,</span> <span class="n">Window</span> <span class="n">window</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">deviceId</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Window</span> <span class="p">=</span> <span class="n">window</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 触摸点</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">Point</span> <span class="n">Position</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 触摸大小</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">Size</span> <span class="n">Size</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Down</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">TouchAction</span> <span class="p">=</span> <span class="n">TouchAction</span><span class="p">.</span><span class="n">Down</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(!</span><span class="n">IsActive</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">SetActiveSource</span><span class="p">(</span><span class="n">PresentationSource</span><span class="p">.</span><span class="nf">FromVisual</span><span class="p">(</span><span class="n">Window</span><span class="p">));</span>
+
+                <span class="nf">Activate</span><span class="p">();</span>
+                <span class="nf">ReportDown</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="nf">ReportDown</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Move</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">TouchAction</span> <span class="p">=</span> <span class="n">TouchAction</span><span class="p">.</span><span class="n">Move</span><span class="p">;</span>
+
+            <span class="nf">ReportMove</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Up</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">TouchAction</span> <span class="p">=</span> <span class="n">TouchAction</span><span class="p">.</span><span class="n">Up</span><span class="p">;</span>
+
+            <span class="nf">ReportUp</span><span class="p">();</span>
+            <span class="nf">Deactivate</span><span class="p">();</span>
+        <span class="p">}</span>
+
+
+        <span class="k">private</span> <span class="n">Window</span> <span class="n">Window</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">TouchAction</span> <span class="n">TouchAction</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="n">TouchPoint</span> <span class="nf">GetTouchPoint</span><span class="p">(</span><span class="n">IInputElement</span> <span class="n">relativeTo</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">TouchPoint</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">Position</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="n">Position</span><span class="p">,</span> <span class="n">Size</span><span class="p">),</span> <span class="n">TouchAction</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="n">TouchPointCollection</span> <span class="nf">GetIntermediateTouchPoints</span><span class="p">(</span><span class="n">IInputElement</span> <span class="n">relativeTo</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">TouchPointCollection</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="nf">GetTouchPoint</span><span class="p">(</span><span class="n">relativeTo</span><span class="p">)</span>
+            <span class="p">};</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>在 TouchDevice 里面，调用触摸按下和移动等的方法是没有传入参数的，在框架是通过 GetTouchPoint 拿到当前用户触摸的点</p>
+
+<p>在按下的时候需要激活，激活的时候需要传入一个 PresentationSource 在框架通过这个值进行命中测试找到触摸按下的点是按到哪个元素</p>
+
+<p>使用的时候只需要创建 BurnerkadelWallnadarli 然后调用对应的按下移动等方法就可以了，因为在构造的时候传入了窗口，所以在按下等事件可以通过传入的窗口进行命中测试找到按下的元素，从元素触发路由事件</p>
+
+<p>大概的调用顺序是这样的，在触摸的第一个事件是按下，在按下的时候使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">SetActiveSource</span><span class="p">(</span><span class="n">PresentationSource</span><span class="p">.</span><span class="nf">FromVisual</span><span class="p">(</span><span class="n">Window</span><span class="p">));</span>
+
+<span class="nf">Activate</span><span class="p">();</span>
+<span class="nf">ReportDown</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>在 SetActiveSource 会将传入的 PresentationSource 设置在本地的字段 <code class="language-plaintext highlighter-rouge">_activeSource</code> 这样可以在拿到点的时候调用</p>
+
+<p>在调用 Activate 方法会调用一次 UpdateDirectlyOver 这个方法调用 GetTouchPoint 传入一个空参数，用来判断当前是否命中到元素，一般都是没有命中的，需要到 ReportDown 的时候才可能命中元素。在 Activate 会将当前的 TouchDevice 加入到 <code class="language-plaintext highlighter-rouge">TouchDevice._activeDevices</code> 这个静态字段里面，如果刚好这时的静态字段只有一个元素，那么就设置当前的触摸设备是主触摸设备</p>
+
+<p>设置触摸设备是主触摸设备是因为在触摸的时候如果用户是多个手指触摸，一个手指对应一个触摸设备，所以第一个手指对应主触摸设备</p>
+
+<p>调用 ReportDown 会先设置本地字段 <code class="language-plaintext highlighter-rouge">_isDown</code> 为 true 然后调用 UpdateDirectlyOver 方法更新当前按下点到的元素，然后调用 RaiseTouchDown 方法在当前点到的元素触摸触摸按下的路由事件，可以看到此时的路由事件是不需要再获取当前的触摸点，因为只是在点到的元素触摸事件，如果这个元素需要知道当前的触摸点，只需要在方法使用参数的 <code class="language-plaintext highlighter-rouge">e.GetTouchPoint</code> 方法就可以重新拿到触摸点。因为获取触摸点方法是可以重写的，所以第一次获取的用于命中测试的触摸点可以和元素收到触摸事件获取的触摸点返回不同的点</p>
+
+<p>只需要拿到了对应的元素就可以在元素触发事件，从触摸到事件请看<a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E5%88%B0%E4%BA%8B%E4%BB%B6.html">WPF 触摸到事件</a></p>
+
+<p>调用 ReportMove 移动的方法也是差不多，首先通过 UpdateDirectlyOver 找到命中测试的元素，然后触发路由事件。如果元素不关注触摸点击的点就不需要再次调用获取触摸点方法</p>
+
+<p>那么 UpdateDirectlyOver 是如何进行命中测试的？首先通过获取触摸点方法拿到传入空参数时的触摸点，这时相对的应该是窗口的坐标。通过 TouchDevice.LocalHitTest 方法拿到命中测试的元素，在底层调用的是 MouseDevice.LocalHitTest 方法</p>
+
+<p>所以可以通过上面定义的类模拟触摸，只需要创建出来，然后调用对应的方法就可以，如下面的代码就模拟了按下和移动</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">burnerkadelWallnadarli</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BurnerkadelWallnadarli</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+
+<span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">1000</span><span class="p">);</span>
+<span class="n">burnerkadelWallnadarli</span><span class="p">.</span><span class="nf">Down</span><span class="p">();</span>
+
+<span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">1000</span><span class="p">);</span>
+ <span class="c1">// 设置当前触摸点</span>
+<span class="n">burnerkadelWallnadarli</span><span class="p">.</span><span class="nf">Move</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>通过这个方法模拟触摸可以走原有的 WPF 触摸命中测试，也能走路由事件</p>
+
+<p>关于 WPF 的触摸到事件请看 <a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E5%88%B0%E4%BA%8B%E4%BB%B6.html">WPF 触摸到事件</a></p>
+
+<p>本文用到的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/f0f872153ed07b2141b47580a74a18a38cc56cfd/DernijacallqaNaycerejerlal">github</a></p>
+
+<p>更多触摸请看 <a href="https://blog.lindexi.com/post/WPF-%E8%A7%A6%E6%91%B8%E7%9B%B8%E5%85%B3.html">WPF 触摸相关</a></p>
+
+:ET

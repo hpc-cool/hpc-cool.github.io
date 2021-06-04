@@ -1,0 +1,23 @@
+I"�<p>在大约一周之前，Visual Studio 进行了一项更新，增加了 Ctrl+Click 点击跳转到定义的功能。这项功能与 ReSharper 重复了。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/14 17:35:06 -->
+
+<!-- 标签：Resharper -->
+
+<p>于是可以通过关闭其中一个跳转定义可以使用。</p>
+
+<p>VS 的设置</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017117145631.jpg" alt="" /></p>
+
+<p>Resharper 的设置在 Environment-&gt;Editor-&gt;search &amp; Navigation 里的 Rich mouse navigation in the edior</p>
+
+<p>如果无法使用 Resharper 可以尝试fq，打开<a href="http://y.acgzj.cn/ss/">http://y.acgzj.cn/ss/</a> 就可以看到，如何使用自己百度。</p>
+
+<p>最近我还在玩游戏<a href="http://m.94wan.cn//games/2017-10-13/40968.html">铁血战记</a>，感觉不错，我的是iso端的：<a href="http://m.94wan.cn/tg/index.php?tuiId=6317">下载地址</a> ，还有<a href="http://m.94wan.cn/tg/index.php?tuiId=6316">安卓端</a>就是人不是很多，所以给他一个广告</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017117185240.jpg" alt="" /></p>
+
+:ET

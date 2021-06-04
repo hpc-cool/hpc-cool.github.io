@@ -1,0 +1,253 @@
+I"�g<p>在使用 OpenXML SDK 解析 PPT 文档的文本占位符的时候，需要对 PPT 的格式有一定的了解，尽管整个 OpenXML SDK 包括文档等都很详细。但是有一些细节文档上虽然有写，但是没有强调一下，就被我忽略了</p>
+
+<!--more-->
+
+<!-- CreateTime:5/9/2020 10:43:59 AM -->
+
+<p>什么是文本占位符，其实这是在 PPT 添加的概念，在 PPT 里面用户可以编辑模版文件，在这里定义某个占位符文本的样式和坐标等</p>
+
+<p>如何制作占位符请看 <a href="https://zhuanlan.zhihu.com/p/37086389">PPT占位符，居然这么好用！ - 知乎</a></p>
+
+<p>想要解析占位符还需要先学会如何使用占位符才好理解占位符是如何做的</p>
+
+<p>在 OpenXML 里面文本是形状，也就是 <code class="language-plaintext highlighter-rouge">DocumentFormat.OpenXml.Presentation.Shape</code> 元素，可以使用下面代码获取页面的形状</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">presentationDocument</span> <span class="p">=</span> <span class="n">DocumentFormat</span><span class="p">.</span><span class="n">OpenXml</span><span class="p">.</span><span class="n">Packaging</span><span class="p">.</span><span class="n">PresentationDocument</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="s">"测试.pptx"</span><span class="p">,</span> <span class="k">false</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">presentationPart</span> <span class="p">=</span> <span class="n">presentationDocument</span><span class="p">.</span><span class="n">PresentationPart</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">presentation</span> <span class="p">=</span> <span class="n">presentationPart</span><span class="p">.</span><span class="n">Presentation</span><span class="p">;</span>
+
+                <span class="c1">// 先获取页面</span>
+                <span class="kt">var</span> <span class="n">slideIdList</span> <span class="p">=</span> <span class="n">presentation</span><span class="p">.</span><span class="n">SlideIdList</span><span class="p">;</span>
+
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">slideId</span> <span class="k">in</span> <span class="n">slideIdList</span><span class="p">.</span><span class="n">ChildElements</span><span class="p">.</span><span class="n">OfType</span><span class="p">&lt;</span><span class="n">SlideId</span><span class="p">&gt;())</span>
+                <span class="p">{</span>
+                    <span class="c1">// 获取页面内容</span>
+                    <span class="n">SlidePart</span> <span class="n">slidePart</span> <span class="p">=</span> <span class="p">(</span><span class="n">SlidePart</span><span class="p">)</span> <span class="n">presentationPart</span><span class="p">.</span><span class="nf">GetPartById</span><span class="p">(</span><span class="n">slideId</span><span class="p">.</span><span class="n">RelationshipId</span><span class="p">);</span>
+
+                    <span class="kt">var</span> <span class="n">slide</span> <span class="p">=</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">Slide</span><span class="p">;</span>
+
+                    <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">shape</span> <span class="k">in</span>
+                        <span class="n">slidePart</span><span class="p">.</span><span class="n">Slide</span>
+                            <span class="p">.</span><span class="n">Descendants</span><span class="p">&lt;</span><span class="n">DocumentFormat</span><span class="p">.</span><span class="n">OpenXml</span><span class="p">.</span><span class="n">Presentation</span><span class="p">.</span><span class="n">Shape</span><span class="p">&gt;())</span>
+                    <span class="p">{</span>
+                       
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 PPT 里面是使用 <code class="language-plaintext highlighter-rouge">p:ph</code> 判断一个形状是占位符，下面是一个占位符的形状</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p:sp&gt;</span>
+    <span class="nt">&lt;p:nvsppr&gt;</span>
+        <span class="nt">&lt;p:cNvPr</span> <span class="na">id=</span><span class="s">"2"</span> <span class="na">name=</span><span class="s">"标题 1"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;/p:cNvPr&gt;</span>
+        <span class="nt">&lt;p:cNvSpPr&gt;</span>
+            <span class="nt">&lt;a:splocks</span> <span class="na">nogrp=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/a:splocks&gt;</span>
+        <span class="nt">&lt;/p:cNvSpPr&gt;</span>
+        <span class="nt">&lt;p:nvpr&gt;</span>
+            <span class="nt">&lt;p:ph</span> <span class="na">type=</span><span class="s">"ctrTitle"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/p:ph&gt;</span>
+        <span class="nt">&lt;/p:nvpr&gt;</span>
+    <span class="nt">&lt;/p:nvsppr&gt;</span>
+    <span class="nt">&lt;p:sppr&gt;</span>
+    <span class="nt">&lt;/p:sppr&gt;</span>
+    <span class="nt">&lt;p:txbody&gt;</span>
+        <span class="nt">&lt;a:bodypr&gt;</span>
+        <span class="nt">&lt;/a:bodypr&gt;</span>
+        <span class="nt">&lt;a:p&gt;</span>
+            <span class="nt">&lt;a:r&gt;</span>
+                <span class="nt">&lt;a:rpr</span> <span class="na">altlang=</span><span class="s">"en-US"</span> <span class="na">lang=</span><span class="s">"zh-CN"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;/a:rpr&gt;</span>
+                <span class="nt">&lt;a:t&gt;</span>
+                    PPT 解析
+                <span class="nt">&lt;/a:t&gt;</span>
+            <span class="nt">&lt;/a:r&gt;</span>
+            <span class="nt">&lt;a:endpararpr</span> <span class="na">altlang=</span><span class="s">"en-US"</span> <span class="na">lang=</span><span class="s">"zh-CN"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/a:endpararpr&gt;</span>
+        <span class="nt">&lt;/a:p&gt;</span>
+    <span class="nt">&lt;/p:txbody&gt;</span>
+<span class="nt">&lt;/p:sp&gt;</span>
+</code></pre></div></div>
+
+<p>在 slide.xml 里面的元素，通过设置 nvsppr-&gt;nvpr-&gt;ph 设置这个元素使用占位符，需要继承模版的占位符样式和坐标等值</p>
+
+<p>从 Shape 里面拿到占位符可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// &lt;p:nvSpPr&gt;占位符的样式</span>
+<span class="n">NonVisualShapeProperties</span> <span class="n">nonVisualShapeProperties</span> <span class="p">=</span> <span class="n">shape</span><span class="p">?.</span><span class="n">NonVisualShapeProperties</span><span class="p">;</span>
+<span class="c1">// cNvSpPr</span>
+<span class="kt">var</span> <span class="n">nonVisualShapeDrawingProperties</span> <span class="p">=</span> <span class="n">nonVisualShapeProperties</span><span class="p">?.</span><span class="n">NonVisualShapeDrawingProperties</span><span class="p">;</span>
+<span class="c1">// nvpr</span>
+<span class="kt">var</span> <span class="n">applicationNonVisualDrawingProperties</span> <span class="p">=</span> <span class="n">nonVisualShapeProperties</span><span class="p">?.</span><span class="n">ApplicationNonVisualDrawingProperties</span><span class="p">;</span>
+
+<span class="kt">var</span> <span class="n">placeholderShape</span> <span class="p">=</span> <span class="n">applicationNonVisualDrawingProperties</span><span class="p">?.</span><span class="n">PlaceholderShape</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>可以在 placeholderShape 里面找到两个主要的属性，一个是 Index 一个是 Type 属性，这两个属性是什么意思？从属性的注释可以看到写的很复杂，大概的做法就是占位符需要去找到模版里面相同的 Index 或相同的 Type 的占位符元素，获取这个元素的样式和坐标等</p>
+
+<p>如果有仔细阅读上面文档就可以知道，如果用户在模版里面定义了占位符，那么仅仅表示页面里面的对应元素的默认样式，而元素本文可以覆盖此样式。也就是元素的最终样式是先尝试获取元素本文的样式，如果元素本文获取不到样式，那么尝试运行占位符元素，如果可以找到占位符元素，那么尝试获取占位符元素的对应样式</p>
+
+<p>那么如何通过 placeholderShape 找到对应的放在模版里面的占位符元素？是否小伙伴还记得 Slide Layout 和 Slide Master 的概念，如果不知道的话，请复习一下 PPT 是如何制作的课程，这两个概念有点绕，需要小伙伴学会制作 PPT 才比较好说</p>
+
+<p>获取 SlideLayout 和 SlideMaster 可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">layout</span> <span class="p">=</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">SlideLayoutPart</span><span class="p">.</span><span class="n">SlideLayout</span><span class="p">;</span>
+<span class="kt">var</span> <span class="n">master</span> <span class="p">=</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">SlideLayoutPart</span><span class="p">.</span><span class="n">SlideMasterPart</span><span class="p">.</span><span class="n">SlideMaster</span><span class="p">;</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>下面这句话是错的
+先从 layout 里面尝试找到有没有对应的占位符元素，如果没有找到再从 master 里面找</p>
+</blockquote>
+
+<p>无论是 SlideLayout 还是 SlideMaster 都在 CommonSlideData 的 ShapeTree 存放占位符元素。因此寻找占位符方法是从 CommonSlideData 的 ShapeTree 寻找是否有对应的元素，那么什么是对应的元素，如果页面元素设置了 Type 那么要求 ShapeTree 的元素的占位符属性有完全相同的 Type 属性，如果页面元素设置了 Index 那么要求 ShapeTree 的有相同的 ShapeTree 属性。如果页面元素的 Type 是空，那么就不对 ShapeTree 的属性有要求，如果 Index 是空，那么对 ShapeTree 的属性也没有要求</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">Shape</span> <span class="nf">GetPlaceholderShape</span><span class="p">(</span><span class="n">PlaceholderShape</span> <span class="n">placeholder</span><span class="p">,</span> <span class="n">ShapeTree</span> <span class="n">tree</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">tree</span><span class="p">.</span><span class="n">Elements</span><span class="p">&lt;</span><span class="n">Shape</span><span class="p">&gt;().</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">shape</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">placeholderShape</span> <span class="p">=</span> <span class="n">shape</span><span class="p">?.</span><span class="n">NonVisualShapeProperties</span><span class="p">?.</span><span class="n">ApplicationNonVisualDrawingProperties</span>
+                    <span class="p">?.</span><span class="n">PlaceholderShape</span><span class="p">;</span>
+                <span class="k">return</span> <span class="n">placeholderShape</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span> <span class="nf">Equals</span><span class="p">(</span><span class="n">placeholder</span><span class="p">,</span> <span class="n">placeholderShape</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 比较&lt;see cref="PlaceholderShape"/&gt;的type和id是否相同</span>
+        <span class="c1">/// &lt;para&gt;&lt;/para&gt;</span>
+        <span class="c1">/// 如果 1 的 Type 或 Index 是空，那么跳过这个属性的判断</span>
+        <span class="c1">/// &lt;para&gt;&lt;/para&gt;</span>
+        <span class="c1">/// 如果这个属性不是空，那么一定要求 2 存在这个属性</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// 这个规则通过 文本占位符没有type和id的值，获取第一个占位符作为坐标 和 WPS 对比测试拿到</span>
+        <span class="c1">/// 测试课件：文本占位符没有type和id的值.pptx</span>
+        <span class="c1">/// &lt;param name="placeholder1"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="placeholder2"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">Equals</span><span class="p">(</span><span class="n">PlaceholderShape</span> <span class="n">placeholder1</span><span class="p">,</span> <span class="n">PlaceholderShape</span> <span class="n">placeholder2</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 如果 placeholder1.Type 存在值，要求 2 一定存在值</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">placeholder1</span><span class="p">.</span><span class="n">Type</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span> 
+                <span class="n">placeholder1</span><span class="p">.</span><span class="n">Type</span><span class="p">.</span><span class="n">Value</span> <span class="p">!=</span> <span class="n">placeholder2</span><span class="p">.</span><span class="n">Type</span><span class="p">?.</span><span class="n">Value</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">placeholder1</span><span class="p">.</span><span class="n">Index</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span> <span class="n">placeholder1</span><span class="p">.</span><span class="n">Index</span><span class="p">.</span><span class="n">Value</span> <span class="p">!=</span>
+                <span class="n">placeholder2</span><span class="p">.</span><span class="n">Index</span><span class="p">?.</span><span class="n">Value</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>获取的方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">layoutPlaceholder</span> <span class="p">=</span> <span class="nf">GetPlaceholderShape</span><span class="p">(</span><span class="n">placeholder</span><span class="p">,</span> <span class="n">layout</span><span class="p">?.</span><span class="n">CommonSlideData</span><span class="p">?.</span><span class="n">ShapeTree</span><span class="p">);</span>
+  <span class="n">masterPlaceholder</span> <span class="p">=</span> <span class="nf">GetPlaceholderShape</span><span class="p">(</span><span class="n">placeholder</span><span class="p">,</span> <span class="n">master</span><span class="p">?.</span><span class="n">CommonSlideData</span><span class="p">?.</span><span class="n">ShapeTree</span><span class="p">);</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>下面这句话是不对的
+此时的样式获取顺序就是先从元素获取，如果元素获取不到，就从 layoutPlaceholder 获取，如果获取不到从 masterPlaceholder 获取</p>
+</blockquote>
+
+<p>注释里面的 文本占位符没有type和id的值.pptx 我就不放出来了，有需要的小伙伴发邮件给我</p>
+
+<p>更多的 OpenXML 相关博客，还请自行百度 <code class="language-plaintext highlighter-rouge">OpenXML 林德熙</code> 就能找到我的博客了</p>
+
+<p>更正一下</p>
+
+<p>小伙伴可以看到我标记了文章一些说法是不对的。原因是 ECMA 376 文档里面其实只包含了 Placeholder 的定义，而没有包含他的实现方式。整个 <a href="http://www.ecma-international.org/publications/standards/Ecma-376.htm">ECMA</a> 关于 Placeholder 仅有 274 个引用。因此我上面这里的说法完全只是因为没有实践而依靠不靠谱的博客找到的方法</p>
+
+<p>以下为我通过 Office 2013 和 Office 2016 和 WPS 11.3.0.8742 版本测试拿到的规则</p>
+
+<ul>
+  <li>占位符元素需要同时在 SlideLayout 和 SlideMaster 里面查找</li>
+  <li>占位符元素的属性优先级是 Slide 里元素本身，然后是 SlideLayout 占位符元素最后是 SlideMaster 占位符元素
+    <ul>
+      <li>假定尝试获取元素的平移属性，此时在元素本身没有找到，就需要从 SlideLayout 占位符元素（如果存在）里尝试获取平移属性</li>
+      <li>假定从 SlideLayout 占位符元素获取不到平移属性，那么尝试从 SlideMaster 占位符元素获取平移属性</li>
+    </ul>
+  </li>
+  <li>占位符元素如果设置了 Id 的值，那么标准文档里面这个 Id 在 SlideLayout 和 SlideMaster 仅能找到一个占位符元素，不会存在两个
+    <ul>
+      <li>对 WPS 非标准文档，可能存在两个相同 Id 元素，此时使用 xml 的第一个元素</li>
+    </ul>
+  </li>
+  <li>占位符元素如果设置了 Id 的值，在 SlideMaster 里面没有找到对应的 Id 的占位符元素，那么尝试通过占位符元素的 Type 找到对应的 SlideMaster 的元素</li>
+  <li>如果占位符元素没有设置 Type 的值，那么默认值是 Body 的值</li>
+  <li>如果在 SlideMaster 里面存在多个 Body 元素，那么标准文档里面将会设置每个 Body 元素都有 Id 的值</li>
+  <li>对 WPS 非标准文档，如果定义多个 Body 元素，且没有给每个 Body 元素设置 Id 的值，那么使用 xml 的第一个 Body 元素</li>
+  <li>对 WPS 非标准文档，如果定义多个 Body 元素，其中有一个 Body 元素没有 Id 的值，且使用 Id 查找不到对应占位符元素，那么使用第一个没有 Id 的 Body 元素</li>
+</ul>
+
+<p>大概逻辑如下，下面代码仅使用 SlideMaster 的占位符元素，原因是 SlideLayout 没有遇到此非标准文档，而我也不想去改文档代码测试</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 对 SlideMaster 的获取占位符的规则是假设 PlaceholderShape 存在 Id 的值，那么在 SlideMaster 所有元素尝试找到对应的 Id 的值的元素，如果能找到那么这个元素就是占位符元素。如果不存在 Id 或找不到对应的元素，那么进行 Type 的查找，如果传入的 PlaceholderType 没有设置值，那么将使用默认的 PlaceholderValues.Body 的值</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="n">Shape</span> <span class="nf">GetMasterPlaceholderByPlaceHolderType</span><span class="p">(</span><span class="n">PlaceholderShape</span> <span class="n">placeholder</span><span class="p">,</span> <span class="n">SlideMaster</span> <span class="n">master</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">EnumValue</span><span class="p">&lt;</span><span class="n">PlaceholderValues</span><span class="p">&gt;</span> <span class="n">placeholderType</span> <span class="p">=</span> <span class="n">placeholder</span><span class="p">.</span><span class="n">Type</span><span class="p">;</span>
+            <span class="k">const</span> <span class="n">PlaceholderValues</span> <span class="n">defaultPlaceholderValue</span> <span class="p">=</span> <span class="n">PlaceholderValues</span><span class="p">.</span><span class="n">Body</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">type</span> <span class="p">=</span> <span class="n">placeholderType</span><span class="p">?.</span><span class="n">Value</span> <span class="p">??</span> <span class="n">defaultPlaceholderValue</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">id</span> <span class="p">=</span> <span class="n">placeholder</span><span class="p">.</span><span class="n">Index</span><span class="p">?.</span><span class="n">Value</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">elementList</span> <span class="p">=</span> <span class="n">master</span><span class="p">?.</span><span class="n">CommonSlideData</span><span class="p">?.</span><span class="n">ShapeTree</span><span class="p">?.</span><span class="n">Elements</span><span class="p">&lt;</span><span class="n">Shape</span><span class="p">&gt;();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">elementList</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">Shape</span> <span class="n">typeMatchShape</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">shape</span> <span class="k">in</span> <span class="n">elementList</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">placeholderShape</span> <span class="p">=</span> <span class="n">shape</span><span class="p">?.</span><span class="n">NonVisualShapeProperties</span><span class="p">?.</span><span class="n">ApplicationNonVisualDrawingProperties</span>
+                    <span class="p">?.</span><span class="n">PlaceholderShape</span><span class="p">;</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">placeholderShape</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">continue</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">id</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// 优先找到 id 相同的占位符</span>
+                    <span class="c1">// 如果 id 相同的找不到，那么找 Type 相同的</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">placeholderShape</span><span class="p">?.</span><span class="n">Index</span><span class="p">?.</span><span class="n">Value</span> <span class="p">==</span> <span class="n">id</span><span class="p">.</span><span class="n">Value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="n">shape</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+
+                <span class="c1">// 以下逻辑不全对，注意在有两个Body元素，此时 id != null 且这两个 Body 元素</span>
+                <span class="c1">// 第一个元素存在 Id 且和 placeholder.Index 不相等</span>
+                <span class="c1">// 第二个元素不存在 Id 的值 </span>
+                <span class="c1">// 那么此时应该选用第二个元素，不应该选择第一个元素</span>
+                <span class="c1">// 但是下面代码选用的是第一个元素</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">placeholderShape</span><span class="p">.</span><span class="n">Type</span><span class="p">?.</span><span class="n">Value</span> <span class="p">==</span> <span class="n">type</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// 基本只有一个 Type 相等，如果有多个，那么这个课件不是标准的</span>
+                    <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">typeMatchShape</span> <span class="p">==</span> <span class="k">null</span><span class="p">);</span>
+                    <span class="n">typeMatchShape</span> <span class="p">=</span> <span class="n">shape</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">typeMatchShape</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码的逻辑不全对，我写在注释里面</p>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+:ET

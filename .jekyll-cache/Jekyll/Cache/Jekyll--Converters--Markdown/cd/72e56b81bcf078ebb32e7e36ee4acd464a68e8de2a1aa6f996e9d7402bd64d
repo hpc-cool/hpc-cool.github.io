@@ -1,0 +1,844 @@
+I"3<p>本文：我遇到的WPF的坑</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/12/27 8:31:20 -->
+
+<div id="toc"></div>
+
+<h2 id="标记方法被使用">标记方法被使用</h2>
+
+<p>使用 UsedImplicitly 特性可以标记一个没有被引用的方法为反射使用，这时就不会被优化删除。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span>
+<span class="p">{</span>
+    <span class="p">[</span><span class="n">UsedImplicitly</span><span class="p">]</span>
+    <span class="k">public</span> <span class="nf">Foo</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="c1">//反射调用</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">Foo</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">//被引用</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="拼接-uri-路径">拼接 URI 路径</h2>
+
+<p>我需要将一个 URI 和另一个 URI 拼接如 <code class="language-plaintext highlighter-rouge">https://blog.lindexi.com/post/123</code> 和 <code class="language-plaintext highlighter-rouge">/api/12</code> 拼接，拿到绝对路径 <code class="language-plaintext highlighter-rouge">https://blog.lindexi.com/api/12</code> 可以使用下面方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">uri1</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"https://blog.lindexi.com/post/123"</span><span class="p">);</span>
+<span class="kt">var</span> <span class="n">uri2</span> <span class="p">=</span> <span class="s">"/api/12"</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">Uri</span><span class="p">.</span><span class="nf">TryCreate</span><span class="p">(</span><span class="n">uri1</span><span class="p">,</span> <span class="n">uri2</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">absoluteUrl</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="c1">// 拼接成功，在这里就可以使用 absoluteUrl 拼接后的绝对路径</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="拼接-url-参数">拼接 URL 参数</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">uriBuilder</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">UriBuilder</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"http://blog.lindexi.com"</span><span class="p">));</span>
+            <span class="n">NameValueCollection</span> <span class="n">query</span> <span class="p">=</span> <span class="n">HttpUtility</span><span class="p">.</span><span class="nf">ParseQueryString</span><span class="p">(</span><span class="n">uriBuilder</span><span class="p">.</span><span class="n">Query</span><span class="p">);</span>
+            <span class="n">query</span><span class="p">[</span><span class="s">"Foo"</span><span class="p">]</span> <span class="p">=</span> <span class="s">"123"</span><span class="p">;</span>
+            <span class="n">query</span><span class="p">[</span><span class="s">"doubi"</span><span class="p">]</span> <span class="p">=</span> <span class="s">"doubi"</span><span class="p">;</span>
+            <span class="n">uriBuilder</span><span class="p">.</span><span class="n">Query</span> <span class="p">=</span> <span class="n">query</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">uriBuilder</span><span class="p">.</span><span class="n">Uri</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>上面代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/b401342b/JearhelawruNibilubeher">github</a>欢迎小伙伴访问</p>
+
+<!-- ## 单例应用在多实例用户无法使用
+
+如果使用NamedPipeServerStream、`Mutex`做单实例，需要传入字符串，这时如果传入一个固定的字符串，会在多用户的时候无法使用。
+
+因为如果在一个用户启动的软件，那么就注册了这个字符串，在另一个用户就无法启动。解决方法是传入`Environment.UserName`。
+
+在构造函数传入`Environment.UserName`有关的字符串就可以在一个用户进行单例，其他用户打开是自己的软件。
+
+```csharp
+public partial class App
+{
+    #region Constants and Fields
+
+    /// <summary>The event mutex name.</summary>
+    private const string UniqueEventName = "{GUID}";
+
+    /// <summary>The unique mutex name.</summary>
+    private const string UniqueMutexName = "{GUID}"; //这里需要加 Environment.UserName
+
+    /// <summary>The event wait handle.</summary>
+    private EventWaitHandle eventWaitHandle;
+
+    /// <summary>The mutex.</summary>
+    private Mutex mutex;
+
+    #endregion
+
+    #region Methods
+
+    /// <summary>The app on startup.</summary>
+    /// <param name="sender">The sender.</param>
+    /// <param name="e">The e.</param>
+    private void AppOnStartup(object sender, StartupEventArgs e)
+    {
+        bool isOwned;
+        this.mutex = new Mutex(true, UniqueMutexName, out isOwned);
+        this.eventWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset, UniqueEventName);
+
+        // So, R# would not give a warning that this variable is not used.
+        GC.KeepAlive(this.mutex);
+
+        if (isOwned)
+        {
+            // Spawn a thread which will be waiting for our event
+            var thread = new Thread(
+                () =>
+                {
+                    while (this.eventWaitHandle.WaitOne())
+                    {
+                        Current.Dispatcher.BeginInvoke(
+                            (Action)(() => ((MainWindow)Current.MainWindow).BringToForeground()));
+                    }
+                });
+
+            // It is important mark it as background otherwise it will prevent app from exiting.
+            thread.IsBackground = true;
+
+            thread.Start();
+            return;
+        }
+
+        // Notify other instance so it could bring itself to foreground.
+        this.eventWaitHandle.Set();
+
+        // Terminate this instance.
+        this.Shutdown();
+    }
+
+    #endregion
+}
+``` -->
+
+<h2 id="当鼠标滑过一个被禁用的元素时让tooltip-显示">当鼠标滑过一个被禁用的元素时，让ToolTip 显示</h2>
+
+<p>设置<code class="language-plaintext highlighter-rouge">ToolTipService.ShowOnDisabled</code>为 true</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Button</span> <span class="n">ToolTipService</span><span class="p">.</span><span class="n">ShowOnDisabled</span><span class="p">=</span><span class="s">"True"</span><span class="p">&gt;</span>  
+</code></pre></div></div>
+
+<h2 id="获取设备屏幕数量">获取设备屏幕数量</h2>
+
+<p>通过 WinForms 方法获取</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Forms</span><span class="p">.</span><span class="n">Screen</span><span class="p">.</span><span class="n">AllScreens</span>
+</code></pre></div></div>
+
+<p>上面就可以拿到所有的屏幕，通过 Count 方法就可以知道有多少屏幕</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">screenCount</span> <span class="p">=</span> <span class="n">Screen</span><span class="p">.</span><span class="n">AllScreens</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="获取当前域用户">获取当前域用户</h2>
+
+<p>在 WPF 找到当前登陆的用户使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System.Security.Principal</span><span class="p">;</span>
+
+<span class="c1">// 其他代码</span>
+
+            <span class="n">WindowsIdentity</span> <span class="n">windowsIdentity</span> <span class="p">=</span> <span class="n">WindowsIdentity</span><span class="p">.</span><span class="nf">GetCurrent</span><span class="p">();</span>
+            <span class="kt">string</span> <span class="n">crentUserAd</span> <span class="p">=</span> <span class="n">windowsIdentity</span><span class="p">.</span><span class="n">Name</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>输出 <code class="language-plaintext highlighter-rouge">crentUserAd</code> 可以看到 <code class="language-plaintext highlighter-rouge">设备\\用户</code> 的格式</p>
+
+<h2 id="绑定资源文件里面的资源">绑定资源文件里面的资源</h2>
+
+<p>在 WPF 的 xaml 可以通过 <code class="language-plaintext highlighter-rouge">x:Static</code> 绑定资源，但是要求资源文件里面的对应资源设置访问为公开</p>
+
+<p>如果没有设置那么将会在 xaml 运行的时候提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Markup</span><span class="p">.</span><span class="n">XamlParseException</span> 
+
+<span class="err">在</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Markup</span><span class="p">.</span><span class="n">StaticExtension</span> <span class="err">上提供值</span><span class="n">xxx</span>
+</code></pre></div></div>
+
+<p>此时在设计器里面是可以看到绑定成功，只是在运行的时候提示找不到，展开可以看到下面提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">无法将</span> <span class="n">xx</span><span class="p">.</span><span class="n">Properties</span><span class="p">.</span><span class="n">Resources</span><span class="p">.</span><span class="n">xx</span>  <span class="n">StaticExtension</span> <span class="err">值解析为枚举、静态字段或静态属性</span>
+</code></pre></div></div>
+
+<p>解决方法是在 Resource.resx 里面的访问权限从 internal 修改为 public 就可以</p>
+
+<h2 id="资源字典引用">资源字典引用</h2>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Application.Resources&gt;</span>
+    <span class="nt">&lt;ResourceDictionary&gt;</span>
+      <span class="nt">&lt;ResourceDictionary.MergedDictionaries&gt;</span>
+        <span class="nt">&lt;ResourceDictionary</span> <span class="na">Source=</span><span class="s">"pack://application:,,,/JeenalerenenearWerjilakaw;component/ColorBrushResourcesDictionary.xaml"</span><span class="nt">&gt;&lt;/ResourceDictionary&gt;</span>
+      <span class="nt">&lt;/ResourceDictionary.MergedDictionaries&gt;</span>
+    <span class="nt">&lt;/ResourceDictionary&gt;</span>
+  <span class="nt">&lt;/Application.Resources&gt;</span>
+</code></pre></div></div>
+
+<h2 id="判断-wpf-程序使用管理员权限运行">判断 WPF 程序使用管理员权限运行</h2>
+
+<p>引用命名空间，复制下面代码，然后调用 IsAdministrator 方法，如果返回 true 就是使用管理员权限运行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System.Security.Principal</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">IsAdministrator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">WindowsIdentity</span> <span class="n">current</span> <span class="p">=</span> <span class="n">WindowsIdentity</span><span class="p">.</span><span class="nf">GetCurrent</span><span class="p">();</span>
+            <span class="n">WindowsPrincipal</span> <span class="n">windowsPrincipal</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowsPrincipal</span><span class="p">(</span><span class="n">current</span><span class="p">);</span>
+            <span class="c1">//WindowsBuiltInRole可以枚举出很多权限，例如系统用户、User、Guest等等</span>
+            <span class="k">return</span> <span class="n">windowsPrincipal</span><span class="p">.</span><span class="nf">IsInRole</span><span class="p">(</span><span class="n">WindowsBuiltInRole</span><span class="p">.</span><span class="n">Administrator</span><span class="p">);</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p><a href="https://blog.csdn.net/zuoyefeng1990/article/details/62224387">C# 判断软件是否是管理员权限运行 - 除却猩猩不是猿 - CSDN博客</a></p>
+
+<h2 id="注册全局事件">注册全局事件</h2>
+
+<p>如果需要注册一个类型的全局事件，如拿到 TextBox 的全局输入，那么可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">EventManager</span><span class="p">.</span><span class="nf">RegisterClassHandler</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">TextBox</span><span class="p">),</span> <span class="n">TextBox</span><span class="p">.</span><span class="n">KeyDownEvent</span><span class="p">,</span> <span class="k">new</span> <span class="nf">RoutedEventHandler</span><span class="p">(</span><span class="err">方法</span><span class="p">));</span>
+</code></pre></div></div>
+
+<h2 id="高版本的-wpf-引用低版本类库导致无法启动">高版本的 WPF 引用低版本类库导致无法启动</h2>
+
+<p>如果在一个 .net 4.0 的 WPF 程序引用一个 .net 2.0 的库，那么就会让程序无法运行，解决方法添加<code class="language-plaintext highlighter-rouge">useLegacyV2RuntimeActivationPolicy</code></p>
+
+<p>打开 app.config 添加 <code class="language-plaintext highlighter-rouge">useLegacyV2RuntimeActivationPolicy="true"</code> 在 startup 元素</p>
+
+<p>下面是 app.config 代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="p">=</span><span class="s">"1.0"</span> <span class="n">encoding</span><span class="p">=</span><span class="s">"utf-8"</span><span class="p">?&gt;</span>
+<span class="p">&lt;</span><span class="n">configuration</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="n">startup</span> <span class="n">useLegacyV2RuntimeActivationPolicy</span><span class="p">=</span><span class="s">"true"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">supportedRuntime</span> <span class="n">version</span><span class="p">=</span><span class="s">"v4.0"</span> <span class="n">sku</span><span class="p">=</span><span class="s">".NETFramework,Version=v4.0"</span><span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="n">startup</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">configuration</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>参见：<a href="http://blog.csdn.net/barry_hui/article/details/78758405">WPF 软件引用其他类库启动无反应问题 - 灰色年华 - CSDN博客</a></p>
+
+<h2 id="非托管使用托管委托">非托管使用托管委托</h2>
+
+<p>如果有一个 C++ 写的dll，他需要一个函数指针，在C#使用，就可以传入委托。</p>
+
+<p>那么简单的方法是这样写：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Func</span><span class="p">(){}</span>
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">C</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nf">c</span><span class="p">(</span><span class="n">Func</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>其中c就是C++写的函数，传进去看起来好像正常。</p>
+
+<p>但是有时候程序不知道怎么就炸了。</p>
+
+<p>因为这样写是不对的。</p>
+
+<p>传入的不是函数地址，传入的是把函数隐式转换委托，然后转换的委托是局部变量，会被gc，所以在C++拿到的是一个被回收的委托，调用时就会炸。</p>
+
+<p>这里无法用catch，所以用这个会让程序退出。</p>
+
+<p>调用C#的函数，使用委托，是隐式转换，上面代码可以写成下面的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Func</span><span class="p">(){}</span>
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">C</span><span class="p">()</span>
+    <span class="p">{</span>
+         <span class="kt">var</span> <span class="n">temp</span> <span class="p">=</span> <span class="k">new</span> <span class="k">delegate</span><span class="p">(){</span> <span class="n">Func</span> <span class="p">};</span>
+         <span class="nf">c</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>于是在函数完就把temp放到gc在调用时找不到委托。</p>
+
+<p>一个好的做法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Func</span><span class="p">(){}</span>
+    <span class="k">private</span> <span class="k">delegate</span> <span class="n">Temp</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="k">delegate</span><span class="p">(){</span><span class="n">Func</span><span class="p">};</span>
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">C</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nf">c</span><span class="p">(</span><span class="n">Temp</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>放在静态变量不会gc调用不会空，可以这样不会出现上面问题。</p>
+
+<h2 id="元素失去获得">元素失去获得</h2>
+
+<p>元素可以使用 CaptureMouse 方法获得，这可以用在拖动，一旦拖动出元素可以获得，得到拖动结束。</p>
+
+<p>但是有时会失去获得，如果自己需要失去，可以使用 Mouse.Capture(null) 但是在没有自己使用的这个函数，失去获得，可以的是：</p>
+
+<p>设置元素可命中false，如果看到元素失去交互，而且堆栈没有任何地方使用失去获得，那么可能就是存在设置元素可命中false。</p>
+
+<p>如果有两个函数同时 获得 一个元素，会不会出现 失去获得？不会，如果同一个元素多次 获得，那么不会出现失去获得。如果这是让另一个获得，那么这个元素就是失去获得。可以通过元素.IsMouseCaptured 判断元素获得。</p>
+
+<p>可以通过 Mouse.Captured 获得现在 Mouse 是否获得。如果返回是 null ，没有获得，但是元素获得存在一些问题，在失去焦点或其他，可能就失去获得。</p>
+
+<p><a href="https://walterlv.github.io/post/wpf/capture-mouse-failed.html">CaptureMouse/CaptureStylus 可能会失败 - walterlv</a></p>
+
+<h2 id="反射引用程序集">反射引用程序集</h2>
+
+<p>这是比较难以说明的问题，总之，可能出现的问题就是引用了一个 xaml 使用的资源库，或使用了一个只有反射才访问的库。</p>
+
+<p>原因：
+如果在引用一个库，引用代码没有直接使用的程序集。使用的方法就是使用 xaml 或反射来使用。那么在生成，vs 不会把程序集放在输出文件夹。</p>
+
+<p>问题：
+反射报错，无法找到程序集。</p>
+
+<p>例子：
+如果我用了一个程序集，然而代码没有直接引用，而是反射使用，这样，vs判断这个程序集没有使用，最后把他清除。所以会出现反射无法拿到，而且很难知道这里出现坑。</p>
+
+<p>为了解决 xaml 和反射无法拿到的坑，可以使用 在任意位置使用 Debug.Write(typeof(程序集里的一个类)) 方法让 vs 引用程序集。</p>
+
+<p>那么在 Release 上为何还可以把程序集放在输出文件夹呢？因为我也不知道原因，如果你知道的话，那么请告诉我一下。</p>
+
+<h2 id="使用十进制设置颜色">使用十进制设置颜色</h2>
+
+<p>在 xaml 如果需要使用 十进制设置颜色，请使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">SolidColorBrush</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"LikeGreen"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">SolidColorBrush</span><span class="p">.</span><span class="n">Color</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Color</span> <span class="n">R</span><span class="p">=</span><span class="s">"100"</span> <span class="n">G</span><span class="p">=</span><span class="s">"200"</span> <span class="n">B</span><span class="p">=</span><span class="s">"30"</span> <span class="n">A</span><span class="p">=</span><span class="s">"100"</span><span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">SolidColorBrush</span><span class="p">.</span><span class="n">Color</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">SolidColorBrush</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/a/47952098/6116637">https://stackoverflow.com/a/47952098/6116637</a></p>
+
+<h2 id="wpf-判断文件是否隐藏">WPF 判断文件是否隐藏</h2>
+
+<p>可以设置一些文件是隐藏文件，那么 WPF 如何判断 FileInfo 是隐藏文件？</p>
+
+<p>简单的代码，通过判断 Attributes 就可以得到，请看下面。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">file</span><span class="p">.</span><span class="n">Attributes</span><span class="p">.</span><span class="nf">HasFlag</span><span class="p">(</span><span class="n">FileAttributes</span><span class="p">.</span><span class="n">Hidden</span><span class="p">)</span>
+</code></pre></div></div>
+
+<h2 id="触发鼠标事件">触发鼠标事件</h2>
+
+<p>触发鼠标点下事件，可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">element</span><span class="p">.</span><span class="nf">RaiseEvent</span><span class="p">(</span><span class="k">new</span> <span class="nf">MouseEventArgs</span><span class="p">(</span><span class="n">Mouse</span><span class="p">.</span><span class="n">PrimaryDevice</span><span class="p">,</span> <span class="m">1</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">RoutedEvent</span> <span class="p">=</span> <span class="n">Mouse</span><span class="p">.</span><span class="n">MouseDownEvent</span>
+            <span class="p">});</span>
+</code></pre></div></div>
+
+<h2 id="textblock-换行">TextBlock 换行</h2>
+
+<p>使用 <code class="language-plaintext highlighter-rouge">&amp;#10;</code> 就可以换行</p>
+
+<p><a href="https://blog.lindexi.com/post/win10-uwp-%E5%9C%A8-xaml-%E8%AE%A9-TextBlock-%E6%8D%A2%E8%A1%8C.html">win10 uwp 在 xaml 让 TextBlock 换行</a></p>
+
+<h2 id="在-xaml-绑定索引空格">在 xaml 绑定索引空格</h2>
+
+<p>如果一个索引需要传入空格，那么在 xaml 使用下面代码是无法绑定</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="n">Binding</span> <span class="n">MyCollection</span><span class="p">[</span><span class="n">foo</span> <span class="n">bar</span><span class="p">]}</span>
+</code></pre></div></div>
+
+<p>需要使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="n">Binding</span> <span class="n">MyCollection</span><span class="p">[[</span><span class="n">foo</span><span class="p">&amp;</span><span class="n">x20</span><span class="p">;</span><span class="n">bar</span><span class="p">]]}</span>
+</code></pre></div></div>
+
+<p><a href="https://ikriv.com/blog/?p=1143">Binding to an index with space in XAML – Ivan Krivyakov</a></p>
+
+<h2 id="使用-task-continuewith-在主线程">使用 Task ContinueWith 在主线程</h2>
+
+<p>在有时候使用 Task 的 Delay 之后想要返回主线程，可以使用 ContinueWith 的方法，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">5</span><span class="p">)).</span><span class="nf">ContinueWith</span>
+            <span class="p">(</span>
+                <span class="n">_</span> <span class="p">=&gt;</span> <span class="nf">Foo</span><span class="p">()</span>
+                <span class="c1">// 如果 Foo 不需要在主线程，请注释下面一段代码</span>
+                <span class="p">,</span> <span class="n">TaskScheduler</span><span class="p">.</span><span class="nf">FromCurrentSynchronizationContext</span><span class="p">()</span>
+            <span class="p">);</span>
+</code></pre></div></div>
+
+<p>核心是 TaskScheduler.FromCurrentSynchronizationContext 方法</p>
+
+<p>如果 Foo 不需要在主线程，就可以删除 TaskScheduler.FromCurrentSynchronizationContext 代码</p>
+
+<h2 id="wpf-数据绑定日期时间格式">WPF-数据绑定：日期时间格式</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{Binding datetime,StringFormat='{}{0:yyyy年MM月dd日 dddd HH:mm:ss}',ConverterCulture=zh-CN}
+</code></pre></div></div>
+
+<p>指定ConverterCulture为zh-CN后星期就显示为中文了。</p>
+
+<h2 id="wpf-第三方dll-强签名">WPF 第三方DLL 强签名</h2>
+
+<p>参见：http://www.cnblogs.com/xjt927/p/5317678.html</p>
+
+<h2 id="wpf-去掉最大化按钮">WPF 去掉最大化按钮</h2>
+
+<p>通过在窗口添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ResizeMode</span><span class="p">=</span><span class="s">"NoResize"</span>
+</code></pre></div></div>
+
+<p>窗口就剩下一个关闭同时用户也无法拖动修改窗口大小</p>
+
+<h2 id="wpf-textbox-全选">WPF TextBox 全选</h2>
+
+<p>在一个按钮点击的时候全选 TextBox 的内容，可以在按钮里面调用 SelectAll 方法</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>textBox.SelectAll();
+</code></pre></div></div>
+
+<p>上面代码的 textBox 就是界面写的 TextBox 元素</p>
+
+<p>如果发现调用上面的代码 TextBox 没有全选，可能是 TextBox 没有拿到焦点，可以尝试下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>textBox.Focus();
+textBox.SelectAll();
+</code></pre></div></div>
+
+<h2 id="wpf-获取文本光标宽度">WPF 获取文本光标宽度</h2>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">SystemParameters.CaretWidth</code> 获取宽度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">caretWidth</span> <span class="p">=</span> <span class="n">SystemParameters</span><span class="p">.</span><span class="n">CaretWidth</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="获取屏幕可用大小">获取屏幕可用大小</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">SystemParameters</span><span class="p">.</span><span class="n">WorkArea</span>
+</code></pre></div></div>
+
+<h2 id="设置另一个窗口获取焦点">设置另一个窗口获取焦点</h2>
+
+<p>设置窗口获取焦点不能通过 Focus 设置，这个方法设置的是窗口控件拿到窗口内焦点，需要通过 Activate 方法激活窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">window</span><span class="p">.</span><span class="nf">Activate</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>推荐在子窗口关闭之前激活 Owner 解决<a href="https://blog.walterlv.com/post/fix-owner-window-dropping-down-when-close-a-modal-child-window.html">关闭模态窗口后，父窗口居然失去焦点跑到了其他窗口的后面的问题 - walterlv</a></p>
+
+<p>详细请看 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.windows.systemparameters.caretwidth?view=netframework-4.8#System_Windows_SystemParameters_CaretWidth">SystemParameters.CaretWidth Property</a></p>
+
+<p><a href="http://www.cnblogs.com/xwlyun/archive/2012/09/14/2685199.html">wpf动画——new PropertyPath属性链 - 影天 - 博客园</a></p>
+
+<p><a href="http://www.cnblogs.com/xwlyun/archive/2012/09/11/2680579.html">wpf动画——缓动动画Animation Easing - 影天 - 博客园</a></p>
+
+<h2 id="wpf-listview-使用-wrappanel-没有自动换行">WPF ListView 使用 WrapPanel 没有自动换行</h2>
+
+<p>原因是没有设置禁用 ListView 的水平滚动</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;ListView</span> <span class="na">ScrollViewer.HorizontalScrollBarVisibility=</span><span class="s">"Disabled"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;ListView.ItemsPanel&gt;</span>
+    <span class="nt">&lt;ItemsPanelTemplate&gt;</span>
+      <span class="nt">&lt;WrapPanel</span> <span class="na">Orientation=</span><span class="s">"Horizontal"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/ItemsPanelTemplate&gt;</span>
+  <span class="nt">&lt;/ListView.ItemsPanel&gt;</span>
+<span class="nt">&lt;/ListView&gt;</span>
+</code></pre></div></div>
+
+<h2 id="通用路由事件定义">通用路由事件定义</h2>
+
+<p>因为没有模版创建，还是写一下，方便抄代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">RoutedEvent</span> <span class="n">LindexiEvent</span> <span class="p">=</span> <span class="n">EventManager</span><span class="p">.</span><span class="nf">RegisterRoutedEvent</span><span class="p">(</span><span class="s">"Lindexi"</span><span class="p">,</span>
+            <span class="n">RoutingStrategy</span><span class="p">.</span><span class="n">Bubble</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">&lt;</span><span class="n">LindexiRoutedEventArgs</span><span class="p">&gt;),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Owner</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">EventHandler</span><span class="p">&lt;</span><span class="n">LindexiRoutedEventArgs</span><span class="p">&gt;</span> <span class="n">Lindexi</span>
+        <span class="p">{</span>
+            <span class="k">add</span> <span class="p">{</span> <span class="nf">AddHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">remove</span> <span class="p">{</span> <span class="nf">RemoveHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>全部代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Owner</span> <span class="p">:</span> <span class="n">UIElement</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">RoutedEvent</span> <span class="n">LindexiEvent</span> <span class="p">=</span> <span class="n">EventManager</span><span class="p">.</span><span class="nf">RegisterRoutedEvent</span><span class="p">(</span><span class="s">"Lindexi"</span><span class="p">,</span>
+            <span class="n">RoutingStrategy</span><span class="p">.</span><span class="n">Bubble</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">LindexiRoutedEventEventHandler</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Owner</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">LindexiRoutedEventEventHandler</span> <span class="n">Lindexi</span>
+        <span class="p">{</span>
+            <span class="k">add</span> <span class="p">{</span> <span class="nf">AddHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">remove</span> <span class="p">{</span> <span class="nf">RemoveHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">RaiseLindexiEvent</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">RaiseEvent</span><span class="p">(</span><span class="k">new</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">this</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">LindexiRoutedEventArgs</span> <span class="p">:</span> <span class="n">RoutedEventArgs</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">RoutedEvent</span> <span class="n">routedEvent</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">routedEvent</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">RoutedEvent</span> <span class="n">routedEvent</span><span class="p">,</span> <span class="kt">object</span> <span class="n">source</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">routedEvent</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">InvokeEventHandler</span><span class="p">(</span><span class="n">Delegate</span> <span class="n">genericHandler</span><span class="p">,</span> <span class="kt">object</span> <span class="n">genericTarget</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 这个方法的重写是可选的，用途是为了提升性能</span>
+            <span class="c1">// 如无重写，底层将会调用 Delegate.DynamicInvoke 方法触发事件，这是通过反射的方法调用的</span>
+            <span class="kt">var</span> <span class="n">handler</span> <span class="p">=</span> <span class="p">(</span><span class="n">LindexiRoutedEventEventHandler</span><span class="p">)</span> <span class="n">genericHandler</span><span class="p">;</span>
+            <span class="nf">handler</span><span class="p">(</span><span class="n">genericTarget</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">delegate</span> <span class="k">void</span> <span class="nf">LindexiRoutedEventEventHandler</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span>
+        <span class="n">LindexiRoutedEventArgs</span> <span class="n">e</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>监听</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">xx</span><span class="p">.</span><span class="nf">AddHandler</span><span class="p">(</span><span class="n">Owner</span><span class="p">.</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">new</span> <span class="nf">LindexiRoutedEventEventHandler</span><span class="p">((</span><span class="n">o</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+
+            <span class="p">}));</span>
+</code></pre></div></div>
+
+<h2 id="附加路由事件">附加路由事件</h2>
+
+<p>路由事件可以定义在任意的类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">LindexiExtensions</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">AddLindexiHandler</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">element</span><span class="p">,</span>
+            <span class="n">EventHandler</span><span class="p">&lt;</span><span class="n">LindexiRoutedEventArgs</span><span class="p">&gt;</span> <span class="n">handler</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">AddHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="n">handler</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">RemoveLindexiHandler</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">element</span><span class="p">,</span>
+            <span class="n">EventHandler</span><span class="p">&lt;</span><span class="n">LindexiRoutedEventArgs</span><span class="p">&gt;</span> <span class="n">handler</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">RemoveHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="n">handler</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">RoutedEvent</span> <span class="n">LindexiEvent</span> <span class="p">=</span>
+            <span class="n">EventManager</span><span class="p">.</span><span class="nf">RegisterRoutedEvent</span><span class="p">(</span><span class="s">"Lindexi"</span><span class="p">,</span>
+                <span class="n">RoutingStrategy</span><span class="p">.</span><span class="n">Bubble</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">EventHandler</span><span class="p">&lt;</span><span class="n">LindexiRoutedEventArgs</span><span class="p">&gt;),</span>
+                <span class="k">typeof</span><span class="p">(</span><span class="n">LindexiExtensions</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">RaiseLindexiEvent</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">RaiseEvent</span><span class="p">(</span><span class="k">new</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="n">element</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">LindexiRoutedEventArgs</span> <span class="p">:</span> <span class="n">RoutedEventArgs</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">RoutedEvent</span> <span class="n">routedEvent</span><span class="p">,</span> <span class="kt">object</span> <span class="n">source</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">routedEvent</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如使用 <code class="language-plaintext highlighter-rouge">element.RaiseEvent(new UIElementDraggedRoutedEventArgs(UIElementDraggedEvent, element2));</code> 那么事件里面的 Source 是 element 而 OriginSource 是 element2 元素</p>
+
+<h2 id="滚动-listview-的内容到最底">滚动 ListView 的内容到最底</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">DependencyObject</span> <span class="n">border</span> <span class="p">=</span> <span class="n">VisualTreeHelper</span><span class="p">.</span><span class="nf">GetChild</span><span class="p">(</span><span class="n">ListView</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+            <span class="n">ScrollViewer</span> <span class="n">scrollViewer</span> <span class="p">=</span> <span class="p">(</span><span class="n">ScrollViewer</span><span class="p">)</span><span class="n">VisualTreeHelper</span><span class="p">.</span><span class="nf">GetChild</span><span class="p">(</span><span class="n">border</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+            <span class="n">scrollViewer</span><span class="p">.</span><span class="nf">ScrollToBottom</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>可以使用下面扩展方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">ListViewExtensions</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ScrollToBottom</span><span class="p">(</span><span class="k">this</span> <span class="n">ListView</span> <span class="n">listView</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">DependencyObject</span> <span class="n">border</span> <span class="p">=</span> <span class="n">VisualTreeHelper</span><span class="p">.</span><span class="nf">GetChild</span><span class="p">(</span><span class="n">listView</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+            <span class="n">ScrollViewer</span> <span class="n">scrollViewer</span> <span class="p">=</span> <span class="p">(</span><span class="n">ScrollViewer</span><span class="p">)</span> <span class="n">VisualTreeHelper</span><span class="p">.</span><span class="nf">GetChild</span><span class="p">(</span><span class="n">border</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+            <span class="n">scrollViewer</span><span class="p">.</span><span class="nf">ScrollToBottom</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/questions/2337822/wpf-listbox-scroll-to-end-automatically">WPF ListBox Scroll to end automatically - Stack Overflow</a></p>
+
+<h2 id="wpf-截图功能的实现"><a href="https://huchengv5.gitee.io/post/WPF-%E6%88%AA%E5%9B%BE%E5%8A%9F%E8%83%BD%E7%9A%84%E5%AE%9E%E7%8E%B0.html">WPF 截图功能的实现</a></h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="n">BitmapSource</span> <span class="nf">Snap</span><span class="p">(</span><span class="k">this</span> <span class="n">FrameworkElement</span> <span class="n">element</span><span class="p">,</span> <span class="kt">double</span> <span class="n">scale</span><span class="p">,</span> <span class="kt">int</span> <span class="n">desiredHeight</span><span class="p">,</span> <span class="kt">int</span> <span class="n">desiredWidth</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">width</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">element</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">width</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">width</span> <span class="p">=</span> <span class="n">desiredWidth</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">height</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">element</span><span class="p">.</span><span class="n">ActualHeight</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">height</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">height</span> <span class="p">=</span> <span class="n">desiredHeight</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(!</span><span class="n">element</span><span class="p">.</span><span class="n">IsLoaded</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">element</span><span class="p">.</span><span class="nf">Arrange</span><span class="p">(</span><span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">));</span>
+                <span class="n">element</span><span class="p">.</span><span class="nf">Measure</span><span class="p">(</span><span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">scaleWidth</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">width</span> <span class="p">*</span> <span class="n">scale</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">scaleHeight</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="n">height</span> <span class="p">*</span> <span class="n">scale</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">bitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RenderTargetBitmap</span><span class="p">(</span><span class="n">scaleWidth</span><span class="p">,</span> <span class="n">scaleHeight</span><span class="p">,</span> <span class="m">96.0</span><span class="p">,</span> <span class="m">96.0</span><span class="p">,</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Pbgra32</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">rectangle</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Rectangle</span>
+            <span class="p">{</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="n">scaleWidth</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="n">scaleHeight</span><span class="p">,</span>
+
+                <span class="n">Fill</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualBrush</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Viewbox</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">),</span>
+                    <span class="n">ViewboxUnits</span> <span class="p">=</span> <span class="n">BrushMappingMode</span><span class="p">.</span><span class="n">Absolute</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="p">};</span>
+
+            <span class="n">rectangle</span><span class="p">.</span><span class="nf">Measure</span><span class="p">(</span><span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">scaleWidth</span><span class="p">,</span> <span class="n">scaleHeight</span><span class="p">));</span>
+            <span class="n">rectangle</span><span class="p">.</span><span class="nf">Arrange</span><span class="p">(</span><span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">scaleWidth</span><span class="p">,</span> <span class="n">scaleHeight</span><span class="p">)));</span>
+
+            <span class="n">bitmap</span><span class="p">.</span><span class="nf">Render</span><span class="p">(</span><span class="n">rectangle</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">bitmap</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>详细请看 <a href="https://huchengv5.gitee.io/post/WPF-%E6%88%AA%E5%9B%BE%E5%8A%9F%E8%83%BD%E7%9A%84%E5%AE%9E%E7%8E%B0.html">WPF 截图功能的实现</a></p>
+
+<h2 id="wpf-使用-frame-导航-缓存之前页面实例">WPF 使用 Frame 导航 缓存之前页面实例</h2>
+
+<p>默认 Frame 导航不会保存 Page 对象，想要实现 Cache 页面的功能，导航的时候调用原来的实例不重新创建，需要在页面设置 <code class="language-plaintext highlighter-rouge">KeepAlive=true</code> 属性。这个设置相当于在 UWP 中的 <a href="https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.controls.page.navigationcachemode?view=winrt-19041&amp;WT.mc_id=WD-MVP-5003260">Page.NavigationCacheMode Property</a> 属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">(</span><span class="n">Page</span> <span class="n">p</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">p</span><span class="p">.</span><span class="n">KeepAlive</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>或在 XAML 使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Page</span>
+    <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">x</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="n">WindowTitle</span><span class="p">=</span><span class="s">"WillBeKeptInMemory"</span>
+    <span class="n">KeepAlive</span><span class="p">=</span><span class="s">"True"</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>详细请看 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.windows.controls.page.keepalive?view=netcore-3.1&amp;WT.mc_id=WD-MVP-5003260">Page.KeepAlive Property</a></p>
+
+<p><a href="https://stackoverflow.com/questions/54844836/how-are-wpf-pages-held-in-memory">c# - How are WPF pages held in memory? - Stack Overflow</a></p>
+
+<h2 id="wpf-获得依赖属性值更新">WPF 获得依赖属性值更新</h2>
+
+<p>如果需要获得 G 的 Padding 的值更改，WPF 获得依赖属性 值更改可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">DependencyPropertyDescriptor</span><span class="p">.</span><span class="nf">FromProperty</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Border</span><span class="p">)).</span><span class="nf">AddValueChanged</span><span class="p">(</span><span class="n">Board</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">Padding</span> <span class="p">=</span> <span class="n">Board</span><span class="p">.</span><span class="n">Padding</span><span class="p">;</span>
+                    <span class="n">BoardPadding</span> <span class="p">=</span> <span class="n">Board</span><span class="p">.</span><span class="n">Padding</span><span class="p">;</span>
+                <span class="p">});</span>
+</code></pre></div></div>
+
+<p>这个方法就是获得属性的值更改</p>
+
+<p>但是这个方法会出现内存泄露，可以使用 RemoveValueChanged 清除，为了使用清除，需要写一个函数。</p>
+
+<p>不需要担心清除一个不存在的委托，一般在使用 AddValueChanged 之前都使用 RemoveValueChanged 清除</p>
+
+<p>参见：https://stackoverflow.com/questions/4764916/listen-to-changes-of-dependency-property</p>
+
+<h2 id="wpf-如何正确的在tooltip中实现绑定">WPF 如何正确的在tooltip中实现绑定</h2>
+
+<p>解决 ToolTip 绑定不上的问题</p>
+
+<p><a href="https://xinyuehtx.github.io/post/%E5%A6%82%E4%BD%95%E6%AD%A3%E7%A1%AE%E7%9A%84%E5%9C%A8tooltip%E4%B8%AD%E5%AE%9E%E7%8E%B0%E7%BB%91%E5%AE%9A.html">2020-1-8-如何正确的在tooltip中实现绑定 - huangtengxiao</a></p>
+
+<h2 id="wpf-拖动元素">WPF 拖动元素</h2>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/0e57c425/LayfilejonarchoDawherehebafonur">github</a> 欢迎小伙伴访问</p>
+
+<h2 id="依赖属性的-frameworkpropertymetadata-配置仅在-frameworkelement-生效">依赖属性的 FrameworkPropertyMetadata 配置仅在 FrameworkElement 生效</h2>
+
+<p>如果一个自定义的类型只是继承 UIElement 类型，那么在依赖属性定义的 FrameworkPropertyMetadata 里面设置的 FrameworkPropertyMetadataOptions.AffectsRender 等都是无效的，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Doubi</span> <span class="p">:</span> <span class="n">UIElement</span>
+<span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">LindexiProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Lindexi"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Lindexi</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Doubi</span><span class="p">),</span> <span class="k">new</span> <span class="nf">FrameworkPropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="n">Lindexi</span><span class="p">),</span> <span class="n">FrameworkPropertyMetadataOptions</span><span class="p">.</span><span class="n">AffectsRender</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="n">Lindexi</span> <span class="n">Lindexi</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">Lindexi</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">LindexiProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">LindexiProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果更改 Lindexi 属性的值，是不会重新触发 OnRender 函数的，因为 FrameworkPropertyMetadataOptions.AffectsRender 的设置是在 FrameworkPropertyMetadata 里面，而这个类需要在 FrameworkElement 下生效，只是继承 UIElement 是无效的</p>
+
+<h2 id="多个依赖属性共用一个-propertymetadata-对象">多个依赖属性共用一个 PropertyMetadata 对象</h2>
+
+<p>如果我定义了多个依赖属性，这些属性都有相同的 PropertyMetadata 定义，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Doubi</span> <span class="p">:</span> <span class="n">UIElement</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">F1Property</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"F1"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Lindexi</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Doubi</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="n">Lindexi</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="n">Lindexi</span> <span class="n">F1</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">Lindexi</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">F1Property</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">F1Property</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">F2Property</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"F2"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Doubi</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">F2</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">F2Property</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">F2Property</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Lindexi</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到 F1Property 和 F2Property 的 PropertyMetadata 里面的定义都是相同的，那么我是否可以只定义一个对象，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyMetadata</span> <span class="n">DefaultPropertyMetadata</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="n">Lindexi</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">F1Property</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"F1"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Lindexi</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Doubi</span><span class="p">),</span> <span class="n">DefaultPropertyMetadata</span><span class="p">);</span>
+
+        <span class="k">public</span> <span class="n">Lindexi</span> <span class="n">F1</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">Lindexi</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">F1Property</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">F1Property</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">F2Property</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"F2"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Doubi</span><span class="p">),</span> <span class="n">DefaultPropertyMetadata</span><span class="p">);</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">F2</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">F2Property</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">F2Property</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这是不可以的，此时运行将会提示此元数据已与类型和属性关联。必须新建一个元数据</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>System.ArgumentException:“此元数据已与类型和属性关联。必须新建一个元数据。”
+</code></pre></div></div>
+
+<p>抛出的堆栈如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    WindowsBase.dll!System.Windows.DependencyProperty.SetupOverrideMetadata(System.Type, System.Windows.PropertyMetadata typeMetadata, out System.Windows.DependencyObjectType dType, out System.Windows.PropertyMetadata baseMetadata)  未知
+    WindowsBase.dll!System.Windows.DependencyProperty.OverrideMetadata(System.Type, System.Windows.PropertyMetadata typeMetadata = {System.Windows.PropertyMetadata})    未知
+    WindowsBase.dll!System.Windows.DependencyProperty.Register(string name, System.Type propertyType, System.Type ownerType, System.Windows.PropertyMetadata typeMetadata, System.Windows.ValidateValueCallback validateValueCallback)  未知
+    WindowsBase.dll!System.Windows.DependencyProperty.Register(string name, System.Type propertyType, System.Type ownerType, System.Windows.PropertyMetadata typeMetadata)  未知
+</code></pre></div></div>
+
+<h2 id="选择-listview-的某一项同时滚动到某一项">选择 ListView 的某一项同时滚动到某一项</h2>
+
+<p>在 WPF 中让 ListView 滚动到选择的一项，可以在知道当前选择的是哪一项之后，通过如下代码设置。下面代码的 InkPointListView 是一个 ListView 元素，而 selectedIndex 表示当前选择的项的序号，可以使用下面代码，设置自动滚动</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">InkPointListView</span><span class="p">.</span><span class="n">SelectedIndex</span> <span class="p">=</span> <span class="n">selectedIndex</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">selectedIndex</span> <span class="p">&gt;=</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="n">selectedIndex</span> <span class="p">&lt;</span> <span class="n">InkPointListView</span><span class="p">.</span><span class="n">Items</span><span class="p">.</span><span class="n">Count</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">InkPointListView</span><span class="p">.</span><span class="nf">ScrollIntoView</span><span class="p">(</span><span class="n">InkPointListView</span><span class="p">.</span><span class="n">Items</span><span class="p">[</span><span class="n">selectedIndex</span><span class="p">]);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="绑定无视-clr-属性的返回值">绑定无视 CLR 属性的返回值</h2>
+
+<p>如下面代码，返回的是字符串常量，但实际的绑定是有效的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">TextProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Text"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">TextControl</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Text</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="s">"lindexi is doubi"</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">TextProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>绑定返回值是绑定的值，而不是返回的字符串</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;StackPanel&gt;</span>
+      <span class="nt">&lt;TextBlock</span> <span class="na">x:Name=</span><span class="s">"TextBlock"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Text=</span><span class="s">"123"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+      <span class="nt">&lt;local:TextControl</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Text=</span><span class="s">"{Binding ElementName=TextBlock,Path=Text}"</span><span class="nt">&gt;&lt;/local:TextControl&gt;</span>
+    <span class="nt">&lt;/StackPanel&gt;</span>
+</code></pre></div></div>
+
+<h2 id="单元测试没有-getentryassembly-的返回值">单元测试没有 GetEntryAssembly 的返回值</h2>
+
+<p>在单元测试调用 Assembly.GetEntryAssembly() 拿到的返回值是空</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Use as first line in ad hoc tests (needed by XNA specifically)</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetEntryAssembly</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nf">SetEntryAssembly</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetCallingAssembly</span><span class="p">());</span>
+    <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Allows setting the Entry Assembly when needed. </span>
+    <span class="c1">/// Use AssemblyUtilities.SetEntryAssembly() as first line in XNA ad hoc tests</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">/// &lt;param name="assembly"&gt;Assembly to set as entry assembly&lt;/param&gt;</span>
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetEntryAssembly</span><span class="p">(</span><span class="n">Assembly</span> <span class="n">assembly</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">AppDomainManager</span> <span class="n">manager</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">AppDomainManager</span><span class="p">();</span>
+        <span class="n">FieldInfo</span> <span class="n">entryAssemblyField</span> <span class="p">=</span> <span class="n">manager</span><span class="p">.</span><span class="nf">GetType</span><span class="p">().</span><span class="nf">GetField</span><span class="p">(</span><span class="s">"m_entryAssembly"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">);</span>
+        <span class="n">entryAssemblyField</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">assembly</span><span class="p">);</span>
+
+        <span class="n">AppDomain</span> <span class="n">domain</span> <span class="p">=</span> <span class="n">AppDomain</span><span class="p">.</span><span class="n">CurrentDomain</span><span class="p">;</span>
+        <span class="n">FieldInfo</span> <span class="n">domainManagerField</span> <span class="p">=</span> <span class="n">domain</span><span class="p">.</span><span class="nf">GetType</span><span class="p">().</span><span class="nf">GetField</span><span class="p">(</span><span class="s">"_domainManager"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">);</span>
+        <span class="n">domainManagerField</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">manager</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="触发-wpf-按钮点击">触发 WPF 按钮点击</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ButtonAutomationPeer</span> <span class="n">peer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ButtonAutomationPeer</span><span class="p">(</span><span class="n">someButton</span><span class="p">);</span>
+<span class="n">IInvokeProvider</span> <span class="n">invokeProv</span> <span class="p">=</span> <span class="n">peer</span><span class="p">.</span><span class="nf">GetPattern</span><span class="p">(</span><span class="n">PatternInterface</span><span class="p">.</span><span class="n">Invoke</span><span class="p">)</span> <span class="k">as</span> <span class="n">IInvokeProvider</span><span class="p">;</span>
+<span class="n">invokeProv</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>详细请看 <a href="https://stackoverflow.com/a/728444/6116637">https://stackoverflow.com/a/728444/6116637</a></p>
+:ET

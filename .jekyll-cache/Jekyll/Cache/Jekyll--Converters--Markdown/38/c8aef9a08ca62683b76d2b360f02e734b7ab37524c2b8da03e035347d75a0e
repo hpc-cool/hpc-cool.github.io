@@ -1,0 +1,76 @@
+I"�<p>本文告诉大家一个简单的方法在 Windows 安装 Jekyll</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/22 17:47:39 -->
+
+<div id="toc"></div>
+
+<h2 id="下载-ps1-文件">下载 ps1 文件</h2>
+
+<p>首先需要安装 Chocolatey ，这个工具可以快速安装 Jekyll</p>
+
+<p>先下载<a href="https://chocolatey.org/install.ps1">Chocolatey</a>，如果无法从这个地方下载，请到csdn<a href="http://download.csdn.net/download/lindexi_gd/10132718">下载</a></p>
+
+<p>然后管理员打开 PowerShell ，因为需要使用脚本，所以让 PowerShell 支持脚本</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Set</span><span class="p">-</span><span class="n">ExecutionPolicy</span> <span class="n">bypass</span>
+</code></pre></div></div>
+
+<p>需要注意 bypass 是不需要签名就可以运行脚本，对于开发者，这个功能是很好的，但是如果你不是开发者，那么请不要使用这个功能。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">如果不是开发者，请用下面代码</span>
+
+ <span class="n">Set</span><span class="p">-</span><span class="n">ExecutionPolicy</span> <span class="n">bypass</span> <span class="n">process</span>
+</code></pre></div></div>
+
+<h2 id="安装-chocolatey">安装 Chocolatey</h2>
+
+<p>把下载的脚本放到 PowerShell 运行就可以</p>
+
+<p>然后输入下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">SET</span> <span class="s">"PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"</span>
+</code></pre></div></div>
+
+<h2 id="安装-ruby">安装 Ruby</h2>
+
+<p>使用下面的命令安装</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">choco</span> <span class="n">install</span> <span class="n">ruby</span> <span class="p">-</span><span class="n">y</span>
+</code></pre></div></div>
+
+<h2 id="安装bundler">安装bundler</h2>
+
+<p>使用下面的命令</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cd</span>  <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">tools</span><span class="err">\</span><span class="n">ruby24</span><span class="err">\</span><span class="n">bin</span>
+ <span class="p">.</span><span class="err">\</span><span class="n">gem</span> <span class="n">install</span> <span class="n">bundler</span>
+</code></pre></div></div>
+
+<h2 id="安装jekyll">安装Jekyll</h2>
+
+<p>使用下面命令安装</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">.</span><span class="err">\</span><span class="n">gem</span> <span class="n">install</span> <span class="n">jekyll</span>
+
+<span class="p">.</span><span class="err">\</span><span class="n">gem</span> <span class="n">install</span> <span class="n">jekyll</span> <span class="n">bundler</span>
+</code></pre></div></div>
+
+<p>然后重新打开命令行输入</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">bundle</span> <span class="n">install</span>
+</code></pre></div></div>
+
+<p>这样就可以安装了，使用下面的代码启动</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">jekyll</span> <span class="k">new</span> <span class="n">myblog</span>
+<span class="n">cd</span> <span class="n">myblog</span>
+<span class="n">jekyll</span> <span class="n">serve</span>
+</code></pre></div></div>
+
+<p>感谢</p>
+
+<p><a href="https://davidburela.wordpress.com/2015/11/28/easily-install-jekyll-on-windows-with-3-command-prompt-entries-and-chocolatey/">Easily install Jekyll on Windows with 3 command prompt entries and Chocolatey </a></p>
+
+:ET

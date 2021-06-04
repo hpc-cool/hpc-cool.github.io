@@ -1,0 +1,3 @@
+I"<p>现在完全开源的 Xamarin Forms 是支持使用 WPF 进行承载，也就是使用 Xamarin 开发的控件等是可以在 WPF 项目使用的。本文来告诉大家如何在 WPF 中运行 Xamarin Forms 项目，让 Xamarin Forms 构建为 WPF 应用</p>
+
+:ET

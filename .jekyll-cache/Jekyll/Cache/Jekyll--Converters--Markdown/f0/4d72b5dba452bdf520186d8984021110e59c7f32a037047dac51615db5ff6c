@@ -1,0 +1,36 @@
+I"[<p>本文告诉大家多个方法转换 short 和 byte 有简单的也有快的</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/4/29 12:08:39 -->
+
+<h2 id="快速简单的方法">快速简单的方法</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kt">short</span> <span class="nf">ToShort</span><span class="p">(</span><span class="kt">short</span> <span class="n">byte1</span><span class="p">,</span> <span class="kt">short</span> <span class="n">byte2</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">byte2</span> <span class="p">&lt;&lt;</span> <span class="m">8</span><span class="p">)</span> <span class="p">+</span> <span class="n">byte1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="k">void</span> <span class="nf">FromShort</span><span class="p">(</span><span class="kt">short</span> <span class="n">number</span><span class="p">,</span> <span class="k">out</span> <span class="kt">byte</span> <span class="n">byte1</span><span class="p">,</span> <span class="k">out</span> <span class="kt">byte</span> <span class="n">byte2</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">byte2</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="p">(</span><span class="n">number</span> <span class="p">&gt;&gt;</span> <span class="m">8</span><span class="p">);</span>
+    <span class="n">byte1</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="p">(</span><span class="n">number</span> <span class="p">&amp;</span> <span class="m">255</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="简单的方法">简单的方法</h2>
+
+<p>通过<a href="https://docs.microsoft.com/en-us/dotnet/api/system.bitconverter?wt.mc_id=MVP">BitConverter</a> 可以将大量的类转换为 byte 包括 short 的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">short</span> <span class="n">number</span> <span class="p">=</span> <span class="m">42</span><span class="p">;</span>
+<span class="kt">byte</span><span class="p">[]</span> <span class="n">numberBytes</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="nf">GetBytes</span><span class="p">(</span><span class="n">number</span><span class="p">);</span>
+<span class="kt">short</span> <span class="n">converted</span> <span class="p">=</span> <span class="n">BitConverter</span><span class="p">.</span><span class="nf">ToInt16</span><span class="p">(</span><span class="n">numberBytes</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>但是为了这么简单的 short 两个 byte 创建一个数组，感觉不是很好</p>
+
+<p>https://stackoverflow.com/q/1442583/6116637</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201942912529158" alt="" /></p>
+
+:ET

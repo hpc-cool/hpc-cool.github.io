@@ -1,0 +1,20 @@
+I"m<p>在 dotnet 里面可以使用 NamedPipeClientStream 作为命名管道，此时的命名有长度限制，要求在 256 字符之内</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/2 11:54:50 -->
+
+<!-- csdn -->
+
+<p>从官方<a href="https://docs.microsoft.com/en-us/windows/win32/ipc/pipe-names">文档</a> 可以看到限制 256 字符内</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">The</span> <span class="n">entire</span> <span class="n">pipe</span> <span class="n">name</span> <span class="kt">string</span> <span class="n">can</span> <span class="n">be</span> <span class="n">up</span> <span class="n">to</span> <span class="m">256</span> <span class="n">characters</span> <span class="kt">long</span>
+</code></pre></div></div>
+
+<p>详细请看</p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeclientstream.-ctor?wt.mc_id=MVP">NamedPipeClientStream Constructor (System.IO.Pipes)</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/ipc/pipe-names?wt.mc_id=MVP">Pipe Names - Windows applications</a></p>
+
+:ET

@@ -1,0 +1,230 @@
+I"i<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<div id="toc"></div>
+<!-- csdn -->
+
+<h2 id="横向布局">横向布局</h2>
+
+<p>默认 ListView 是垂直，那么如何让 ListView 水平？</p>
+
+<p>可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>设置代码可以进行横向。</p>
+
+<p>如果发现 UWP ListView 横向没有滚动条，可以使用 ScrollViewer 添加</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">ListView</span>  <span class="n">ScrollViewer</span><span class="p">.</span><span class="n">VerticalScrollBarVisibility</span><span class="p">=</span><span class="s">"Disabled"</span>  
+                       <span class="n">ScrollViewer</span><span class="p">.</span><span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"Auto"</span>
+                       <span class="n">ScrollViewer</span><span class="p">.</span><span class="n">HorizontalScrollMode</span><span class="p">=</span><span class="s">"Enabled"</span>                  
+                       <span class="n">ScrollViewer</span><span class="p">.</span><span class="n">VerticalScrollMode</span><span class="p">=</span><span class="s">"Disabled"</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<h2 id="使用从左到右放元素">使用从左到右放元素</h2>
+
+<p>实际上 ItemsPanelTemplate 可以放很多个类型，如 WrapGrid 和 ItemsWrapGrid ，下面我告诉大家如何做出这个效果</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ItemsWrapGrid</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span><span class="p">&gt;&lt;/</span><span class="n">ItemsWrapGrid</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">ItemsPanelTemplate</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemsPanel</span><span class="p">&gt;</span>                                                                                                            
+</code></pre></div></div>
+
+<p>这时可以设置元素的宽度，或者高度，这样可以做出下面的效果。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201811121814.jpg" alt="" /></p>
+
+<h2 id="选中显示元素">选中显示元素</h2>
+
+<p>有一些元素是要 Item 选中显示，不选中不显示</p>
+
+<p>如何绑定到Item 的状态，是否被选中？</p>
+
+<p>如果可以写在后台代码多的话，一个简单的方法是在SelectionChanged直接让 AddItems 的显示，其他不显示。</p>
+
+<p>如何想要定义样式，可以参见：https://msdn.microsoft.com/en-us/library/windows/apps/mt299136.aspx</p>
+
+<p>首先把代码复制下来，然后修改 Selected 的动画，添加自己元素在ControlTemplate，看起来就是</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                       <span class="p">&lt;</span><span class="n">ControlTemplate</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ListViewItem"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ContentPresenter</span> <span class="p">&gt;&lt;/</span><span class="n">ContentPresenter</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Button</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"b"</span> <span class="n">Opacity</span><span class="p">=</span><span class="s">"0"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"显示"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">VisualStateManager</span><span class="p">.</span><span class="n">VisualStateGroups</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">VisualStateGroup</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"SelectionStates"</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;!--&lt;</span><span class="n">VisualState</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Unselecting"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">BeginTime</span><span class="p">=</span><span class="s">"0:0:0"</span><span class="p">&gt;</span>
+                                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"b"</span>
+                                                     <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"Opacity"</span>
+                                                     <span class="n">Duration</span><span class="p">=</span><span class="s">"0:0:0.1"</span>
+                                                     <span class="n">To</span><span class="p">=</span><span class="s">"0"</span> <span class="p">/&gt;</span>
+                                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">VisualState</span><span class="p">&gt;--&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">VisualState</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Unselected"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">BeginTime</span><span class="p">=</span><span class="s">"0:0:0"</span><span class="p">&gt;</span>
+                                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"b"</span>
+                                                     <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"Opacity"</span>
+                                                     <span class="n">Duration</span><span class="p">=</span><span class="s">"0"</span>
+                                                     <span class="n">To</span><span class="p">=</span><span class="s">"0"</span> <span class="p">/&gt;</span>
+                                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">VisualState</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">VisualState</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Selected"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">BeginTime</span><span class="p">=</span><span class="s">"0:0:0"</span><span class="p">&gt;</span>
+                                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"b"</span>
+                                                     <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"Opacity"</span>
+                                                     <span class="n">Duration</span><span class="p">=</span><span class="s">"0"</span>
+                                                     <span class="n">To</span><span class="p">=</span><span class="s">"1"</span> <span class="p">/&gt;</span>
+                                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">VisualState</span><span class="p">&gt;</span>
+                                <span class="p">&lt;/</span><span class="n">VisualStateGroup</span><span class="p">&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">VisualStateManager</span><span class="p">.</span><span class="n">VisualStateGroups</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ControlTemplate</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码的元素 b 就是加上去的元素，参见他的做法，可以看到这个方法可以在 选择时显示，但是我无法在不选择时隐藏，原因没找到。</p>
+
+<p>根据上面代码，可以做很小修改，在选择改变时，手动使用变化。</p>
+
+<p>首先把 Selected 改为 CustomSelected 现在的代码换为</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                        <span class="p">&lt;</span><span class="n">ControlTemplate</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ListViewItem"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ContentPresenter</span> <span class="p">&gt;&lt;/</span><span class="n">ContentPresenter</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">Button</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"b"</span> <span class="n">Opacity</span><span class="p">=</span><span class="s">"0"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"显示"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">VisualStateManager</span><span class="p">.</span><span class="n">VisualStateGroups</span><span class="p">&gt;</span>
+                                <span class="p">&lt;</span><span class="n">VisualStateGroup</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"SelectionStates"</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;!--&lt;</span><span class="n">VisualState</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Unselecting"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">BeginTime</span><span class="p">=</span><span class="s">"0:0:0"</span><span class="p">&gt;</span>
+                                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"b"</span>
+                                                     <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"Opacity"</span>
+                                                     <span class="n">Duration</span><span class="p">=</span><span class="s">"0:0:0.1"</span>
+                                                     <span class="n">To</span><span class="p">=</span><span class="s">"0"</span> <span class="p">/&gt;</span>
+                                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">VisualState</span><span class="p">&gt;--&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">VisualState</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"CustomUnselected"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">BeginTime</span><span class="p">=</span><span class="s">"0:0:0"</span><span class="p">&gt;</span>
+                                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"b"</span>
+                                                     <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"Opacity"</span>
+                                                     <span class="n">Duration</span><span class="p">=</span><span class="s">"0"</span>
+                                                     <span class="n">To</span><span class="p">=</span><span class="s">"0"</span> <span class="p">/&gt;</span>
+                                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">VisualState</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;</span><span class="n">VisualState</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"CustomSelected"</span><span class="p">&gt;</span>
+                                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">BeginTime</span><span class="p">=</span><span class="s">"0:0:0"</span><span class="p">&gt;</span>
+                                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"b"</span>
+                                                     <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"Opacity"</span>
+                                                     <span class="n">Duration</span><span class="p">=</span><span class="s">"0"</span>
+                                                     <span class="n">To</span><span class="p">=</span><span class="s">"1"</span> <span class="p">/&gt;</span>
+                                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                                    <span class="p">&lt;/</span><span class="n">VisualState</span><span class="p">&gt;</span>
+                                <span class="p">&lt;/</span><span class="n">VisualStateGroup</span><span class="p">&gt;</span>
+                            <span class="p">&lt;/</span><span class="n">VisualStateManager</span><span class="p">.</span><span class="n">VisualStateGroups</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">ControlTemplate</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>在列表的选择改变时，需要在后台代码写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">listView</span> <span class="p">=</span> <span class="p">(</span><span class="n">sender</span> <span class="k">as</span> <span class="n">ListView</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">listView</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">AddedItems</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">item</span> <span class="k">in</span> <span class="n">e</span><span class="p">.</span><span class="n">AddedItems</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">item</span><span class="p">);</span>
+                    <span class="n">ListViewItem</span> <span class="n">litem</span> <span class="p">=</span> <span class="n">listView</span><span class="p">.</span><span class="nf">ContainerFromItem</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">as</span> <span class="n">ListViewItem</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">litem</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">VisualStateManager</span><span class="p">.</span><span class="nf">GoToState</span><span class="p">(</span><span class="n">litem</span><span class="p">,</span> <span class="s">"CustomSelected"</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">RemovedItems</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">item</span> <span class="k">in</span> <span class="n">e</span><span class="p">.</span><span class="n">RemovedItems</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">item</span><span class="p">);</span>
+                    <span class="n">ListViewItem</span> <span class="n">litem</span> <span class="p">=</span> <span class="n">listView</span><span class="p">.</span><span class="nf">ContainerFromItem</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">as</span> <span class="n">ListViewItem</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">litem</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">VisualStateManager</span><span class="p">.</span><span class="nf">GoToState</span><span class="p">(</span><span class="n">litem</span><span class="p">,</span> <span class="s">"CustomUnselected"</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>这个方法是比较差的，但是可以使用</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFADbzBgABAAQArj4BAGZDAgBo6AkA6Nk%3D%2F2017%25E5%25B9%25B44%25E6%259C%258818%25E6%2597%25A5%2520090629.gif" alt="" /></p>
+
+<p>参见：http://stackoverflow.com/questions/43461819/the-listviewitem-style-cant-trigger-unselected</p>
+
+<h2 id="listviewitem-默认">ListViewItem 默认</h2>
+
+<style targettype="ListViewItem">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListViewItem">
+                        <ListViewItemPresenter
+                            ContentTransitions="{TemplateBinding ContentTransitions}"
+                            SelectionCheckMarkVisualEnabled="True"
+                            CheckBrush="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"
+                            CheckBoxBrush="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"
+                            DragBackground="{ThemeResource ListViewItemDragBackgroundThemeBrush}"
+                            DragForeground="{ThemeResource ListViewItemDragForegroundThemeBrush}"
+                            FocusBorderBrush="{ThemeResource SystemControlForegroundAltHighBrush}"
+                            FocusSecondaryBorderBrush="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                            PlaceholderBackground="{ThemeResource ListViewItemPlaceholderBackgroundThemeBrush}"
+                            PointerOverBackground="{ThemeResource SystemControlHighlightListLowBrush}"
+                            PointerOverForeground="{ThemeResource SystemControlHighlightAltBaseHighBrush}"
+                            SelectedBackground="{ThemeResource SystemControlHighlightListAccentLowBrush}"
+                            SelectedForeground="{ThemeResource SystemControlHighlightAltBaseHighBrush}"
+                            SelectedPointerOverBackground="{ThemeResource SystemControlHighlightListAccentMediumBrush}"
+                            PressedBackground="{ThemeResource SystemControlHighlightListMediumBrush}"
+                            SelectedPressedBackground="{ThemeResource SystemControlHighlightListAccentHighBrush}"
+                            DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
+                            DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
+                            ReorderHintOffset="{ThemeResource ListViewItemReorderHintThemeOffset}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                            ContentMargin="{TemplateBinding Padding}"
+                            CheckMode="Inline"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </style>
+
+<h2 id="wpf-listview-宽度">WPF ListView 宽度</h2>
+
+<p>使用下面的代码可以让 WPF 的 ListView 的 Item 宽度和他一样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">HorizontalContentAlignment</span><span class="p">=</span><span class="s">"Stretch"</span>
+</code></pre></div></div>
+
+<p>或</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">ListBox</span><span class="p">.</span><span class="n">ItemContainerStyle</span><span class="p">&gt;</span> 
+    <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ListBoxItem"</span><span class="p">&gt;</span> 
+        <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"HorizontalContentAlignment"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"Stretch"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span> 
+    <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span> 
+<span class="p">&lt;/</span><span class="n">ListBox</span><span class="p">.</span><span class="n">ItemContainerStyle</span><span class="p">&gt;</span> 
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/questions/838828/how-to-get-a-listbox-itemtemplate-to-stretch-horizontally-the-full-width-of-the"> How to get a ListBox ItemTemplate to stretch horizontally the full width of the ListBox? - Stack Overflow</a></p>
+
+:ET

@@ -1,0 +1,155 @@
+I"aG<p>使用 Skia 能做到在多个不同的平台使用相同的一套 API 绘制出相同界面效果的图片，可以将图片绘制到应用程序的渲染显示里面。在 WPF 中最稳的方法就是通过 WriteableBitmap 作为承载绘制。本文告诉大家如何封装一个支持差量绘制的控件，默认的绘制方法都是每次都是不保存上次绘制的内容，而且清空画布，重新绘制。这样的绘制方法显然效率不够高</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/7 8:57:47 -->
+
+<p>在上一篇博客里面告诉大家如何在 WPF 中使用 Skia 绘制，请看 <a href="https://blog.lindexi.com/post/WPF-%E4%BD%BF%E7%94%A8-Skia-%E7%BB%98%E5%88%B6-WriteableBitmap-%E5%9B%BE%E7%89%87.html">WPF 使用 Skia 绘制 WriteableBitmap 图片</a></p>
+
+<p>而这样的绘制方式意味着每次都需要重新绘制画布，而不能在原有上一次绘制的基础上绘制新的内容。其实在 Skia 的 SKSurface 是不需要每次绘制完成就释放，可以保存他的值</p>
+
+<p>只是需要注意和 WriteableBitmap 图片一起使用时，需要在绘制之前调用 Lock 方法，在绘制完成之后调用 Unlock 方法</p>
+
+<p>此时就可以实现在相同的 SKSurface 上重复上次绘制的内容。而如果能了解绘制的界面范围的话，可以使用 WriteableBitmap 的 AddDirtyRect 方法，通过这个方法可以让 WPF 层仅更新指定范围的内容</p>
+
+<p>虽然 Skia 和 WPF 两个的绘制效率都很高，但是在 WriteableBitmap 里面一定存在内存和显存的拷贝，这部分虽然在 DirtyRect 很小的时候几乎不耗性能，但是如果是在 4k 下完全重新绘制，还是稍微有点伤的。只是稍微有点</p>
+
+<p>在使用 WriteableBitmap 作为 Skia 的承载，就需要再来一步，让 WriteableBitmap 在界面绘制。在 WPF 中最简单的绘制 WriteableBitmap 的方法就是使用 Image 控件了</p>
+
+<p>下面写一个继承 Image 控件的 SkiaCanvas 控件</p>
+
+<p>这个控件十分简单，在 Loaded 事件里面将会创建 WriteableBitmap 和 SKSurface 两个字段，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">SkiaCanvas</span> <span class="p">:</span> <span class="n">Image</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">SkiaCanvas</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Loaded</span> <span class="p">+=</span> <span class="n">SkiaCanvas_Loaded</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">SkiaCanvas_Loaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">writeableBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="n">PixelHeight</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Bgra32</span><span class="p">,</span>
+                <span class="n">BitmapPalettes</span><span class="p">.</span><span class="n">Halftone256Transparent</span><span class="p">);</span>
+
+            <span class="n">_writeableBitmap</span> <span class="p">=</span> <span class="n">writeableBitmap</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">skImageInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKImageInfo</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="n">PixelWidth</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="n">PixelHeight</span><span class="p">,</span>
+                <span class="n">ColorType</span> <span class="p">=</span> <span class="n">SKColorType</span><span class="p">.</span><span class="n">Bgra8888</span><span class="p">,</span>
+                <span class="n">AlphaType</span> <span class="p">=</span> <span class="n">SKAlphaType</span><span class="p">.</span><span class="n">Premul</span><span class="p">,</span>
+                <span class="n">ColorSpace</span> <span class="p">=</span> <span class="n">SKColorSpace</span><span class="p">.</span><span class="nf">CreateSrgb</span><span class="p">()</span>
+            <span class="p">};</span>
+
+            <span class="n">SKSurface</span> <span class="n">surface</span> <span class="p">=</span> <span class="n">SKSurface</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">skImageInfo</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">BackBuffer</span><span class="p">);</span>
+            <span class="n">_skSurface</span> <span class="p">=</span> <span class="n">surface</span><span class="p">;</span>
+
+            <span class="n">Source</span> <span class="p">=</span> <span class="n">writeableBitmap</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">WriteableBitmap</span> <span class="n">_writeableBitmap</span> <span class="p">=</span> <span class="k">null</span><span class="p">!;</span> <span class="c1">// 这里的 null! 是 C# 的新语法，是给智能分析用的，表示这个字段在使用的时候不会为空</span>
+        <span class="k">private</span> <span class="n">SKSurface</span> <span class="n">_skSurface</span> <span class="p">=</span> <span class="k">null</span><span class="p">!;</span> <span class="c1">// 实际上 null! 的含义是我明确给他一个空值，也就是说如果是空也是预期的</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">PixelWidth</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Width</span><span class="p">;</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">PixelHeight</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">Height</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是说在使用 SkiaCanvas 控件的时候，需要先设置他的宽度和高度，也不支持后续更改哈</p>
+
+<p>在创建完成了 SKSurface 字段，就可以通过调用他的绘制方法在 WriteableBitmap 上绘制内容。不过在绘制之前需要调用 Lock 等方法，在输入绘制命令完成之后需要调用更新的代码，这部分代码可以封装一个方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">void</span> <span class="nf">Draw</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">SKCanvas</span><span class="p">&gt;</span> <span class="n">action</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">Draw</span><span class="p">(</span><span class="n">canvas</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="nf">action</span><span class="p">(</span><span class="n">canvas</span><span class="p">);</span>
+                <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Draw</span><span class="p">(</span><span class="n">Func</span><span class="p">&lt;</span><span class="n">SKCanvas</span><span class="p">,</span> <span class="n">Int32Rect</span><span class="p">?&gt;</span> <span class="n">draw</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">writeableBitmap</span> <span class="p">=</span> <span class="n">_writeableBitmap</span><span class="p">;</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Lock</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">canvas</span> <span class="p">=</span> <span class="n">_skSurface</span><span class="p">.</span><span class="n">Canvas</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">dirtyRect</span> <span class="p">=</span> <span class="nf">draw</span><span class="p">(</span><span class="n">canvas</span><span class="p">);</span>
+            <span class="n">canvas</span><span class="p">.</span><span class="nf">Flush</span><span class="p">();</span>
+
+            <span class="n">dirtyRect</span> <span class="p">??=</span> <span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">PixelWidth</span><span class="p">,</span> <span class="n">PixelHeight</span><span class="p">);</span>
+
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">AddDirtyRect</span><span class="p">(</span><span class="n">dirtyRect</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是调用 Draw 方法，传入具体的绘制逻辑就可以完成绘制了。这部分的绘制逻辑有一个优势在于不需要等待绘制时机，随时都可以进行绘制。而 WPF 将会在框架层的绘制命令收集时自动更新和收集。或者换句话说，这里的绘制逻辑有坑在于不能做到对准界面更新</p>
+
+<p>上面这个方法是提供差量更新的，也就是每次绘制的内容都会在上一次画布的基础上继续绘制</p>
+
+<p>下面写一点代码试试，在鼠标划过应用时，绘制出鼠标划过的点，将这些点连为线</p>
+
+<p>如果没有差量更新，也就是需要咱自己去存放记录之前鼠标划过哪些点，在有差量更新的辅助就可以只记录上一次的一个点</p>
+
+<p>在 XAML 代码添加如下代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid</span> <span class="na">MouseMove=</span><span class="s">"UIElement_OnMouseMove"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"Auto"</span><span class="nt">&gt;&lt;/RowDefinition&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;local:SkiaCanvas</span> <span class="na">x:Name=</span><span class="s">"Image"</span> <span class="na">Width=</span><span class="s">"1920"</span> <span class="na">Height=</span><span class="s">"1080"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;&lt;/local:SkiaCanvas&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码给 SkiaCanvas 一个固定的宽度和高度，为什么需要给他这个值，在上文告诉了大家</p>
+
+<p>接下来在 UIElement_OnMouseMove 方法，也就是 Grid 容器收到的鼠标划过的事件，将划过的点作为线段在画布中</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Draw</span><span class="p">(</span><span class="n">Action</span><span class="p">&lt;</span><span class="n">SKCanvas</span><span class="p">&gt;</span> <span class="n">action</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Image</span><span class="p">.</span><span class="nf">Draw</span><span class="p">(</span><span class="n">action</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">UIElement_OnMouseMove</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">MouseEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">position</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetPosition</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+
+            <span class="nf">Draw</span><span class="p">(</span><span class="n">canvas</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="k">using</span> <span class="nn">var</span> <span class="n">skPaint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKPaint</span><span class="p">()</span> <span class="p">{</span><span class="n">Color</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKColor</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="n">TextSize</span> <span class="p">=</span> <span class="m">100</span><span class="p">};</span>
+                <span class="n">canvas</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="nf">SKPoint</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">_lastPosition</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">_lastPosition</span><span class="p">.</span><span class="n">Y</span><span class="p">),</span>
+                    <span class="k">new</span> <span class="nf">SKPoint</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">position</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">position</span><span class="p">.</span><span class="n">Y</span><span class="p">),</span> <span class="n">skPaint</span><span class="p">);</span>
+            <span class="p">});</span>
+
+            <span class="n">_lastPosition</span> <span class="p">=</span> <span class="n">position</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">Point</span> <span class="n">_lastPosition</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>可以看到逻辑十分简单，如果我需要让画布重新绘制，可以调用 Clear 方法，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">Draw</span><span class="p">(</span><span class="n">canvas</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">canvas</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+                <span class="k">using</span> <span class="nn">var</span> <span class="n">skPaint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKPaint</span><span class="p">()</span> <span class="p">{</span><span class="n">Color</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKColor</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="n">TextSize</span> <span class="p">=</span> <span class="m">100</span><span class="p">};</span>
+                <span class="n">canvas</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="n">skPaint</span><span class="p">);</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因此这个控件就支持重新绘制和差量更新绘制内容的功能</p>
+
+<p>如果每次都能返回具体更新的范围，那么这个控件的绘制效率还是不错的</p>
+
+<p>本文的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/7b4b746f/ReewheaberekaiNayweelehe">github</a> 欢迎小伙伴访问</p>
+
+<p>更多 WPF 渲染请看 <a href="https://lindexi.gitee.io/post/%E6%B8%B2%E6%9F%93.html">渲染相关</a></p>
+
+:ET

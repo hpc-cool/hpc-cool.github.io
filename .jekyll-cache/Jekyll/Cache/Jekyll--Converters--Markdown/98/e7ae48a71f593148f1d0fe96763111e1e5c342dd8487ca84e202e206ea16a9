@@ -1,0 +1,61 @@
+I"s<p>在使用 dotnet core 3.1 的 WPF 打包为 UWP 应用的时候，如果没有设置 PublishProfiles 那么将会在构建 x64 提示所生成项目的处理器架构“AMD64”与引用的处理器架构“x86”不匹配</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/13 11:06:33 -->
+
+<p>在我使用下面命令打包的时候，如果我将 <code class="language-plaintext highlighter-rouge">Platform</code> 设置为 x86 那么什么问题都没有，如果我设置为 x64 就会发现构建失败，请看 <a href="https://github.com/dotnet-campus/TranslationTool/runs/504702520?check_suite_focus=true">https://github.com/dotnet-campus/TranslationTool/runs/504702520?check_suite_focus=true</a></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">msbuild</span> <span class="n">TranslationTool</span><span class="p">.</span><span class="n">sln</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">Platform</span><span class="p">=</span><span class="n">x64</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">Configuration</span><span class="p">=</span><span class="n">Debug</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">UapAppxPackageBuildMode</span><span class="p">=</span><span class="n">StoreOnly</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">AppxBundle</span><span class="p">=</span><span class="n">Never</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">PackageCertificateKeyFile</span><span class="p">=</span><span class="n">TranslationTool</span><span class="p">.</span><span class="n">Package_TemporaryKey</span><span class="p">.</span><span class="n">pfx</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">PackageCertificatePassword</span><span class="p">=</span><span class="s">"123"</span>
+</code></pre></div></div>
+
+<p>可以看到的英文提示如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(ResolveAssemblyReferences target) -&gt;   
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\Microsoft.Common.CurrentVersion.targets(2106,5): error MSB3270: There was a mismatch between the processor architecture of the project being built "AMD64" and the processor architecture of the reference "D:\a\TranslationTool\TranslationTool\Code\TranslationTool.WPF\bin\x86\Debug\netcoreapp3.1\win-x86\TranslationTool.WPF.dll", "x86". This mismatch may cause runtime failures. Please consider changing the targeted processor architecture of your project through the Configuration Manager so as to align the processor architectures between your project and references, or take a dependency on references with a processor architecture that matches the targeted processor architecture of your project. [D:\a\TranslationTool\TranslationTool\Code\TranslationTool.Package\TranslationTool.Package.wapproj]
+</code></pre></div></div>
+
+<p>中文提示如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(ResolveAssemblyReferences 目标) -&gt;
+  C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\MSBuild\Current\Bin\Microsoft.Common.CurrentVersion.ta
+rgets(2106,5): error MSB3270: 所生成项目的处理器架构“AMD64”与引用“D:\lindexi\TranslationTool\Code\TranslationTool.WPF\bin
+\x86\Debug\netcoreapp3.1\win-x86\TranslationTool.WPF.dll”的处理器架构“x86”不匹配。这种不匹配可能会导致运行时失败。请 考虑通过配置管理器更改您的项目的目标处理器架构，以使您的项目
+与引用间的处理器架构保持一致，或者为引用关联一个与您的项目的目标处理器架构相符的处理器架构。
+</code></pre></div></div>
+
+<p>解决方法是添加 PublishProfiles 文件，请看 <a href="https://github.com/dotnet-campus/TranslationTool/commit/1650f7a9a12cc2a9df1595477f21a928507ea201">dotnet-campus/TranslationTool@1650f7a</a></p>
+
+<p>原因是在使用 .NET Core 3.1 的桌面应用需要修改使用独立发布，也需要指定不同的文件夹</p>
+
+<p>除了在 WPF 项目添加 PublishProfiles 文件，还需要在打包项目添加代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ProjectReference</span> <span class="na">Include=</span><span class="s">"..\lindexi\林德熙博客.csproj"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;SkipGetTargetFrameworkProperties&gt;</span>True<span class="nt">&lt;/SkipGetTargetFrameworkProperties&gt;</span>
+      <span class="nt">&lt;TrustLevel&gt;</span>Full<span class="nt">&lt;/TrustLevel&gt;</span>
+      <span class="nt">&lt;PublishProfile</span> <span class="na">Condition=</span><span class="s">"'$(Configuration)|$(Platform)'=='Release|x86'"</span><span class="nt">&gt;</span>Properties\PublishProfiles\SelfContainedWin86.pubxml<span class="nt">&lt;/PublishProfile&gt;</span>
+      <span class="nt">&lt;PublishProfile</span> <span class="na">Condition=</span><span class="s">"'$(Configuration)|$(Platform)'=='Release|x64'"</span><span class="nt">&gt;</span>Properties\PublishProfiles\SelfContainedWin64.pubxml<span class="nt">&lt;/PublishProfile&gt;</span>
+      <span class="nt">&lt;PublishProfile</span> <span class="na">Condition=</span><span class="s">"'$(Configuration)|$(Platform)'=='Debug|x86'"</span><span class="nt">&gt;</span>Properties\PublishProfiles\SelfContainedWin86Debug.pubxml<span class="nt">&lt;/PublishProfile&gt;</span>
+      <span class="nt">&lt;PublishProfile</span> <span class="na">Condition=</span><span class="s">"'$(Configuration)|$(Platform)'=='Debug|x64'"</span><span class="nt">&gt;</span>Properties\PublishProfiles\SelfContainedWin64Debug.pubxml<span class="nt">&lt;/PublishProfile&gt;</span>
+    <span class="nt">&lt;/ProjectReference&gt;</span>
+</code></pre></div></div>
+
+<p>如果使用 msbuild 命令行打包桌面应用为 UWP 应用请看</p>
+
+<p><a href="https://blog.lindexi.com/post/win10-uwp-%E4%BD%BF%E7%94%A8-msbuild-%E5%91%BD%E4%BB%A4%E8%A1%8C%E7%BC%96%E8%AF%91-UWP-%E7%A8%8B%E5%BA%8F.html">使用 msbuild 命令行编译 UWP 程序</a></p>
+
+<p>如何使用 Github 的自动构建请看</p>
+
+<p><a href="https://devblogs.microsoft.com/dotnet/continuous-integration-and-deployment-for-desktop-apps-with-github-actions/#comment-4898">Continuous integration and deployment for desktop apps with GitHub Actions</a></p>
+
+<p><a href="https://github.com/microsoft/github-actions-for-desktop-apps">microsoft/github-actions-for-desktop-apps: This repo contains a sample WPF application to demonstrate how to create CI/CD pipelines using GitHub Actions.</a></p>
+
+<p>如何在 VS 打包请看</p>
+
+<p><a href="https://blog.lindexi.com/post/UWP-%E6%89%93%E5%8C%85-win32-%E5%BA%94%E7%94%A8-%E6%B7%BB%E5%8A%A0%E9%98%B2%E7%81%AB%E5%A2%99%E4%BE%8B%E5%A4%96.html">UWP 打包 win32 应用 添加防火墙例外</a></p>
+
+<p>本文链接的是 Github Action 是在 Github 上自动构建的服务，可以用来持续集成，可以用来做 NuGet 包</p>
+
+<p><a href="https://blog.lindexi.com/post/dotnet-%E9%83%A8%E7%BD%B2-github-%E7%9A%84-Action-%E8%BF%9B%E8%A1%8C%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90.html">dotnet 部署 github 的 Action 进行持续集成</a></p>
+
+:ET

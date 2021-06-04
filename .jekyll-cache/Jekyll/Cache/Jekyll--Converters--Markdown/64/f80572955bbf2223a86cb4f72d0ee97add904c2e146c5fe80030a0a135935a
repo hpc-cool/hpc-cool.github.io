@@ -1,0 +1,50 @@
+I"�<p>本文告诉大家从文件加载字体。在wpf 使用 fontfamily 显示指定的 ttf 显示字体。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/2 17:10:33 -->
+
+<p>假如有字体在 <code class="language-plaintext highlighter-rouge">C:\Projects\MyProj\free3of9.ttf</code> ，可以使用 PrivateFontCollection 添加字体。</p>
+
+<p>下面的代码就可以使用本地的 free3of9.ttf ，需要注意添加的 FontFamily 是需要知道字体名，和传入 PrivateFontCollection 才可以使用。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System.Drawing</span><span class="p">;</span>
+
+<span class="n">PrivateFontCollection</span> <span class="n">collection</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">PrivateFontCollection</span><span class="p">();</span>
+<span class="n">collection</span><span class="p">.</span><span class="nf">AddFontFile</span><span class="p">(</span><span class="s">@"C:\Projects\MyProj\free3of9.ttf"</span><span class="p">);</span>
+<span class="n">FontFamily</span> <span class="n">fontFamily</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="s">"Free 3 of 9"</span><span class="p">,</span> <span class="n">collection</span><span class="p">);</span>
+<span class="n">Font</span> <span class="n">font</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Font</span><span class="p">(</span><span class="n">fontFamily</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>另一个方法是去掉字体的后缀名，直接写在 FontFamily ，我比较希望使用下面的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">FontFamily</span> <span class="n">fontFamily</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="s">@"C:\Projects\MyProj\#free3of9"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在 WPF 里面 FontFamily 存在与 System.Drawing 和 System.Windows.Media 命名空间下，同时两个命名空间的字体是不能互换的。以上方法使用的是 System.Drawing 命名空间的字体</p>
+
+<p>对 System.Windows.Media 命名空间的 FontFamily 需要使用以下两个方法之一拿到本地字体</p>
+
+<p>第一个方法是通过 URI 加上字体名</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="s">@"C:\lindexi\xx.ttf"</span><span class="p">;</span>
+<span class="kt">var</span> <span class="n">uri</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+<span class="n">FontFamily</span> <span class="n">fontFamily</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="s">"字体名"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>可以通过双击字体看到字体名，或通过下面的第二个方法拿到字体名同时使用本地字体</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">fontFile</span> <span class="p">=</span> <span class="s">@"C:\lindexi\xx.ttf"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">glyphTypeface</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">GlyphTypeface</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">fontFile</span><span class="p">));</span>
+
+            <span class="c1">// 获取字体名</span>
+            <span class="kt">var</span> <span class="n">fontName</span> <span class="p">=</span> <span class="n">glyphTypeface</span><span class="p">.</span><span class="n">FamilyNames</span><span class="p">.</span><span class="n">Values</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">directory</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetDirectoryName</span><span class="p">(</span><span class="n">fontFile</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">fontUri</span> <span class="p">=</span> <span class="s">$"</span><span class="p">{</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">directory</span><span class="p">).</span><span class="n">AbsoluteUri</span><span class="p">}</span><span class="s">/#</span><span class="p">{</span><span class="n">fontName</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">fontFamily</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="n">fontUri</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/a/24022783/6116637">https://stackoverflow.com/a/24022783/6116637</a></p>
+
+:ET

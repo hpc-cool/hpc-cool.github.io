@@ -1,0 +1,85 @@
+I"�$<p>如果在 UWP 有一个控件里面有 ScrollViewer 控件，那么因为默认的 ScrollViewer 会使用触摸的交互，这样在控件就收不到触摸的交互</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/1/25 21:45:37 -->
+
+<!-- csdn -->
+
+<p>通过 <code class="language-plaintext highlighter-rouge">VerticalScrollMode="Disabled" HorizontalScrollMode="Disabled"</code> 可以关闭 ScrollViewer 交互</p>
+
+<p>接下来就是简单告诉大家如何使用 ScrollViewer 在禁用默认交互还让 ScrollViewer 滑动，先创建一个简单的 UWP 项目</p>
+
+<p>打开 xaml 添加一点代码，创建一个 Canvas 放在 ScrollViewer 内，在里面放一个矩形，通过这个矩形就可以知道有没有移动</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">ScrollViewer</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Canvas</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100000"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"10000000"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"Black"</span> 
+                           <span class="n">Canvas</span><span class="p">.</span><span class="n">Left</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Canvas</span><span class="p">.</span><span class="n">Top</span><span class="p">=</span><span class="s">"100"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Canvas</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ScrollViewer</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>创建的 ScrollViewer 只有对水平做滑动，尝试用触摸滑动矩形，会发现只能通过垂直滑动</p>
+
+<p>如果想水平也可以滚动，需要设置 HorizontalScrollBarVisibility 属性，设置为 Auto Hidden  Visible 都可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">ScrollViewer</span> <span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"Hidden"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Canvas</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100000"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"10000000"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"Black"</span> 
+
+                           <span class="n">Canvas</span><span class="p">.</span><span class="n">Left</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Canvas</span><span class="p">.</span><span class="n">Top</span><span class="p">=</span><span class="s">"100"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Canvas</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ScrollViewer</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在再试试触摸矩形</p>
+
+<p>如果现在尝试拿到 滚动条外面的 Grid 的 Manipulation 事件，可以看到没被被调用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"Transparent"</span> <span class="n">ManipulationMode</span><span class="p">=</span><span class="s">"TranslateX,TranslateY"</span> <span class="n">ManipulationDelta</span><span class="p">=</span><span class="s">"Grid_OnManipulationDelta"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ScrollViewer</span> <span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"Hidden"</span>
+                      <span class="n">HorizontalScrollMode</span><span class="p">=</span><span class="s">"Disabled"</span>
+                      <span class="n">VerticalScrollMode</span><span class="p">=</span><span class="s">"Disabled"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Canvas</span>  <span class="n">Width</span><span class="p">=</span><span class="s">"100000"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"10000000"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">Width</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"Black"</span> 
+                           <span class="n">Canvas</span><span class="p">.</span><span class="n">Left</span><span class="p">=</span><span class="s">"100"</span> <span class="n">Canvas</span><span class="p">.</span><span class="n">Top</span><span class="p">=</span><span class="s">"100"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Canvas</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ScrollViewer</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Grid_OnManipulationDelta</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ManipulationDeltaRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里需要设置 Grid 的背景和设置 ManipulationMode 可以水平或垂直，设置 Grid 的背景是让 Grid 有命中测试，这样 UWP 才知道用户点击到哪个控件，通过 ManipulationMode 才可以让事件知道可以如何做</p>
+
+<p>那么如何让 Grid 接收到 Manipulation 或者 Pointer 事件？</p>
+
+<p>尝试下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">ScrollViewer</span> <span class="n">HorizontalScrollBarVisibility</span><span class="p">=</span><span class="s">"Hidden"</span>
+                      <span class="n">HorizontalScrollMode</span><span class="p">=</span><span class="s">"Disabled"</span>
+                      <span class="n">VerticalScrollMode</span><span class="p">=</span><span class="s">"Disabled"</span><span class="p">&gt;</span>
+                      <span class="err">……</span>
+        <span class="p">&lt;/</span><span class="n">ScrollViewer</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>此时就可以看到 Grid 收到 Pointer 事件</p>
+
+<p>但是如果想要 ScrollViewer 外面的控件可以收到交互同时想要让 ScrollViewer 可以和之前一样，那么就需要自己写一些代码</p>
+
+<p>首先给 ScrollViewer 命名，这样在后台代码才可以使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Grid_OnManipulationDelta</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ManipulationDeltaRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ScrollViewer</span><span class="p">.</span><span class="nf">ChangeView</span><span class="p">(</span><span class="n">ScrollViewer</span><span class="p">.</span><span class="n">HorizontalOffset</span> <span class="p">-</span> <span class="n">e</span><span class="p">.</span><span class="n">Delta</span><span class="p">.</span><span class="n">Translation</span><span class="p">.</span><span class="n">X</span><span class="p">,</span>
+                <span class="n">ScrollViewer</span><span class="p">.</span><span class="n">VerticalOffset</span> <span class="p">-</span> <span class="n">e</span><span class="p">.</span><span class="n">Delta</span><span class="p">.</span><span class="n">Translation</span><span class="p">.</span><span class="n">Y</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在尝试运行一下代码，才不告诉大家 ChangeView 有一个属性需要修改为 true 看起来清真</p>
+
+:ET

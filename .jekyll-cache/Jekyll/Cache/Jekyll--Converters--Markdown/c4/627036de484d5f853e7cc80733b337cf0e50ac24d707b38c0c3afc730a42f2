@@ -1,0 +1,40 @@
+I"�<p>在使用 CMD 命令的时候，会将传入的命令按照空格分为多个不同的命令，但是路径经常是带有空格的。特别是想将参数传入到通过命令行启动的软件里面，可以如何做？</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/5/25 9:31:46 -->
+
+<!-- csdn -->
+
+<p>假如通过 CMD 命令启动我的一个放在 <code class="language-plaintext highlighter-rouge">C:\lindexi 是逗比</code> 的 Foo.exe 程序，那么可以通过下面代码启动</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmd.exe "C:\lindexi  是逗比\Foo.exe"
+</code></pre></div></div>
+
+<p>因为路径里面的 <code class="language-plaintext highlighter-rouge">C:\lindexi  是逗比\Foo.exe</code> 有空格，需要通过引号包含</p>
+
+<p>如果我需要给 Foo.exe 传入参数，参数内容是 <code class="language-plaintext highlighter-rouge">foo</code> 那么需要通过 <code class="language-plaintext highlighter-rouge">/K</code> 或 <code class="language-plaintext highlighter-rouge">/C</code> 的命令将参数传入，在 <code class="language-plaintext highlighter-rouge">/K</code> 或 <code class="language-plaintext highlighter-rouge">/C</code> 后面的参数将会传入到执行的程序，而不是作为 CMD 的参数</p>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">/k</code> 可以在执行之后不退出 cmd 程序，通过 <code class="language-plaintext highlighter-rouge">/C</code> 可以在执行完程序之后就退出 cmd 程序</p>
+
+<p>例如我需要将 <code class="language-plaintext highlighter-rouge">C:\林德熙 是逗比</code> 作为参数传入到 Foo.exe 那么下面代码执行的时候，因为传入 CMD 命令的路径带来空格，需要通过引号包含</p>
+
+<p>但是在 CMD 里面传入多个带引号的路径会被作为多个传入 CMD 的启动参数，刚好参数路径不是可以执行的文件</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C:\user\lindexi&gt; cmd /k "C:\lindexi  是逗比\Foo.exe" "C:\林德熙 是逗比"
+文件名、目录名或卷标语法不正确
+</code></pre></div></div>
+
+<p>在传入的参数里面存在空格，需要使用最外层的一个引号包含</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cmd</span> <span class="p">/</span><span class="n">k</span> <span class="s">" xx.exe xx参数 "</span>
+</code></pre></div></div>
+
+<p>通过这个方法可以解决 cmd 不认路径带空格，和不认使用引号包含的路径</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cmd /k " "C:\lindexi  是逗比\Foo.exe" "C:\林德熙 是逗比" "
+</code></pre></div></div>
+
+<p><a href="https://blog.walterlv.com/post/cmd-startup-arguments.html">cmd.exe 的命令行启动参数（可用于执行命令、传参或进行环境配置） - walterlv</a></p>
+
+:ET

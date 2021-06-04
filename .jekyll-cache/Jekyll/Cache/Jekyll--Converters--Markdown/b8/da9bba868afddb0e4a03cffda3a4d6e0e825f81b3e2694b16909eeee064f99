@@ -1,0 +1,55 @@
+I"�<p>大家都知道，不可以在 其他线程访问 UI 线程，访问 UI 线程包括给 依赖属性设置值、读取依赖属性、调用方法（如果方法里面修改了依赖属性）等。一旦访问UI线程，那么就会报错，为了解决这个问题，需要使用本文的方法，让后台线程访问 UI 线程。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/10/12 15:00:12 -->
+
+<!-- csdn -->
+
+<p>本文提供三个方法可以让其他线程访问 UI 线程</p>
+
+<p>第一个方法是比较不推荐使用的，可能出现 <a href="https://blog.lindexi.com/post/win10-uwp-Window.Current.Dispatcher%E4%B8%ADCurrent%E4%B8%BAnull.html">win10 uwp Window.Current.Dispatcher中Current为null</a></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="k">await</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">High</span><span class="p">,</span>
+                <span class="p">()</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="c1">//需要访问 ui 的代码</span>
+                <span class="p">});</span>
+</code></pre></div></div>
+
+<p>请注意，这里使用了 CoreDispatcherPriority ，表示优先级，请不要在这里使用 High ，一般都是使用比较低的优先</p>
+
+<p>为何不设置为 High ，参见
+<a href="https://docs.microsoft.com/en-us/uwp/api/Windows.UI.Core.CoreDispatcherPriority">CoreDispatcherPriority</a></p>
+
+<p>那么比较推荐的一个方法是在一个用户控件或者Page之类的，如果在里面使用了异步线程需要访问 ui 的属性，那么可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span> 
+<span class="p">{</span>
+            <span class="c1">//UI code here</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p>在 UWP 所有的继承依赖属性 <a href="https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.dependencyobject">DependencyObject</a> 的类，都有 <a href="https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.dependencyobject.dispatcher">Dispatcher</a> 属性</p>
+
+<p>如果是写在其他类，没有 Dispatcher 属性，那么可以使用下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">await</span> <span class="n">CoreApplication</span><span class="p">.</span><span class="n">MainView</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span> 
+<span class="p">{</span> 
+     <span class="c1">//代码</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p>上面两种方法都写在堆栈网 <a href="https://stackoverflow.com/a/38175976/6116637">https://stackoverflow.com/a/38175976/6116637</a></p>
+
+<p><a href="https://stackoverflow.com/questions/7401538/simple-example-of-dispatcherhelper">https://stackoverflow.com/questions/7401538/simple-example-of-dispatcherhelper</a></p>
+
+<p><a href="https://stackoverflow.com/questions/38149767/uwp-update-ui-from-task">https://stackoverflow.com/questions/38149767/uwp-update-ui-from-task</a></p>
+
+<p>参见：</p>
+
+<p><a href="https://www.cnblogs.com/hupo376787/p/11660732.html#4387513">UWP 在非UI线程中更新UI - 星期八再娶你 - 博客园</a></p>
+
+<p><a href="https://blog.lindexi.com/post/win10-uwp-window.current.dispatcher%E4%B8%ADcurrent%E4%B8%BAnull">win10 uwp Window.Current.Dispatcher中Current为null</a></p>
+
+:ET

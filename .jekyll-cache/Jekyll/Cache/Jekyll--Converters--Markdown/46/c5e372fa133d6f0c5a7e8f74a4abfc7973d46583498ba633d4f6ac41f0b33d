@@ -1,0 +1,3 @@
+I"�<p>在新建一个 Xamarin 应用，编译时提示了 linking references 和一些诡异的文件无法访问，原因是文件路径问题和 NuGet 还原问题</p>
+
+:ET

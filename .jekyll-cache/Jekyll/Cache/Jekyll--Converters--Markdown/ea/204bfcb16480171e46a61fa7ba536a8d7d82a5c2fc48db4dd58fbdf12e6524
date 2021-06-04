@@ -1,0 +1,92 @@
+I"�<!--more-->
+
+<!-- CreateTime:2018/10/15 9:35:15 -->
+
+<!-- csdn -->
+<!-- 标签：C# -->
+
+<h2 id="去掉最大化和最小化按钮">去掉最大化和最小化按钮</h2>
+
+<p>如果需要去掉最大化和最小化按钮，只需要设置 MinimizeBox 或 MaximizeBox 为 false 请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">MinimizeBox</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="c1">// 不显示最小化按钮</span>
+            <span class="n">MaximizeBox</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="c1">// 不显示最大化按钮</span>
+</code></pre></div></div>
+
+<p>下面的代码需要写在 Form 内</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">Form1</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="n">MinimizeBox</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+            <span class="n">MaximizeBox</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>下面的图片是原来的值</p>
+
+<!-- ![](image/Winforms 可能遇到的 1000 个问题/Winforms 可能遇到的 1000 个问题3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101585516689" alt="" /></p>
+
+<p>下面的图片是修改之后</p>
+
+<!-- ![](image/Winforms 可能遇到的 1000 个问题/Winforms 可能遇到的 1000 个问题6.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101593416619" alt="" /></p>
+
+<p>具体请看 https://stackoverflow.com/a/3025944/6116637</p>
+
+<h2 id="使用系统的图标">使用系统的图标</h2>
+
+<p>通过 SystemIcons 可以使用系统的图标，首先需要在界面放一个 PictureBox 控件，我修改这个控件的命名 <code class="language-plaintext highlighter-rouge">_image</code> 通过下面代码可以让这个控件显示系统提示错误的图标</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">_image</span><span class="p">.</span><span class="n">Image</span> <span class="p">=</span> <span class="n">SystemIcons</span><span class="p">.</span><span class="n">Error</span><span class="p">.</span><span class="nf">ToBitmap</span><span class="p">();</span>
+</code></pre></div></div>
+
+<!-- ![](image/Winforms 可能遇到的 1000 个问题/Winforms 可能遇到的 1000 个问题0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101584938619" alt="" /></p>
+
+<p>参见 https://stackoverflow.com/a/4868459/6116637</p>
+
+<h2 id="禁止用户修改窗口大小">禁止用户修改窗口大小</h2>
+
+<p>只需要设置 FormBorderStyle 为 FixedSingle 就可以让用户无法拖动窗口大小，通过 SizeGripStyle 可以防止用户拖动右下角按钮修改窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">SizeGripStyle</span> <span class="p">=</span> <span class="n">SizeGripStyle</span><span class="p">.</span><span class="n">Hide</span><span class="p">;</span>
+            <span class="n">FormBorderStyle</span> <span class="p">=</span> <span class="n">FormBorderStyle</span><span class="p">.</span><span class="n">FixedSingle</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>同样需要写在 Form 类内</p>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">SizeGripStyle = SizeGripStyle.Show;</code> 可以从下面图片看到软件的右下角有一个可以拖动的按钮，用户可以拖动按钮让窗体变大。修改这个值 <code class="language-plaintext highlighter-rouge">SizeGripStyle.Hide</code> 让用户无法修改窗体大小</p>
+
+<!-- ![](image/Winforms 可能遇到的 1000 个问题/Winforms 可能遇到的 1000 个问题1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101585055784" alt="" /></p>
+
+<p>具体请看 https://stackoverflow.com/a/5416394/6116637</p>
+
+<h2 id="隐藏标题栏的图标">隐藏标题栏的图标</h2>
+
+<p>在 Form 类内修改 ShowIcon 可以修改图标</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">Form1</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="k">this</span><span class="p">.</span><span class="n">ShowIcon</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>默认软件的左上角是有图标，请看下图</p>
+
+<!-- ![](image/Winforms 可能遇到的 1000 个问题/Winforms 可能遇到的 1000 个问题5.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101585516689" alt="" /></p>
+
+<p>设置为 false 就看不到</p>
+
+<!-- ![](image/Winforms 可能遇到的 1000 个问题/Winforms 可能遇到的 1000 个问题7.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201810159359115" alt="" /></p>
+
+:ET

@@ -1,0 +1,47 @@
+I"�	<p>获取文件夹时出现</p>
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">Access</span> <span class="k">is</span> <span class="n">denied</span><span class="p">.</span> <span class="p">(</span><span class="n">Exception</span> <span class="k">from</span> <span class="n">HRESULT</span><span class="p">:</span> <span class="m">0x80070005</span> <span class="p">(</span><span class="n">E_ACCESSDENIED</span><span class="p">))</span>
+</code></pre></div></div>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:50 -->
+
+<div id="toc"></div>
+<!-- csdn -->
+
+<p>代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">FolderPicker</span> <span class="n">fp</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FolderPicker</span><span class="p">();</span>
+<span class="n">fp</span><span class="p">.</span><span class="n">SuggestedStartLocation</span> <span class="p">=</span> <span class="n">PickerLocationId</span><span class="p">.</span><span class="n">ComputerFolder</span><span class="p">;</span>
+<span class="n">fp</span><span class="p">.</span><span class="n">FileTypeFilter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"*"</span><span class="p">);</span>
+<span class="kt">var</span> <span class="n">f</span> <span class="p">=</span> <span class="k">await</span> <span class="n">fp</span><span class="p">.</span><span class="nf">PickSingleFolderAsync</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>上面代码有3个地方错误。</p>
+
+<ol>
+  <li>需要知道的，在 FileTypeFilter 添加的是具体的类型，不能使用 “<code class="language-plaintext highlighter-rouge">*</code>”</li>
+</ol>
+
+<p>即使设置为特殊类型，但是文件夹没有这类型的文件也是可以。</p>
+
+<p>这属性对结果好像不会有r用，垃圾ms</p>
+
+<ol>
+  <li>
+    <p>设置了 <code class="language-plaintext highlighter-rouge">PickerLocationId.ComputerFolder</code></p>
+  </li>
+  <li>
+    <p>代码写在 Load 函数。</p>
+  </li>
+</ol>
+
+<p>需要知道 上面的错误是 写在 Load 函数错误。</p>
+
+<p>修改，把上面代码写在其他函数调用，不在 Load 调用。</p>
+
+<p>参见：http://stackoverflow.com/a/42969965/6116637</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201792391647.jpg" alt="" /></p>
+
+:ET

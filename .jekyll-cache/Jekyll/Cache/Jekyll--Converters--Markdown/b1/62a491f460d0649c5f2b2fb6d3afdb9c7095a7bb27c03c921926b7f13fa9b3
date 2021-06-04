@@ -1,0 +1,33 @@
+I"<p>本文告诉大家如何添加窗口消息钩子</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/12 18:46:53 -->
+
+<!-- csdn -->
+
+<p>窗口消息钩子需要先拿到窗口指针然后需要在窗口初始化完成之后才可以做到，推荐的做法请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">SourceInitialized</span> <span class="p">+=</span> <span class="n">OnSourceInitialized</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnSourceInitialized</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">windowInteropHelper</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">hwnd</span> <span class="p">=</span> <span class="n">windowInteropHelper</span><span class="p">.</span><span class="n">Handle</span><span class="p">;</span>
+
+            <span class="n">HwndSource</span> <span class="n">source</span> <span class="p">=</span> <span class="n">HwndSource</span><span class="p">.</span><span class="nf">FromHwnd</span><span class="p">(</span><span class="n">hwnd</span><span class="p">);</span>
+            <span class="n">source</span><span class="p">.</span><span class="nf">AddHook</span><span class="p">(</span><span class="n">Hook</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">IntPtr</span> <span class="nf">Hook</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wparam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lparam</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

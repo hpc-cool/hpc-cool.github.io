@@ -1,0 +1,87 @@
+I"1!<p>本文主要：C# 6.0 新特性 String Interpolation，一些比较少知道的知识。
+本文内容有：字符串新特性的一般使用、格式化字符串、保留小数点、判断字符串</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:52 -->
+
+<div id="toc"></div>
+
+<p>原文发在csdn http://blog.csdn.net/lindexi_gd/article/details/49716741</p>
+
+<p>本文做了一些修改。</p>
+
+<p>“hello $world”的格式化字符串是指把字符串中一个单词，以一个标示开头。可以代换为单词所指的变量。
+这个在jq有，而C#string的格式只能用格式的字符占位符，格式的字符占位符都是数字，这样多了很容易混，好多我都出现了，拷贝代码，然后没有排好数字，漏了一个数字，这样出现了错误。
+<code class="language-plaintext highlighter-rouge">string.Format("这里有很长字符串{0}{2}" , "Hello" , "csdn");</code>
+<img src="http://img.blog.csdn.net/20151108094949397" alt="string.Format(&quot;这里有很长字符串{0}{2}&quot; , &quot;Hello&quot; , &quot;csdn&quot;);" />
+而看到一个大神实现了类似jQueryStringFormat的扩展string，觉得C#内置有一个方法：</p>
+
+<pre><code class="language-C#">            var csdn = "csdn";
+            var result = $"Hello {csdn}";
+            Console.Write(result);
+</code></pre>
+<p>会输出<img src="http://img.blog.csdn.net/20151108095202929" alt="输出Hello csdn" /></p>
+
+<p>通过$开头字符串，中间<code class="language-plaintext highlighter-rouge">{}</code>作为变量名，可以把字符串代换为变量的字符。</p>
+
+<p>这就是 C# 6.0 新特性： String Interpolation</p>
+
+<p>但是 String Interpolation 如何输入一定长度的字符串？</p>
+
+<p>我看到了堆栈炸有大神问了一个<a href="http://stackoverflow.com/questions/37113595/c-sharp-6-how-to-format-double-using-interpolated-string">问题</a>，刚好我在做的编码<a href="https://github.com/iip-easi/EncodingNormalior">工具</a>也遇到命令行输入的不好看，需要格式化，所以就去找下方法。</p>
+
+<p>后来发现，可以在ToString放参数的，把参数写在<code class="language-plaintext highlighter-rouge">:</code>后就可以传进去。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">csdn</span> <span class="p">=</span> <span class="s">"csdn"</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">n</span> <span class="p">=</span> <span class="m">1.1315</span><span class="p">;</span>
+            <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">$"Hello </span><span class="p">{</span><span class="n">csdn</span><span class="p">}</span><span class="s"> 新特性"</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+            <span class="n">str</span> <span class="p">=</span> <span class="s">$"Hello </span><span class="p">{</span><span class="n">csdn</span><span class="p">}</span><span class="s"> 新特性 </span><span class="p">{</span><span class="n">n</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+            <span class="n">str</span> <span class="p">=</span> <span class="s">$"Hello </span><span class="p">{</span><span class="n">csdn</span><span class="p">}</span><span class="s"> 新特性 </span><span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="m">1.</span><span class="err">##</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+            <span class="c1">//不生效</span>
+            <span class="n">str</span> <span class="p">=</span> <span class="s">$"Hello </span><span class="p">{</span><span class="n">csdn</span><span class="p">:</span><span class="m">10</span><span class="p">}</span><span class="s"> 新特性 </span><span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="m">1.</span><span class="err">##</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果要指定一个字符串显示的长度，不够长度填充空格，使用<code class="language-plaintext highlighter-rouge">,</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">str</span> <span class="p">=</span> <span class="s">$"Hello </span><span class="p">{</span><span class="n">csdn</span><span class="p">,</span><span class="m">10</span><span class="p">}</span><span class="s"> 新特性 </span><span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="m">1.</span><span class="err">##</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/8f464be7-2358-45f4-b6cd-eae32c47a87820172715475.jpg" alt="" /></p>
+
+<p>关于字符串长度的使用，参见：https://msdn.microsoft.com/en-us/library/dn961160.aspx</p>
+
+<p>可以看到上面的长度是添加在左边，如果要添加在右边？可以使用字符串函数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">str</span> <span class="p">=</span> <span class="s">$"Hello </span><span class="p">{</span><span class="n">csdn</span><span class="p">.</span><span class="nf">PadRight</span><span class="p">(</span><span class="m">10</span><span class="p">)}</span><span class="s"> 新特性 </span><span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="m">1.</span><span class="err">##</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>当然，可以在字符串使用判断。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">str</span> <span class="p">=</span> <span class="s">$"Hello </span><span class="p">{(</span><span class="n">csdn</span> <span class="p">==</span><span class="s">"csdn"</span><span class="p">?</span><span class="s">"csdn"</span><span class="p">:</span><span class="s">"lindexi"</span><span class="p">)}</span><span class="s"> 新特性 </span><span class="p">{</span><span class="n">n</span><span class="p">:</span><span class="m">1.</span><span class="err">##</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>代码传到了 csdn 下载：http://download.csdn.net/detail/lindexi_gd/9749065</p>
+
+<p>还有代码放在 code.csdn</p>
+
+<p>代码：https://code.csdn.net/lindexi_gd/lindexi_gd/tree/master/hellow_$csdn</p>
+
+<p>参考：http://www.cnblogs.com/isaboy/p/4945045.html</p>
+
+<p>更多特性参见 <a href="http://www.cnblogs.com/wolf-sun/p/5168217.html">http://www.cnblogs.com/wolf-sun/p/5168217.html</a></p>
+
+:ET

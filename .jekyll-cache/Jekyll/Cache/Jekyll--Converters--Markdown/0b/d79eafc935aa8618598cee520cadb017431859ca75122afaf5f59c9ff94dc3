@@ -1,0 +1,507 @@
+I"�t<p>本文主要讲我设计的几个进度条，还有如何使用异步控制进度条，如何使用动画做进度。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>进度条可以参见：http://edi.wang/post/2016/2/25/windows-10-uwp-modal-progress-dialog</p>
+
+<p>进度条其实异步就是使用后台变化，然后 value 绑定，异步绑定很简单，参见绑定的文章。</p>
+
+<p>我使用一个<code class="language-plaintext highlighter-rouge">ProgressBar </code>需要设置他的各个值，如果不设置，一般最大值为100，最小为0，所以可以表示百分数，其中Value是double，绑定后台就好。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+         &lt;ProgressBar Maximum="100" Value="{x:Bind View.Value,Mode=OneWay}" Height="20" Width="100"&gt;&lt;/ProgressBar&gt;
+
+</code></pre></div></div>
+
+<p>绑定到我们的 ViewModel ，一般如果后台线程操作界面是不能直接，但是我用了下面代码，把异步的线程放在同步</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+             <span class="k">await</span> <span class="n">CoreApplication</span><span class="p">.</span><span class="n">MainView</span><span class="p">.</span><span class="n">CoreWindow</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">,</span>
+
+                <span class="p">()</span> <span class="p">=&gt;</span>
+
+                <span class="p">{</span>
+
+                     
+
+                <span class="p">});</span>
+
+</code></pre></div></div>
+
+<p>代码参见：<a href="https://github.com/lindexi/UWP/tree/master/uwp/control/Progress">https://github.com/lindexi/UWP/tree/master/uwp/control/Progress</a>，项目所有代码都会发出，所以可以看我的网站</p>
+
+<p>我们使用 Task 异步，我们因为没有什么耗时的，就<code class="language-plaintext highlighter-rouge">Task.Delay(1000).Wait();</code>我们进度会等一秒，当然自己也可以设置多些。也可以写 <code class="language-plaintext highlighter-rouge">await Task.Dalay(1000);</code></p>
+
+<p>ViewModel</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">public</span> <span class="nf">ViewModel</span><span class="p">()</span>
+        <span class="p">{</span>
+
+            <span class="k">new</span> <span class="nf">Task</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(</span><span class="n">Value</span> <span class="p">&lt;</span> <span class="m">90</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Value</span> <span class="p">+=</span> <span class="m">10</span><span class="p">;</span>
+                    <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">1000</span><span class="p">).</span><span class="nf">Wait</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}).</span><span class="nf">Start</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Value</span>
+        <span class="p">{</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_value</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="nf">OnPropertyChanged</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">_value</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">double</span> <span class="n">_value</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>默认进度条设置最大值，</p>
+
+<p>我还自己的控件，一个值从0到100的圆形的，可以看下面</p>
+
+<h2 id="圆形进度条">圆形进度条</h2>
+
+<p>参见：http://www.cnblogs.com/ms-uap/p/4641419.html</p>
+
+<p>先说怎么用我的，首先去我源代码https://github.com/lindexi/UWP，打开我的进度条文件夹，里面有View文件夹</p>
+
+<p>我在View有一个控件<code class="language-plaintext highlighter-rouge">RountProgress</code>复制他到你的解决方案，如果我的控件大小和你不一样，很简单调整，我就不说。</p>
+
+<p>那么我的控件只需要指定Value就好啦，Value其实是从0到100，如果叫别的应该好，但是我不改，如果你觉得不想要，自己改</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   xmlns:view="using:lindexi.uwp.control.RountProgress.View"
+     &lt;view:RountProgress Value="{x:Bind Value,Mode=OneWay}"&gt;&lt;/view:RountProgress&gt;
+
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160810164207135" alt="这里写图片描述" /></p>
+
+<p>我来说下怎么做</p>
+
+<p>我们要知道StrokeDashArray，这个是一个数组，是循环的，也就是依此读取，知道超过长度。</p>
+
+<p>首先我们需要有Thickness，宽度，StrokeDashArray的每一个都是宽度的倍数</p>
+
+<p>首先取第一个元素，把这个元素乘以宽度，作为显示的大小，然后取第二个元素，乘以宽度，作为不显示的大小</p>
+
+<p>然后循环获取第三个……，如果不存在第三个，那么循环拿第一做第三，n=n==max?0:n+1，n就是第n个元素</p>
+
+<p>一个显示一个不显示，循环</p>
+
+<p>记得长度乘以是<code class="language-plaintext highlighter-rouge">值*宽度</code></p>
+
+<p>那么我们如果有一个<code class="language-plaintext highlighter-rouge">值*宽度</code>的到大小比我们的宽度还大，那么就会截断。</p>
+
+<p>假如我们宽度 3，StrokeDashArray 1,2,0.5，总长度为5，那么</p>
+
+<p>第一个是大小 <code class="language-plaintext highlighter-rouge">1*3</code>显示，然后是<code class="language-plaintext highlighter-rouge">2*3</code>不显示，因为到第一个只有长度为2，第二个大小为6，所以会截断，3显示然后2不显示</p>
+
+<p>我们可以用第一个为一个值，然后第二个为一个比总长度还大的值，这样会让宽度显示为我们第一个的值，而其他为空，因为第二个比最大还大</p>
+
+<p>我们要做一个<code class="language-plaintext highlighter-rouge">30%</code>，我们需要算</p>
+
+<p><code class="language-plaintext highlighter-rouge">长=圆*30%/宽度</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">圆=PI*(总长度-宽度)</code></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+         <span class="nt">&lt;Ellipse</span> <span class="na">x:Name=</span><span class="s">"Rount"</span> <span class="na">Stroke=</span><span class="s">"DeepSkyBlue"</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Width=</span><span class="s">"100"</span> 
+
+                 <span class="na">StrokeThickness=</span><span class="s">"3"</span> 
+
+                 <span class="na">RenderTransformOrigin=</span><span class="s">"0.5,0.5"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>那么我们第一个值 <code class="language-plaintext highlighter-rouge">(总长度100 - 宽度3) \* PI / 宽度3</code></p>
+
+<p>因为我们需要算我们的宽度不是直接总长度，是总长度-宽度</p>
+
+<p>第二个最好是Double.Max</p>
+
+<p>我们想要一个可以用户进度，那么可以绑定一个属性，在我们控件</p>
+
+<p>我们需要这个为<code class="language-plaintext highlighter-rouge">double</code>，然后绑定</p>
+
+<p>因为我们需要两个值，所以转换</p>
+
+<p>假如我们的转换是固定的总长度，宽度，那么可以使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="kt">string</span> <span class="n">language</span><span class="p">)</span>
+
+        <span class="p">{</span>
+
+            <span class="kt">double</span> <span class="n">thine</span> <span class="p">=</span> <span class="m">3</span><span class="p">;</span>
+
+            <span class="kt">double</span> <span class="n">w</span> <span class="p">=</span> <span class="m">100</span> <span class="p">-</span> <span class="n">thine</span><span class="p">;</span>
+
+            <span class="kt">double</span> <span class="n">n</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">*</span> <span class="n">w</span><span class="p">/</span><span class="n">thine</span> <span class="p">*</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="k">value</span> <span class="p">/</span> <span class="m">100</span><span class="p">;</span>
+
+            <span class="n">DoubleCollection</span> <span class="n">temp</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DoubleCollection</span><span class="p">()</span>
+
+            <span class="p">{</span>
+
+               <span class="n">n</span><span class="p">,</span>
+
+                <span class="m">1000</span>
+
+            <span class="p">};</span>
+
+            <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>如果觉得固定不好，可以在我们转换写属性，然后在界面把我们的宽度给属性，然后换为我们的宽度算，这个简单</p>
+
+<p>代码在https://github.com/lindexi/UWP/tree/master/uwp/control/Progress/Progress/View/RountProgress.xaml</p>
+
+<p>那么进度条如果不需要进度，那么我有一些好的，例如我之前的博客有说的，还有一个简单，也是上面改，我们一个值是显示一个值是不显示，那么我们可以做</p>
+
+<p><img src="http://img.blog.csdn.net/20160810190545145" alt="这里写图片描述" /></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nt">&lt;UserControl</span>
+
+    <span class="na">x:Class=</span><span class="s">"lindexi.uwp.control.RountProgress.View.IndeterminateProgress"</span>
+
+    <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+
+    <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+
+    <span class="na">xmlns:local=</span><span class="s">"using:lindexi.uwp.control.RountProgress.View"</span>
+
+    <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+
+    <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+
+    <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+
+    <span class="na">d:DesignHeight=</span><span class="s">"300"</span>
+
+    <span class="na">d:DesignWidth=</span><span class="s">"400"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;UserControl.Resources&gt;</span>
+
+        <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"ProgressRing"</span><span class="nt">&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Background"</span> <span class="na">Value=</span><span class="s">"Transparent"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Foreground"</span> <span class="na">Value=</span><span class="s">"{ThemeResource SystemControlHighlightAccentBrush}"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"IsHitTestVisible"</span> <span class="na">Value=</span><span class="s">"False"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"HorizontalAlignment"</span> <span class="na">Value=</span><span class="s">"Center"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"VerticalAlignment"</span> <span class="na">Value=</span><span class="s">"Center"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"MinHeight"</span> <span class="na">Value=</span><span class="s">"20"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"MinWidth"</span> <span class="na">Value=</span><span class="s">"20"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"IsTabStop"</span> <span class="na">Value=</span><span class="s">"False"</span><span class="nt">/&gt;</span>
+
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Template"</span><span class="nt">&gt;</span>
+
+                <span class="nt">&lt;Setter.Value&gt;</span>
+
+                    <span class="nt">&lt;ControlTemplate</span> <span class="na">TargetType=</span><span class="s">"ProgressRing"</span><span class="nt">&gt;</span>
+
+                        <span class="nt">&lt;Grid</span> <span class="na">x:Name=</span><span class="s">"Ring"</span> <span class="na">BorderBrush=</span><span class="s">"{TemplateBinding BorderBrush}"</span> <span class="na">BorderThickness=</span><span class="s">"{TemplateBinding BorderThickness}"</span> <span class="na">Background=</span><span class="s">"{TemplateBinding Background}"</span> <span class="na">FlowDirection=</span><span class="s">"LeftToRight"</span> <span class="na">MaxWidth=</span><span class="s">"{Binding TemplateSettings.MaxSideLength, RelativeSource={RelativeSource Mode=TemplatedParent}}"</span> <span class="na">MaxHeight=</span><span class="s">"{Binding TemplateSettings.MaxSideLength, RelativeSource={RelativeSource Mode=TemplatedParent}}"</span> <span class="na">Padding=</span><span class="s">"{TemplateBinding Padding}"</span> <span class="na">RenderTransformOrigin=</span><span class="s">".5,.5"</span> <span class="nt">&gt;</span>
+
+                            <span class="nt">&lt;Grid.Resources&gt;</span>
+
+                                <span class="nt">&lt;Style</span> <span class="na">x:Key=</span><span class="s">"ProgressRingEllipseStyle"</span> <span class="na">TargetType=</span><span class="s">"Ellipse"</span><span class="nt">&gt;</span>
+
+                                    <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Opacity"</span> <span class="na">Value=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+
+                                    <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"HorizontalAlignment"</span> <span class="na">Value=</span><span class="s">"Left"</span><span class="nt">/&gt;</span>
+
+                                    <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"VerticalAlignment"</span> <span class="na">Value=</span><span class="s">"Top"</span><span class="nt">/&gt;</span>
+
+                                <span class="nt">&lt;/Style&gt;</span>
+
+                            <span class="nt">&lt;/Grid.Resources&gt;</span>
+
+                            <span class="nt">&lt;VisualStateManager.VisualStateGroups&gt;</span>
+
+                                <span class="nt">&lt;VisualStateGroup</span> <span class="na">x:Name=</span><span class="s">"SizeStates"</span><span class="nt">&gt;</span>
+
+                                    <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Large"</span><span class="nt">&gt;</span>
+
+                                        <span class="nt">&lt;Storyboard&gt;</span>
+
+                                      
+
+                                        <span class="nt">&lt;/Storyboard&gt;</span>
+
+                                    <span class="nt">&lt;/VisualState&gt;</span>
+
+                                    <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Small"</span><span class="nt">/&gt;</span>
+
+                                <span class="nt">&lt;/VisualStateGroup&gt;</span>
+
+                                <span class="nt">&lt;VisualStateGroup</span> <span class="na">x:Name=</span><span class="s">"ActiveStates"</span><span class="nt">&gt;</span>
+
+                                    <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Inactive"</span><span class="nt">/&gt;</span>
+
+                                    <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Active"</span><span class="nt">&gt;</span>
+
+                                        <span class="nt">&lt;Storyboard</span> <span class="na">RepeatBehavior=</span><span class="s">"Forever"</span><span class="nt">&gt;</span>
+
+                                            <span class="nt">&lt;DoubleAnimation</span> <span class="na">Storyboard.TargetName=</span><span class="s">"Rount"</span> <span class="na">Storyboard.TargetProperty=</span><span class="s">"Angle"</span>
+
+                                                           <span class="na">BeginTime=</span><span class="s">"0:0:0"</span> <span class="na">Duration=</span><span class="s">"0:0:5"</span> <span class="na">From=</span><span class="s">"0"</span> <span class="na">To=</span><span class="s">"360"</span>  <span class="nt">&gt;</span>
+
+                                            <span class="nt">&lt;/DoubleAnimation&gt;</span>
+
+                                            
+
+                                        <span class="nt">&lt;/Storyboard&gt;</span>
+
+                                    <span class="nt">&lt;/VisualState&gt;</span>
+
+                                <span class="nt">&lt;/VisualStateGroup&gt;</span>
+
+                            <span class="nt">&lt;/VisualStateManager.VisualStateGroups&gt;</span>
+
+                           
+
+                            <span class="nt">&lt;Ellipse</span>  <span class="na">Stroke=</span><span class="s">"DeepSkyBlue"</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Width=</span><span class="s">"100"</span> 
+
+                                      <span class="na">StrokeThickness=</span><span class="s">"3"</span>  
+
+                                      <span class="na">RenderTransformOrigin=</span><span class="s">"0.5,0.5"</span><span class="nt">/&gt;</span>
+
+                            <span class="nt">&lt;Ellipse</span>  <span class="na">Stroke=</span><span class="s">"DeepSkyBlue"</span> <span class="na">Height=</span><span class="s">"200"</span> <span class="na">Width=</span><span class="s">"200"</span> 
+
+                                      <span class="na">StrokeThickness=</span><span class="s">"3"</span> <span class="na">StrokeDashArray=</span><span class="s">"50 50"</span> 
+
+                                      <span class="na">RenderTransformOrigin=</span><span class="s">"0.5,0.5"</span> <span class="nt">&gt;</span>
+
+                                <span class="nt">&lt;Ellipse.RenderTransform&gt;</span>
+
+                                    <span class="nt">&lt;RotateTransform</span>  <span class="na">x:Name=</span><span class="s">"Rount"</span> <span class="na">Angle=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+
+                                <span class="nt">&lt;/Ellipse.RenderTransform&gt;</span>
+
+                            <span class="nt">&lt;/Ellipse&gt;</span>
+
+                        <span class="nt">&lt;/Grid&gt;</span>
+
+                    <span class="nt">&lt;/ControlTemplate&gt;</span>
+
+                <span class="nt">&lt;/Setter.Value&gt;</span>
+
+            <span class="nt">&lt;/Setter&gt;</span>
+
+        <span class="nt">&lt;/Style&gt;</span>
+
+    <span class="nt">&lt;/UserControl.Resources&gt;</span>
+
+    <span class="nt">&lt;Grid&gt;</span>
+
+        <span class="nt">&lt;ProgressRing</span> <span class="na">Width=</span><span class="s">"200"</span> <span class="na">Height=</span><span class="s">"200"</span> 
+
+                      <span class="na">IsActive=</span><span class="s">"True"</span><span class="nt">&gt;&lt;/ProgressRing&gt;</span>
+
+    <span class="nt">&lt;/Grid&gt;</span>
+
+<span class="nt">&lt;/UserControl&gt;</span>
+
+</code></pre></div></div>
+
+<p>我们使用一个简单的修改，因为我们可以使用<code class="language-plaintext highlighter-rouge">&lt;RotateTransform  x:Name="Rount" Angle="0"/&gt;</code></p>
+
+<p>我们使用</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+                                    <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Active"</span><span class="nt">&gt;</span>
+
+                                        <span class="nt">&lt;Storyboard</span> <span class="na">RepeatBehavior=</span><span class="s">"Forever"</span><span class="nt">&gt;</span>
+
+                                            <span class="nt">&lt;DoubleAnimation</span> <span class="na">Storyboard.TargetName=</span><span class="s">"Rount"</span> <span class="na">Storyboard.TargetProperty=</span><span class="s">"Angle"</span>
+
+                                                             <span class="na">Duration=</span><span class="s">"0:0:5"</span> <span class="na">From=</span><span class="s">"0"</span> <span class="na">To=</span><span class="s">"360"</span>  <span class="nt">&gt;</span>
+
+                                            <span class="nt">&lt;/DoubleAnimation&gt;</span>
+
+                                            
+
+                                        <span class="nt">&lt;/Storyboard&gt;</span>
+
+                                    <span class="nt">&lt;/VisualState&gt;</span>
+
+</code></pre></div></div>
+
+<p>修改我们旋转，时间0:0:5，5秒，从0到360，循环</p>
+
+<p>因为是修改，所以可以放在Resource</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nt">&lt;ProgressRing</span> <span class="na">Width=</span><span class="s">"200"</span> <span class="na">Height=</span><span class="s">"200"</span> 
+
+                      <span class="na">IsActive=</span><span class="s">"True"</span><span class="nt">&gt;&lt;/ProgressRing&gt;</span>
+
+</code></pre></div></div>
+
+<p>我觉得匀速不好，修改速度</p>
+
+<ul>
+  <li>BackEase</li>
+</ul>
+
+<p>缓动函数，它在部分持续时间内向反方向更改主函数的值</p>
+
+<ul>
+  <li>BounceEase</li>
+</ul>
+
+<p>弹跳</p>
+
+<ul>
+  <li>
+    <p>CircleEase</p>
+
+    <p>加速</p>
+  </li>
+  <li>
+    <p>PowerEase</p>
+
+    <p>次方</p>
+  </li>
+  <li>
+    <p>SineEase</p>
+
+    <p>sin加速</p>
+  </li>
+  <li>
+    <p>QuadraticEase</p>
+
+    <p><code class="language-plaintext highlighter-rouge">^2</code></p>
+  </li>
+</ul>
+
+<p>## 动画</p>
+
+<p>移动元素</p>
+
+<p>我们可以看到我们的元素位置可以修改 Margin，那么如何在动画修改Margin</p>
+
+<p>UWP 动画 Margin可以</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+ <span class="nt">&lt;Storyboard</span> <span class="na">TargetName=</span><span class="s">"Rount"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;ObjectAnimationUsingKeyFrames</span> <span class="na">Storyboard.TargetProperty=</span><span class="s">"Margin"</span>
+
+                                   <span class="na">BeginTime=</span><span class="s">"00:00:00"</span> <span class="na">EnableDependentAnimation=</span><span class="s">"True"</span>
+
+                                   <span class="na">Duration=</span><span class="s">"0:0:2"</span> <span class="nt">&gt;</span>
+
+                 <span class="nt">&lt;DiscreteObjectKeyFrame</span> <span class="na">KeyTime=</span><span class="s">"00:00:00"</span>  <span class="nt">&gt;</span>
+
+                     <span class="nt">&lt;DiscreteObjectKeyFrame.Value</span> <span class="nt">&gt;</span>
+
+                         <span class="nt">&lt;Thickness&gt;</span>10,1,10,10<span class="nt">&lt;/Thickness&gt;</span>
+
+                     <span class="nt">&lt;/DiscreteObjectKeyFrame.Value&gt;</span>
+
+                   <span class="nt">&lt;/DiscreteObjectKeyFrame&gt;</span>
+
+                 <span class="nt">&lt;DiscreteObjectKeyFrame</span> <span class="na">KeyTime=</span><span class="s">"00:00:02"</span><span class="nt">&gt;</span>
+
+                     <span class="nt">&lt;DiscreteObjectKeyFrame.Value</span> <span class="nt">&gt;</span>
+
+                         <span class="nt">&lt;Thickness&gt;</span>10,200,10,10<span class="nt">&lt;/Thickness&gt;</span>
+
+                 <span class="nt">&lt;/DiscreteObjectKeyFrame.Value&gt;</span>
+
+         <span class="nt">&lt;/DiscreteObjectKeyFrame&gt;</span>
+
+    <span class="nt">&lt;/ObjectAnimationUsingKeyFrames&gt;</span>
+
+ <span class="nt">&lt;/Storyboard&gt;</span>
+
+</code></pre></div></div>
+
+<p>Rount就是我们要修改的控件，我们看到这是在2就直接修改，没有从1到200，这样其实并不是我们直接就想从1然后两秒200</p>
+
+<p>我们定义</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                            &lt;local:IndeterminateProgress  Margin="0,10,0,0" Width="200" Height="200" &gt;
+
+                                &lt;local:IndeterminateProgress.RenderTransform&gt;
+
+                                    &lt;TranslateTransform x:Name="Rount" Y="0"&gt;&lt;/TranslateTransform&gt;
+
+                                &lt;/local:IndeterminateProgress.RenderTransform&gt;
+
+                            &lt;/local:IndeterminateProgress&gt;
+</code></pre></div></div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+ &lt;DoubleAnimation Storyboard.TargetName="Rount" Storyboard.TargetProperty="Y"
+
+        From="0" To="100" Duration="0:0:2"&gt;&lt;/DoubleAnimation&gt;
+
+</code></pre></div></div>
+
+<p>我们要让我们的进度弹起来，如果不知道我说什么，简单我有图</p>
+
+<p><img src="http://img.blog.csdn.net/20160815151046014" alt="这里写图片描述" /></p>
+
+<p>其实我们要让我们的元素移动，可以看林政大神的书</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+ 
+
+    <span class="nt">&lt;local:IndeterminateProgress</span> <span class="na">Margin=</span><span class="s">"0,10,0,0"</span> <span class="na">Width=</span><span class="s">"200"</span> <span class="na">Height=</span><span class="s">"200"</span> <span class="nt">&gt;</span>
+
+       <span class="nt">&lt;local:IndeterminateProgress.RenderTransform&gt;</span>
+
+               <span class="nt">&lt;TranslateTransform</span> <span class="na">x:Name=</span><span class="s">"Rount"</span> <span class="na">Y=</span><span class="s">"10"</span> <span class="nt">/&gt;</span>
+
+       <span class="nt">&lt;/local:IndeterminateProgress.RenderTransform&gt;</span>
+
+    <span class="nt">&lt;/local:IndeterminateProgress&gt;</span>
+
+</code></pre></div></div>
+
+<p>在动画</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+                                              <span class="nt">&lt;DoubleAnimation</span> <span class="na">Storyboard.TargetName=</span><span class="s">"Rount"</span>
+
+                                                             <span class="na">Storyboard.TargetProperty=</span><span class="s">"Y"</span>
+
+                                                             <span class="na">Duration=</span><span class="s">"0:0:2"</span> <span class="na">From=</span><span class="s">"0"</span> <span class="na">To=</span><span class="s">"300"</span><span class="nt">&gt;</span>
+
+                                                <span class="nt">&lt;DoubleAnimation.EasingFunction&gt;</span>
+
+                                                    <span class="nt">&lt;BounceEase</span> <span class="na">Bounces=</span><span class="s">"2"</span><span class="nt">&gt;&lt;/BounceEase&gt;</span>
+
+                                                <span class="nt">&lt;/DoubleAnimation.EasingFunction&gt;</span>
+
+                                            <span class="nt">&lt;/DoubleAnimation&gt;</span>
+
+</code></pre></div></div>
+
+<p>我们使用Rount，x，记得要给名字，然后两秒，从0到300，下面就是弹跳，我上面有说，这个在官方有说比我写还好，但是官方的我没法拿来</p>
+
+:ET

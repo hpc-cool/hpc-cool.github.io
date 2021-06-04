@@ -1,0 +1,174 @@
+I"�Q<p>本文将告诉大家在 SmartSql 的 SQL 语句的属性前缀 ParameterPrefix 的默认值和用法以及原理</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/12 11:16:01 -->
+
+<h2 id="用途">用途</h2>
+
+<p>使用 SmartSql 库的属性前缀 ParameterPrefix 能赋予 SQL 语句属性替换参数的功能，可以将 SQL 语句中的属性替换为业务方传入的参数</p>
+
+<p>如以下代码，在运行时将替换 <code class="language-plaintext highlighter-rouge">@Id</code> 为业务传入参数</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c">&lt;!--获取表映射实体--&gt;</span>
+        <span class="nt">&lt;Statement</span> <span class="na">Id=</span><span class="s">"GetEntity"</span><span class="nt">&gt;</span>
+            Select * From T_User Where Id=@Id
+        <span class="nt">&lt;/Statement&gt;</span>
+</code></pre></div></div>
+
+<h2 id="用法">用法</h2>
+
+<p>在 SmartSql 中将使用两套属性前缀 ParameterPrefix 定义，一套是根据具体的数据库采用不同的默认属性前缀 ParameterPrefix 字符。另一套是开发者自定义的属性前缀，开发者可以在 SmartSqlMapConfig.xml 的 Settings 的 ParameterPrefix 属性进行自定义，如以下示例，将定义默认的属性前缀为 <code class="language-plaintext highlighter-rouge">$</code> 符号</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;SmartSqlMapConfig</span> <span class="na">xmlns=</span><span class="s">"http://SmartSql.net/schemas/SmartSqlMapConfig.xsd"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Settings</span> <span class="na">ParameterPrefix=</span><span class="s">"$"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/SmartSqlMapConfig&gt;</span>
+</code></pre></div></div>
+
+<h2 id="默认值">默认值</h2>
+
+<p>默认的各个数据库采用的默认属性前缀 ParameterPrefix 字符如下</p>
+
+<ul>
+  <li>SQL Server: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>My SQL Server: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>POSTGRESQL: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>SQLite: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>MySQL: <code class="language-plaintext highlighter-rouge">?</code></li>
+  <li>MySQL CONNECTOR: <code class="language-plaintext highlighter-rouge">?</code></li>
+  <li>ORACLE: <code class="language-plaintext highlighter-rouge">:</code></li>
+</ul>
+
+<h2 id="原理">原理</h2>
+
+<p>在 SmartSql 库的一个重要功能就是支持编写底层的 SQL 语句。在 SQL 语句里面的属性可以通过一定的规则替换为业务层传入的参数。如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c">&lt;!--获取表映射实体--&gt;</span>
+        <span class="nt">&lt;Statement</span> <span class="na">Id=</span><span class="s">"GetEntity"</span><span class="nt">&gt;</span>
+            Select * From T_User Where Id=@Id
+        <span class="nt">&lt;/Statement&gt;</span>
+</code></pre></div></div>
+
+<p>以上代码的 <code class="language-plaintext highlighter-rouge">Where Id=@Id</code> 的 <code class="language-plaintext highlighter-rouge">@Id</code> 将会在运行时替换为映射参数的具体值。映射参数在对应的 Repository interfaces 定义，如以下代码示例</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IUserRepository</span>
+    <span class="p">{</span>
+
+        <span class="p">[</span><span class="nf">Statement</span><span class="p">(</span><span class="n">Id</span> <span class="p">=</span> <span class="s">"GetEntity"</span><span class="p">)]</span>
+        <span class="n">User</span> <span class="nf">GetById</span><span class="p">([</span><span class="nf">Param</span><span class="p">(</span><span class="s">"Id"</span><span class="p">)]</span><span class="kt">long</span> <span class="n">id</span><span class="p">);</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上代码示例可以在<a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/sample/SmartSql.Sample.AspNetCore/DyRepositories/IUserRepository.cs#L16-L17">官方仓库的 sample/SmartSql.Sample.AspNetCore/DyRepositories/IUserRepository.cs</a> 找到</p>
+
+<p>那么 SmartSql 是如何了解需要将 <code class="language-plaintext highlighter-rouge">Where Id=@Id</code> 的 <code class="language-plaintext highlighter-rouge">@Id</code> 替换为 IUserRepository 的 <code class="language-plaintext highlighter-rouge">User GetById([Param("Id")]long id);</code> 方法中的 <code class="language-plaintext highlighter-rouge">long id</code> 参数？请看下文</p>
+
+<p>可以关注到在 <code class="language-plaintext highlighter-rouge">Select * From T_User Where Id=@Id</code> 中需要替换的属性包含了前缀 ParameterPrefix 属性前缀 <code class="language-plaintext highlighter-rouge">@</code> 符号。在 SmartSql 底层将会使用正则对此字符串进行替换，能够通过前缀取出需要替换的属性。而根据方法里面的 <code class="language-plaintext highlighter-rouge">Param</code> 特性找到对应的参数，从而拿到对应的值</p>
+
+<p>如在以上例子中，在 SQL 语句中使用了 <code class="language-plaintext highlighter-rouge">@Id</code> 标识，此时将可以通过前缀 <code class="language-plaintext highlighter-rouge">@</code> 判断取出需要替换的属性是 <code class="language-plaintext highlighter-rouge">Id</code> 属性。从对应的方法 <code class="language-plaintext highlighter-rouge">User GetById([Param("Id")]long id);</code> 的 <code class="language-plaintext highlighter-rouge">Param</code> 特性找到对应的参数是 <code class="language-plaintext highlighter-rouge">long id</code> 参数，因此在运行时将可以进行属性替换为参数</p>
+
+<p>在 SmartSql 的属性前缀替换是十分智能的，将会根据所使用的数据库替换为不同的值，其目的是规避数据库的关键词以及合法变量。其次 SmartSql 也支持在业务端自定义属性前缀</p>
+
+<p>默认定义如下</p>
+
+<ul>
+  <li>SQL Server: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>My SQL Server: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>POSTGRESQL: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>SQLite: <code class="language-plaintext highlighter-rouge">@</code></li>
+  <li>MySQL: <code class="language-plaintext highlighter-rouge">?</code></li>
+  <li>MySQL CONNECTOR: <code class="language-plaintext highlighter-rouge">?</code></li>
+  <li>ORACLE: <code class="language-plaintext highlighter-rouge">:</code></li>
+</ul>
+
+<p>以上默认定义在 <a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/src/SmartSql/DataSource/DbProviderManager.cs#L13-L66">官方仓库的 src/SmartSql/DataSource/DbProviderManager.cs</a> 代码文件里</p>
+
+<p>通过默认值定义可以了解到为什么从 SQLite 替换到 MySQL 时，可能存在 SQL 的属性替换失败，在 <code class="language-plaintext highlighter-rouge">SmartSql.Middlewares.PrepareStatementMiddleware</code> 的输出里面没有参数，显示代码是 <code class="language-plaintext highlighter-rouge">Parameters:[]</code> 没有参数</p>
+
+<p>其中一个可能的原因是在 SQLite 中使用的 SQL 语句是 <code class="language-plaintext highlighter-rouge">Select * From T_User Where Id=@Id</code> 属性使用前缀是 <code class="language-plaintext highlighter-rouge">@</code> 符号，而通过默认值定义可以看到在 MySQL 的默认定义是 <code class="language-plaintext highlighter-rouge">?</code> 符号。因此需要将 SQL 语句替换为 <code class="language-plaintext highlighter-rouge">Select * From T_User Where Id=?Id</code> 才能替换参数</p>
+
+<p>在使用方法上，因为如果 SQL 语句需要动态根据所使用的数据库而进行变更，那么在更换数据库时将会存在很大的工作量。因此 SmartSql 库提供了开发者自定义的属性前缀的方法，通过开发者自定义的属性前缀可以做到在更换数据库类型时，不需要更改 SQL 语句</p>
+
+<p>在开发者端自定义属性前缀，可以在 SmartSqlMapConfig.xml 的 Settings 使用 ParameterPrefix 属性进行定义，如以下示例</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;SmartSqlMapConfig</span> <span class="na">xmlns=</span><span class="s">"http://SmartSql.net/schemas/SmartSqlMapConfig.xsd"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Settings</span> <span class="na">IgnoreParameterCase=</span><span class="s">"false"</span> <span class="na">ParameterPrefix=</span><span class="s">"$"</span> <span class="na">IsCacheEnabled=</span><span class="s">"true"</span> <span class="na">EnablePropertyChangedTrack=</span><span class="s">"true"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/SmartSqlMapConfig&gt;</span>
+</code></pre></div></div>
+
+<p>以上代码将在开发者端定义属性前缀是 <code class="language-plaintext highlighter-rouge">$</code> 符号，此时在 SQL 语句中所有使用 <code class="language-plaintext highlighter-rouge">$</code> 开头的属性将会被识别为需要替换的属性，将会在运行时进行参数替换</p>
+
+<p>在 SmartSql 的 SQL 属性替换的原理如下</p>
+
+<p>在应用程序启动时，将创建 DbProviderManager.cs 的各个数据库对应的参数配置，将会初始化各个不同的数据库使用的默认属性前缀。详细代码请看 <a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/src/SmartSql/DataSource/DbProviderManager.cs#L13-L66">官方仓库的 src/SmartSql/DataSource/DbProviderManager.cs</a> 代码</p>
+
+<p>在启动过程的 <code class="language-plaintext highlighter-rouge">SmartSql.ConfigBuilder.XmlConfigBuilder.BuildDatabase()</code> 函数将根据配置文件决定使用哪个数据库，因此将拿到对应的数据库默认属性前缀</p>
+
+<p>在 SmartSql 的设计里面，将在启动过程的 <code class="language-plaintext highlighter-rouge">SmartSql.ConfigBuilder.SqlMapBuilder.BuildStatements()</code> 读取所有的 XML 文件定义的 SQL 语句，在此方法进行构建</p>
+
+<p>在 BuildStatements 方法构建的核心逻辑将会调用 <code class="language-plaintext highlighter-rouge">SmartSql.Configuration.Tags.TagBuilders.SqlTextBuilder.Build</code> 方法，此方法将会进行字符串替换，将 SQL 语句中所有用到自定义属性前缀的字符替换为具体数据库的默认属性前缀的值，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">ITag</span> <span class="nf">Build</span><span class="p">(</span><span class="n">XmlNode</span> <span class="n">xmlNode</span><span class="p">,</span> <span class="n">Statement</span> <span class="n">statement</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">innerText</span> <span class="p">=</span> <span class="n">xmlNode</span><span class="p">.</span><span class="n">InnerText</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">sqlConfig</span> <span class="p">=</span> <span class="n">statement</span><span class="p">.</span><span class="n">SqlMap</span><span class="p">.</span><span class="n">SmartSqlConfig</span><span class="p">;</span>
+
+            <span class="c1">// 以下是核心代码，将替换对应的 SQL 语句中使用开发者自定义的前缀的字符替换为具体数据库的默认属性前缀的值</span>
+            <span class="kt">var</span> <span class="n">bodyText</span> <span class="p">=</span> <span class="n">innerText</span><span class="p">.</span><span class="nf">Replace</span><span class="p">(</span><span class="n">sqlConfig</span><span class="p">.</span><span class="n">Settings</span><span class="p">.</span><span class="n">ParameterPrefix</span>
+                <span class="p">,</span> <span class="n">sqlConfig</span><span class="p">.</span><span class="n">Database</span><span class="p">.</span><span class="n">DbProvider</span><span class="p">.</span><span class="n">ParameterPrefix</span><span class="p">);</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">SqlText</span><span class="p">(</span><span class="n">bodyText</span>
+                <span class="p">,</span> <span class="n">sqlConfig</span><span class="p">.</span><span class="n">Database</span><span class="p">.</span><span class="n">DbProvider</span><span class="p">.</span><span class="n">ParameterPrefix</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Statement</span> <span class="p">=</span> <span class="n">statement</span>
+            <span class="p">};</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上代码的 innerText 是开发者编写的 SQL 语句，如 <code class="language-plaintext highlighter-rouge">Select * From T_User Where Id=$Id</code> 代码。而 <code class="language-plaintext highlighter-rouge">sqlConfig.Settings.ParameterPrefix</code> 对应在 SmartSqlMapConfig.xml 的 Settings 的 ParameterPrefix 属性。而 sqlConfig.Database.DbProvider.ParameterPrefix 是对应数据库的默认属性前缀的值</p>
+
+<p>假定如上示例开发者自定义的属性前缀是 <code class="language-plaintext highlighter-rouge">$</code> 字符，而采用数据库是 <code class="language-plaintext highlighter-rouge">SQLite</code> 数据库，通过上文可以了解到 <code class="language-plaintext highlighter-rouge">SQLite</code> 数据库的默认属性前缀的值是 <code class="language-plaintext highlighter-rouge">@</code> 字符，因此以上代码等价于如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">innerText</span> <span class="p">=</span> <span class="s">"Select * From T_User Where Id=$Id"</span><span class="p">;</span>
+    <span class="kt">var</span> <span class="n">bodyText</span> <span class="p">=</span> <span class="n">innerText</span><span class="p">.</span><span class="nf">Replace</span><span class="p">(</span><span class="s">"$"</span><span class="p">,</span> <span class="s">"@"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>因此最终的 SQL 语句都会使用对应数据库的默认属性前缀的值作为属性前缀</p>
+
+<p>在运行的过程，在调用对应的访问数据库方法时，将会先找到对应的 SQL 语句，经过 <a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/src/SmartSql/Middlewares/PrepareStatementMiddleware.cs#L65-L88"><code class="language-plaintext highlighter-rouge">SmartSql.Middlewares.PrepareStatementMiddleware.BuildDbParameters</code></a> 方法进行属性替换为业务传入参数</p>
+
+<p>其中这个步骤核心逻辑是将拿到的参数预先构建为 属性名-参数值 的字典，然后进入 <a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/src/SmartSql/Utils/SqlParamAnalyzer.cs#L33">SqlParamAnalyzer 的 Replace</a> 方法进行属性和参数的替换逻辑</p>
+
+<p>在 <a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/src/SmartSql/Utils/SqlParamAnalyzer.cs#L33">SqlParamAnalyzer 的 Replace</a> 方法里面将通过正则替换的方法，找到 SQL 语句里面的各个属性，执行传入的属性和参数的替换方法，替换属性为对应的参数</p>
+
+<p>因此如果想要让 SQL 语句能被正确替换属性，需要在 <a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/src/SmartSql/Utils/SqlParamAnalyzer.cs#L33">SqlParamAnalyzer 的 Replace</a> 方法的第一步正则替换能正确执行。在 <a href="https://github.com/dotnetcore/SmartSql/blob/e3a18b7c356b7a2033eaf3c9a55f9ca9b92121ec/src/SmartSql/Utils/SqlParamAnalyzer.cs">SqlParamAnalyzer</a> 的构造函数将会创建出正则，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">SqlParamAnalyzer</span><span class="p">(</span><span class="kt">bool</span> <span class="n">ignoreCase</span><span class="p">,</span> <span class="kt">string</span> <span class="n">dbPrefix</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">regOptions</span> <span class="p">=</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">Multiline</span> <span class="p">|</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">CultureInvariant</span> <span class="p">|</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">Compiled</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ignoreCase</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">regOptions</span> <span class="p">=</span> <span class="n">regOptions</span> <span class="p">|</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">IgnoreCase</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">_sqlParamsTokens</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="s">@"["</span> <span class="p">+</span> <span class="n">dbPrefix</span> <span class="p">+</span> <span class="s">@"]([\p{L}\p{N}_.\[\]]+)"</span><span class="p">,</span> <span class="n">regOptions</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上代码的 <code class="language-plaintext highlighter-rouge">dbPrefix</code> 将会被传入具体的数据库的默认属性前缀的值，如 <code class="language-plaintext highlighter-rouge">SQLite</code> 数据库的默认属性前缀的值是 <code class="language-plaintext highlighter-rouge">@</code> 字符</p>
+
+<p>根据正则字符串可以找到 SQL 里面所有的属性字符串，将属性替换为具体的参数即可完成实际使用的 SQL 语句。输出的实际使用的 SQL 语句将会放在 RequestContext 的 RealSql 字符串中</p>
+
+<p>在 appsettings.json 中将 LogLevel 的 Default 设置为 Debug 等级，可以在运行时看到从开发者编写的 SQL 语句加上参数的实际 SQL 语句，大概内容如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dbug</span><span class="p">:</span> <span class="n">SmartSql</span><span class="p">.</span><span class="n">Middlewares</span><span class="p">.</span><span class="n">PrepareStatementMiddleware</span><span class="p">[</span><span class="m">0</span><span class="p">]</span>
+      <span class="n">Statement</span><span class="p">.</span><span class="n">Id</span><span class="p">:[</span><span class="n">User</span><span class="p">.</span><span class="n">GetEntity</span><span class="p">],</span><span class="n">Sql</span><span class="p">:</span>
+      <span class="n">Select</span> <span class="p">*</span> <span class="n">From</span> <span class="n">T_User</span> <span class="n">Where</span> <span class="n">Id</span><span class="p">=</span><span class="n">@Id</span>
+      <span class="n">Parameters</span><span class="p">:[</span><span class="n">Id</span><span class="p">=</span><span class="m">1</span><span class="p">]</span>
+      <span class="n">Sql</span> <span class="n">with</span> <span class="n">parameter</span> <span class="k">value</span><span class="p">:</span>
+      <span class="n">Select</span> <span class="p">*</span> <span class="n">From</span> <span class="n">T_User</span> <span class="n">Where</span> <span class="n">Id</span><span class="p">=</span><span class="m">1</span>
+</code></pre></div></div>
+
+<p>当前 SmartSql 的文档比较缺失，入门级文档请看 <a href="https://www.cnblogs.com/jasongrass/p/13656356.html">smartsql 入门使用踩坑笔记 - J.晒太阳的猫 - 博客园</a></p>
+
+:ET

@@ -1,0 +1,47 @@
+I"X<p>本文告诉大家如何在 WPF 开发一个可以自动启动的程序</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/9/2 15:10:52 -->
+
+<!-- csdn -->
+
+<p>本文使用的自动开机启动方法是通过快捷方式放在启动文件夹的方式。</p>
+
+<h2 id="创建快捷方式">创建快捷方式</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 为本程序创建一个快捷方式。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="lnkFilePath"&gt;快捷方式的完全限定路径。&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="args"&gt;快捷方式启动程序时需要使用的参数。&lt;/param&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">CreateShortcut</span><span class="p">(</span><span class="kt">string</span> <span class="n">lnkFilePath</span><span class="p">,</span> <span class="kt">string</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">shellType</span> <span class="p">=</span> <span class="n">Type</span><span class="p">.</span><span class="nf">GetTypeFromProgID</span><span class="p">(</span><span class="s">"WScript.Shell"</span><span class="p">);</span>
+            <span class="kt">dynamic</span> <span class="n">shell</span> <span class="p">=</span> <span class="n">Activator</span><span class="p">.</span><span class="nf">CreateInstance</span><span class="p">(</span><span class="n">shellType</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">shortcut</span> <span class="p">=</span> <span class="n">shell</span><span class="p">.</span><span class="nf">CreateShortcut</span><span class="p">(</span><span class="n">lnkFilePath</span><span class="p">);</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="n">TargetPath</span> <span class="p">=</span> <span class="n">Assembly</span><span class="p">.</span><span class="nf">GetEntryAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">;</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="n">Arguments</span> <span class="p">=</span> <span class="n">args</span><span class="p">;</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="n">WorkingDirectory</span> <span class="p">=</span> <span class="n">AppDomain</span><span class="p">.</span><span class="n">CurrentDomain</span><span class="p">.</span><span class="n">SetupInformation</span><span class="p">.</span><span class="n">ApplicationBase</span><span class="p">;</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="nf">Save</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="创建在启动文件">创建在启动文件</h2>
+
+<p>将快捷方式创建在启动文件夹就可以让程序开机自动启动，上面的方法已经可以传入 lnkFilePath 所以只需要设置 lnkFilePath 是启动文件夹就可以</p>
+
+<p>设置的方式是 <code class="language-plaintext highlighter-rouge">Environment.GetFolderPath</code> 传入启动的文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">startupPath</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span>
+                <span class="n">Environment</span><span class="p">.</span><span class="nf">GetFolderPath</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">SpecialFolder</span><span class="p">.</span><span class="n">Startup</span><span class="p">),</span>
+                <span class="s">"xx.lnk"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>现在就可以让软件在开机自动启动。</p>
+
+<p>参见 <a href="https://blog.walterlv.com/post/create-shortcut-file-using-csharp.html">使用 C# 代码创建快捷方式文件 - walterlv</a></p>
+
+<p><img src="https://i.loli.net/2018/09/02/5b8b8a8e69248.jpg" alt="" /></p>
+
+:ET

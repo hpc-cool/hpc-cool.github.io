@@ -1,0 +1,44 @@
+I"�<p>在创建一个 TaskCompletionSource 期望让等待的逻辑只会被调用一次，而调用的是多线程，可以使用 TrySetResult 方法，这个方法是线程安全，只会让 TaskCompletionSource 被调用一次</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/7/27 19:52:44 -->
+
+<p>在多个线程调用 TaskCompletionSource 的 TrySetResult 方法，只有一个线程能进入设置，其他线程将会拿到返回 false 的值</p>
+
+<p>测试代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">_taskCompletionSource</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">bool</span><span class="p">&gt;();</span>
+
+            <span class="nf">Foo</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">taskList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Task</span><span class="p">&gt;();</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">task</span> <span class="p">=</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(()</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">_taskCompletionSource</span><span class="p">.</span><span class="nf">TrySetResult</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+                <span class="p">});</span>
+
+                <span class="n">taskList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">task</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">Task</span><span class="p">.</span><span class="nf">WaitAll</span><span class="p">(</span><span class="n">taskList</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">());</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">Read</span><span class="p">();</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">_taskCompletionSource</span><span class="p">.</span><span class="n">Task</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"F"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">TaskCompletionSource</span><span class="p">&lt;</span><span class="kt">bool</span><span class="p">&gt;</span> <span class="n">_taskCompletionSource</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>可以看到使用很多线程调用，而 Foo 只执行一次输出</p>
+
+<p>上面测试的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/916a11d68c0fba14c75b5e438bdecddb1ff421be/CallbadojuBaheanurjair">github</a> 欢迎小伙伴访问</p>
+
+:ET

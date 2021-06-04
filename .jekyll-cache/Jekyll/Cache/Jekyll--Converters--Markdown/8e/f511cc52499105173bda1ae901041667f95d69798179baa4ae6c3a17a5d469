@@ -1,0 +1,96 @@
+I"�%<p>本文告诉大家如何使用 DrawingContext 变换，修改画出的内容。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/7/15 15:51:00 -->
+
+<!-- csdn -->
+
+<p>如果在一个 DrawingContext 画出一个 DrawingVisual ，如何修改这个 DrawingVisual 的大小，对他进行变换？</p>
+
+<p>简单的方法就是使用 PushTransform 方法，那么如何使用这个方法就是本文要告诉大家的。</p>
+
+<p>先写一个简单的 OnRender ，创建一个类 GearcawralSarBule 继承 FrameworkElement 就可以重写 OnRender 方法，为了让WPF调用 OnRender 方法就需要把 GearcawralSarBule 加入视觉树，最简单加入视觉树的方法就是把他添加到 Grid，下面就是 GearcawralSarBule 类代码和在 xaml 添加他到 Grid 显示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">GearcawralSarBule</span> <span class="p">:</span> <span class="n">FrameworkElement</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnRender</span><span class="p">(</span><span class="n">DrawingContext</span> <span class="n">drawingContext</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnRender</span><span class="p">(</span><span class="n">drawingContext</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">GearcawralSarBule</span><span class="p">&gt;&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">GearcawralSarBule</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在运行可以看到界面没有内容，下面来使用一个已有的图片画出来。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">GearcawralSarBule</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">DrawingVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DrawingVisual</span><span class="p">();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">drawingContext</span> <span class="p">=</span> <span class="n">DrawingVisual</span><span class="p">.</span><span class="nf">RenderOpen</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="c1">// 本来是想写文字 lindexi 的，但是最后还是画星</span>
+                <span class="n">drawingContext</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">Brushes</span><span class="p">.</span><span class="n">Black</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="n">Geometry</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="n">DrawingVisual</span><span class="p">.</span><span class="n">CacheMode</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapCache</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">DrawingVisual</span> <span class="n">DrawingVisual</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码使用 Geometry.Parse 转换一个图形，大家先猜一下是什么图形。</p>
+
+<p>下面来把上面的 DrawingVisual 画出来</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnRender</span><span class="p">(</span><span class="n">DrawingContext</span> <span class="n">drawingContext</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">DrawDrawing</span><span class="p">(</span><span class="n">DrawingVisual</span><span class="p">.</span><span class="n">Drawing</span><span class="p">);</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnRender</span><span class="p">(</span><span class="n">drawingContext</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<p>那么现在的问题是如何缩放这个画出来的 DrawingVisual ，实际上方法很简单，就是通过 drawingContext 的 push 方法。如果有玩过 ps 就知道，在 ps 有图层，使用 DrawingContext 的 push 方法就是创建一个图层，而且做的变换都是对这个图层做变换，在使用 push 创建图层之后需要使用 pop 把图层画进去。</p>
+
+<p>如对 DrawingVisual 进行变换的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnRender</span><span class="p">(</span><span class="n">DrawingContext</span> <span class="n">drawingContext</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">PushTransform</span><span class="p">(</span><span class="k">new</span> <span class="nf">ScaleTransform</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">ScaleX</span> <span class="p">=</span> <span class="m">2</span><span class="p">,</span>
+                <span class="n">ScaleY</span> <span class="p">=</span> <span class="m">2</span><span class="p">,</span>
+            <span class="p">});</span>
+            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">DrawDrawing</span><span class="p">(</span><span class="n">DrawingVisual</span><span class="p">.</span><span class="n">Drawing</span><span class="p">);</span>
+            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">Pop</span><span class="p">();</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnRender</span><span class="p">(</span><span class="n">drawingContext</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时就可以对 DrawingVisual 放大，因为 Transform 可以进行移动、旋转，这里的代码就不告诉大家了</p>
+
+<p>注意使用了 push 需要在画完使用 pop ，不然会出现下面继续对 DrawingVisual 进行画的时候就会发现还是在原先的图层</p>
+
+<p>除了 PushTransform 方法还有很多 push 方法，如 PushClip ，调用这个方法可以裁剪传入的范围。如 PushOpacity 可以设置接下来画的图片的不透明度，如果多次调用 PushOpacity 没有调用 Pop 就会叠加不透明度，如使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">PushOpacity</span><span class="p">(</span><span class="m">0.3</span><span class="p">);</span>
+            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">PushOpacity</span><span class="p">(</span><span class="m">0.3</span><span class="p">);</span>
+
+
+            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">DrawDrawing</span><span class="p">(</span><span class="n">DrawingVisual</span><span class="p">.</span><span class="n">Drawing</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>和使用下面代码画出来的图形不透明度相同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">PushOpacity</span><span class="p">(</span><span class="m">0.09</span><span class="p">);</span>
+
+            <span class="n">drawingContext</span><span class="p">.</span><span class="nf">DrawDrawing</span><span class="p">(</span><span class="n">DrawingVisual</span><span class="p">.</span><span class="n">Drawing</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>还有一个 PushGuidelineSet 参见：<a href="http://www.cnblogs.com/AaronLu/archive/2009/11/13/1602332.html">WPF：基于物理像素的图形绘制 - Aaron Lu - 博客园</a></p>
+
+:ET

@@ -1,0 +1,70 @@
+I"�<p>在构建 WPF 开源仓库的时候，需要先搭建 Perl 环境，此时大家是否想了解在 WPF 构建的哪里用到 Perl 工具</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/1/12 9:45:32 -->
+
+<!-- 标签：WPF框架开发 -->
+<!-- 发布 -->
+
+<p>在完全开源的 WPF 仓库里面，其实可以看到很多 Perl 的影子，大部分都是用来做构建的脚本，小部分是在做我也看不懂的逻辑</p>
+
+<p>做构建脚本的包括了生成一些代码，如 GenerateAvTraceMessages 这个构建步骤，代码定义如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Project&gt;</span>
+  <span class="nt">&lt;Target</span>
+    <span class="na">Name=</span><span class="s">"GenerateAvTraceMessages"</span>
+    <span class="na">BeforeTargets=</span><span class="s">"CoreCompile"</span>
+    <span class="na">Condition=</span><span class="s">"'$(AvTraceMessages)'!=''"</span>
+    <span class="na">Inputs=</span><span class="s">"$(AvTraceMessages)"</span>
+    <span class="na">Outputs=</span><span class="s">"$(IntermediateOutputPath)AvTraceMessages.cs"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Error</span> <span class="na">Condition=</span><span class="s">"!Exists($(PerlCommand.Replace('&amp;quot;','')))"</span> <span class="na">Text=</span><span class="s">"Perl is not found: PerlCommand=$(PerlCommand)"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;MakeDir</span> <span class="na">Condition=</span><span class="s">"!Exists('$(IntermediateOutputPath)')"</span> <span class="na">Directories=</span><span class="s">"$(IntermediateOutputPath)"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;Message</span> <span class="na">Text=</span><span class="s">"Generating $(IntermeidateOutputPath)AvTraceMessages.cs from $(AvTraceMessages)"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;Exec</span>
+      <span class="na">Command=</span><span class="s">"$(PerlCommand) $(MSBuildThisFileDirectory)AvTrace\GenTraceStrings.pl -o $(IntermediateOutputPath)AvTraceMessages.cs -i $(AvTraceMessages)"</span>
+      <span class="na">StandardErrorImportance=</span><span class="s">"normal"</span>
+      <span class="na">Outputs=</span><span class="s">"$(IntermediateOutputPath)AvTraceMessages.cs"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;Output</span> <span class="na">TaskParameter=</span><span class="s">"Outputs"</span> <span class="na">ItemName=</span><span class="s">"Compile"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Exec&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到上面代码调用了 PerlCommand 来执行 GenTraceStrings.pl 文件</p>
+
+<p>除此之外，在 PresentationFramework.csproj 文件里面也有使用 Perl 的代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nt">&lt;Exec</span> <span class="na">Command=</span><span class="s">"$(PerlCommand) template.pl %(CollectionTemplate.Pattern) %(CollectionTemplate.Template) &amp;gt; $(IntermediateOutputPath)\%(CollectionTemplate.Identity)"</span> <span class="na">Outputs=</span><span class="s">"$(IntermediateOutputPath)\%(CollectionTemplate.Identity)"</span> <span class="na">StandardOutputImportance=</span><span class="s">"normal"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>在 PresentationUI.csproj 生成主题的代码也是用到 Perl 工具</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"AfterBuild"</span> <span class="na">Inputs=</span><span class="s">"@(Page)"</span> <span class="na">Outputs=</span><span class="s">"$(OutputPath)sdk\PUI.%(Page.Filename)%(Page.Extension)"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Exec</span> <span class="na">Command=</span><span class="s">"$(PerlCommand) ThemeGenerator.pl %(Page.Identity) @(Page -&gt; '$(IntermediateOutputPath)PUI.%(Filename)%(Extension)')"</span> <span class="na">Condition=</span><span class="s">"'%(Page.GenerateTheme)' == 'true'"</span> <span class="na">StandardOutputImportance=</span><span class="s">"normal"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;ItemGroup&gt;</span>
+      <span class="nt">&lt;DataFile</span> <span class="na">Condition=</span><span class="s">"'%(Page.GenerateTheme)' == 'true' and Exists('$(IntermediateOutputPath)PUI.%(Page.Filename)%(Page.Extension)')"</span> <span class="na">Include=</span><span class="s">"$(IntermediateOutputPath)PUI.%(Page.Filename)%(Page.Extension)"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;SubFolder&gt;</span>sdk<span class="nt">&lt;/SubFolder&gt;</span>
+      <span class="nt">&lt;/DataFile&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码使用 Perl 通过 ThemeGenerator.pl 生成主题</p>
+
+<p>在 WindowsBase.csproj 里面同样也是用来生成代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"GenerateSources"</span> <span class="na">BeforeTargets=</span><span class="s">"CoreCompile"</span> <span class="na">Inputs=</span><span class="s">"MS\Internal\IO\Packaging\PackageXmlNamespaces.txt;MS\Internal\IO\Packaging\PackageXmlStrings.txt;"</span> <span class="na">Outputs=</span><span class="s">"$(IntermediateOutputPath)\PackageXmlStringTable.cs"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Error</span> <span class="na">Condition=</span><span class="s">"!Exists($(PerlCommand.Replace('&amp;quot;','')))"</span> <span class="na">Text=</span><span class="s">"Perl is not found: PerlCommand=$(PerlCommand)"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;MakeDir</span> <span class="na">Condition=</span><span class="s">"!Exists('$(IntermediateOutputPath)')"</span> <span class="na">Directories=</span><span class="s">"$(IntermediateOutputPath)"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;Exec</span> <span class="na">Command=</span><span class="s">"$(PerlCommand) $(GenXmlStringTable) -o $(IntermediateOutputPath)\PackageXmlStringTable.cs -n MS\Internal\IO\Packaging\PackageXmlNamespaces.txt -x MS\Internal\IO\Packaging\PackageXmlStrings.txt -e MS.Internal.IO.Packaging.PackageXmlEnum -c MS.Internal.IO.Packaging.PackageXmlStringTable"</span> <span class="na">StandardOutputImportance=</span><span class="s">"normal"</span> <span class="na">Outputs=</span><span class="s">"$(IntermediateOutputPath)\PackageXmlStringTable.cs"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;Output</span> <span class="na">TaskParameter=</span><span class="s">"Outputs"</span> <span class="na">ItemName=</span><span class="s">"Compile"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Exec&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<p>也就是说 Perl 在 WPF 仓库最大的作用就是用来辅助生成代码，通过代码模版生成代码。大概就是古代没有一个好用的代码模版生成器，才使用了Perl工具，但是官方也没有计划去更改这部分的逻辑</p>
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

@@ -1,0 +1,211 @@
+I"Y\<p>我在之前修改了一个文件，但是没有commit，现在我想要commit，日期为那天的日期
+git 修改日期的方法很简单，因为有一个命令<code class="language-plaintext highlighter-rouge">--date</code> 可以设置 git 提交时间。
+默认的 git 的提交时间会受到系统的时间的影响，如果想要系统的时间不会影响到 git 的提交时间，请使用本文的方式，自己指定提交的时间</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/19 8:53:16 -->
+
+<p>使用git自定义时间的提交格式：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">commit</span> <span class="p">--</span><span class="n">date</span><span class="p">=</span><span class="s">"月 日 时间 年 +0800"</span> <span class="p">-</span><span class="n">am</span> <span class="s">"提交"</span>
+</code></pre></div></div>
+
+<p>如果我要把日期修改为 2016.5.7 那么我可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">commit</span> <span class="p">--</span><span class="n">date</span><span class="p">=</span><span class="s">"May 7 9:05:20 2016 +0800"</span> <span class="p">-</span><span class="n">am</span> <span class="s">"提交"</span>
+</code></pre></div></div>
+
+<p>其中我希望大家知道的：</p>
+
+<p>各个月份的缩写，不然每次都需要去百度一下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">January</span><span class="p">,</span> <span class="n">Jan</span><span class="p">.</span>
+<span class="n">February</span><span class="p">,</span> <span class="n">Feb</span><span class="p">.</span>
+<span class="n">March</span><span class="p">,</span> <span class="n">Mar</span><span class="p">.</span>
+<span class="n">April</span><span class="p">,</span> <span class="n">Apr</span><span class="p">.</span>
+<span class="n">May</span><span class="p">,</span> <span class="n">May</span><span class="p">.</span>
+<span class="n">June</span><span class="p">,</span> <span class="n">Jun</span><span class="p">.</span>
+<span class="n">July</span><span class="p">,</span> <span class="n">Jul</span><span class="p">.</span>
+<span class="n">August</span><span class="p">,</span> <span class="n">Aug</span><span class="p">.</span>
+<span class="n">September</span><span class="p">,</span> <span class="n">Sep</span><span class="p">.</span>
+<span class="n">October</span><span class="p">,</span> <span class="n">Oct</span><span class="p">.</span>
+<span class="n">November</span><span class="p">,</span> <span class="n">Nov</span><span class="p">.</span>
+<span class="n">December</span><span class="p">,</span> <span class="n">Dec</span><span class="p">.</span>
+</code></pre></div></div>
+
+<p>当然，如果你想写为程序，那么我还可以送你一点代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;()</span>
+            <span class="p">{</span>
+                <span class="s">"Jan"</span><span class="p">,</span><span class="s">"Feb"</span><span class="p">,</span><span class="s">"Mar"</span><span class="p">,</span><span class="s">"Apr"</span><span class="p">,</span><span class="s">"May"</span><span class="p">,</span><span class="s">"Jun"</span><span class="p">,</span><span class="s">"Jul"</span><span class="p">,</span><span class="s">"Aug"</span><span class="p">,</span>
+                <span class="s">"Sep"</span><span class="p">,</span><span class="s">"Oct"</span><span class="p">,</span><span class="s">"Nov"</span><span class="p">,</span><span class="s">"Dec"</span>
+            <span class="p">};</span>
+</code></pre></div></div>
+
+<p>如果需要使用 C# 调用 git ，可以使用我之前写过的代码：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">GitControl</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">GitControl</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileDirectory</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">FileDirectory</span> <span class="p">=</span> <span class="n">fileDirectory</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     git的文件夹</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">FileDirectory</span>
+        <span class="p">{</span>
+            <span class="k">set</span><span class="p">;</span>
+            <span class="k">get</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Branch</span>
+        <span class="p">{</span>
+            <span class="k">set</span><span class="p">;</span>
+            <span class="k">get</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Origin</span>
+        <span class="p">{</span>
+            <span class="k">set</span><span class="p">;</span>
+            <span class="k">get</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">Add</span><span class="p">(</span><span class="kt">string</span> <span class="n">file</span> <span class="p">=</span> <span class="s">"."</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">"add "</span> <span class="p">+</span> <span class="n">file</span><span class="p">;</span>
+            <span class="k">return</span> <span class="nf">Control</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="nf">ConvertDate</span><span class="p">(</span><span class="n">DateTime</span> <span class="n">time</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//1.  一月     January      （Jan）2.  二月      February   （Feb）</span>
+            <span class="c1">//3.  三月      March        （Mar） </span>
+            <span class="c1">//4.  四月      April           （Apr）</span>
+            <span class="c1">//5.  五月      May           （May）</span>
+            <span class="c1">//6.  六月      June           （Jun）</span>
+            <span class="c1">//7.  七月      July             （Jul）</span>
+            <span class="c1">//8.  八月      August        （Aug）</span>
+            <span class="c1">//9.  九月      September  （Sep）</span>
+            <span class="c1">//10.  十月     October      （Oct） </span>
+            <span class="c1">//11.  十一月   November （Nov）12.  十二月   December （Dec）</span>
+            <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">temp</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;()</span>
+            <span class="p">{</span>
+                <span class="s">"Jan"</span><span class="p">,</span><span class="s">"Feb"</span><span class="p">,</span><span class="s">"Mar"</span><span class="p">,</span><span class="s">"Apr"</span><span class="p">,</span><span class="s">"May"</span><span class="p">,</span><span class="s">"Jun"</span><span class="p">,</span><span class="s">"Jul"</span><span class="p">,</span><span class="s">"Aug"</span><span class="p">,</span>
+                <span class="s">"Sep"</span><span class="p">,</span><span class="s">"Oct"</span><span class="p">,</span><span class="s">"Nov"</span><span class="p">,</span><span class="s">"Dec"</span>
+            <span class="p">};</span>
+
+            <span class="c1">//StringBuilder str = new StringBuilder();</span>
+            <span class="c1">//            git commit --date = "月 日 时间 年 +0800" - am "提交"</span>
+
+            <span class="c1">//git commit --date = "May 7 9:05:20 2016 +0800" - am "提交"</span>
+            <span class="k">return</span> <span class="s">$"--date=\"</span><span class="p">{</span><span class="n">temp</span><span class="p">[</span><span class="n">time</span><span class="p">.</span><span class="n">Month</span> <span class="p">-</span> <span class="m">1</span><span class="p">]}</span><span class="s"> </span><span class="p">{</span><span class="n">time</span><span class="p">.</span><span class="n">Day</span><span class="p">}</span><span class="s"> </span><span class="p">{</span><span class="n">time</span><span class="p">.</span><span class="n">Hour</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">time</span><span class="p">.</span><span class="n">Minute</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">time</span><span class="p">.</span><span class="n">Second</span><span class="p">}</span><span class="s"> </span><span class="p">{</span><span class="n">time</span><span class="p">.</span><span class="n">Year</span><span class="p">}</span><span class="s"> +0800\" "</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">Commit</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span> <span class="n">DateTime</span> <span class="n">time</span> <span class="p">=</span> <span class="k">default</span><span class="p">(</span><span class="n">DateTime</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">commit</span> <span class="p">=</span> <span class="s">" commit"</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">time</span> <span class="p">!=</span> <span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="n">DateTime</span><span class="p">)))</span>
+            <span class="p">{</span>
+                <span class="n">commit</span> <span class="p">+=</span> <span class="s">" "</span> <span class="p">+</span> <span class="nf">ConvertDate</span><span class="p">(</span><span class="n">time</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">time</span> <span class="p">==</span> <span class="k">default</span><span class="p">(</span><span class="n">DateTime</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="n">time</span> <span class="p">=</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="n">str</span> <span class="p">=</span> <span class="n">time</span><span class="p">.</span><span class="n">Year</span> <span class="p">+</span> <span class="s">"年"</span> <span class="p">+</span> <span class="n">time</span><span class="p">.</span><span class="n">Month</span> <span class="p">+</span> <span class="s">"月"</span> <span class="p">+</span>
+                      <span class="n">time</span><span class="p">.</span><span class="n">Day</span> <span class="p">+</span> <span class="s">"日 "</span> <span class="p">+</span>
+                      <span class="n">time</span><span class="p">.</span><span class="n">Hour</span> <span class="p">+</span> <span class="s">":"</span> <span class="p">+</span>
+                      <span class="n">time</span><span class="p">.</span><span class="n">Minute</span> <span class="p">+</span> <span class="s">":"</span> <span class="p">+</span> <span class="n">time</span><span class="p">.</span><span class="n">Second</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">commit</span> <span class="p">+=</span> <span class="s">" -m "</span> <span class="p">+</span> <span class="s">"\""</span> <span class="p">+</span> <span class="n">str</span> <span class="p">+</span> <span class="s">"\""</span><span class="p">;</span>
+            <span class="c1">//commit = FileStr() + commit;</span>
+            <span class="k">return</span> <span class="nf">Control</span><span class="p">(</span><span class="n">commit</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">Push</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">//git push origin master</span>
+            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">Branch</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Branch</span> <span class="p">=</span> <span class="s">"master"</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">Origin</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Origin</span> <span class="p">=</span> <span class="s">"origin"</span><span class="p">;</span>
+                <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">$"push </span><span class="p">{</span><span class="n">Origin</span><span class="p">}</span><span class="s"> </span><span class="p">{</span><span class="n">Branch</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+                <span class="k">return</span> <span class="nf">Control</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">$"push </span><span class="p">{</span><span class="n">Origin</span><span class="p">}</span><span class="s"> </span><span class="p">{</span><span class="n">Branch</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+                <span class="n">str</span><span class="p">=</span> <span class="nf">Control</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">Origin</span> <span class="p">!=</span> <span class="s">"origin"</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Origin</span> <span class="p">=</span> <span class="s">"origin"</span><span class="p">;</span>
+                    <span class="n">str</span> <span class="p">+=</span> <span class="nf">Control</span><span class="p">(</span><span class="s">$"push </span><span class="p">{</span><span class="n">Origin</span><span class="p">}</span><span class="s"> </span><span class="p">{</span><span class="n">Branch</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">return</span> <span class="n">str</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">_gitStr</span> <span class="p">=</span> <span class="s">"git -C {0}"</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="nf">FileStr</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="n">_gitStr</span><span class="p">,</span> <span class="n">FileDirectory</span><span class="p">)</span> <span class="p">+</span> <span class="s">" "</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="nf">Control</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">str</span> <span class="p">=</span> <span class="nf">FileStr</span><span class="p">()</span> <span class="p">+</span> <span class="n">str</span><span class="p">;</span>
+            <span class="c1">// string str = Console.ReadLine();</span>
+            <span class="c1">//System.Console.InputEncoding = System.Text.Encoding.UTF8;//乱码</span>
+
+            <span class="n">Process</span> <span class="n">p</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Process</span><span class="p">();</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StartInfo</span><span class="p">.</span><span class="n">FileName</span> <span class="p">=</span> <span class="s">"cmd.exe"</span><span class="p">;</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StartInfo</span><span class="p">.</span><span class="n">UseShellExecute</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="c1">//是否使用操作系统shell启动</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StartInfo</span><span class="p">.</span><span class="n">RedirectStandardInput</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span> <span class="c1">//接受来自调用程序的输入信息</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StartInfo</span><span class="p">.</span><span class="n">RedirectStandardOutput</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span> <span class="c1">//由调用程序获取输出信息</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StartInfo</span><span class="p">.</span><span class="n">RedirectStandardError</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span> <span class="c1">//重定向标准错误输出</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StartInfo</span><span class="p">.</span><span class="n">CreateNoWindow</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span> <span class="c1">//不显示程序窗口</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StartInfo</span><span class="p">.</span><span class="n">StandardOutputEncoding</span><span class="p">=</span> <span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">;</span><span class="c1">//Encoding.GetEncoding("GBK");//乱码</span>
+            <span class="n">p</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span> <span class="c1">//启动程序</span>
+
+            <span class="c1">//向cmd窗口发送输入信息</span>
+            <span class="n">p</span><span class="p">.</span><span class="n">StandardInput</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span> <span class="p">+</span> <span class="s">"&amp;exit"</span><span class="p">);</span>
+
+            <span class="n">p</span><span class="p">.</span><span class="n">StandardInput</span><span class="p">.</span><span class="n">AutoFlush</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="c1">//向标准输入写入要执行的命令。这里使用&amp;是批处理命令的符号，表示前面一个命令不管是否执行成功都执行后面(exit)命令，如果不执行exit命令，后面调用ReadToEnd()方法会假死</span>
+            <span class="c1">//同类的符号还有&amp;&amp;和||前者表示必须前一个命令执行成功才会执行后面的命令，后者表示必须前一个命令执行失败才会执行后面的命令</span>
+
+            
+            <span class="c1">//获取cmd窗口的输出信息</span>
+            <span class="kt">string</span> <span class="n">output</span> <span class="p">=</span> <span class="n">p</span><span class="p">.</span><span class="n">StandardOutput</span><span class="p">.</span><span class="nf">ReadToEnd</span><span class="p">();</span>
+            <span class="n">output</span> <span class="p">+=</span> <span class="n">p</span><span class="p">.</span><span class="n">StandardError</span><span class="p">.</span><span class="nf">ReadToEnd</span><span class="p">();</span>
+
+            <span class="n">p</span><span class="p">.</span><span class="nf">WaitForExit</span><span class="p">();</span> <span class="c1">//等待程序执行完退出进程</span>
+            <span class="n">p</span><span class="p">.</span><span class="nf">Close</span><span class="p">();</span>
+
+            <span class="k">return</span> <span class="n">output</span> <span class="p">+</span> <span class="s">"\r\n"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>如果修改过程需要修改上一次提交的日期，可以添加 <code class="language-plaintext highlighter-rouge">--amend</code> 的参数，如果要修改不是上一次的提交，而是很久的提交，我暂时没找到如何做，如果你知道怎么做，请告诉我</p>
+
+<p>本文用的时间是 RFC 2822 格式，这个格式的时间是 <code class="language-plaintext highlighter-rouge">月 日 时间 年 +0800</code> 而除了这个格式，还可以使用 ISO 8601 格式，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="m">2005</span><span class="p">-</span><span class="m">04</span><span class="p">-</span><span class="m">07</span><span class="n">T22</span><span class="p">:</span><span class="m">13</span><span class="p">:</span><span class="m">13</span>
+</code></pre></div></div>
+
+<p>在 C# 可以使用 <code class="language-plaintext highlighter-rouge">DateTime.UtcNow.ToString("s")</code> 将时间输出</p>
+
+:ET

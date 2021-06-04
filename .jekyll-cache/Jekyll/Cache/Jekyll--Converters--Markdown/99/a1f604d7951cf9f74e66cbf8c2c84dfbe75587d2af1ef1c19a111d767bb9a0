@@ -1,0 +1,54 @@
+I")<p>默认的反射输出带泛型的类型，都会使用反引号的字符串。使用 TypeNameFormatter 库可以输出贴近代码的输出</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/3/25 20:08:24 -->
+
+<!-- 发布 -->
+
+<p>默认的类型的输出是和代码写的方法不相同，如获取 <code class="language-plaintext highlighter-rouge">List&lt;int&gt;</code> 类型的输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;));</span>
+<span class="c1">// 大概输出是 List`1[System.Int32]</span>
+</code></pre></div></div>
+
+<p>而我期望输出的是 <code class="language-plaintext highlighter-rouge">List&lt;int&gt;</code> 的内容，使用 TypeNameFormatter 库的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">fType</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">List</span><span class="p">&lt;</span><span class="n">F</span><span class="p">&gt;);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">fType</span><span class="p">.</span><span class="nf">GetFormattedName</span><span class="p">());</span>
+            <span class="c1">// 输出 List&lt;F&gt;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">F</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">A</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">B</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">C</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>使用 NuGet 搜 TypeNameFormatter 就可以找到这个库，需要加上命名空间</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">TypeNameFormatter</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>编辑 csproj 添加下面代码可以快速安装</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"TypeNameFormatter.Sources"</span> <span class="na">Version=</span><span class="s">"1.1.1"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;PrivateAssets&gt;</span>all<span class="nt">&lt;/PrivateAssets&gt;</span>
+      <span class="nt">&lt;IncludeAssets&gt;</span>runtime; build; native; contentfiles; analyzers; buildtransitive<span class="nt">&lt;/IncludeAssets&gt;</span>
+    <span class="nt">&lt;/PackageReference&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>这是一个源代码包，按照之后，可以在 obj 文件夹找到代码。或者进入 GetFormattedName 方法定义，可以看到代码</p>
+
+<p>这个库在 GitHub 开源，请看 <a href="https://github.com/stakx/TypeNameFormatter">https://github.com/stakx/TypeNameFormatter</a></p>
+
+:ET

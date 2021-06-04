@@ -1,0 +1,90 @@
+I"�%<p>本文告诉大家如何隐藏系统窗口菜单</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/6/5 17:26:44 -->
+
+<!-- csdn -->
+
+<p>系统的窗口菜单请看下图</p>
+
+<!-- ![](image/WPF 隐藏系统窗口菜单/WPF 隐藏系统窗口菜单0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201965171728198" alt="" /></p>
+
+<p>通过在消息里面钩调一些消息的方式，此方法由 黄滨滨 大佬提供</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">IntPtr</span> <span class="nf">Hook</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wparam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lparam</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="p">==</span> <span class="m">0x112</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">param</span> <span class="p">=</span> <span class="n">wparam</span><span class="p">.</span><span class="nf">ToInt32</span><span class="p">();</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">param</span> <span class="k">is</span> <span class="m">0xf093</span> <span class="c1">// 单击打开菜单</span>
+                    <span class="p">||</span> <span class="n">param</span> <span class="k">is</span> <span class="m">0xf100</span><span class="p">)</span><span class="c1">//键盘打开菜单</span>
+                <span class="p">{</span>
+                    <span class="n">handled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="p">==</span> <span class="m">0xa4</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">param</span> <span class="p">=</span> <span class="n">wparam</span><span class="p">.</span><span class="nf">ToInt32</span><span class="p">();</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">param</span> <span class="p">==</span> <span class="m">0x02</span> <span class="c1">// 非图片客户区</span>
+                    <span class="p">||</span> <span class="n">param</span> <span class="k">is</span> <span class="m">0x03</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">handled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>第二个方法是通过设置样式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">SourceInitialized</span> <span class="p">+=</span> <span class="n">OnSourceInitialized</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnSourceInitialized</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">windowInteropHelper</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">hwnd</span> <span class="p">=</span> <span class="n">windowInteropHelper</span><span class="p">.</span><span class="n">Handle</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">windowLong</span> <span class="p">=</span> <span class="nf">GetWindowLong</span><span class="p">(</span><span class="n">hwnd</span><span class="p">,</span> <span class="n">GWL_STYLE</span><span class="p">);</span>
+            <span class="n">windowLong</span> <span class="p">&amp;=</span> <span class="p">~</span><span class="n">WS_SYSMENU</span><span class="p">;</span>
+
+            <span class="nf">SetWindowLongPtr</span><span class="p">(</span><span class="n">hwnd</span><span class="p">,</span> <span class="n">GWL_STYLE</span><span class="p">,</span> <span class="k">new</span> <span class="nf">IntPtr</span><span class="p">(</span><span class="n">windowLong</span><span class="p">));</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">WS_SYSMENU</span> <span class="p">=</span> <span class="m">0x00080000</span><span class="p">;</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">SetLastError</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">GetWindowLong</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nIndex</span><span class="p">);</span>
+
+        <span class="k">public</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">GWL_STYLE</span> <span class="p">=</span> <span class="p">-</span><span class="m">16</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="n">IntPtr</span> <span class="nf">SetWindowLongPtr</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nIndex</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">dwNewLong</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">Is64BitProcess</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nf">SetWindowLongPtr64</span><span class="p">(</span><span class="n">hWnd</span><span class="p">,</span> <span class="n">nIndex</span><span class="p">,</span> <span class="n">dwNewLong</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">IntPtr</span><span class="p">(</span><span class="nf">SetWindowLong32</span><span class="p">(</span><span class="n">hWnd</span><span class="p">,</span> <span class="n">nIndex</span><span class="p">,</span> <span class="n">dwNewLong</span><span class="p">.</span><span class="nf">ToInt32</span><span class="p">()));</span>
+        <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">EntryPoint</span> <span class="p">=</span> <span class="s">"SetWindowLong"</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">SetWindowLong32</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nIndex</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dwNewLong</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">EntryPoint</span> <span class="p">=</span> <span class="s">"SetWindowLongPtr"</span><span class="p">)]</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">SetWindowLongPtr64</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hWnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">nIndex</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">dwNewLong</span><span class="p">);</span>
+
+       
+</code></pre></div></div>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/9d7f8aa1c4aa3bcca4af2bed7cb65ec2e540ad47/HemluchaderJaberkaina">github</a> 欢迎小伙伴访问</p>
+
+:ET

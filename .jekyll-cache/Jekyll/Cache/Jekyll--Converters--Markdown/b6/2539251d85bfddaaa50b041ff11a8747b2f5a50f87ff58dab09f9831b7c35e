@@ -1,0 +1,67 @@
+I"�<p>本文告诉大家如果在 Nuget 引用源代码的方式引用源代码，在 VisualStudio 的智能提示和 Resharper 的智能提示都能找到对应的类，但是在 VisualStudio 编译或使用命令行 msbuild 编译时提示找不到类</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/9/29 12:58:16 -->
+
+<!-- csdn -->
+
+<!-- 标签：Roslyn,MSBuild,编译器 -->
+
+<p>这个问题是 msbuild 的一个坑，主要是没有主动引用 <code class="language-plaintext highlighter-rouge">.nuget.g.props</code> 和 <code class="language-plaintext highlighter-rouge">.nuget.g.targets</code> 文件，使用 Microsoft.NET.Sdk 作为 Sdk 的项目文件会自动在 obj 文件夹下生成 project.assets.json、$(ProjectName).csproj.nuget.cache、$(ProjectName).csproj.nuget.g.props 和 $(ProjectName).csproj.nuget.g.targets 文件；其中 .nuget.g.props 和 .nuget.g.targets 中生成了 Import 包中编译相关文件的代码。具体请看<a href="https://blog.walterlv.com/post/problems-of-msbuild-and-nuget.html">MSBuild/Roslyn 和 NuGet 的 100 个坑 - walterlv</a></p>
+
+<p>但是在使用 Nuget 引用源代码的时候，因为此时源代码还没加入到编译，在编译的时候 msbuild 找不到类，于是就没继续执行，只是就无法编译通过</p>
+
+<p>在我的项目编译出现下面的提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">“</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">github</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="p">.</span><span class="n">csproj</span><span class="err">”</span><span class="p">(</span><span class="err">默认目标</span><span class="p">)</span> <span class="p">(</span><span class="m">1</span><span class="p">)</span> <span class="p">-&gt;</span>
+<span class="err">“</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">github</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="p">.</span><span class="n">csproj</span><span class="err">”</span><span class="p">(</span><span class="n">Build</span> <span class="err">目标</span><span class="p">)</span> <span class="p">(</span><span class="m">1</span><span class="p">:</span><span class="m">2</span><span class="p">)</span> <span class="p">-&gt;</span>
+<span class="err">“</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">github</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="err">\</span><span class="n">SopisatraJowje_rb00pftp_wpftmp</span><span class="p">.</span><span class="n">csproj</span><span class="err">”</span><span class="p">(</span><span class="n">_CompileTemporaryAssembly</span> <span class="err">目标</span><span class="p">)</span> <span class="p">(</span>
+<span class="m">2</span><span class="p">)</span> <span class="p">-&gt;</span>
+<span class="p">(</span><span class="n">CoreCompile</span> <span class="err">目标</span><span class="p">)</span> <span class="p">-&gt;</span>
+  <span class="n">MainWindow</span><span class="p">.</span><span class="n">xaml</span><span class="p">.</span><span class="nf">cs</span><span class="p">(</span><span class="m">15</span><span class="p">,</span><span class="m">12</span><span class="p">):</span> <span class="n">error</span> <span class="n">CS0234</span><span class="p">:</span> <span class="err">命名空间“</span><span class="n">lindexi</span><span class="err">”中不存在类型或命名空间名“</span><span class="n">Doubi</span><span class="err">”</span><span class="p">(</span><span class="err">是否缺少程序集引用</span><span class="p">?)</span> <span class="p">[</span><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">github</span><span class="err">\</span><span class="n">SopisatraJowj</span>
+<span class="n">e</span><span class="err">\</span><span class="n">SopisatraJowje</span><span class="err">\</span><span class="n">SopisatraJowje_rb00pftp_wpftmp</span><span class="p">.</span><span class="n">csproj</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p>简单的解决方法是在 csproj 添加引用 <code class="language-plaintext highlighter-rouge">.nuget.g.props</code> 两个文件，引用的方式是在<code class="language-plaintext highlighter-rouge">&lt;Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0"&gt;</code> 的下一句引用 <code class="language-plaintext highlighter-rouge">.nuget.g.props</code> 例如我创建了项目是 <code class="language-plaintext highlighter-rouge">SopisatraJowje</code> 我可以使用下面的方式引用</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Project</span> <span class="na">Sdk=</span><span class="s">"Microsoft.NET.Sdk"</span> <span class="na">ToolsVersion=</span><span class="s">"15.0"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;Import</span> <span class="na">Project=</span><span class="s">"obj\SopisatraJowje.csproj.nuget.g.props"</span><span class="nt">&gt;&lt;/Import&gt;</span>
+
+  <span class="c">&lt;!-- 下面是原来的内容 --&gt;</span>
+  <span class="nt">&lt;PropertyGroup&gt;</span>
+    <span class="nt">&lt;LanguageTargets&gt;</span>$(MSBuildToolsPath)\Microsoft.CSharp.targets<span class="nt">&lt;/LanguageTargets&gt;</span>
+    <span class="nt">&lt;TargetFrameworks&gt;</span>net45;<span class="nt">&lt;/TargetFrameworks&gt;</span>
+    <span class="nt">&lt;OutputType&gt;</span>WinExe<span class="nt">&lt;/OutputType&gt;</span>
+  <span class="nt">&lt;/PropertyGroup&gt;</span>
+</code></pre></div></div>
+
+<p>在文件的最后再添加引用 nuget.g.targets 文件的最后需要在 <code class="language-plaintext highlighter-rouge">&lt;/Project&gt;</code> 上一个</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Import</span> <span class="na">Project=</span><span class="s">"obj\SopisatraJowje.csproj.nuget.g.targets"</span><span class="nt">&gt;&lt;/Import&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div></div>
+
+<p>也就是文件看起来是这样</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0"&gt;
+  &lt;Import Project="obj\SopisatraJowje.csproj.nuget.g.props"&gt;&lt;/Import&gt;
+  
+  &lt;PropertyGroup&gt;
+    &lt;LanguageTargets&gt;$(MSBuildToolsPath)\Microsoft.CSharp.targets&lt;/LanguageTargets&gt;
+    &lt;TargetFrameworks&gt;net45;&lt;/TargetFrameworks&gt;
+    &lt;OutputType&gt;WinExe&lt;/OutputType&gt;
+  &lt;/PropertyGroup&gt;
+ 
+
+  &lt;Import Project="obj\SopisatraJowje.csproj.nuget.g.targets"&gt;&lt;/Import&gt;
+&lt;/Project&gt;
+</code></pre></div></div>
+
+<p>添加了这两个引用就可以解决源代码引用的时候出现了在 VisualStudio 可以跳转找到类，但是在编译的时候找不到类的问题</p>
+
+<p><a href="https://blog.walterlv.com/post/problems-of-msbuild-and-nuget.html">MSBuild/Roslyn 和 NuGet 的 100 个坑 - walterlv</a></p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018927201059809" alt="" /></p>
+
+:ET

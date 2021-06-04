@@ -1,0 +1,147 @@
+I"�)<p>很多时候写出来的网站只能自己内网访问，本文告诉大家如何通过 Frp 将自己的 asp dotnet core 网站发布到外网，让小伙伴访问自己的网站
+通过 frp 的方式，可以解决自己的服务器性能太差的问题，通过 frp 的方式需要先存在一个外网的服务器</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/1/13 8:49:53 -->
+
+<!-- 标签：dotnet,dotnetcore,frp -->
+
+<p>本文分为三个部分，第一个是创建一个简单的 asp dotnet core 网站，第二是配置域名，第三是配置代理</p>
+
+<p>要使用本文的方法需要以下三个条件</p>
+
+<ul>
+  <li>本地有 asp dotnet core 环境</li>
+  <li>有自己的外网服务器</li>
+  <li>有自己的域名</li>
+</ul>
+
+<h2 id="搭建本地网站">搭建本地网站</h2>
+
+<p>通过 asp dotnet core 搭建网站是十分简单的，这里搭建的只是一个简单的 api 服务</p>
+
+<p>通过命令行进入一个文件夹，在这个文件里面创建 asp dotnet core 网站，通过在地址栏输入 <code class="language-plaintext highlighter-rouge">cmd</code> 就可以在命令行进入当前的文件夹</p>
+
+<p>在文件夹输入下面代码创建一个 asp dotnet core api 网站</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="k">new</span> <span class="n">webapi</span> <span class="p">-</span><span class="n">o</span> <span class="err">网站的项目名</span>
+</code></pre></div></div>
+
+<p>等待一下就可以使用命令行进入创建的网站的项目，我这里的项目是 lindexi 会在文件夹里面创建一个 lindexi 的程序</p>
+
+<p>进入刚才创建的网站</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cd</span> <span class="err">网站的项目名</span>
+</code></pre></div></div>
+
+<p>这时打开里面的 Program.cs 文件，在里面修改一点代码，让 asp dotnet core 绑定本地的端口</p>
+
+<p>在 asp dotnet core 绑定端口的方法是通过 IWebHostBuilder 配置使用的连接</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="n">IWebHostBuilder</span> <span class="nf">CreateWebHostBuilder</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="n">WebHost</span><span class="p">.</span><span class="nf">CreateDefaultBuilder</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="p">.</span><span class="nf">UseUrls</span><span class="p">(</span><span class="s">"http://0.0.0.0:8000"</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">UseStartup</span><span class="p">&lt;</span><span class="n">Startup</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>这里绑定了本地的所有的 8000 端口，可以通过本地的网站的内网 ip 本地 127.0.0.1 访问</p>
+
+<p>保存关闭，然后运行下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">run</span>
+</code></pre></div></div>
+
+<p>如果看到下面的代码就是创建成功</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Hosting</span> <span class="n">environment</span><span class="p">:</span> <span class="n">Development</span>
+<span class="n">Content</span> <span class="n">root</span> <span class="n">path</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">dotnet</span> <span class="n">core</span> <span class="err">通过</span> <span class="n">frp</span> <span class="err">发布自己的网站\</span><span class="n">lindexi</span>
+<span class="n">Now</span> <span class="n">listening</span> <span class="k">on</span><span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="c1">//0.0.0.0:8000</span>
+</code></pre></div></div>
+
+<h2 id="配置域名">配置域名</h2>
+
+<p>这里域名不需要备案，简单的方法是从 godaddy.com 购买域名</p>
+
+<p>在域名管理添加一个 a 记录</p>
+
+<!-- ![](image/dotnet core 通过 frp 发布自己的网站/dotnet core 通过 frp 发布自己的网站1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201921593652428" alt="" /></p>
+
+<p>在这里写入 Host 或 Name 输入 server 作为你二级域名，然后在 Value 输入你的服务器地址</p>
+
+<p>这里的 Host 的名字可以随意更改，但是这个值会在下面使用到</p>
+
+<!-- ![](image/dotnet core 通过 frp 发布自己的网站/dotnet core 通过 frp 发布自己的网站0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201921593616616" alt="" /></p>
+
+<p>这里就让 dns 的 server.lindexi.com 指向我的服务器 ip 通过访问 <a href="http://server.lindexi.com">http://server.lindexi.com</a> 就可以访问服务器</p>
+
+<h2 id="配置代理">配置代理</h2>
+
+<p>打开自己的服务器，从服务器下载 frp 程序</p>
+
+<p>在 <a href="https://github.com/fatedier/frp/releases">github</a> 下载对应的 Linux 版本的 frp 程序，然后解压</p>
+
+<p>进入 frp 文件夹，可以看到 frps.ini 文件，在这个文件输入下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="n">common</span><span class="p">]</span>
+<span class="n">bind_port</span> <span class="p">=</span> <span class="m">7000</span>
+<span class="n">vhost_http_port</span> <span class="p">=</span> <span class="m">8080</span>
+
+</code></pre></div></div>
+
+<p>这里的 <code class="language-plaintext highlighter-rouge">bind_port</code> 是客户端连接服务器的端口，客户端需要知道服务器的 ip 和端口才能访问到服务器</p>
+
+<p>这里 <code class="language-plaintext highlighter-rouge">vhost_http_port</code> 就是服务器发送服务的端口</p>
+
+<p>然后在服务器运行 frps 这里的 frps 的 s 指的是服务器，里面的 frpc 的 c 指的是客户端</p>
+
+<p>在本地的设备，从<a href="https://github.com/fatedier/frp/releases">github</a>下载和服务器版本相同的 frp 程序，注意版本要相同</p>
+
+<p>打开 frpc.ini 文件，在里面写入下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="n">common</span><span class="p">]</span>
+<span class="n">server_addr</span> <span class="p">=</span> <span class="m">23.105</span><span class="p">.</span><span class="m">201.4</span>
+<span class="n">server_port</span> <span class="p">=</span> <span class="m">7000</span>
+
+<span class="p">[</span><span class="n">web</span><span class="p">]</span>
+<span class="n">type</span> <span class="p">=</span> <span class="n">http</span>
+<span class="n">local_port</span> <span class="p">=</span> <span class="m">8000</span>
+<span class="n">custom_domains</span> <span class="p">=</span> <span class="n">server</span><span class="p">.</span><span class="n">lindexi</span><span class="p">.</span><span class="n">com</span>
+</code></pre></div></div>
+
+<p>注意，这里的 <code class="language-plaintext highlighter-rouge">server_addr</code> 填写的是你的服务器的 ip 这里的 <code class="language-plaintext highlighter-rouge">server_port</code> 对应服务器的 <code class="language-plaintext highlighter-rouge">bind_port</code> 的值</p>
+
+<p>上面代码 <code class="language-plaintext highlighter-rouge">custom_domains</code> 的自定义域名需要先在自己的域名配置好</p>
+
+<p>上面的代码的 <code class="language-plaintext highlighter-rouge">local_port</code> 就是通过 127.0.0.1 可以访问到的自己的网站的端口，在本文前面就使用 8000 作为 12.0.0.1:8000 网站</p>
+
+<p>现在尝试在服务器运行一下 frp 服务</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">./</span><span class="n">frps</span> <span class="p">-</span><span class="n">c</span> <span class="p">./</span><span class="n">frps</span><span class="p">.</span><span class="n">ini</span>
+</code></pre></div></div>
+
+<p>在本地也启动 frp 客户端</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">./</span><span class="n">frpc</span> <span class="p">-</span><span class="n">c</span> <span class="p">./</span><span class="n">frpc</span><span class="p">.</span><span class="n">ini</span>
+</code></pre></div></div>
+
+<p>因为服务器对外的端口是 8080 也就是 frps.ini 的 <code class="language-plaintext highlighter-rouge">vhost_http_port</code> 的设置，需要通过域名:8080访问</p>
+
+<p>我的域名设置是 server.lindexi.com 本地的 asp dotnet core api 的链接是 <a href="http://127.0.0.1:8000/api/values">http://127.0.0.1:8000/api/values</a> 在浏览器就需要通过下面网址访问</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">server</span><span class="p">.</span><span class="n">lindexi</span><span class="p">.</span><span class="n">com</span><span class="p">:</span><span class="m">8080</span><span class="p">/</span><span class="n">api</span><span class="p">/</span><span class="n">values</span>
+</code></pre></div></div>
+
+<p>通过 frp 就可以将自己本地的服务通过自己的服务器让外面的小伙伴访问，这样就可以使用本地的几乎无限量的本地磁盘做文件存储，也可以使用本地的性能比服务器厉害很多的设备</p>
+
+<p><a href="https://github.com/fatedier/frp/blob/master/README_zh.md#%E9%80%9A%E8%BF%87%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9F%9F%E5%90%8D%E8%AE%BF%E9%97%AE%E9%83%A8%E7%BD%B2%E4%BA%8E%E5%86%85%E7%BD%91%E7%9A%84-web-%E6%9C%8D%E5%8A%A1">frp 文档</a></p>
+
+<p><a href="https://xinyuehtx.github.io/post/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F%E7%A5%9E%E5%99%A8frp.html">2020-1-10-内网穿透神器frp - huangtengxiao</a></p>
+
+<p><a href="https://xinyuehtx.github.io/post/%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F%E7%A5%9E%E5%99%A8frp%E4%B9%8B%E8%BF%9B%E9%98%B6%E9%85%8D%E7%BD%AE.html">2020-1-11-内网穿透神器frp之进阶配置 - huangtengxiao</a></p>
+
+:ET

@@ -1,0 +1,90 @@
+I"�<p>本文告诉大家几个方法在 DataTemplate 绑定。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:50 -->
+
+<!-- csdn -->
+
+<!-- 标签：win10,uwp -->
+
+<p>在 DataTemplate 绑定是使用次数很多的，下面我在使用新的控件 NavigationView  就需要绑定两个按钮。</p>
+
+<p>先给大家看一下界面</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018551724559489.jpg" alt="" /></p>
+
+<p>不要以为这个界面很复杂，实际上他需要的代码很少。</p>
+
+<p>先在后台创建一个 ViewModel ，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">ViewModel</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后绑定 ViewModel ，在 MainPage 绑定就是 DataContext ，如果想知道 DataContext 的写法，请看 <a href="https://lindexi.gitee.io/post/win10-uwp-DataContext.html">win10 uwp DataContext</a></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ViewModel</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>实际上界面的代码很少，请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">NavigationView</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"NavView"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">NavigationView</span><span class="p">.</span><span class="n">HeaderTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">DataTemplate</span> <span class="n">x</span><span class="p">:</span><span class="n">DataType</span><span class="p">=</span><span class="s">"local:ViewModel"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"24,10,0,0"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"Auto"</span> <span class="p">/&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span>
+                            <span class="n">Margin</span><span class="p">=</span><span class="s">"0,0,0,10"</span>
+                            <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Bottom"</span>
+                            <span class="n">FontSize</span><span class="p">=</span><span class="s">"28"</span>
+                            <span class="n">Style</span><span class="p">=</span><span class="s">"{StaticResource TitleTextBlockStyle}"</span>
+                            <span class="n">Text</span><span class="p">=</span><span class="s">"lindexi.github.io/lindexi"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;</span><span class="n">CommandBar</span>
+                            <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span>
+                            <span class="n">Margin</span><span class="p">=</span><span class="s">"0,0,10,0"</span>
+                            <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Right"</span>
+                            <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Bottom"</span>
+                            <span class="n">DefaultLabelPosition</span><span class="p">=</span><span class="s">"Right"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">AppBarButton</span>
+                                <span class="n">Icon</span><span class="p">=</span><span class="s">"Edit"</span>
+                                <span class="n">Label</span><span class="p">=</span><span class="s">"Feedback"</span>
+                                <span class="n">Click</span><span class="p">=</span><span class="s">"{x:Bind Foo}"</span> <span class="p">/&gt;</span>
+                            <span class="p">&lt;</span><span class="n">AppBarButton</span>
+                                <span class="n">Icon</span><span class="p">=</span><span class="s">"OtherUser"</span>
+                                <span class="n">Label</span><span class="p">=</span><span class="s">"ChangeUser"</span>
+                                <span class="n">Click</span><span class="p">=</span><span class="s">"{x:Bind Foo}"</span> <span class="p">/&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">CommandBar</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">NavigationView</span><span class="p">.</span><span class="n">HeaderTemplate</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">NavigationView</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>回到本文的问题，如何在 AppBarButton 点击绑定 ViewModel 的 Foo 函数。</p>
+
+<p>实际上就是设置了 <code class="language-plaintext highlighter-rouge">x:DataType="local:ViewModel"</code> 就可以，方法很简单。</p>
+
+<p>但是如果在那些特殊的属性绑定，如一个列表，绑定了类型是 IText 的，也就是绑定的类型可能是有多种的。除了使用列表选择还可以使用下面的方法。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">x</span><span class="p">:</span><span class="n">Bind</span> <span class="n">xx</span><span class="p">.</span><span class="n">DataContext</span><span class="p">.(</span><span class="err">具体类型</span><span class="p">.</span><span class="err">属性</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>通过这个方式可以把 DataContext 强转为具体类型，然后拿到属性。</p>
+
+<p>但是这个方法只能拿到属性，不能拿到方法。</p>
+
+:ET

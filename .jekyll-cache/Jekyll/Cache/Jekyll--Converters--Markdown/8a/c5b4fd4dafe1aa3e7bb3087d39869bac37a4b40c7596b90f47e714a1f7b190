@@ -1,0 +1,635 @@
+I"]�<p>在 OpenXML 的 PPT 的文本的字体是一个比较复杂的概念，即使在 OpenXML SDK 的辅助下，也需要自己写很多的逻辑。通过 ECMA 376 文档里面散落在各地的描述，和 dotnetCampus.OfficeDocumentZipper 工具的实验帮助之下，我摸到了本文将要告诉大家的规则，以及逻辑的实现</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/10 10:17:20 -->
+
+<p>有大量的 Office 相关软件在解析 PPT 文档使用的文本段的字体都非常简单，当然，这部分处理也就不全面</p>
+
+<p>先让咱看一个简单的 PPT 文档的字体定义写法</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:r&gt;</span>
+    <span class="nt">&lt;a:rPr</span> <span class="na">lang=</span><span class="s">"zh-CN"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">dirty=</span><span class="s">"0"</span> <span class="na">smtClean=</span><span class="s">"0"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">"楷体"</span> <span class="na">panose=</span><span class="s">"02010609060101010101"</span> <span class="na">pitchFamily=</span><span class="s">"49"</span> <span class="na">charset=</span><span class="s">"-122"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:rPr&gt;</span>
+    <span class="nt">&lt;a:t&gt;</span>一行文本<span class="nt">&lt;/a:t&gt;</span>
+<span class="nt">&lt;/a:r&gt;</span>
+</code></pre></div></div>
+
+<p>请问当前文本的字体是什么？人类简单就能回答是 <code class="language-plaintext highlighter-rouge">楷体</code> 了</p>
+
+<p>那么更进一步的，如下面的 PPT 文档呢？</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:r&gt;</span>
+    <span class="nt">&lt;a:rPr</span> <span class="na">lang=</span><span class="s">"zh-CN"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">sz=</span><span class="s">"2000"</span> <span class="na">dirty=</span><span class="s">"0"</span> <span class="na">smtClean=</span><span class="s">"0"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"Jokerman"</span> <span class="na">panose=</span><span class="s">"02010609060101010101"</span> <span class="na">pitchFamily=</span><span class="s">"49"</span> <span class="na">charset=</span><span class="s">"-122"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">"宋体"</span> <span class="na">panose=</span><span class="s">"02010609060101010101"</span> <span class="na">pitchFamily=</span><span class="s">"49"</span> <span class="na">charset=</span><span class="s">"-122"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:rPr&gt;</span>
+    <span class="nt">&lt;a:t&gt;</span>a文本<span class="nt">&lt;/a:t&gt;</span>
+<span class="nt">&lt;/a:r&gt;</span>
+</code></pre></div></div>
+
+<p>此时的 <code class="language-plaintext highlighter-rouge">a:latin</code> 和 <code class="language-plaintext highlighter-rouge">a:ea</code> 表示的是什么意思？需要使用哪个字体才对？其实这是 PPT 的允许西文和中文使用不同字体的功能</p>
+
+<!-- ![](image/dotnet OpenXML 解析 PPT 文本字体获取详解/dotnet OpenXML 解析 PPT 文本字体获取详解0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20208101034419639.jpg" alt="" /></p>
+
+<p>这就是需要让不同的字符选择不同的字体的功能，解析方式请看 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E6%96%87%E6%9C%AC%E5%AD%97%E4%BD%93%E7%9A%84%E9%80%89%E6%8B%A9%E8%A7%84%E5%88%99.html">dotnet OpenXML 文本字体的选择规则</a></p>
+
+<p>是不是觉得有点复杂了？其实这还不算复杂的</p>
+
+<p>看看下面这份简洁的 PPT 文档</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p:txBody&gt;</span>
+    <span class="nt">&lt;a:bodyPr</span> <span class="na">wrap=</span><span class="s">"square"</span> <span class="na">rtlCol=</span><span class="s">"0"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;a:spAutoFit/&gt;</span>
+    <span class="nt">&lt;/a:bodyPr&gt;</span>
+    <span class="nt">&lt;a:lstStyle/&gt;</span>
+    <span class="nt">&lt;a:p&gt;</span>
+        <span class="nt">&lt;a:r&gt;</span>
+            <span class="nt">&lt;a:rPr</span> <span class="na">lang=</span><span class="s">"zh-CN"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">smtClean=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;a:t&gt;</span>一行文本<span class="nt">&lt;/a:t&gt;</span>
+        <span class="nt">&lt;/a:r&gt;</span>
+        <span class="nt">&lt;a:endParaRPr</span> <span class="na">lang=</span><span class="s">"en-US"</span> <span class="na">dirty=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:p&gt;</span>
+<span class="nt">&lt;/p:txBody&gt;</span>
+</code></pre></div></div>
+
+<p>请问这份文档的字体是什么？其实上面的代码没有写任何的字体，那么 PPT 是如何知道的？这就需要用到上面代码一个没有写完成的功能，就是样式列表了</p>
+
+<p>小伙伴可以注意到上面代码的一行内容 <code class="language-plaintext highlighter-rouge">&lt;a:lstStyle/&gt;</code> 这个的意思是什么？在 OpenXML SDK 里面有这个定义，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="kt">var</span> <span class="n">textBodyListStyle</span> <span class="p">=</span> <span class="n">textBody</span><span class="p">.</span><span class="n">ListStyle</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>我准备了这份简洁的文档，这份文档将需要用到本文说讲到的大部分知识才能解析出实际的字体是哪个。本文用的测试文档放在 <a href="https://github.com/lindexi/lindexi_gd/tree/e1c54f474820d4fcfe91a81e8e6b3b07c8bec53a/GojolerbeeLerechelhajerefawwha">github</a> 欢迎小伙伴下载测试。另外推荐 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E8%A7%A3%E5%8E%8B%E7%BC%A9%E6%96%87%E6%A1%A3%E4%B8%BA%E6%96%87%E4%BB%B6%E5%A4%B9%E5%B7%A5%E5%85%B7.html">dotnetCampus.OfficeDocumentZipper</a> 工具，这个工具可以更好的协助小伙伴测试文档</p>
+
+<p>整个文本的定义如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p:sp&gt;</span>
+    <span class="nt">&lt;p:nvSpPr&gt;</span>
+        <span class="nt">&lt;p:cNvPr</span> <span class="na">id=</span><span class="s">"4"</span> <span class="na">name=</span><span class="s">"文本框 3"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;p:cNvSpPr</span> <span class="na">txBox=</span><span class="s">"1"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;p:nvPr/&gt;</span>
+    <span class="nt">&lt;/p:nvSpPr&gt;</span>
+    <span class="nt">&lt;p:spPr&gt;</span>
+        <span class="nt">&lt;a:xfrm&gt;</span>
+            <span class="nt">&lt;a:off</span> <span class="na">x=</span><span class="s">"4168346"</span> <span class="na">y=</span><span class="s">"914401"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;a:ext</span> <span class="na">cx=</span><span class="s">"3048000"</span> <span class="na">cy=</span><span class="s">"369332"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/a:xfrm&gt;</span>
+        <span class="nt">&lt;a:prstGeom</span> <span class="na">prst=</span><span class="s">"rect"</span><span class="nt">&gt;&lt;/a:prstGeom&gt;</span>
+    <span class="nt">&lt;/p:spPr&gt;</span>
+    <span class="nt">&lt;p:txBody&gt;</span>
+        <span class="nt">&lt;a:bodyPr</span> <span class="na">wrap=</span><span class="s">"square"</span> <span class="na">rtlCol=</span><span class="s">"0"</span><span class="nt">&gt;&lt;/a:bodyPr&gt;</span>
+        <span class="nt">&lt;a:lstStyle/&gt;</span>
+        <span class="nt">&lt;a:p&gt;</span>
+            <span class="nt">&lt;a:r&gt;</span>
+                <span class="nt">&lt;a:rPr</span> <span class="na">lang=</span><span class="s">"zh-CN"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">smtClean=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;a:t&gt;</span>一行文本<span class="nt">&lt;/a:t&gt;</span>
+            <span class="nt">&lt;/a:r&gt;</span>
+            <span class="nt">&lt;a:endParaRPr</span> <span class="na">lang=</span><span class="s">"en-US"</span> <span class="na">dirty=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/a:p&gt;</span>
+    <span class="nt">&lt;/p:txBody&gt;</span>
+<span class="nt">&lt;/p:sp&gt;</span>
+</code></pre></div></div>
+
+<p>从上面的内容可以看到，这不是一个放在占位符的文本，那么什么是放在占位符的文本？如果 <code class="language-plaintext highlighter-rouge">&lt;p:nvPr/&gt;</code> 没有内容，那么就表示不是占位符的文本。而如果是占位符那么 <code class="language-plaintext highlighter-rouge">p:nvpr</code> 将会是如下格式</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;p:nvpr&gt;</span>
+            <span class="nt">&lt;p:ph</span> <span class="na">type=</span><span class="s">"ctrTitle"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/p:ph&gt;</span>
+        <span class="nt">&lt;/p:nvpr&gt;</span>
+</code></pre></div></div>
+
+<p>对于 占位符 需要通过继承属性添加更多内容，请看 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-SDK-%E6%96%87%E6%9C%AC%E5%8D%A0%E4%BD%8D%E7%AC%A6%E8%A7%A3%E6%9E%90.html">dotnet OpenXML SDK 文本占位符解析</a></p>
+
+<p>当然，本文的例子不是占位符是比较简单的元素</p>
+
+<p>但是这个形状没有给一个明确的字体，那么请问这个形状用的字体是什么？此时涉及到了一个文本样式等级的概念</p>
+
+<p>在文档里面有这一句代码 <code class="language-plaintext highlighter-rouge">&lt;a:lstStyle/&gt;</code> 表示文本本身没有重新定义样式等级，需要一层层寻找</p>
+
+<p>可以在 Slide 的 Layout 和 Slide 的 Master 找到对应的 <code class="language-plaintext highlighter-rouge">p:txStyles</code> 内容，不过样式等级是另外的知识点，不在本文围内。可以告诉大家的是在这份测试课件里面，其实 SlideLayout 和 SlideMaster 的 <code class="language-plaintext highlighter-rouge">p:txStyles</code> 都不是此文本的样式。因为这个元素需要的是 <code class="language-plaintext highlighter-rouge">&lt;p:defaultTextStyle&gt;</code> 默认文本样式</p>
+
+<p>那么在哪可以拿到 <code class="language-plaintext highlighter-rouge">&lt;p:defaultTextStyle&gt;</code> 默认文本样式？这是文档全局的设置，因此需要在 Presentation.xml 拿到，对应的 OpenXML 代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">presentationDocument</span> <span class="p">=</span>
+       <span class="n">DocumentFormat</span><span class="p">.</span><span class="n">OpenXml</span><span class="p">.</span><span class="n">Packaging</span><span class="p">.</span><span class="n">PresentationDocument</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="s">"测试.pptx"</span><span class="p">,</span> <span class="k">false</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">presentationPart</span> <span class="p">=</span> <span class="n">presentationDocument</span><span class="p">.</span><span class="n">PresentationPart</span><span class="p">;</span>
+    <span class="kt">var</span> <span class="n">presentation</span> <span class="p">=</span> <span class="n">presentationPart</span><span class="p">.</span><span class="n">Presentation</span><span class="p">;</span>
+
+    <span class="kt">var</span> <span class="n">defaultTextStyle</span> <span class="p">=</span> <span class="n">presentation</span><span class="p">.</span><span class="n">DefaultTextStyle</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这就是 DefaultTextStyle 的获取方法，从 Presentation 类的属性定义也能了解到这个规则</p>
+
+<p>于是按照规则，默认如果文本存在 ListStyle 那么就使用文本自己的，否则采用文档级的。当然，如果是占位符等元素，那就更复杂了，咱先忽略</p>
+
+<p>在这份课件里面文本元素没有自己的样式重写，可以通过下面代码判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">defaultTextStyle</span> <span class="p">=</span> <span class="n">presentation</span><span class="p">.</span><span class="n">DefaultTextStyle</span><span class="p">;</span>
+<span class="kt">var</span> <span class="n">textBody</span> <span class="p">=</span> <span class="n">shape</span><span class="p">.</span><span class="n">TextBody</span><span class="p">;</span>
+
+<span class="kt">var</span> <span class="n">textBodyListStyle</span> <span class="p">=</span> <span class="n">textBody</span><span class="p">.</span><span class="n">ListStyle</span><span class="p">;</span>
+
+<span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">textBodyListStyle</span><span class="p">.</span><span class="n">ChildElements</span><span class="p">.</span><span class="n">Count</span> <span class="p">==</span> <span class="m">0</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>而 TextStyle 其实准确说是一个列表，有从 Level1 到 Level9 的样式，那么如何知道使用哪一个</p>
+
+<p>其实样式列表针对的是段级的，也就是一个文本里面的多个不同的段落可以使用不同的样式等级，可以使用如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">paragraph</span> <span class="p">=</span> <span class="n">textBody</span><span class="p">.</span><span class="n">Descendants</span><span class="p">&lt;</span><span class="n">Paragraph</span><span class="p">&gt;().</span><span class="nf">First</span><span class="p">();</span>
+<span class="kt">var</span> <span class="n">level</span> <span class="p">=</span> <span class="n">paragraph</span><span class="p">.</span><span class="n">ParagraphProperties</span><span class="p">?.</span><span class="n">Level</span><span class="p">?.</span><span class="n">Value</span> <span class="p">??</span> <span class="m">1</span><span class="p">;</span>
+<span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">level</span> <span class="p">==</span> <span class="m">1</span><span class="p">);</span>
+<span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">paragraph</span><span class="p">.</span><span class="n">ParagraphProperties</span> <span class="p">==</span> <span class="k">null</span><span class="p">);</span>
+
+<span class="kt">var</span> <span class="n">paragraphProperties</span> <span class="p">=</span> <span class="n">defaultTextStyle</span><span class="p">.</span><span class="n">Level1ParagraphProperties</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>这是测试代码，因此仅获取第一段，而按照测试的文档，可以了解到此时的 level 就是 1 同时文本本身没有重写样式，因此使用的就是 defaultTextStyle.Level1ParagraphProperties 作为段落样式</p>
+
+<p>文本的样式段落里面包含了段落的默认属性，也就是文本的 Run 如果没有定义如字体等这些属性，将会使用段落默认属性</p>
+
+<p>可以使用下面代码获取段落的文本</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">run</span> <span class="k">in</span> <span class="n">paragraph</span><span class="p">.</span><span class="n">Descendants</span><span class="p">&lt;</span><span class="n">Run</span><span class="p">&gt;())</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">runProperties</span> <span class="p">=</span> <span class="n">run</span><span class="p">.</span><span class="n">RunProperties</span><span class="p">;</span>
+    <span class="kt">var</span> <span class="n">eastAsianFont</span> <span class="p">=</span> <span class="n">runProperties</span><span class="p">.</span><span class="n">GetFirstChild</span><span class="p">&lt;</span><span class="n">EastAsianFont</span><span class="p">&gt;();</span>
+    <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">eastAsianFont</span> <span class="p">==</span> <span class="k">null</span><span class="p">);</span>
+    <span class="c1">// 忽略代码</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>从上面代码可以看到，测试文档是不存在 EastAsianFont 字体的，此时就需要用到 defaultTextStyle 定义的内容，在开始写代码之前，先看一下在文档里面是如何定义的</p>
+
+<p>在测试文档里面的 Presentation.xml 是这样定义的，这份文档放在 <a href="https://github.com/lindexi/lindexi_gd/tree/6f972af439c4daf91318fbda8d7bf6ac88a069de/GojolerbeeLerechelhajerefawwha/GojolerbeeLerechelhajerefawwha/测试.pptx">github</a> 欢迎小伙伴解压缩</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
+<span class="nt">&lt;p:presentation</span> <span class="na">xmlns:a=</span><span class="s">"http://schemas.openxmlformats.org/drawingml/2006/main"</span> <span class="na">xmlns:r=</span><span class="s">"http://schemas.openxmlformats.org/officeDocument/2006/relationships"</span> <span class="na">xmlns:p=</span><span class="s">"http://schemas.openxmlformats.org/presentationml/2006/main"</span> <span class="na">saveSubsetFonts=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;p:sldMasterIdLst&gt;</span>
+        <span class="nt">&lt;p:sldMasterId</span> <span class="na">id=</span><span class="s">"2147483648"</span> <span class="na">r:id=</span><span class="s">"rId1"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/p:sldMasterIdLst&gt;</span>
+    <span class="nt">&lt;p:sldIdLst&gt;</span>
+        <span class="nt">&lt;p:sldId</span> <span class="na">id=</span><span class="s">"256"</span> <span class="na">r:id=</span><span class="s">"rId2"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/p:sldIdLst&gt;</span>
+    <span class="nt">&lt;p:sldSz</span> <span class="na">cx=</span><span class="s">"12192000"</span> <span class="na">cy=</span><span class="s">"6858000"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;p:notesSz</span> <span class="na">cx=</span><span class="s">"6858000"</span> <span class="na">cy=</span><span class="s">"9144000"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;p:defaultTextStyle&gt;</span>
+        <span class="nt">&lt;a:defPPr&gt;</span>
+            <span class="nt">&lt;a:defRPr</span> <span class="na">lang=</span><span class="s">"en-US"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/a:defPPr&gt;</span>
+        <span class="nt">&lt;a:lvl1pPr</span> <span class="na">marL=</span><span class="s">"0"</span> <span class="na">algn=</span><span class="s">"l"</span> <span class="na">defTabSz=</span><span class="s">"914400"</span> <span class="na">rtl=</span><span class="s">"0"</span> <span class="na">eaLnBrk=</span><span class="s">"1"</span> <span class="na">latinLnBrk=</span><span class="s">"0"</span> <span class="na">hangingPunct=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;a:defRPr</span> <span class="na">sz=</span><span class="s">"1800"</span> <span class="na">kern=</span><span class="s">"1200"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;a:solidFill&gt;</span>
+                    <span class="nt">&lt;a:schemeClr</span> <span class="na">val=</span><span class="s">"tx1"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;/a:solidFill&gt;</span>
+                <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"+mn-lt"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">"林德熙"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">"+mn-cs"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;/a:defRPr&gt;</span>
+        <span class="nt">&lt;/a:lvl1pPr&gt;</span>
+    <span class="nt">&lt;/p:defaultTextStyle&gt;</span>
+    <span class="nt">&lt;p:extLst&gt;</span>
+        <span class="nt">&lt;p:ext</span> <span class="na">uri=</span><span class="s">"{EFAFB233-063F-42B5-8137-9DF3F51BA10A}"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;p15:sldGuideLst</span> <span class="na">xmlns:p15=</span><span class="s">"http://schemas.microsoft.com/office/powerpoint/2012/main"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/p:ext&gt;</span>
+    <span class="nt">&lt;/p:extLst&gt;</span>
+<span class="nt">&lt;/p:presentation&gt;</span>
+</code></pre></div></div>
+
+<p>也许看起来的逻辑有点复杂，但是实际需要了解的逻辑如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:lvl1pPr</span> <span class="na">marL=</span><span class="s">"0"</span> <span class="na">algn=</span><span class="s">"l"</span> <span class="na">defTabSz=</span><span class="s">"914400"</span> <span class="na">rtl=</span><span class="s">"0"</span> <span class="na">eaLnBrk=</span><span class="s">"1"</span> <span class="na">latinLnBrk=</span><span class="s">"0"</span> <span class="na">hangingPunct=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;a:defRPr</span> <span class="na">sz=</span><span class="s">"1800"</span> <span class="na">kern=</span><span class="s">"1200"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;a:solidFill&gt;</span>
+            <span class="nt">&lt;a:schemeClr</span> <span class="na">val=</span><span class="s">"tx1"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/a:solidFill&gt;</span>
+        <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"+mn-lt"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">"林德熙"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">"+mn-cs"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:defRPr&gt;</span>
+<span class="nt">&lt;/a:lvl1pPr&gt;</span>
+</code></pre></div></div>
+
+<p>此时的 paragraphProperties 的数据，将是上面的内容，默认使用 Level1 的属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">paragraphProperties</span> <span class="p">=</span> <span class="n">defaultTextStyle</span><span class="p">.</span><span class="n">Level1ParagraphProperties</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>此时获取的方法如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">eastAsianFont</span> <span class="p">=</span> <span class="n">paragraphProperties</span><span class="p">.</span><span class="n">GetFirstChild</span><span class="p">&lt;</span><span class="n">DefaultRunProperties</span><span class="p">&gt;()</span>
+    <span class="p">.</span><span class="n">GetFirstChild</span><span class="p">&lt;</span><span class="n">EastAsianFont</span><span class="p">&gt;();</span>
+
+<span class="kt">var</span> <span class="n">typeface</span> <span class="p">=</span> <span class="n">eastAsianFont</span><span class="p">.</span><span class="n">Typeface</span><span class="p">.</span><span class="n">Value</span><span class="p">;</span>
+
+<span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"字体是 </span><span class="p">{</span><span class="n">typeface</span><span class="p">}</span><span class="s">"</span><span class="p">);</span> 
+
+<span class="c1">// typeface == "林德熙"</span>
+</code></pre></div></div>
+
+<p>当然，小伙伴如果没有去阅读 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E6%96%87%E6%9C%AC%E5%AD%97%E4%BD%93%E7%9A%84%E9%80%89%E6%8B%A9%E8%A7%84%E5%88%99.html">dotnet OpenXML 文本字体的选择规则</a> 也许就会好奇为什么我这里的代码只读取 EastAsianFont 字体，而忽略其他的字体</p>
+
+<!-- ![](image/dotnet OpenXML 解析 PPT 文本字体获取详解/dotnet OpenXML 解析 PPT 文本字体获取详解1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20208101411367386.jpg" alt="" /></p>
+
+<p>从本文到当前只是在告诉大家如何拿到对的字体属性，字体属性是对于文本段 Run 来说的，而不是段落或文本的。但是如果文本段 Run 不存在字体的定义，那么此时需要尝试去获取段落的默认属性定义。但是如果段落没有任何默认属性定义，就需要获取文档的文本样式定义</p>
+
+<p>这部分逻辑属于 PPT 的逻辑，我在 ECMA 376 没有找到相关的描述，也就是这部分逻辑是没有文档定义的。这也就是 OpenXML SDK 这个库没有提供获取文本最终属性的方法的原因</p>
+
+<p>如果小伙伴认为这么简单就获取到字体了，那么坐等你使用了一个叫 <code class="language-plaintext highlighter-rouge">+mn-ea</code> 的字体。等等，这是一个什么字体？其实这是一个有趣的写法</p>
+
+<p>在找到对应的字体属性的时候，不一定拿到最终使用的字体，如果判断是 <code class="language-plaintext highlighter-rouge">+mn-ea</code> 的格式，那么就需要再进一步的转换</p>
+
+<p>首先判断的正则代码如下，如果这个代码写错了，还请小伙伴告诉我</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">Regex</span> <span class="n">ThemeFontTypePattern</span> <span class="p">=</span>
+            <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="s">@"(^\+(mn|mj)\-(lt|cs|ea)$)"</span><span class="p">,</span> <span class="n">RegexOptions</span><span class="p">.</span><span class="n">Compiled</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这个定义的方式是 FontScheme 的定义，需要先解析这个字符串才能了解</p>
+
+<p>按照定义，需要将这个字符串分为两个部分，一个就是 <code class="language-plaintext highlighter-rouge">+mn</code> 另一个就是 <code class="language-plaintext highlighter-rouge">-ea</code> 两个部分</p>
+
+<p>前面部分表示如下</p>
+
+<ul>
+  <li>mn：MinorFont</li>
+  <li>mj：MajorFont</li>
+</ul>
+
+<p>后面的枚举表示如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">enum</span> <span class="n">FontLang</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// lt</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="n">LatinFont</span><span class="p">,</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// ea</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="n">EastAsianFont</span><span class="p">,</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// cs </span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="n">ComplexScriptFont</span><span class="p">,</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// sym</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="n">SymbolFont</span><span class="p">,</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///  不知道哪个语言</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="n">Unknown</span><span class="p">,</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么 MinorFont 和 MajorFont 是什么意思？其实就是正文和标题的提示，小伙伴可以在 PPT 的字体看到有括号写的标题和正文，就是对应的这两个属性的含义</p>
+
+<!-- ![](image/dotnet OpenXML 解析 PPT 文本字体获取详解/dotnet OpenXML 解析 PPT 文本字体获取详解2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020810150571943.jpg" alt="" /></p>
+
+<p>这个主题可以如何获取？请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">private</span> <span class="k">static</span> <span class="n">FontScheme</span> <span class="nf">GetFontScheme</span><span class="p">(</span><span class="n">SlidePart</span> <span class="n">slidePart</span><span class="p">)</span>
+ <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">slidePart</span><span class="p">.</span><span class="n">ThemeOverridePart</span><span class="p">?.</span><span class="n">ThemeOverride</span><span class="p">?.</span><span class="n">FontScheme</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">ThemeOverridePart</span><span class="p">.</span><span class="n">ThemeOverride</span><span class="p">.</span><span class="n">FontScheme</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">var</span> <span class="n">slideLayoutPart</span> <span class="p">=</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">SlideLayoutPart</span><span class="p">;</span>
+
+    <span class="c1">//从SlideLayout获取theme</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">slideLayoutPart</span><span class="p">.</span><span class="n">ThemeOverridePart</span><span class="p">?.</span><span class="n">ThemeOverride</span><span class="p">?.</span><span class="n">FontScheme</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="n">slideLayoutPart</span><span class="p">.</span><span class="n">ThemeOverridePart</span><span class="p">.</span><span class="n">ThemeOverride</span><span class="p">.</span><span class="n">FontScheme</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">var</span> <span class="n">slideMasterPart</span> <span class="p">=</span> <span class="n">slideLayoutPart</span><span class="p">.</span><span class="n">SlideMasterPart</span><span class="p">;</span>
+
+    <span class="c1">//从SlideMaster获取theme</span>
+    <span class="k">return</span> <span class="n">slideMasterPart</span><span class="p">?.</span><span class="n">ThemePart</span><span class="p">?.</span><span class="n">Theme</span><span class="p">?.</span><span class="n">ThemeElements</span><span class="p">?.</span><span class="n">FontScheme</span><span class="p">;</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>请小伙伴换一份测试课件用来测试逻辑，测试的课件放在 <a href="https://github.com/lindexi/lindexi_gd/tree/75bc1ef8d1cff8c334015b3b184cd19ddddd5f28/GojolerbeeLerechelhajerefawwha/GojolerbeeLerechelhajerefawwha/测试.pptx">github</a> 这份课件更改了 Presentation.xml 定义为下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:lvl1pPr</span> <span class="na">marL=</span><span class="s">"0"</span> <span class="na">algn=</span><span class="s">"l"</span> <span class="na">defTabSz=</span><span class="s">"914400"</span> <span class="na">rtl=</span><span class="s">"0"</span> <span class="na">eaLnBrk=</span><span class="s">"1"</span> <span class="na">latinLnBrk=</span><span class="s">"0"</span> <span class="na">hangingPunct=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;a:defRPr</span> <span class="na">sz=</span><span class="s">"1800"</span> <span class="na">kern=</span><span class="s">"1200"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;a:solidFill&gt;</span>
+            <span class="nt">&lt;a:schemeClr</span> <span class="na">val=</span><span class="s">"tx1"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/a:solidFill&gt;</span>
+        <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"+mn-lt"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">"+mn-ea"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">"+mn-cs"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:defRPr&gt;</span>
+<span class="nt">&lt;/a:lvl1pPr&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到的是原本是有具体的字体的 <code class="language-plaintext highlighter-rouge">a:ea</code> 被更改为 <code class="language-plaintext highlighter-rouge">a:ea typeface="+mn-ea"</code> 需要使用 FontScheme 找到对应的逻辑</p>
+
+<p>在这份测试课件里面，其实只有 Theme1.xml 文件才有实际的定义，也就是 <code class="language-plaintext highlighter-rouge">slideMasterPart?.ThemePart?.Theme?.ThemeElements?.FontScheme</code> 才有返回值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">ThemeFontTypePattern</span><span class="p">.</span><span class="nf">IsMatch</span><span class="p">(</span><span class="n">typeface</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="c1">// 进入这个分支，字体是 +mn-ea 字体</span>
+    <span class="c1">// 这个字体的意思里面 mn 表示 Body 字体</span>
+    <span class="c1">// 而 mj 表示 Title 字体，也就是 Major 字体</span>
+    <span class="c1">// 后续的 ea 和 lt 等表示采用东亚文字或拉丁文等</span>
+    <span class="c1">// 此时需要获取字体主题</span>
+    <span class="kt">var</span> <span class="n">fontScheme</span> <span class="p">=</span> <span class="nf">GetFontScheme</span><span class="p">(</span><span class="n">slidePart</span><span class="p">);</span>
+    <span class="n">FontCollectionType</span> <span class="n">fontCollection</span><span class="p">;</span>
+
+    <span class="c1">// mn 的 n 传入字符串是 +mn-ea 也就是第三个字符</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">typeface</span><span class="p">[</span><span class="m">2</span><span class="p">]</span> <span class="p">==</span> <span class="sc">'n'</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">fontCollection</span> <span class="p">=</span> <span class="n">fontScheme</span><span class="p">.</span><span class="n">MinorFont</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+        <span class="n">fontCollection</span> <span class="p">=</span> <span class="n">fontScheme</span><span class="p">.</span><span class="n">MajorFont</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 忽略代码</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>按照本文的逻辑，下一步需要解析是具体的语言</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="n">FontLang</span> <span class="n">fontLang</span> <span class="p">=</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">Unknown</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">typeface</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"lt"</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="n">fontLang</span> <span class="p">=</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">LatinFont</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">typeface</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"cs"</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="n">fontLang</span> <span class="p">=</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">ComplexScriptFont</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">typeface</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"ea"</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="n">fontLang</span> <span class="p">=</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">EastAsianFont</span><span class="p">;</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>在开始读取字体之前，先看一下 Theme1.xml 文件的定义</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:fontScheme</span> <span class="na">name=</span><span class="s">"Office"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;a:majorFont&gt;</span>
+        <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"Calibri Light"</span> <span class="na">panose=</span><span class="s">"020F0302020204030204"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Jpan"</span> <span class="na">typeface=</span><span class="s">"ＭＳ Ｐゴシック"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hang"</span> <span class="na">typeface=</span><span class="s">"맑은 고딕"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hans"</span> <span class="na">typeface=</span><span class="s">"宋体"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hant"</span> <span class="na">typeface=</span><span class="s">"新細明體"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:majorFont&gt;</span>
+    <span class="nt">&lt;a:minorFont&gt;</span>
+        <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"Calibri"</span> <span class="na">panose=</span><span class="s">"020F0502020204030204"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Jpan"</span> <span class="na">typeface=</span><span class="s">"ＭＳ Ｐゴシック"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hang"</span> <span class="na">typeface=</span><span class="s">"맑은 고딕"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hans"</span> <span class="na">typeface=</span><span class="s">"逗比"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hant"</span> <span class="na">typeface=</span><span class="s">"新細明體"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:minorFont&gt;</span>
+<span class="nt">&lt;/a:fontScheme&gt;</span>
+</code></pre></div></div>
+
+<p>当然也许你会发现此时的 typeface 不是某个字体或 “mn-lt” 等，而是一个空字符串。此时就需要用到 Theme Font Languages（ThemeFontLang ECMA-376 17.15.1.88）的功能了</p>
+
+<p>请问此时的字体是什么？</p>
+
+<!-- ![](image/dotnet OpenXML 解析 PPT 文本字体获取详解/dotnet OpenXML 解析 PPT 文本字体获取详解3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20208101516112418.jpg" alt="" /></p>
+
+<p>为什么是读取 <code class="language-plaintext highlighter-rouge">&lt;a:font script="Hans" typeface="逗比"/&gt;</code> 作为字体的？原因就是需要先判断语言</p>
+
+<p>小伙伴是否还记得在 Run 的属性定义</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:p&gt;</span>
+    <span class="nt">&lt;a:r&gt;</span>
+        <span class="nt">&lt;a:rPr</span> <span class="na">lang=</span><span class="s">"zh-CN"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">sz=</span><span class="s">"2000"</span> <span class="na">smtClean=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:t&gt;</span>一行文本<span class="nt">&lt;/a:t&gt;</span>
+    <span class="nt">&lt;/a:r&gt;</span>
+    <span class="nt">&lt;a:endParaRPr</span> <span class="na">lang=</span><span class="s">"en-US"</span> <span class="na">dirty=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/a:p&gt;</span>
+</code></pre></div></div>
+
+<p>这里有一个属性 <code class="language-plaintext highlighter-rouge">lang</code> 是什么作用？其实就是用来决定使用那个 Script 对应的字体的</p>
+
+<p>而 zh-CN 和 Hans 有什么关系，这个是在 <a href="https://tools.ietf.org/html/rfc4646">RFC 4646</a> 标准定义的，可以根据语言拿到。关于 zh-CN 这个语言格式的标准，请看 <a href="https://tools.ietf.org/html/bcp47">BCP47</a> 标准</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetScript</span><span class="p">(</span><span class="n">StringValue</span> <span class="n">language</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">language</span> <span class="p">==</span> <span class="s">"zh-CN"</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="s">"Hans"</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">language</span> <span class="p">==</span> <span class="s">"zh-Hant"</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="s">"Hant"</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 默认值，当然，在 Office 里面的逻辑是十分多的，需要根据 [国家-地区字符串](https://docs.microsoft.com/zh-CN/cpp/c-runtime-library/country-region-strings?view=vs-2019 ) 文档写代码，只是这部分代码不是本文重点</span>
+            <span class="k">return</span> <span class="s">"Hans"</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面是简单的逻辑，更多代码就需要你去通过 <a href="https://tools.ietf.org/html/rfc4646">RFC 4646</a> 标准去写代码了</p>
+
+<p>在使用 GetScript 返回了 scriptTag 字符串之后，就可以在 FontCollectionType 遍历获取字体</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetFontFromFontCollection</span><span class="p">(</span><span class="kt">string</span> <span class="n">scriptTag</span><span class="p">,</span> <span class="n">FontLang</span> <span class="n">themeTypefaceFontLang</span><span class="p">,</span>
+            <span class="n">FontCollectionType</span> <span class="n">fontCollection</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">fontCollection</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 假定存在对应的语言的字体，那么获取对应的字体</span>
+            <span class="c1">// 存放方式如</span>
+            <span class="cm">/*
+            &lt;a:majorFont xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"&gt;
+                &lt;a:latin typeface="Calibri Light" panose="020F0302020204030204" /&gt;
+                &lt;a:ea typeface="" /&gt;
+                &lt;a:cs typeface="" /&gt;
+                &lt;a:font script="Jpan" typeface="ＭＳ Ｐゴシック" /&gt;
+                &lt;a:font script="Hang" typeface="맑은 고딕" /&gt;
+                &lt;a:font script="Hans" typeface="宋体" /&gt;
+            &lt;/a:majorFont&gt;
+            &lt;a:minorFont xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"&gt;
+                &lt;a:latin typeface="Calibri" panose="020F0502020204030204" /&gt;
+                &lt;a:ea typeface="" /&gt;
+                &lt;a:cs typeface="" /&gt;
+                &lt;a:font script="Jpan" typeface="ＭＳ Ｐゴシック" /&gt;
+                &lt;a:font script="Hang" typeface="맑은 고딕" /&gt;
+                &lt;a:font script="Hans" typeface="宋体" /&gt;
+            &lt;/a:minorFont&gt;
+             */</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">font</span> <span class="k">in</span> <span class="n">fontCollection</span><span class="p">.</span><span class="n">Elements</span><span class="p">&lt;</span><span class="n">SupplementalFont</span><span class="p">&gt;())</span>
+            <span class="p">{</span>
+                <span class="c1">// &lt;a:font script="Hang" typeface="맑은 고딕" /&gt;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">font</span><span class="p">.</span><span class="n">Script</span><span class="p">,</span> <span class="n">scriptTag</span><span class="p">,</span> <span class="n">StringComparison</span><span class="p">.</span><span class="n">OrdinalIgnoreCase</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">font</span><span class="p">.</span><span class="n">Typeface</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/a7b375da3ff6d0511ba7b064686eed4ba71aef5d/GojolerbeeLerechelhajerefawwha">github</a> 欢迎小伙伴访问，此时就能拿到字体</p>
+
+<p>如果此时的 Theme1.xml 定义是如下呢</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:minorFont&gt;</span>
+    <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"Calibri"</span> <span class="na">panose=</span><span class="s">"020F0502020204030204"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">"林德熙"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Jpan"</span> <span class="na">typeface=</span><span class="s">"ＭＳ Ｐゴシック"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hang"</span> <span class="na">typeface=</span><span class="s">"맑은 고딕"</span><span class="nt">/&gt;</span>
+    <span class="c">&lt;!-- &lt;a:font script="Hans" typeface="逗比"/&gt;--&gt;</span>
+<span class="nt">&lt;/a:minorFont&gt;</span>
+</code></pre></div></div>
+
+<p>也就是 font 的 script 是 Hans 的定义是不存在的，那么此时的规则是什么？此时的规则就是 FontLang 对应的内容</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">// 也就是先尝试获取语言文化的，如果获取不到，就采用对应语言的</span>
+            <span class="n">TextFontType</span> <span class="n">textFont</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">themeTypefaceFontLang</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">case</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">LatinFont</span><span class="p">:</span>
+                    <span class="n">textFont</span> <span class="p">=</span> <span class="n">fontCollection</span><span class="p">.</span><span class="n">LatinFont</span><span class="p">;</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">EastAsianFont</span><span class="p">:</span>
+                    <span class="n">textFont</span> <span class="p">=</span> <span class="n">fontCollection</span><span class="p">.</span><span class="n">EastAsianFont</span><span class="p">;</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">ComplexScriptFont</span><span class="p">:</span>
+                    <span class="n">textFont</span> <span class="p">=</span> <span class="n">fontCollection</span><span class="p">.</span><span class="n">ComplexScriptFont</span><span class="p">;</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="k">case</span> <span class="n">FontLang</span><span class="p">.</span><span class="n">SymbolFont</span><span class="p">:</span>
+                    <span class="c1">// 特别不处理，为什么？</span>
+                    <span class="c1">// 在 fontCollection 是不存在的 SymbolFont 的</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="k">default</span><span class="p">:</span>
+                    <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentOutOfRangeException</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">themeTypefaceFontLang</span><span class="p">),</span> <span class="n">themeTypefaceFontLang</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">typeface</span> <span class="p">=</span> <span class="n">textFont</span><span class="p">?.</span><span class="n">Typeface</span><span class="p">?.</span><span class="n">Value</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(!</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">typeface</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">typeface</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="k">false</span><span class="p">,</span> <span class="s">"找不到字体"</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>其实这个找不到字体 <code class="language-plaintext highlighter-rouge">Debug.Assert(false, "找不到字体")</code> 的输出也不全对，如果 Theme1.xml 定义是如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:minorFont&gt;</span>
+    <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"csdn"</span> <span class="na">panose=</span><span class="s">"020F0502020204030204"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Jpan"</span> <span class="na">typeface=</span><span class="s">"ＭＳ Ｐゴシック"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hang"</span> <span class="na">typeface=</span><span class="s">"맑은 고딕"</span><span class="nt">/&gt;</span>
+    <span class="c">&lt;!-- &lt;a:font script="Hans" typeface="逗比"/&gt;--&gt;</span>
+<span class="nt">&lt;/a:minorFont&gt;</span>
+</code></pre></div></div>
+
+<p>也就是 Hans 没有这个定义，而 ea 也没有值，此时将会降级使用 latin 的字体</p>
+
+<!-- ![](image/dotnet OpenXML 解析 PPT 文本字体获取详解/dotnet OpenXML 解析 PPT 文本字体获取详解4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20208101529131539.jpg" alt="" /></p>
+
+<p>如果 latin 也没有内容呢？将使用本机的默认语言字体</p>
+
+<p>但小伙伴是否觉得上面还有一个没有用到的属性，没错就是 altLang 这个属性</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:p&gt;</span>
+    <span class="nt">&lt;a:r&gt;</span>
+        <span class="nt">&lt;a:rPr</span> <span class="na">lang=</span><span class="s">"zh-CN"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">sz=</span><span class="s">"2000"</span> <span class="na">smtClean=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:t&gt;</span>一行文本<span class="nt">&lt;/a:t&gt;</span>
+    <span class="nt">&lt;/a:r&gt;</span>
+    <span class="nt">&lt;a:endParaRPr</span> <span class="na">lang=</span><span class="s">"en-US"</span> <span class="na">dirty=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/a:p&gt;</span>
+</code></pre></div></div>
+
+<p>这个属性是做什么用的？这是一个备用的属性，按照 ECMA-376 的 21.1.2.3.2 defRPr (Default Text Run Properties) 这一章的描述，这是一个备用的属性，默认是不写的，不写的时候将会使用 lang 属性。这个属性可以用来显示界面控件时使用的备用语言，也就是在 lang 找不到语言的时候，需要启用 altLang 属性去获取</p>
+
+<p>而实际上本文的规则主要针对 PPT 而不是 OpenXML 的 ECMA-376 的标准，因为实际上 PPT 有些行为和 ECMA-376 不相同，或者说我没有理解对 ECMA-376 的意思。而这部分也是 OpenXML SDK 没有提供接口方法的</p>
+
+<p>以下是 ECMA-376 的原文</p>
+
+<p>17.15.1.88 ThemeFontLang (Theme Font Languages)</p>
+
+<p>These mappings are performed as follows:</p>
+
+<ul>
+  <li>For majorAscii/majorHAnsi, locate the font element (§20.1.4.1.16) in the majorFont element (§20.1.4.1.24) in the theme part for the language specified by the val attribute</li>
+  <li>For majorBidi,             locate the font element                in the majorFont element               in the theme part for the language specified by the bidi attribute</li>
+  <li>For majorEastAsia,         locate the font element                in the majorFont element               in the theme part for the language specified by the eastAsia attribute</li>
+  <li>For minorAscii/minorHAnsi, locate the font element in the minorFont element (§20.1.4.1.25) in the theme part for the language specified by the val attribute</li>
+  <li>For minorBidi, locate the font element in the minorFont element in the theme part for the language specified by the bidi attribute</li>
+  <li>For minorEastAsia,         locate the font element                in the minorFont element in the theme part for the language specified by the eastAsia attribute</li>
+</ul>
+
+<p>If this element is omitted, then the default fonts for each region as specified by the latin, ea, and cs elements (§21.1.2.3.7; §21.1.2.3.3; §21.1.2.3.1) should be used</p>
+
+<p>不过 PPT 没有按照文档做</p>
+
+<p>不信你试试 MinorAscii 的字符，也就是 Latin 字符实际上是不遵守上面的规定的。返回的是 Theme 的 latin 字体</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:p&gt;</span>
+    <span class="nt">&lt;a:r&gt;</span>
+        <span class="nt">&lt;a:rPr</span> <span class="na">lang=</span><span class="s">"ja-JP"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">sz=</span><span class="s">"2000"</span> <span class="na">smtClean=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;a:t&gt;</span>lindexi<span class="nt">&lt;/a:t&gt;</span>
+    <span class="nt">&lt;/a:r&gt;</span>
+    <span class="nt">&lt;a:endParaRPr</span> <span class="na">lang=</span><span class="s">"en-US"</span> <span class="na">dirty=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/a:p&gt;</span>
+
+<span class="nt">&lt;a:minorFont&gt;</span>
+    <span class="nt">&lt;a:latin</span> <span class="na">typeface=</span><span class="s">"Wingdings"</span> <span class="na">panose=</span><span class="s">"020F0502020204030204"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:cs</span> <span class="na">typeface=</span><span class="s">""</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Jpan"</span> <span class="na">typeface=</span><span class="s">"微软雅黑"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hang"</span> <span class="na">typeface=</span><span class="s">"맑은 고딕"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:font</span> <span class="na">script=</span><span class="s">"Hans"</span> <span class="na">typeface=</span><span class="s">"逗比"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/a:minorFont&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/dotnet OpenXML 解析 PPT 文本字体获取详解/dotnet OpenXML 解析 PPT 文本字体获取详解5.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20208101837395865.jpg" alt="" /></p>
+
+<p>可以看到英文字符用的是 <code class="language-plaintext highlighter-rouge">a:latin</code> 的，而不是使用语言的</p>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+<p><a href="http://www.brandwares.com/bestpractices/2017/02/xml-hacking-font-themes-complete/">OOXML Hacking: Font Themes Complete - Brandwares</a></p>
+
+<!-- 有关多语言和字体，请看 [github](https://github.com/lindexi/lindexi_gd/tree/094e0b6de5d341a68906c7dc9e6a3f662cca9020/HerjemhokiNeakunegar) -->
+
+:ET

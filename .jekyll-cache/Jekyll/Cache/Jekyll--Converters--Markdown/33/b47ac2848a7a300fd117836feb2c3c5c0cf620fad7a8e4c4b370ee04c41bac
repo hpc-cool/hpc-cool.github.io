@@ -1,0 +1,124 @@
+I"�<p>本文记录 Office Open XML (OOXML) 的测量单位</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/19 16:19:12 -->
+
+<p>在 Office Open XML 默认单位是 dxa 也就是像素点的 20 倍，如 ISO 216 A4 (210x297mm ~ 8.3×11.7in) 的大小可以使用下面代码表示</p>
+
+<p>在页面大小 Page width Page height 和边距 margin 和缩进 tabs 使用</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;w:pgSz w:w="11906" w:h="16838"/&gt;
+</code></pre></div></div>
+
+<p>单位计算可以使用下面公式</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>像素 Points = dxa/20 
+英寸 Inches = Points/72
+厘米 Centimeters = Inches*2.54
+</code></pre></div></div>
+
+<p>在 OpenXML 因为 dxa 是像素点的 20 倍，所以也叫二十分之一点，另外这里说的像素点是 Point 而不是像素 Pixel 哦</p>
+
+<p>缩写如下</p>
+
+<ul>
+  <li>Points:pt</li>
+  <li>Inches:in</li>
+  <li>Centimeters:cm</li>
+</ul>
+
+<p>以 A4 为例</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Width = 11906 dxa = 595.3 point = 8.27 in = 21 cm
+</code></pre></div></div>
+
+<h2 id="half-points">Half-points</h2>
+
+<p>用来表示字体大小的半点，一个点等于两个半点，如表示 12pt 可以这样写</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// run properties
+<span class="nt">&lt;w:rPr&gt;</span>
+  // 24 = 12pt
+  <span class="nt">&lt;w:sz</span> <span class="na">w:val=</span><span class="s">"24"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/w:rPr&gt;</span>
+</code></pre></div></div>
+
+<h2 id="fiftieths-of-a-percent">Fiftieths of a Percent</h2>
+
+<p>表示百分比相对值，用于表示表格的宽度和相对宽度，他的值和百分比换算如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>n/100 * 5000
+</code></pre></div></div>
+
+<p>如百分之50可以表示为 50/100 * 5000 pct 的大小，如表格的宽度是百分之50宽度</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;w:tbl&gt;</span>
+    <span class="nt">&lt;w:tblPr&gt;</span>
+      <span class="c">&lt;!-- 表格宽度是百分之50宽度 --&gt;</span>
+      <span class="nt">&lt;w:tblW</span> <span class="na">w:w=</span><span class="s">"2500"</span> <span class="na">w:type=</span><span class="s">"pct"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/w:tblPr&gt;</span>
+    <span class="nt">&lt;w:tblGrid/&gt;</span>
+    <span class="nt">&lt;w:tr&gt;</span>
+        <span class="nt">&lt;w:tc&gt;</span>
+            <span class="nt">&lt;w:p&gt;</span>
+                <span class="nt">&lt;w:r&gt;</span>
+                    <span class="nt">&lt;w:t&gt;</span>Hello, World!<span class="nt">&lt;/w:t&gt;</span>
+                <span class="nt">&lt;/w:r&gt;</span>
+            <span class="nt">&lt;/w:p&gt;</span>
+        <span class="nt">&lt;/w:tc&gt;</span>
+    <span class="nt">&lt;/w:tr&gt;</span>
+<span class="nt">&lt;/w:tbl&gt;</span>
+</code></pre></div></div>
+
+<h2 id="english-metric-unit">English Metric Unit</h2>
+
+<p>这也是最常用的单位，使用 EMUs (English Metric Unit) 用来表示图片和其他元素的宽度，换算如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>1 in = 914400 EMUs
+1 cm = 360000 EMUs
+</code></pre></div></div>
+
+<p>如用于 <code class="language-plaintext highlighter-rouge">w:drawing</code> 绘制，表示绘制画布的宽度 <code class="language-plaintext highlighter-rouge">&lt;wp:extent cx="1530350" cy="2142490"/&gt;</code> 用这么大的数是可以提高精度和性能，不需要通过浮点计算</p>
+
+<p>关于 EMU 的定义，请看 ECMA 376 的 20.1.2.1 内容</p>
+
+<h2 id="开源库">开源库</h2>
+
+<p>我开源了 <a href="https://github.com/dotnet-campus/dotnetCampus.OfficeDocumentZiper">dotnetCampus.OpenXMLUnitConverter</a> 包含了本文的转换方法</p>
+
+<!-- ![](image/Office Open XML 的测量单位/Office Open XML 的测量单位0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20207281217352399.jpg" alt="" /></p>
+
+<p>工具获取方法是通过以下命令安装 dotnet 工具</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet tool update -g dotnetCampus.OfficeDocumentZipper
+</code></pre></div></div>
+
+<p>启动工具方法是在命令行输入下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>OfficeDocumentZipper
+</code></pre></div></div>
+
+<p>另外，在项目使用，可以通过 NuGet 安装 dotnetCampus.OpenXMLUnitConverter 这个库</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet add package dotnetCampus.OpenXMLUnitConverter
+</code></pre></div></div>
+
+<p>这个库同时包含使用 <a href="https://github.com/dotnet-campus/SourceYard">SourceYard</a> 打包的源代码 NuGet 包，可以使用下面代码安装</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet add package dotnetCampus.OpenXMLUnitConverter.Source
+</code></pre></div></div>
+
+<p>也可以在 csproj 添加下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"dotnetCampus.OpenXMLUnitConverter.Source"</span> <span class="na">Version=</span><span class="s">"1.0.2-alpah01"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;PrivateAssets&gt;</span>all<span class="nt">&lt;/PrivateAssets&gt;</span>
+  <span class="nt">&lt;IncludeAssets&gt;</span>runtime; build; native; contentfiles; analyzers<span class="nt">&lt;/IncludeAssets&gt;</span>
+<span class="nt">&lt;/PackageReference&gt;</span>
+</code></pre></div></div>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+:ET

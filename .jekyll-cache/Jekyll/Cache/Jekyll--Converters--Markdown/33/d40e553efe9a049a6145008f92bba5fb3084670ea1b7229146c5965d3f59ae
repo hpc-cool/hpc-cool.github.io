@@ -1,0 +1,71 @@
+I"�<p>在 MAC 系统下，如果在运行过程中，应用程序的文件被删除了，那么此时如果应用程序执行了 Process.Start 方法时，将会抛出 Win32Exception 异常</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/13 9:38:41 -->
+
+<p>我写了一个工具 <a href="https://github.com/dotnet-campus/dotnetCampus.UpdateAllDotNetTools">dotnetCampus.UpdateAllDotNetTools</a> 用来更新所有的 dotnet tool 工具。因为 <a href="https://github.com/dotnet-campus/dotnetCampus.UpdateAllDotNetTools">dotnetCampus.UpdateAllDotNetTools</a> 也是一个 dotnet tool 工具，因此也会更新自身</p>
+
+<p>但是有小伙伴告诉我，在使用 <a href="https://github.com/dotnet-campus/dotnetCampus.UpdateAllDotNetTools">dotnetCampus.UpdateAllDotNetTools</a> 更新 <a href="https://github.com/dotnet-campus/dotnetCampus.UpdateAllDotNetTools">dotnetCampus.UpdateAllDotNetTools</a> 到最新版本之后，其他的 dotnet tool 就都不能更新了，将会抛出 Win32Exception 异常，如下图</p>
+
+<!-- ![](image/dotnet core 在 MAC 系统下删除应用程序自己后调 Process Start 方法将会抛出 Win32 异常/dotnet core 在 MAC 系统下删除应用程序自己后调 Process Start 方法将会抛出 Win32 异常0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020813938278627.jpg" alt="" /></p>
+
+<p>在更新 <a href="https://github.com/dotnet-campus/dotnetCampus.UpdateAllDotNetTools">dotnetCampus.UpdateAllDotNetTools</a> 将会删除当前运行的 <a href="https://github.com/dotnet-campus/dotnetCampus.UpdateAllDotNetTools">dotnetCampus.UpdateAllDotNetTools</a> 进程的文件，在 MAC 下是可以删除正在运行的程序的文件，但是在 .NET Core 的 Process.Start 方法里面的逻辑是需要先获取当前进程所在的文件，获取对应的文件夹，用于找到命令</p>
+
+<p>例如我输入了 <code class="language-plaintext highlighter-rouge">dotnet</code> 命令，通过 <code class="language-plaintext highlighter-rouge">Process.Start("dotnet")</code> 那么 .NET 将先尝试在程序所在的文件夹寻找是否存在 “dotnet” 这个程序，如果存在，那么执行。因此第一步就是获取当前进程所在的文件</p>
+
+<p>在 .NET 开源代码里面，可以在 <code class="language-plaintext highlighter-rouge">src\libraries\System.Diagnostics.Process\src\System\Diagnostics\Process.Unix.cs</code> 找到实际的 Process Start 逻辑</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// Starts the process using the supplied start info.</span>
+        <span class="c1">/// With UseShellExecute option, we'll try the shell tools to launch it(e.g. "open fileName")</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="startInfo"&gt;The start info with which to start the process.&lt;/param&gt;</span>
+        <span class="k">private</span> <span class="kt">bool</span> <span class="nf">StartCore</span><span class="p">(</span><span class="n">ProcessStartInfo</span> <span class="n">startInfo</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="c1">// 忽略代码</span>
+                <span class="n">filename</span> <span class="p">=</span> <span class="nf">ResolvePath</span><span class="p">(</span><span class="n">startInfo</span><span class="p">.</span><span class="n">FileName</span><span class="p">);</span>
+                <span class="n">argv</span> <span class="p">=</span> <span class="nf">ParseArgv</span><span class="p">(</span><span class="n">startInfo</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">Directory</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="k">throw</span> <span class="k">new</span> <span class="nf">Win32Exception</span><span class="p">(</span><span class="n">SR</span><span class="p">.</span><span class="n">DirectoryNotValidAsInput</span><span class="p">);</span>
+                <span class="p">}</span>
+
+                <span class="nf">ForkAndExecProcess</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">argv</span><span class="p">,</span> <span class="n">envp</span><span class="p">,</span> <span class="n">cwd</span><span class="p">,</span>
+                    <span class="n">startInfo</span><span class="p">.</span><span class="n">RedirectStandardInput</span><span class="p">,</span> <span class="n">startInfo</span><span class="p">.</span><span class="n">RedirectStandardOutput</span><span class="p">,</span> <span class="n">startInfo</span><span class="p">.</span><span class="n">RedirectStandardError</span><span class="p">,</span>
+                    <span class="n">setCredentials</span><span class="p">,</span> <span class="n">userId</span><span class="p">,</span> <span class="n">groupId</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span>
+                    <span class="k">out</span> <span class="n">stdinFd</span><span class="p">,</span> <span class="k">out</span> <span class="n">stdoutFd</span><span class="p">,</span> <span class="k">out</span> <span class="n">stderrFd</span><span class="p">,</span> <span class="n">usesTerminal</span><span class="p">);</span>
+
+                <span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 ResolvePath 方法将会先尝试获取当前的文件夹，具体的实现将会在 <code class="language-plaintext highlighter-rouge">src\libraries\System.Diagnostics.Process\src\System\Diagnostics\Process.OSX.cs</code> 文件里</p>
+
+<p>在 MAC 系统的代号里面，上古版本就是 OSX 也就是 OSX 就是 MAC 系统，上面这个代码文件就是特别给 MAC 系统使用的</p>
+
+<p>那么获取当前文件用的是什么方法？调用一个和 Windows 的 P/Invoke 方法差不多的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;Gets the path to the current executable, or null if it could not be retrieved.&lt;/summary&gt;</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetExePath</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Interop</span><span class="p">.</span><span class="n">libproc</span><span class="p">.</span><span class="nf">proc_pidpath</span><span class="p">(</span><span class="n">Environment</span><span class="p">.</span><span class="n">ProcessId</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个 <code class="language-plaintext highlighter-rouge">proc_pidpath</code> 是什么方法？这是一个获取传入的进程号拿到对应的文件路径的方法，如果传入的进程号对应的文件被删除了，那么将会抛出 Win32Exception 异常</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>System.ComponentModel.Win32Exception (2): No such file or Directory
+at Interop.libproc.proc_pidpath(Int32 pid)
+at System.Diagnostics.Process.ResolvePath(string filename)
+at System.Diagnostics.Process.StartCore(ProcessStartInfo startInfo)
+at System.Diagnostics.Process.Start()
+</code></pre></div></div>
+
+<p>这就是在 <a href="https://github.com/dotnet-campus/dotnetCampus.UpdateAllDotNetTools/issues/4">Unhandled exception on Mac · Issue #4 · dotnet-campus/dotnetCampus.UpdateAllDotNetTools</a> 的问题</p>
+
+<p>我尝试在 dotnet runtime 修复这个坑 <a href="https://github.com/dotnet/runtime/pull/40748">Ignore the executable file be deleted in Process Start by lindexi · Pull Request #40748 · dotnet/runtime</a></p>
+
+:ET

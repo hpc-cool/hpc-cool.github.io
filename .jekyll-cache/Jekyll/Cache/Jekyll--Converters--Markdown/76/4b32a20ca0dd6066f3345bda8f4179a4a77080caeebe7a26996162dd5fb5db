@@ -1,0 +1,40 @@
+I"<p>我有一个 WPF 应用，这是一个绿色软件，会被用户拷贝这和那的文件夹，我期望在多个文件夹里面打开的进程，在任务栏里面都可以将窗口进行合并。使用 Win32 的 Shell32.dll 提供的 SetCurrentProcessExplicitAppUserModelID 可以显设置应用的 Application User Model ID 从而让在多个不同的路径打开的应用，使用相同的 Id 而在任务栏进行合并窗口</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/29 17:09:57 -->
+
+<!-- 发布 -->
+
+<p>我期望使用 Win32 的 Shell32.dll 提供的 SetCurrentProcessExplicitAppUserModelID 方法，最简单的做法是使用 <a href="https://blog.sdlsj.net">lsj</a> 的 Lsj.Util.Win32 库，在这个库里面已经做了封装</p>
+
+<p>在 csproj 上添加下面代码，用来安装 <a href="https://blog.sdlsj.net">lsj</a> 的 Lsj.Util.Win32 库</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"Lsj.Util.Win32"</span> <span class="na">Version=</span><span class="s">"5.1.0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>在调用 SetCurrentProcessExplicitAppUserModelID 方法有一个要求是需要在应用完全启动之前调用，否则调用无效。传入给 SetCurrentProcessExplicitAppUserModelID 方法的 AppId 如果相同，那么多个进程都会认为是相同的 Application User Model ID 从而可以在任务栏进行合并窗口</p>
+
+<p>实际上 Application User Model ID 能实现的功能还有很多，详细请参阅 <a href="https://docs.microsoft.com/en-us/windows/win32/shell/appids?WT.mc_id=WD-MVP-5003260">Application User Model IDs 官方文档</a></p>
+
+<p>在 WPF 的 App.xaml.cs 的启动方法里面，调用 SetCurrentProcessExplicitAppUserModelID 方法，传入相同的 AppId 值。只需要定义 AppId 作为常量，构建的应用在多个路径进行启动，都能在任务栏里面合并窗口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStartup</span><span class="p">(</span><span class="n">StartupEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Shell32</span><span class="p">.</span><span class="nf">SetCurrentProcessExplicitAppUserModelID</span><span class="p">(</span><span class="n">AppId</span><span class="p">);</span>
+
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnStartup</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">AppId</span> <span class="p">=</span> <span class="s">"lindexi is doubi"</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/0939187ce18c4d9cb69a5a55724b808ca28aab1b/BerekunakeaLearweekacee">github</a> 和 <a href="https://gitee.com/lindexi/lindexi_gd/tree/0939187ce18c4d9cb69a5a55724b808ca28aab1b/BerekunakeaLearweekacee">gitee</a> 欢迎小伙伴访问</p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/api/shobjidl_core/nf-shobjidl_core-setcurrentprocessexplicitappusermodelid?WT.mc_id=WD-MVP-5003260">SetCurrentProcessExplicitAppUserModelID function (shobjidl_core.h) - Win32 apps</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/shell/appids?WT.mc_id=WD-MVP-5003260">Application User Model IDs 官方文档</a></p>
+
+:ET

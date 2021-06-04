@@ -1,0 +1,364 @@
+I"Խ<p>在 win2d 可以通过 CanvasCommandList 定义很多命令，这些命令不是直接渲染到 Canvas 上，而是作为一个缓存。可以将 CanvasCommandList 作为输入，输入到其他的特效或参与其他的渲染。
+特别在用 Win2d 写一个渲染框架的时候，通过 CanvasCommandList 可以实现内部元素容器的偏移和统一的效果</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/9 20:08:04 -->
+
+<!-- csdn -->
+
+<div id="toc"></div>
+
+<!-- 标签：uwp,win2d -->
+
+<p>先安装好 Win2d 的 nuget 如果对于 win2d 的安装有疑问，请看 <a href="https://lindexi.gitee.io/post/win10-uwp-win2d-%E5%85%A5%E9%97%A8-%E7%9C%8B%E8%BF%99%E4%B8%80%E7%AF%87%E5%B0%B1%E5%A4%9F%E4%BA%86.html">win10 uwp win2d 入门 看这一篇就够了</a></p>
+
+<p>在界面加上代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Page</span>
+    <span class="n">x</span><span class="p">:</span><span class="n">Class</span><span class="p">=</span><span class="s">"lindexi.Win2d.MainPage"</span>
+    <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">x</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">local</span><span class="p">=</span><span class="s">"using:NekeJivear"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">d</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">mc</span><span class="p">=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">win2d</span><span class="p">=</span><span class="s">"using:Microsoft.Graphics.Canvas.UI.Xaml"</span>
+    <span class="n">mc</span><span class="p">:</span><span class="n">Ignorable</span><span class="p">=</span><span class="s">"d"</span>
+    <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">win2d</span><span class="p">:</span><span class="n">CanvasControl</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Canvas"</span> <span class="n">Draw</span><span class="p">=</span><span class="s">"Canvas_OnDraw"</span><span class="p">&gt;&lt;/</span><span class="n">win2d</span><span class="p">:</span><span class="n">CanvasControl</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"确定"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Bottom"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<h2 id="直接显示">直接显示</h2>
+
+<p>在后台的代码需要添加两个函数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_OnDraw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在在 <code class="language-plaintext highlighter-rouge">Canvas_OnDraw</code> 尝试使用 CanvasCommandList 在看到代码的时候，大家会发现使用 CanvasCommandList 没有什么特殊的</p>
+
+<p>创建 CanvasCommandList 需要传入 ICanvasResourceCreator 通过 sender 传入就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_OnDraw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+        
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 CanvasCommandList 添加渲染的系列命令的方法是调用 CreateDrawingSession 的方法返回 CanvasDrawingSession 这个值和普通的渲染用到的是相同的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_OnDraw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 clds 里面添加渲染的命令就可以输入到 CanvasCommandList 作为缓存</p>
+
+<p>现在尝试添加一些文字和元素</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="n">CanvasDrawingSession</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">clds</span><span class="p">.</span><span class="nf">DrawText</span><span class="p">(</span><span class="s">"lindexi"</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">),</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromArgb</span><span class="p">(</span><span class="m">0xFF</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>
+                <span class="n">clds</span><span class="p">.</span><span class="nf">DrawRectangle</span><span class="p">(</span><span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">),</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">20</span><span class="p">,</span> <span class="m">15</span><span class="p">)),</span>
+                    <span class="k">new</span> <span class="nf">CanvasSolidColorBrush</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">Colors</span><span class="p">.</span><span class="n">Black</span><span class="p">));</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是如果现在运行软件，是不会在界面看到任何的修改</p>
+
+<p>因为 CanvasCommandList 需要调用 DrawImage 的方法才能画到 win2d 的控件上</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">canvasCommandList</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在运行软件，可以看到下面图片</p>
+
+<!-- ![](image/win2d CanvasCommandList 使用方法/win2d CanvasCommandList 使用方法0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018119193546571" alt="" /></p>
+
+<h2 id="相对移动">相对移动</h2>
+
+<p>如果在写一个渲染的框架，很多的时候会使用容器，容器的元素会相对于容器的坐标，而在容器移动的时候，对里面的元素是无法知道的。所以需要将里面的元素进行总体的移动。</p>
+
+<p>通过 CanvasCommandList 可以很容易做到移动整个容器。</p>
+
+<p>将里面的元素全部渲染到一个 CanvasCommandList 然后通过重载的方法移动 CanvasCommandList 的渲染，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">offset</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">);</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">canvasCommandList</span><span class="p">,</span> <span class="n">offset</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就可以做到将这个 canvasCommandList 移动到 (100,100) 同时缓存在里面的命令也就被移动了 (100,100) 运行代码可以看到下面的图片</p>
+
+<!-- ![](image/win2d CanvasCommandList 使用方法/win2d CanvasCommandList 使用方法1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018119193935518" alt="" /></p>
+
+<h2 id="复用命令">复用命令</h2>
+
+<p>除了可以用来作为元素的移动，还可以作为复用命令，假如有一个元素可以作为组合画出来</p>
+
+<p>那么只需要多次画出的元素输入到 canvasCommandList 然后多次使用 canvasCommandList 也就是复用元素</p>
+
+<p>如在 <a href="https://lindexi.gitee.io/post/win2d-%E7%94%BB%E5%87%BA%E5%A5%BD%E7%9C%8B%E7%9A%84%E5%9B%BE%E5%BD%A2.html">win2d 画出好看的图形</a> 里面就有很多的好看的图形，想要多次画出这些图形，如果进行每次都来坐标的计算，那么这个代码一点也不好</p>
+
+<p>例如我需要画出下面的图片</p>
+
+<!-- ![](image/win2d CanvasCommandList 使用方法/win2d CanvasCommandList 使用方法2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018119194727968" alt="" /></p>
+
+<p>如果不使用 canvasCommandList 需要计算每个元素的坐标，这样的代码看起来不好，于是在使用了之后就可以十分快速使用下面代码画出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_OnDraw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="n">CanvasDrawingSession</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">pointList</span> <span class="p">=</span> <span class="nf">CreateStone</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">),</span> <span class="m">10</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">5</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">canvasGeometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePolygon</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span>
+                    <span class="n">pointList</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">temp</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">temp</span><span class="p">.</span><span class="n">Y</span><span class="p">)).</span><span class="nf">ToArray</span><span class="p">());</span>
+
+                <span class="n">clds</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">canvasGeometry</span><span class="p">,</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromArgb</span><span class="p">(</span><span class="m">255</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualWidth</span> <span class="p">/</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualHeight</span> <span class="p">/</span> <span class="m">100</span><span class="p">;</span> <span class="n">j</span><span class="p">++)</span>
+                    <span class="p">{</span>
+                        <span class="kt">var</span> <span class="n">offset</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">(</span><span class="n">i</span> <span class="p">*</span> <span class="m">100</span><span class="p">,</span> <span class="n">j</span> <span class="p">*</span> <span class="m">100</span><span class="p">);</span>
+                        <span class="n">ds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">canvasCommandList</span><span class="p">,</span> <span class="n">offset</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>这里的 CreateStone 是在 <a href="https://lindexi.gitee.io/post/win2d-%E7%94%BB%E5%87%BA%E5%A5%BD%E7%9C%8B%E7%9A%84%E5%9B%BE%E5%BD%A2.html">win2d 画出好看的图形</a> 写的</p>
+
+<p>所以对于需要重复使用的命令，就不需要使用 <a href="https://lindexi.gitee.io/post/win10-uwp-win2d-%E7%A6%BB%E5%B1%8F%E6%B8%B2%E6%9F%93.html">CanvasRenderTarget</a> 的方法</p>
+
+<h2 id="与-canvasrendertarget-的区别">与 CanvasRenderTarget 的区别</h2>
+
+<p>关于 CanvasRenderTarget 请看 <a href="https://lindexi.gitee.io/post/win10-uwp-win2d-%E7%A6%BB%E5%B1%8F%E6%B8%B2%E6%9F%93.html">win10 uwp win2d 离屏渲染</a> 这个类可以用来不添加到视觉树的时候将命令画在图片上，可以输出为图片</p>
+
+<p>也就是输入的命令实际上就进行渲染，而 CanvasCommandList 只是一个缓存，里面不会进行渲染。</p>
+
+<p>两个类同时都可以作为 Image 的输入，如果只是需要复用某些元素，建议使用 CanvasCommandList 的方法，这样的速度很快</p>
+
+<h2 id="特效">特效</h2>
+
+<p>如果对于很大的元素，如上面画出的元素，需要对整个图片进行特效。</p>
+
+<p>关于特效请看 <a href="https://lindexi.gitee.io/post/win10-uwp-win2d-%E7%89%B9%E6%95%88.html">win10 uwp win2d 特效</a> 这里使用 DirectionalBlurEffect 特效</p>
+
+<p>这个特效可以用来将图片模糊，为了让大家比较容易看到特效，我需要将上面的代码做很小的修改</p>
+
+<p>我将多个元素放在一个 CanvasCommandList 提取代码为一个函数，这个函数就是画出一个元素</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">CanvasCommandList</span> <span class="nf">DrawSaJonairqai</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="n">CanvasDrawingSession</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">pointList</span> <span class="p">=</span> <span class="nf">CreateStone</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">),</span> <span class="m">10</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">5</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">canvasGeometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePolygon</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span>
+                    <span class="n">pointList</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span><span class="n">temp</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">temp</span><span class="p">.</span><span class="n">Y</span><span class="p">)).</span><span class="nf">ToArray</span><span class="p">());</span>
+
+                <span class="n">clds</span><span class="p">.</span><span class="nf">DrawGeometry</span><span class="p">(</span><span class="n">canvasGeometry</span><span class="p">,</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromArgb</span><span class="p">(</span><span class="m">255</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">canvasCommandList</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后将上面的 DrawGeometry 修改为填充</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="k">private</span> <span class="k">static</span> <span class="n">CanvasCommandList</span> <span class="nf">DrawSaJonairqai</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="n">CanvasDrawingSession</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">pointList</span> <span class="p">=</span> <span class="nf">CreateStone</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">),</span> <span class="m">10</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">5</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">canvasGeometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePolygon</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span>
+                    <span class="n">pointList</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span><span class="n">temp</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span><span class="n">temp</span><span class="p">.</span><span class="n">Y</span><span class="p">)).</span><span class="nf">ToArray</span><span class="p">());</span>
+
+                <span class="n">clds</span><span class="p">.</span><span class="nf">FillGeometry</span><span class="p">(</span><span class="n">canvasGeometry</span><span class="p">,</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromArgb</span><span class="p">(</span><span class="m">255</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">canvasCommandList</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>替换渲染到画板为输入到另一个 CanvasCommandList 作为特效输入</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_OnDraw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualWidth</span> <span class="p">/</span> <span class="m">50</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualHeight</span> <span class="p">/</span> <span class="m">50</span><span class="p">;</span> <span class="n">j</span><span class="p">++)</span>
+                    <span class="p">{</span>
+                        <span class="kt">var</span> <span class="n">offset</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">(</span><span class="n">i</span> <span class="p">*</span> <span class="m">50</span><span class="p">,</span> <span class="n">j</span> <span class="p">*</span> <span class="m">50</span><span class="p">);</span>
+                        <span class="n">clds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="nf">DrawSaJonairqai</span><span class="p">(</span><span class="n">sender</span><span class="p">),</span> <span class="n">offset</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>先尝试运行代码，可以看到下面的图片</p>
+
+<!-- ![](image/win2d CanvasCommandList 使用方法/win2d CanvasCommandList 使用方法3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201811920340600" alt="" /></p>
+
+<p>现在添加 DirectionalBlurEffect  特效</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">directionalBlurEffect</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DirectionalBlurEffect</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Source</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">,</span>
+                <span class="n">BlurAmount</span> <span class="p">=</span> <span class="m">3</span><span class="p">,</span>
+            <span class="p">};</span>
+</code></pre></div></div>
+
+<p>将特效渲染到控件，运行代码可以看到下面图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">directionalBlurEffect</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<!-- ![](image/win2d CanvasCommandList 使用方法/win2d CanvasCommandList 使用方法4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20181192073394" alt="" /></p>
+
+<p>所有代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">private</span> <span class="k">void</span> <span class="nf">Canvas_OnDraw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualWidth</span> <span class="p">/</span> <span class="m">50</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualHeight</span> <span class="p">/</span> <span class="m">50</span><span class="p">;</span> <span class="n">j</span><span class="p">++)</span>
+                    <span class="p">{</span>
+                        <span class="kt">var</span> <span class="n">offset</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">(</span><span class="n">i</span> <span class="p">*</span> <span class="m">50</span><span class="p">,</span> <span class="n">j</span> <span class="p">*</span> <span class="m">50</span><span class="p">);</span>
+                        <span class="n">clds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="nf">DrawSaJonairqai</span><span class="p">(</span><span class="n">sender</span><span class="p">),</span> <span class="n">offset</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">directionalBlurEffect</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DirectionalBlurEffect</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Source</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">,</span>
+                <span class="n">BlurAmount</span> <span class="p">=</span> <span class="m">3</span><span class="p">,</span>
+            <span class="p">};</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ds</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">ds</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">directionalBlurEffect</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">CanvasCommandList</span> <span class="nf">DrawSaJonairqai</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">canvasCommandList</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CanvasCommandList</span><span class="p">(</span><span class="n">sender</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="n">CanvasDrawingSession</span> <span class="n">clds</span> <span class="p">=</span> <span class="n">canvasCommandList</span><span class="p">.</span><span class="nf">CreateDrawingSession</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">pointList</span> <span class="p">=</span> <span class="nf">CreateStone</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">),</span> <span class="m">10</span><span class="p">,</span> <span class="m">2</span><span class="p">,</span> <span class="m">5</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">canvasGeometry</span> <span class="p">=</span> <span class="n">CanvasGeometry</span><span class="p">.</span><span class="nf">CreatePolygon</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span>
+                    <span class="n">pointList</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Vector2</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span> <span class="n">temp</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">temp</span><span class="p">.</span><span class="n">Y</span><span class="p">)).</span><span class="nf">ToArray</span><span class="p">());</span>
+
+                <span class="n">clds</span><span class="p">.</span><span class="nf">FillGeometry</span><span class="p">(</span><span class="n">canvasGeometry</span><span class="p">,</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromArgb</span><span class="p">(</span><span class="m">255</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">canvasCommandList</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="n">Point</span><span class="p">[]</span> <span class="nf">CreateStone</span><span class="p">(</span><span class="n">Point</span> <span class="n">center</span><span class="p">,</span> <span class="kt">int</span> <span class="n">outerRadius</span><span class="p">,</span> <span class="kt">int</span> <span class="n">innerRadius</span><span class="p">,</span> <span class="kt">int</span> <span class="n">arms</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">centerX</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">center</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">centerY</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">center</span><span class="p">.</span><span class="n">Y</span><span class="p">;</span>
+            <span class="n">Point</span><span class="p">[]</span> <span class="n">points</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Point</span><span class="p">[</span><span class="n">arms</span> <span class="p">*</span> <span class="m">2</span><span class="p">];</span>
+            <span class="kt">double</span> <span class="n">offset</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">arc</span> <span class="p">=</span> <span class="m">2</span> <span class="p">*</span> <span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">/</span> <span class="n">arms</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">half</span> <span class="p">=</span> <span class="n">arc</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">arms</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">Random</span> <span class="n">randomOuter</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">.</span><span class="n">Ticks</span><span class="p">);</span>
+                <span class="n">outerRadius</span> <span class="p">=</span> <span class="n">outerRadius</span> <span class="p">-</span>
+                              <span class="n">randomOuter</span><span class="p">.</span><span class="nf">Next</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.06</span> <span class="p">*</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">().</span><span class="nf">Next</span><span class="p">(-</span><span class="m">20</span><span class="p">,</span> <span class="m">20</span><span class="p">)</span> <span class="p">/</span> <span class="m">30d</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.08</span><span class="p">));</span>
+                <span class="n">Random</span> <span class="n">randomInner</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">(</span><span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">GetHashCode</span><span class="p">());</span>
+                <span class="n">innerRadius</span> <span class="p">=</span> <span class="n">innerRadius</span> <span class="p">+</span>
+                              <span class="n">randomInner</span><span class="p">.</span><span class="nf">Next</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.02</span> <span class="p">*</span> <span class="k">new</span> <span class="nf">Random</span><span class="p">().</span><span class="nf">Next</span><span class="p">(-</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">)</span> <span class="p">/</span> <span class="m">150d</span><span class="p">),</span>
+                                  <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">*</span> <span class="m">0.08</span><span class="p">));</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">innerRadius</span> <span class="p">&gt;</span> <span class="n">outerRadius</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">int</span> <span class="n">temp</span> <span class="p">=</span> <span class="n">outerRadius</span><span class="p">;</span>
+                    <span class="n">outerRadius</span> <span class="p">=</span> <span class="n">innerRadius</span><span class="p">;</span>
+                    <span class="n">innerRadius</span> <span class="p">=</span> <span class="n">temp</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="kt">double</span> <span class="n">angleTemp</span> <span class="p">=</span> <span class="n">arc</span> <span class="p">*</span> <span class="n">randomInner</span><span class="p">.</span><span class="nf">Next</span><span class="p">(-</span><span class="m">5</span><span class="p">,</span> <span class="m">5</span><span class="p">)</span> <span class="p">/</span> <span class="m">10d</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">angle</span> <span class="p">=</span> <span class="n">i</span> <span class="p">*</span> <span class="n">arc</span><span class="p">;</span>
+                <span class="n">angle</span> <span class="p">+=</span> <span class="n">angleTemp</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span><span class="p">].</span><span class="n">X</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerX</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="n">angle</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">outerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span><span class="p">].</span><span class="n">Y</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerY</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="n">angle</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">outerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span> <span class="p">+</span> <span class="m">1</span><span class="p">].</span><span class="n">X</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerX</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Cos</span><span class="p">(</span><span class="n">angle</span> <span class="p">+</span> <span class="n">half</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">innerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+                <span class="n">points</span><span class="p">[</span><span class="n">i</span> <span class="p">*</span> <span class="m">2</span> <span class="p">+</span> <span class="m">1</span><span class="p">].</span><span class="n">Y</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="p">(</span><span class="n">centerY</span> <span class="p">+</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Sin</span><span class="p">(</span><span class="n">angle</span> <span class="p">+</span> <span class="n">half</span> <span class="p">-</span> <span class="n">offset</span><span class="p">)</span> <span class="p">*</span> <span class="n">innerRadius</span><span class="p">)</span> <span class="p">+</span> <span class="m">20</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">points</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

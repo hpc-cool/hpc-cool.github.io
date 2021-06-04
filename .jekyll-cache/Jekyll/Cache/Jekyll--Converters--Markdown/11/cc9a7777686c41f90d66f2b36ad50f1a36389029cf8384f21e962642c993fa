@@ -1,0 +1,69 @@
+I"�<p>和很多序列化库一样，可以通过 MessagePack 序列化和反序列化，和 json 相比这个库提供了二进制的序列化，序列化之后的内容长度比 json 小很多</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>这个库能序列的内容不多，大多数时候建议使用的序列的类都是只有基础的 int 和 bool 字符串等，最好不要存在复杂的类</p>
+
+<p>使用 MessagePack 的好处只是序列化出来的内容的长度小，但是从性能等方面，其实和 Json 差别不大，在序列化简单的类的时候，可以看到 MessagePack 的序列化速度会比较快。在序列化比较大的类如果序列化到文件，那么因为文件读写的性能，可以看到 MessagePack 的性能明显比 json 好。</p>
+
+<p>在使用 MessagePack 之前需要通过 Nuget 安装</p>
+
+<p>安装方法是在 Nuget 输入 MessagePack 安装</p>
+
+<p>下面写一个简单的方法，将会对这个类序列化</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">MessagePackObject</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">Key</span><span class="p">(</span><span class="m">0</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Lindexi</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在主函数创建这个类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Foo</span> <span class="p">{</span> <span class="n">Lindexi</span> <span class="p">=</span> <span class="s">"林德熙是逗比"</span> <span class="p">};</span>
+
+</code></pre></div></div>
+
+<p>通过 MessagePackSerializer.Serialize 方法可以将一个类序列化为 byte 数组，或序列化到 stream 也就是可以直接序列化到文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="n">MessagePackSerializer</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">foo</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>如果想要看 byteList 的内容，可以使用下面方法将 byte 数组转字符串</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="nf">ByteListToString</span><span class="p">(</span><span class="n">byteList</span><span class="p">));</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">ByteListToString</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">byteList</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Concat</span><span class="p">(</span><span class="n">byteList</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"x2"</span><span class="p">)));</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>使用下面代码可以反序列化</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">foo</span> <span class="p">=</span> <span class="n">MessagePackSerializer</span><span class="p">.</span><span class="n">Deserialize</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;(</span><span class="n">byteList</span><span class="p">);</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">foo</span><span class="p">.</span><span class="n">Lindexi</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>我尝试运行代码，可以看到下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="m">91</span><span class="n">b2e69e97e5beb7e78699e698afe98097e6af94</span>
+<span class="err">林德熙是逗比</span>
+</code></pre></div></div>
+
+<p>前面是将 Foo 序列化的二进制</p>
+
+<p>如果在使用的时候发现下面代码，那么很多时候都是因为没有在类上面添加特性，需要修改类为公开的，然后在类上面添加 <code class="language-plaintext highlighter-rouge">MessagePackObject</code> 特性，然后在每个公开属性上面添加 <code class="language-plaintext highlighter-rouge">Key</code> 特性，同时输入这个属性是在哪个顺序</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MessagePack</span><span class="p">.</span><span class="n">FormatterNotRegisteredException</span><span class="p">:</span><span class="err">“</span><span class="n">KouhoofamerNeejirstistedrea</span><span class="p">.</span><span class="n">Foo</span> <span class="k">is</span> <span class="n">not</span> <span class="n">registered</span> <span class="k">in</span> <span class="k">this</span> <span class="n">resolver</span><span class="p">.</span> <span class="n">resolver</span><span class="p">:</span><span class="n">StandardResolver</span><span class="err">”</span>
+</code></pre></div></div>
+
+<p>github：<a href="https://github.com/msgpack/msgpack-cli">msgpack/msgpack-cli</a></p>
+
+:ET

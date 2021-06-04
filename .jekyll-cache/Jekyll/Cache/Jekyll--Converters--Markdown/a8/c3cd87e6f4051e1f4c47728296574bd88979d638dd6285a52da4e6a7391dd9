@@ -1,0 +1,453 @@
+I"��<p>本文告诉大家如何使用序列类，以及序列时可以用到的特性，特性的作用和一些容易被问的问题</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:59:02 -->
+
+<div id="toc"></div>
+
+<p>最近我在把项目文件修改为 VisualStudio 2017 的格式，请看<a href="https://blog.lindexi.com/post/%E4%BB%8E%E4%BB%A5%E5%89%8D%E7%9A%84%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F%E8%BF%81%E7%A7%BB%E5%88%B0-VS2017-%E6%96%B0%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F.html">从以前的项目格式迁移到 VS2017 新项目格式</a>，这时虽然可以自动打包，但是我还是需要生成 Nuspec 文件，所以本文就是记录我在从 csproj 文件创建 nuspec 文件遇到的转换</p>
+
+<p>实际就是做<a href="https://walterlv.github.io/post/the-simplest-way-to-pack-a-source-code-nuget-package.html">将 .NET Core 项目打一个最简单的 NuGet 源码包，安装此包就像直接把源码放进项目一样 - walterlv</a>，把项目作为源代码打包</p>
+
+<h2 id="保存序列类">保存序列类</h2>
+
+<p>例如有类 NuspecMetadata ，需要把这个类转换为 xml 字符串，可以使用下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecMetadata</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>先创建 StringBuilder 使用 XmlWriter 写入，使用 XmlSerializer 序列</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">nuspecMetadata</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">NuspecMetadata</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Id</span> <span class="p">=</span> <span class="s">"lindexi.MVVM.Framework"</span>
+            <span class="p">};</span>
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">xmlWriter</span> <span class="p">=</span> <span class="n">XmlWriter</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">xmlSerializer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializer</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">NuspecMetadata</span><span class="p">));</span>
+                <span class="n">xmlSerializer</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">xmlWriter</span><span class="p">,</span> <span class="n">nuspecMetadata</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时使用 <code class="language-plaintext highlighter-rouge">str.ToString()</code> 可以看到下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;NuspecMetadata</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xmlns:xsd=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="nt">&gt;&lt;Id&gt;</span>lindexi.MVVM.Framework<span class="nt">&lt;/Id&gt;&lt;/NuspecMetadata&gt;</span>
+</code></pre></div></div>
+
+<p>这就是序列类的方法，现在看起来和 nuspec 文件还不一样，所以下面告诉大家如何修改</p>
+
+<h2 id="设置属性别名">设置属性别名</h2>
+
+<p>可以看到 nuspec 文件的属性都是使用小写，如</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;metadata&gt;</span>
+     <span class="c">&lt;!-- The unique identifier for the package. This is the package name that is shown
+     when packages are listed using the Package Manager Console. These are also used when
+     installing a package using the Install-Package command within the Package Manager
+     Console. Package IDs may not contain any spaces or characters that are invalid in
+     an URL. In general, they follow the same rules as .NET namespaces do. So Foo.Bar
+     is a valid ID, Foo! and Foo Bar are not. --&gt;</span>
+    <span class="nt">&lt;id&gt;</span>lindexi.MVVM.Framework<span class="nt">&lt;/id&gt;</span>
+  <span class="nt">&lt;/metadata&gt;</span>
+</code></pre></div></div>
+
+<p>如果创建 <code class="language-plaintext highlighter-rouge">metadata</code> 类，那么属性 id 需要使用大写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecMetadata</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时如果序列NuspecMetadata就会发现创建的 id 是大写的<code class="language-plaintext highlighter-rouge">Id</code>，这不是需要的</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;NuspecMetadata</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xmlns:xsd=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;Id&gt;</span>lindexi.MVVM.Framework<span class="nt">&lt;/Id&gt;</span>
+<span class="nt">&lt;/NuspecMetadata&gt;</span>
+</code></pre></div></div>
+
+<p>在 id 属性添加 <code class="language-plaintext highlighter-rouge">XmlElement</code> 可以告诉序列的元素叫什么，而不是直接从属性名作为元素</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecMetadata</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlElement</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为添加<code class="language-plaintext highlighter-rouge">[XmlElement("id")]</code> 现在 xml 知道这个属性叫 <code class="language-plaintext highlighter-rouge">id</code> 所以这时运行上面的转换代码，可以看到下面的代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;NuspecMetadata</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xmlns:xsd=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="nt">&gt;&lt;id&gt;</span>lindexi.MVVM.Framework<span class="nt">&lt;/id&gt;&lt;/NuspecMetadata&gt;</span>
+</code></pre></div></div>
+
+<p>现在所有的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">nuspecMetadata</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">NuspecMetadata</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Id</span> <span class="p">=</span> <span class="s">"lindexi.MVVM.Framework"</span>
+            <span class="p">};</span>
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">xmlWriter</span> <span class="p">=</span> <span class="n">XmlWriter</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">xmlSerializer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializer</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">NuspecMetadata</span><span class="p">));</span>
+                <span class="n">xmlSerializer</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">xmlWriter</span><span class="p">,</span> <span class="n">nuspecMetadata</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">rawceeyopereSuwhisa</span> <span class="p">=</span> <span class="n">str</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">rawceeyopereSuwhisa</span><span class="p">);</span>
+        <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecMetadata</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlElement</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="设置属性作为-xmlattribute">设置属性作为 XmlAttribute</h2>
+
+<p>在 nuspec 文件存在一些属性是需要做特性，如</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">dependency</span> <span class="n">id</span><span class="p">=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="n">version</span><span class="p">=</span><span class="s">"[1.1.2,)"</span><span class="p">&gt;&lt;/</span><span class="n">dependency</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>那么先定义 dependency 类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecDependency</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Version</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时使用下面代码序列 NuspecDependency 可以看到 id 和版本都作为元素而不是特性，这和上面代码的不相同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecDependency</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Version</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 其他代码</span>
+
+             <span class="kt">var</span> <span class="n">nuspecDependency</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">NuspecDependency</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Id</span> <span class="p">=</span> <span class="s">"lindexi.wpf.Framework"</span><span class="p">,</span>
+                <span class="n">Version</span> <span class="p">=</span> <span class="s">"[1.1.2,)"</span>
+            <span class="p">};</span>
+
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">xmlWriter</span> <span class="p">=</span> <span class="n">XmlWriter</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">xmlSerializer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializer</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">NuspecDependency</span><span class="p">));</span>
+                <span class="n">xmlSerializer</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">xmlWriter</span><span class="p">,</span> <span class="n">nuspecDependency</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时运行代码，可以看到 str 的值是下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;NuspecDependency</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xmlns:xsd=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="nt">&gt;&lt;Id&gt;</span>lindexi.wpf.Framework<span class="nt">&lt;/Id&gt;&lt;Version&gt;</span>[1.1.2,)<span class="nt">&lt;/Version&gt;&lt;/NuspecDependency&gt;</span>
+</code></pre></div></div>
+
+<p>可以使用 XmlAttribute 告诉 xml 这个属性是作为特性，而且可以告诉 xml 属性作为特性叫什么，而不是拿属性的名作为特性</p>
+
+<p>修改上面的代码为下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecDependency</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="n">attributeName</span><span class="p">:</span> <span class="s">"version"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Version</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>添加特性 XmlAttribute 就可以告诉 xml 这个属性作为特性，现在运行上面代码，可以看到 str 的值和需要的一样</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;NuspecDependency</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xmlns:xsd=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span> <span class="na">id=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="na">version=</span><span class="s">"[1.1.2,)"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<h2 id="设置类别名">设置类别名</h2>
+
+<p>从上面代码可以看到 NuspecDependency 的类和需要的 dependency 不相同</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      &lt;dependency id="lindexi.wpf.Framework" version="[1.1.2,)"&gt;&lt;/dependency&gt;
+
+</code></pre></div></div>
+
+<p>可以使用 XmlType 告诉 xml 这个类序列叫什么而不是直接使用类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">XmlType</span><span class="p">(</span><span class="s">"dependency"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecDependency</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="n">attributeName</span><span class="p">:</span> <span class="s">"version"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Version</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个代码主要是添加<code class="language-plaintext highlighter-rouge">[XmlType("dependency")]</code>告诉 xml 把 NuspecDependency 在序列使用<code class="language-plaintext highlighter-rouge">dependency</code> 尝试运行上面代码，现在的 str 的值就把 NuspecDependency 修改</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="p">=</span><span class="s">"1.0"</span> <span class="n">encoding</span><span class="p">=</span><span class="s">"utf-16"</span><span class="p">?&gt;&lt;</span><span class="n">dependency</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">xsi</span><span class="p">=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">xsd</span><span class="p">=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span> <span class="n">id</span><span class="p">=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="n">version</span><span class="p">=</span><span class="s">"[1.1.2,)"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<h2 id="设置列表元素别名">设置列表元素别名</h2>
+
+<p>但是 dependency 的使用是这样使用</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;dependencies&gt;</span>
+      <span class="nt">&lt;dependency</span> <span class="na">id=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="na">version=</span><span class="s">"[1.1.2,)"</span><span class="nt">&gt;&lt;/dependency&gt;</span>
+    <span class="nt">&lt;/dependencies&gt;</span>
+</code></pre></div></div>
+
+<p>所以在 NuspecMetadata 类添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;</span> <span class="n">Dependencies</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;();</span>
+
+</code></pre></div></div>
+
+<p>所有代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecMetadata</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlElement</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;</span> <span class="n">Dependencies</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;();</span>
+    <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">nuspecMetadata</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">NuspecMetadata</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Id</span> <span class="p">=</span> <span class="s">"lindexi.MVVM.Framework"</span><span class="p">,</span>
+                <span class="n">Dependencies</span> <span class="p">=</span>
+                <span class="p">{</span>
+                    <span class="k">new</span> <span class="nf">NuspecDependency</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">Id</span> <span class="p">=</span> <span class="s">"lindexi.wpf.Framework"</span><span class="p">,</span>
+                        <span class="n">Version</span> <span class="p">=</span> <span class="s">"[1.1.2,)"</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">};</span>
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">xmlWriter</span> <span class="p">=</span> <span class="n">XmlWriter</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">xmlSerializer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializer</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">NuspecMetadata</span><span class="p">));</span>
+                <span class="n">xmlSerializer</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">xmlWriter</span><span class="p">,</span> <span class="n">nuspecMetadata</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">rawceeyopereSuwhisa</span> <span class="p">=</span> <span class="n">str</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>这时尝试运行，请看 str 的值</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;NuspecMetadata</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xmlns:xsd=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="nt">&gt;&lt;id&gt;</span>lindexi.MVVM.Framework<span class="nt">&lt;/id&gt;&lt;Dependencies&gt;&lt;dependency</span> <span class="na">id=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="na">version=</span><span class="s">"[1.1.2,)"</span> <span class="nt">/&gt;&lt;/Dependencies&gt;&lt;/NuspecMetadata&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到 Dependencies 的输出还是有些不相同</p>
+
+<p>这是代码的输出</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Dependencies&gt;&lt;dependency</span> <span class="na">id=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="na">version=</span><span class="s">"[1.1.2,)"</span> <span class="nt">/&gt;&lt;/Dependencies&gt;</span>
+</code></pre></div></div>
+
+<p>这是需要的文件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;dependencies&gt;</span>
+      <span class="nt">&lt;dependency</span> <span class="na">id=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="na">version=</span><span class="s">"[1.1.2,)"</span><span class="nt">&gt;&lt;/dependency&gt;</span>
+    <span class="nt">&lt;/dependencies&gt;</span>
+</code></pre></div></div>
+
+<p>对比一下可以发现属性的名不对</p>
+
+<p>在 xml 对于列表或数组的序列是需要做特殊处理，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">XmlArray</span><span class="p">(</span><span class="n">elementName</span><span class="p">:</span> <span class="s">"dependencies"</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">XmlArrayItem</span><span class="p">(</span><span class="n">elementName</span><span class="p">:</span> <span class="s">"dependency"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;</span> <span class="n">Dependencies</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>这时运行代码可以看到 str 的值是符合</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="p">=</span><span class="s">"1.0"</span> <span class="n">encoding</span><span class="p">=</span><span class="s">"utf-16"</span><span class="p">?&gt;&lt;</span><span class="n">NuspecMetadata</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">xsi</span><span class="p">=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">xsd</span><span class="p">=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="p">&gt;&lt;</span><span class="n">id</span><span class="p">&gt;</span><span class="n">lindexi</span><span class="p">.</span><span class="n">MVVM</span><span class="p">.</span><span class="n">Framework</span><span class="p">&lt;/</span><span class="n">id</span><span class="p">&gt;&lt;</span><span class="n">dependencies</span><span class="p">&gt;&lt;</span><span class="n">dependency</span> <span class="n">id</span><span class="p">=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="n">version</span><span class="p">=</span><span class="s">"[1.1.2,)"</span> <span class="p">/&gt;&lt;/</span><span class="n">dependencies</span><span class="p">&gt;&lt;/</span><span class="n">NuspecMetadata</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>添加的代码是<code class="language-plaintext highlighter-rouge">[XmlArray(elementName: "dependencies")]</code>告诉这是一个列表，使用<code class="language-plaintext highlighter-rouge">[XmlArrayItem(elementName: "dependency")]</code>告诉每一列叫什么</p>
+
+<p>因为已经设置了 NuspecDependency 的名，所以设置 XmlArrayItem 没看出效果，尝试把 XmlArrayItem 修改为</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">XmlArrayItem</span><span class="p">(</span><span class="n">elementName</span><span class="p">:</span> <span class="s">"doubi"</span><span class="p">)]</span>
+
+</code></pre></div></div>
+
+<p>这时运行可以看到把 dependency 修改为 doubi ，请看代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;metadata</span> <span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="na">xmlns:xsd=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span><span class="nt">&gt;&lt;id&gt;</span>lindexi.MVVM.Framework<span class="nt">&lt;/id&gt;&lt;dependencies&gt;&lt;doubi</span> <span class="na">id=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="na">version=</span><span class="s">"[1.1.2,)"</span> <span class="nt">/&gt;&lt;/dependencies&gt;&lt;/metadata&gt;</span>
+</code></pre></div></div>
+
+<p>这是原来的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">dependencies</span><span class="p">&gt;&lt;</span><span class="n">dependency</span> <span class="n">id</span><span class="p">=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="n">version</span><span class="p">=</span><span class="s">"[1.1.2,)"</span> <span class="p">/&gt;&lt;/</span><span class="n">dependencies</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>修改后的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">dependencies</span><span class="p">&gt;&lt;</span><span class="n">doubi</span> <span class="n">id</span><span class="p">=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="n">version</span><span class="p">=</span><span class="s">"[1.1.2,)"</span> <span class="p">/&gt;&lt;/</span><span class="n">dependencies</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>所有代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="p">[</span><span class="nf">XmlType</span><span class="p">(</span><span class="n">typeName</span><span class="p">:</span> <span class="s">"metadata"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecMetadata</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlElement</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">XmlArray</span><span class="p">(</span><span class="n">elementName</span><span class="p">:</span> <span class="s">"dependencies"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;</span> <span class="n">Dependencies</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;();</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="nf">XmlType</span><span class="p">(</span><span class="s">"dependency"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecDependency</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="n">attributeName</span><span class="p">:</span> <span class="s">"version"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Version</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="去掉命名空间">去掉命名空间</h2>
+
+<p>默认保存的 xml 的字符串，可以看到如下面的命名空间</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xmlns</span><span class="p">:</span><span class="n">xsi</span><span class="p">=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">xsd</span><span class="p">=</span><span class="s">"http://www.w3.org/2001/XMLSchema"</span>
+</code></pre></div></div>
+
+<p>那么如何去掉<code class="language-plaintext highlighter-rouge">xmlns:xsi</code>命名空间</p>
+
+<p>最简单的方法是创建 <code class="language-plaintext highlighter-rouge">XmlSerializerNamespaces</code> 添加空白的命名空间</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">XmlSerializerNamespaces</span> <span class="n">ns</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializerNamespaces</span><span class="p">();</span>
+            <span class="n">ns</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">""</span><span class="p">,</span> <span class="s">""</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在序列类时传入</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">xmlSerializer</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">xmlWriter</span><span class="p">,</span> <span class="n">nuspecMetadata</span><span class="p">,</span> <span class="n">ns</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>所有代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="kt">var</span> <span class="n">nuspecMetadata</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">NuspecMetadata</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Id</span> <span class="p">=</span> <span class="s">"lindexi.MVVM.Framework"</span><span class="p">,</span>
+                <span class="n">Dependencies</span> <span class="p">=</span>
+                <span class="p">{</span>
+                    <span class="k">new</span> <span class="nf">NuspecDependency</span><span class="p">()</span>
+                    <span class="p">{</span>
+                        <span class="n">Id</span> <span class="p">=</span> <span class="s">"lindexi.wpf.Framework"</span><span class="p">,</span>
+                        <span class="n">Version</span> <span class="p">=</span> <span class="s">"[1.1.2,)"</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">};</span>
+
+            <span class="kt">var</span> <span class="n">ns</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializerNamespaces</span><span class="p">();</span>
+            <span class="n">ns</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">""</span><span class="p">,</span> <span class="s">""</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">xmlWriter</span> <span class="p">=</span> <span class="n">XmlWriter</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">str</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">xmlSerializer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializer</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">NuspecMetadata</span><span class="p">));</span>
+                <span class="n">xmlSerializer</span><span class="p">.</span><span class="nf">Serialize</span><span class="p">(</span><span class="n">xmlWriter</span><span class="p">,</span> <span class="n">nuspecMetadata</span><span class="p">,</span> <span class="n">ns</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">rawceeyopereSuwhisa</span> <span class="p">=</span> <span class="n">str</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">rawceeyopereSuwhisa</span><span class="p">);</span>
+
+    <span class="p">[</span><span class="nf">XmlType</span><span class="p">(</span><span class="n">typeName</span><span class="p">:</span> <span class="s">"metadata"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecMetadata</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlElement</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">XmlArray</span><span class="p">(</span><span class="n">elementName</span><span class="p">:</span> <span class="s">"dependencies"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;</span> <span class="n">Dependencies</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">NuspecDependency</span><span class="p">&gt;();</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="nf">XmlType</span><span class="p">(</span><span class="s">"dependency"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">NuspecDependency</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="s">"id"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="p">[</span><span class="nf">XmlAttribute</span><span class="p">(</span><span class="n">attributeName</span><span class="p">:</span> <span class="s">"version"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Version</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>尝试运行上面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-16"?&gt;</span><span class="nt">&lt;metadata&gt;&lt;id&gt;</span>lindexi.MVVM.Framework<span class="nt">&lt;/id&gt;&lt;dependencies&gt;&lt;dependency</span> <span class="na">id=</span><span class="s">"lindexi.wpf.Framework"</span> <span class="na">version=</span><span class="s">"[1.1.2,)"</span> <span class="nt">/&gt;&lt;/dependencies&gt;&lt;/metadata&gt;</span>
+</code></pre></div></div>
+
+<h2 id="找不到文件异常">找不到文件异常</h2>
+
+<p>在保存文件的构造函数 XmlSerializer 如果在 dotnet framework 4.5 以上，那么会出现异常</p>
+
+<p>System.IO.FileNotFoundException</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">FileNotFoundException</span> <span class="n">occurred</span>
+  <span class="n">Message</span><span class="p">=</span><span class="s">"Could not load file or assembly '[Containing Assembly of MyType].XmlSerializers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null' or one of its dependencies. The system cannot find the file specified."</span>
+  <span class="n">Source</span><span class="p">=</span><span class="s">"mscorlib"</span>
+  <span class="n">FileName</span><span class="p">=</span><span class="s">"[Containing Assembly of MyType].XmlSerializers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"</span>
+  <span class="n">FusionLog</span><span class="p">=</span><span class="s">""</span>
+  <span class="n">StackTrace</span><span class="p">:</span>
+       <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Reflection</span><span class="p">.</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">_nLoad</span><span class="p">(</span><span class="n">AssemblyName</span> <span class="n">fileName</span><span class="p">,</span> <span class="n">String</span> <span class="n">codeBase</span><span class="p">,</span> <span class="n">Evidence</span> <span class="n">assemblySecurity</span><span class="p">,</span> <span class="n">Assembly</span> <span class="n">locationHint</span><span class="p">,</span> <span class="n">StackCrawlMark</span><span class="p">&amp;</span> <span class="n">stackMark</span><span class="p">,</span> <span class="n">Boolean</span> <span class="n">throwOnFileNotFound</span><span class="p">,</span> <span class="n">Boolean</span> <span class="n">forIntrospection</span><span class="p">)</span>
+       <span class="n">at</span> <span class="n">System</span><span class="p">.</span><span class="n">Reflection</span><span class="p">.</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">nLoad</span><span class="p">(</span><span class="n">AssemblyName</span> <span class="n">fileName</span><span class="p">,</span> <span class="n">String</span> <span class="n">codeBase</span><span class="p">,</span> <span class="n">Evidence</span> <span class="n">assemblySecurity</span><span class="p">,</span> <span class="n">Assembly</span> <span class="n">locationHint</span><span class="p">,</span> <span class="n">StackCrawlMark</span><span class="p">&amp;</span> <span class="n">stackMark</span><span class="p">,</span> <span class="n">Boolean</span> <span class="n">throwOnFileNotFound</span><span class="p">,</span> <span class="n">Boolean</span> <span class="n">forIntrospection</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>这是因为垃圾微软会先找程序集的 XmlSerializers ，也就是[xx程序集].XmlSerializers.dll 从这个程序集可能包含如何序列类的代码，这样可以提高性能。如果这个dll 没有生成，那么就会出现这个异常。默认是没有生成这个类。这里出现了异常，没关系，垃圾微软会在构造函数拿到这个异常，在运行时生成序列的代码。</p>
+
+<p>所以只需要不管这个异常就可以</p>
+
+<h2 id="xmlignore">XmlIgnore</h2>
+
+<p>这个特性表示类的某个属性需要在序列忽略，也就是不使用这个属性</p>
+
+<p>在 xml 序列忽略某个属性就需要在这个属性设置 <code class="language-plaintext highlighter-rouge">[XmlIgnore]</code> ，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">XmlIgnore</span><span class="p">]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">KawbishumaVaslufeeyairrea</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="s">"lindexi.github"</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>参见：</p>
+
+<p><a href="https://walterlv.github.io/post/known-nuget-properties-in-csproj.html">项目文件中的已知 NuGet 属性（使用这些属性，创建 NuGet 包就可以不需要 nuspec 文件啦） - walterlv</a></p>
+
+<p><a href="https://walterlv.github.io/post/introduce-new-style-csproj-into-net-framework.html">将 WPF、UWP 以及其他各种类型的旧样式的 csproj 文件迁移成新样式的 csproj 文件 - walterlv</a></p>
+
+<p><a href="https://stackoverflow.com/questions/1127431/xmlserializer-giving-filenotfoundexception-at-constructor">c# - XmlSerializer giving FileNotFoundException at constructor - Stack Overflow</a></p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201810199941411" alt="" /></p>
+
+:ET

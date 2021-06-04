@@ -1,0 +1,65 @@
+I"�<p>在分析 DUMP 进行自动化调试的时候，很多时候只能通过 WinDbg 和命令行调用的方式，这样的方式很难做到灵活。同时编写各个命令行的难度也特别高，这在需要对命令行的输出进行不同的分支的判断时候，难度会更大。于是找到了 Microsoft.Diagnostics.Runtime 库，这个库提供了简单的方式，可以在 C# 里面用代码写分析 DUMP 的代码</p>
+
+<!--more-->
+
+<!-- CreateTime:4/25/2020 9:05:05 AM -->
+<!-- 标签：dotnet,调试,Diagnostics,DUMP,C# -->
+
+<p>需要先在 NuGet 上添加一个私有的源才能使用这个库，添加私有源的方式请看 <a href="https://blog.lindexi.com/post/VisualStudio-%E7%BB%99%E9%A1%B9%E7%9B%AE%E6%B7%BB%E5%8A%A0%E7%89%B9%E6%AE%8A%E7%9A%84-Nuget-%E7%9A%84%E9%93%BE%E6%8E%A5.html">VisualStudio 给项目添加特殊的 Nuget 的链接</a></p>
+
+<p>本文这里就添加了<a href="https://github.com/lindexi/lindexi_gd/tree/a8dd96d05dd9641fa68e1aa3ed7ab9a4141feea6/BerjearnearheliCallrachurjallhelur/NuGet.config">NuGet.config</a>文件，详细内容请看<a href="https://github.com/lindexi/lindexi_gd/tree/a8dd96d05dd9641fa68e1aa3ed7ab9a4141feea6/BerjearnearheliCallrachurjallhelur">github</a>代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
+<span class="c">&lt;!-- This file should be kept in sync across https://www.github.com/dotnet/wpf and dotnet-wpf-int repos. --&gt;</span>
+<span class="nt">&lt;configuration&gt;</span>
+  <span class="nt">&lt;packageSources&gt;</span>
+    <span class="nt">&lt;clear</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;add</span> <span class="na">key=</span><span class="s">"dotnet-eng"</span> <span class="na">value=</span><span class="s">"https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-eng/nuget/v3/index.json"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;add</span> <span class="na">key=</span><span class="s">"dotnet5"</span> <span class="na">value=</span><span class="s">"https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet5/nuget/v3/index.json"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;add</span> <span class="na">key=</span><span class="s">"dotnet5-transport"</span> <span class="na">value=</span><span class="s">"https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet5-transport/nuget/v3/index.json"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;add</span> <span class="na">key=</span><span class="s">"nuget.org"</span> <span class="na">value=</span><span class="s">"https://api.nuget.org/v3/index.json"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;add</span> <span class="na">key=</span><span class="s">"dotnet-tools"</span> <span class="na">value=</span><span class="s">"https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/packageSources&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre></div></div>
+
+<p>右击项目管理 NuGet 然后输入 Microsoft.Diagnostics.Runtime 然后切换到 dotnet-tools 源</p>
+
+<p>找到一个有趣的项目，让他跑起来，然后炸掉他，这样就能拿到一个 DUMP 文件了。当然不炸掉他也可以，在任务管理器右击创建转储文件</p>
+
+<p>假设放在 <code class="language-plaintext highlighter-rouge">f:\lindexi\test\dotnet.exe.52348.dmp</code> 文件，可以使用下面代码进行分析</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">using</span> <span class="p">(</span><span class="n">DataTarget</span> <span class="n">dataTarget</span> <span class="p">=</span> <span class="n">DataTarget</span><span class="p">.</span><span class="nf">LoadCrashDump</span><span class="p">(</span><span class="s">@"f:\lindexi\test\dotnet.exe.52348.dmp"</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>此时就可以拿到 dataTarget 的 Clr 版本，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>               <span class="k">foreach</span> <span class="p">(</span><span class="n">ClrInfo</span> <span class="n">version</span> <span class="k">in</span> <span class="n">dataTarget</span><span class="p">.</span><span class="n">ClrVersions</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Found CLR Version: "</span> <span class="p">+</span> <span class="n">version</span><span class="p">.</span><span class="n">Version</span><span class="p">);</span>
+
+                    <span class="c1">// This is the data needed to request the dac from the symbol server:</span>
+                    <span class="n">ModuleInfo</span> <span class="n">moduleInfo</span> <span class="p">=</span> <span class="n">version</span><span class="p">.</span><span class="n">ModuleInfo</span><span class="p">;</span>
+
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Filesize:  {0:X}"</span><span class="p">,</span> <span class="n">moduleInfo</span><span class="p">.</span><span class="n">IndexFileSize</span><span class="p">);</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Timestamp: {0:X}"</span><span class="p">,</span> <span class="n">moduleInfo</span><span class="p">.</span><span class="n">IndexTimeStamp</span><span class="p">);</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Dac File:  {0}"</span><span class="p">,</span> <span class="n">moduleInfo</span><span class="p">.</span><span class="n">FileName</span><span class="p">);</span>
+
+                    <span class="c1">// If we just happen to have the correct dac file installed on the machine,</span>
+                    <span class="c1">// the "LocalMatchingDac" property will return its location on disk:</span>
+                    <span class="kt">string</span> <span class="n">dacLocation</span> <span class="p">=</span> <span class="n">version</span><span class="p">.</span><span class="n">LocalMatchingDac</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(!</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">dacLocation</span><span class="p">))</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Local dac location: "</span> <span class="p">+</span> <span class="n">dacLocation</span><span class="p">);</span>
+
+                    <span class="c1">// You may also download the dac from the symbol server, which is covered</span>
+                    <span class="c1">// in a later section of this tutorial.</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>更多的方法就请小伙伴自己去找找 API 了</p>
+
+<p>本文只是一个简单的入门的博客，告诉大家有这个技术，因为这方向的调试技术需要涉及的技术特别多，也不是本渣能一篇博客能说明白的</p>
+
+<p>本文代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/a8dd96d05dd9641fa68e1aa3ed7ab9a4141feea6/BerjearnearheliCallrachurjallhelur">github</a>欢迎小伙伴访问</p>
+
+:ET

@@ -1,0 +1,114 @@
+I"k<p>本文告诉大家如何在 ps 脚本使用 C# 代码。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/27 16:20:04 -->
+
+<!-- 标签：C#，Powershell -->
+
+<p>首先创建一个 C# 的控制台项目，注意修改输出为类库。</p>
+
+<p>现在的 Powershell 还不支持 dotnet core 的库，所以只能创建一个 dotnet framework 的项目。</p>
+
+<p>因为 Powershell 不支持 exe 所以只能输出为类库</p>
+
+<p>先创建一个类 TrallrahurmuSorhardu 这里有两个方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">TrallrahurmuSorhardu</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">FutrowxeBemelvamere</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"DirqisfouDrehorearsem"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">ViwhawSterenekooSirberheeFarzere</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"LirniWaiqeroroo"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面创建的项目是 <code class="language-plaintext highlighter-rouge">MerRear</code> ，项目就是准备调用刚才写的两个方法</p>
+
+<p>在输出的文件夹创建一个 <code class="language-plaintext highlighter-rouge">MaKutownene.ps1</code> 文件，实际上文件的名是随意的，只要后缀是 ps1 就可以。</p>
+
+<p>为什么是需要在输出的文件夹，因为刚才的代码就创建了 MerRear.dll ，为了简单调用 MerRear.dll 这个库，就把创建的文件写在相同的文件夹。</p>
+
+<p>在 <code class="language-plaintext highlighter-rouge">MaKutownene.ps1</code> 使用代码调用 C# 的库很简单，首先引用 dll ，使用 <code class="language-plaintext highlighter-rouge">Add-Type –Path</code> 就可以输入 dll 的文件路径</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Add</span><span class="p">-</span><span class="n">Type</span> <span class="err">–</span><span class="n">Path</span> <span class="s">"MerRear.dll"</span>
+</code></pre></div></div>
+
+<p>下面来告诉大家如何在 Powershell 创建 C# 类</p>
+
+<h2 id="powershell-创建-c-类">Powershell 创建 C# 类</h2>
+
+<p>可以使用下面代码创建 C# 类，因为 Powershell 脚本的写法和 C# 还是存在一些不同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">$</span><span class="n">obj</span> <span class="p">=</span> <span class="n">New</span><span class="p">-</span><span class="n">Object</span> <span class="n">MerRear</span><span class="p">.</span><span class="n">TrallrahurmuSorhardu</span>
+
+</code></pre></div></div>
+
+<p>在 Powershell 使用变量之前是不需要定义，现在就已经创建了类</p>
+
+<p>调用类的 ViwhawSterenekooSirberheeFarzere 方法可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">$</span><span class="n">obj</span><span class="p">.</span><span class="nf">ViwhawSterenekooSirberheeFarzere</span><span class="p">()</span>
+
+</code></pre></div></div>
+
+<h2 id="powershell-调用-c-静态方法">Powershell 调用 C# 静态方法</h2>
+
+<p>在 C# 使用静态方法是不需要创建类，所以在 Powershell 就需要使用下面代码调用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="n">MerRear</span><span class="p">.</span><span class="n">TrallrahurmuSorhardu</span><span class="p">]::</span><span class="nf">FutrowxeBemelvamere</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>调用静态方法的方式是使用 <code class="language-plaintext highlighter-rouge">[命名空间.类]::静态方法()</code> 调用</p>
+
+<p>下面就是全部的 Powershell 代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Add</span><span class="p">-</span><span class="n">Type</span> <span class="err">–</span><span class="n">Path</span> <span class="s">"MerRear.dll"</span>
+
+<span class="err">$</span><span class="n">obj</span> <span class="p">=</span> <span class="n">New</span><span class="p">-</span><span class="n">Object</span> <span class="n">MerRear</span><span class="p">.</span><span class="n">TrallrahurmuSorhardu</span>
+
+<span class="err">$</span><span class="n">obj</span><span class="p">.</span><span class="nf">ViwhawSterenekooSirberheeFarzere</span><span class="p">()</span>
+
+<span class="p">[</span><span class="n">MerRear</span><span class="p">.</span><span class="n">TrallrahurmuSorhardu</span><span class="p">]::</span><span class="nf">FutrowxeBemelvamere</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>这里的 C# 代码是</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">MerRear</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">TrallrahurmuSorhardu</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">FutrowxeBemelvamere</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"DirqisfouDrehorearsem"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">ViwhawSterenekooSirberheeFarzere</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"LirniWaiqeroroo"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意运行 Powershell 脚本需要先添加策略，使用管理员权限运行下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Set</span><span class="p">-</span><span class="n">ExecutionPolicy</span> <span class="n">RemoteSigned</span>
+</code></pre></div></div>
+
+<p>修改执行策略会带来安全隐患，如果不是开发者就不要使用</p>
+
+<p>参见：</p>
+
+<p><a href="https://www.cnblogs.com/ceachy/archive/2013/02/26/PoweShell_Function_Script_Scope.html">PowerShell入门（八）：函数、脚本、作用域 - Luke Zhang - 博客园</a></p>
+
+<p><img src="https://i.loli.net/2018/08/19/5b78d02917a19.jpg" alt="" /></p>
+
+:ET

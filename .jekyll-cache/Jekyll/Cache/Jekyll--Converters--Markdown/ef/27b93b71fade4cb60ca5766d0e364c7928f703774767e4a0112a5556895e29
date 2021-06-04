@@ -1,0 +1,3 @@
+I"�<p>调用 SetWindowLong 方法给 GWL_EXSTYLE 设置 WS_EX_TRANSPARENT 让窗口透明，此时应用程序只能收到鼠标消息但收不到触摸消息</p>
+
+:ET

@@ -1,0 +1,105 @@
+I"Z-<p>本文来安利大家 XamlTreeDump 库，通过这个库可以将 XAML 树上的元素转换为 json 字符串，可以用来进行 UI 单元测试</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/8 9:03:58 -->
+
+<!-- 发布 -->
+
+<p>开始之前先通过 NuGet 工具安装 XamlTreeDump 库</p>
+
+<!-- ![](image/win10 uwp 使用 XamlTreeDump 获取 XAML 树元素内容/win10 uwp 使用 XamlTreeDump 获取 XAML 树元素内容0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20215896206650.jpg" alt="" /></p>
+
+<p>假定咱有 UI 界面代码如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Page</span>
+    <span class="na">x:Class=</span><span class="s">"WholebaycarNowawnawka.MainPage"</span>
+    <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="na">xmlns:local=</span><span class="s">"using:WholebaycarNowawnawka"</span>
+    <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+    <span class="na">Background=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="nt">&gt;</span>
+
+  <span class="nt">&lt;Grid&gt;</span>
+    <span class="nt">&lt;TextBlock&gt;</span>欢迎访问我博客 https://blog.lindexi.com 里面有大量 UWP WPF 博客<span class="nt">&lt;/TextBlock&gt;</span>
+  <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Page&gt;</span>
+</code></pre></div></div>
+
+<p>可以在后台代码使用 VisualTreeDumper.DumpTree 方法获取 json 字符串</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">Loaded</span> <span class="p">+=</span> <span class="n">MainPage_Loaded</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainPage_Loaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">xaml</span> <span class="p">=</span> <span class="n">VisualTreeDumper</span><span class="p">.</span><span class="nf">DumpTree</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="n">Array</span><span class="p">.</span><span class="n">Empty</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;(),</span> <span class="k">new</span> <span class="n">AttachedProperty</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码拿到的 xaml 字符串如下</p>
+
+<div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
+  </span><span class="nl">"XamlType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"WholebaycarNowawnawka.MainPage"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"Background"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#FFFFFFFF"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"BorderBrush"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"BorderThickness"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"Clip"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"CornerRadius"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"FlowDirection"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LeftToRight"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"Foreground"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#FF000000"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"HorizontalAlignment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stretch"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"Margin"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"Padding"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"RenderSize"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1200</span><span class="p">,</span><span class="w"> </span><span class="mi">900</span><span class="p">],</span><span class="w">
+  </span><span class="nl">"VerticalAlignment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stretch"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"Visibility"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Visible"</span><span class="p">,</span><span class="w">
+  </span><span class="nl">"children"</span><span class="p">:</span><span class="w"> 
+  </span><span class="p">[</span><span class="w">
+  </span><span class="p">{</span><span class="w">
+    </span><span class="nl">"XamlType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Windows.UI.Xaml.Controls.Grid"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"Background"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"BorderBrush"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"BorderThickness"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"Clip"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"CornerRadius"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"FlowDirection"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LeftToRight"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"HorizontalAlignment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stretch"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"Margin"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"Padding"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"RenderSize"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1200</span><span class="p">,</span><span class="w"> </span><span class="mi">900</span><span class="p">],</span><span class="w">
+    </span><span class="nl">"VerticalAlignment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stretch"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"Visibility"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Visible"</span><span class="p">,</span><span class="w">
+    </span><span class="nl">"children"</span><span class="p">:</span><span class="w"> 
+    </span><span class="p">[</span><span class="w">
+    </span><span class="p">{</span><span class="w">
+      </span><span class="nl">"XamlType"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Windows.UI.Xaml.Controls.TextBlock"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"Clip"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"FlowDirection"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LeftToRight"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"Foreground"</span><span class="p">:</span><span class="w"> </span><span class="s2">"#FF000000"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"HorizontalAlignment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stretch"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"Margin"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"Padding"</span><span class="p">:</span><span class="w"> </span><span class="s2">"0,0,0,0"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"RenderSize"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mi">1200</span><span class="p">,</span><span class="w"> </span><span class="mi">900</span><span class="p">],</span><span class="w">
+      </span><span class="nl">"Text"</span><span class="p">:</span><span class="w"> </span><span class="s2">"欢迎访问我博客 https://blog.lindexi.com 里面有大量 UWP WPF 博客"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"VerticalAlignment"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Stretch"</span><span class="p">,</span><span class="w">
+      </span><span class="nl">"Visibility"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Visible"</span><span class="w">
+    </span><span class="p">}</span><span class="w">
+    </span><span class="p">]</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+  </span><span class="p">]</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></code></pre></div></div>
+
+<p>详细请看 <a href="https://github.com/asklar/XamlTreeDump">asklar/XamlTreeDump: A UWP library to produce and compare XAML tree dumps useful for visual end-to-end testing</a></p>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/dbf7f4a71f7717f4b3a920968082320766c9ae2e/WholebaycarNowawnawka">github</a> 和 <a href="https://gitee.com/lindexi/lindexi_gd/tree/dbf7f4a71f7717f4b3a920968082320766c9ae2e/WholebaycarNowawnawka">gitee</a> 欢迎小伙伴访问</p>
+
+:ET

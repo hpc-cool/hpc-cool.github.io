@@ -1,0 +1,215 @@
+I"�'<h2 id="nuget">Nuget</h2>
+<p>我们的开发经常使用别人的dll，那么我们需要每次都从网上下载，然后复制到我们的项目，
+而不知道我们的dll是否安全？
+当我们的库更新的时候，我们又需要从网上搜索，这样不好，于是我们就用Nuget，Nuget可以
+让我们把我们做出来的东西发在网上让别人下载，需要搜索名称就可以下载，然后更新会通知
+本文主要讲我们如何制作一个库上传Nuget，让别人可以使用，做法很简单，先下载软件后制作，上传。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<h2 id="下载">下载</h2>
+
+<p>首先下载</p>
+
+<p>nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe</p>
+
+<p>如果没法下载和我说，我发给你</p>
+
+<p>然后下载一个工具https://docs.nuget.org/Create/using-a-gui-to-build-packages，下载后运行</p>
+
+<p>我们把Nuget.exe放在Path，当然不知道Path,就放在我们要打包的工程文件夹</p>
+
+<h2 id="打包nuget">打包Nuget</h2>
+
+<p>我们用MSBuild命令进入项目文件夹，如果找不到MsBuild就用cmd</p>
+
+<p>项目文件夹就是我们要打包项目*.csproj所在文件夹</p>
+
+<p>我的工程文件smms，打开smms.csproj所在文件夹A:\smms\smms</p>
+
+<p>进入文件夹命令</p>
+
+<p>首先进入盘，我是在A盘，</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">a</span><span class="p">:</span>
+</code></pre></div></div>
+
+<p>然后进入文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cd</span> <span class="n">smms</span><span class="p">/</span><span class="n">smms</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160705153953828" alt="这里写图片描述" /></p>
+
+<p>我们打包</p>
+
+<p>首先</p>
+
+<p><code class="language-plaintext highlighter-rouge">nuget spec</code></p>
+
+<p><img src="http://img.blog.csdn.net/20160705154308176" alt="这里写图片描述" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">smms.nuspec</code> 这个可以用文本打开，里面会自动替换</p>
+
+<p>里面有</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0"?&gt;</span>
+<span class="nt">&lt;package</span> <span class="nt">&gt;</span>
+  <span class="nt">&lt;metadata&gt;</span>
+    <span class="nt">&lt;id&gt;</span>$id$<span class="nt">&lt;/id&gt;</span>
+    <span class="nt">&lt;version&gt;</span>$version$<span class="nt">&lt;/version&gt;</span>
+    <span class="nt">&lt;title&gt;</span>$title$<span class="nt">&lt;/title&gt;</span>
+    <span class="nt">&lt;authors&gt;</span>$author$<span class="nt">&lt;/authors&gt;</span>
+    <span class="nt">&lt;owners&gt;</span>$author$<span class="nt">&lt;/owners&gt;</span>
+    <span class="nt">&lt;licenseUrl&gt;</span>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE<span class="nt">&lt;/licenseUrl&gt;</span>
+    <span class="nt">&lt;projectUrl&gt;</span>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE<span class="nt">&lt;/projectUrl&gt;</span>
+    <span class="nt">&lt;iconUrl&gt;</span>http://ICON_URL_HERE_OR_DELETE_THIS_LINE<span class="nt">&lt;/iconUrl&gt;</span>
+    <span class="nt">&lt;requireLicenseAcceptance&gt;</span>false<span class="nt">&lt;/requireLicenseAcceptance&gt;</span>
+    <span class="nt">&lt;description&gt;</span>$description$<span class="nt">&lt;/description&gt;</span>
+    <span class="nt">&lt;releaseNotes&gt;</span>Summary of changes made in this release of the package.<span class="nt">&lt;/releaseNotes&gt;</span>
+    <span class="nt">&lt;copyright&gt;</span>Copyright 2016<span class="nt">&lt;/copyright&gt;</span>
+    <span class="nt">&lt;tags&gt;</span>Tag1 Tag2<span class="nt">&lt;/tags&gt;</span>
+  <span class="nt">&lt;/metadata&gt;</span>
+<span class="nt">&lt;/package&gt;</span>
+</code></pre></div></div>
+
+<ul>
+  <li>
+    <p>id 
+包的ID：必须的唯一的ID，格式和C#命名空间规范相同，在你发布包的时候会去验证唯一性。</p>
+  </li>
+  <li>
+    <p>version 
+版本号：必须的三段式的版本号，注意每次发布必须大于上一次的版本号，否则将会被nuget驳回。</p>
+  </li>
+  <li>
+    <p>title 
+标题：非必需的，通常你可以让它和ID保持一致，但是这不是强制的。</p>
+  </li>
+  <li>
+    <p>authors
+作者(s)：必须的项目，以逗号分隔作者列表。</p>
+  </li>
+  <li>
+    <p>owners 
+拥有者：你可以随便写，但是在发布的时候会被你的nuget帐户名替代。</p>
+  </li>
+  <li>
+    <p>最低客户端版本：描述这个包限制的最低nuget客户端版本。</p>
+  </li>
+  <li>
+    <p>iconUrl
+一个<code class="language-plaintext highlighter-rouge">32*32</code>像素的.png文件地址，作为最终在nuget中显示的图标</p>
+  </li>
+  <li>
+    <p>描述、标签、许可地址、项目地址</p>
+  </li>
+  <li>
+    <p>Dependencies
+我们发的依赖其他程序，那就写他，具体怎么我还不知，我就放空，不管，好像写的要在NuGet服务器上能找到，否则无法完成自动引用添加</p>
+  </li>
+</ul>
+
+<p>我们可以在vs，Properties打开，写上我们名字和说明</p>
+
+<p><img src="http://img.blog.csdn.net/20160705154334553" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160705154345051" alt="这里写图片描述" /></p>
+
+<p>把全部写后生成</p>
+
+<p>其中他会把<code class="language-plaintext highlighter-rouge">$$</code>代为AssemblyInfo.cs</p>
+
+<p>作者代为AssemblyCompany</p>
+
+<p>id代为Assembly名</p>
+
+<p>version代为AssemblyVersion</p>
+
+<p>description代为AssemblyDescription</p>
+
+<p>做完我们文本打开 <code class="language-plaintext highlighter-rouge">*.nuspec</code></p>
+
+<p>改releaseNotes、tags</p>
+
+<p>如果没有修改，我们打包 <code class="language-plaintext highlighter-rouge">nuget pack *.csproj</code></p>
+
+<p><img src="http://img.blog.csdn.net/20160705154419364" alt="这里写图片描述" /></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">问题</span><span class="p">:</span> <span class="err">删除示例</span> <span class="n">nuspec</span> <span class="err">值。</span>
+<span class="err">说明</span><span class="p">:</span> <span class="n">Tags</span> <span class="err">的值“</span><span class="n">Tag1</span> <span class="n">Tag2</span><span class="err">”是示例值，应将其删除。</span>
+<span class="err">解决方案</span><span class="p">:</span> <span class="err">请替换为适当的值或删除它，然后重新生成程序包。</span>
+
+<span class="err">问题</span><span class="p">:</span> <span class="err">删除示例</span> <span class="n">nuspec</span> <span class="err">值。</span>
+<span class="err">说明</span><span class="p">:</span> <span class="n">ReleaseNotes</span> <span class="err">的值“</span><span class="n">Summary</span> <span class="n">of</span> <span class="n">changes</span> <span class="n">made</span> <span class="k">in</span> <span class="k">this</span> <span class="n">release</span> <span class="n">of</span> <span class="n">the</span> <span class="n">package</span><span class="p">.</span><span class="err">”是示例值，应将其删除。</span>
+<span class="err">解决方案</span><span class="p">:</span> <span class="err">请替换为适当的值或删除它，然后重新生成程序包。</span>
+</code></pre></div></div>
+
+<p>把我们信息写后打包</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">nuget</span> <span class="n">pack</span> <span class="n">smms</span><span class="p">.</span><span class="n">csproj</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160705154443317" alt="这里写图片描述" /></p>
+
+<p>我们就把我们项目打包，接着我们看到文件夹有<code class="language-plaintext highlighter-rouge">*.nupkg</code></p>
+
+<p>修改项目地址</p>
+
+<p><img src="http://img.blog.csdn.net/20160705154503646" alt="这里写图片描述" /></p>
+
+<h2 id="上传">上传</h2>
+
+<p>首先有一个微软账号，登录 <a href="https://www.nuget.org">https://www.nuget.org</a></p>
+
+<p>点击自己 <a href="https://www.nuget.org/account">https://www.nuget.org/account</a></p>
+
+<p><img src="http://img.blog.csdn.net/20160705154531195" alt="这里写图片描述" /></p>
+
+<p>复制，这个key是我的，你的应该和我不同</p>
+
+<p><img src="http://img.blog.csdn.net/20160705154957007" alt="这里写图片描述" /></p>
+
+<p>刚才复制的</p>
+
+<p><img src="http://img.blog.csdn.net/20160705154606068" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160705154624787" alt="这里写图片描述" /></p>
+
+<p>发布</p>
+
+<p>我们可以在<a href="https://www.nuget.org/account/Packages">https://www.nuget.org/account/Packages</a></p>
+
+<p>我们上传包，如果还要上传，我们的version要比之前大</p>
+
+<p>我们在</p>
+
+<p><img src="http://img.blog.csdn.net/20160705155015936" alt="这里写图片描述" /></p>
+
+<p>搜索不到，不过我们还是上传了</p>
+
+<p>安装</p>
+
+<p><code class="language-plaintext highlighter-rouge">Install-Package ID</code></p>
+
+<p><img src="http://img.blog.csdn.net/20160705155205298" alt="这里写图片描述" /></p>
+
+<p>安装完搜索就可以搜索到</p>
+
+<p><img src="http://img.blog.csdn.net/20160705155225430" alt="这里写图片描述" /></p>
+
+<p>参见：http://www.cnblogs.com/xiaoyaojian/p/4199735.html</p>
+
+<h2 id="命令行使用nuget">命令行使用Nuget</h2>
+
+<p>参见：https://docs.nuget.org/consume/command-line-reference</p>
+
+<p><a href="http://www.cnblogs.com/liqingwen/p/5859236.html">[.Net] 手把手带你将自己打造的类库丢到 NuGet 上 - 反骨仔（二五仔） - 博客园</a></p>
+
+<p>还可以使用比较快的镜像 <a href="http://www.cnblogs.com/cmt/p/nuget-mirror.html">NuGet镜像上线试运行 - 博客园团队 - 博客园</a></p>
+
+:ET

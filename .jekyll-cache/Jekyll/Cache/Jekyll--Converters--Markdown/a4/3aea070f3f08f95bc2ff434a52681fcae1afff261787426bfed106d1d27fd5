@@ -1,0 +1,87 @@
+I"Z#<p>在进行访问文件的时候，可能会因为文件的路径太长无法创建访问文件
+本文告诉大家如何支持长路径的读写</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/12/6 9:15:06 -->
+
+<!-- csdn -->
+
+<p>先创建简单的程序，在界面放一个按钮，在按钮点击的事件尝试写一个文件名很长的文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">"E:\\the long long path {0}.txt"</span><span class="p">;</span>
+            <span class="n">str</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="n">str</span><span class="p">,</span> <span class="k">new</span> <span class="kt">string</span><span class="p">(</span><span class="n">Enumerable</span><span class="p">.</span><span class="nf">Range</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">300</span><span class="p">).</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="sc">'x'</span><span class="p">).</span><span class="nf">ToArray</span><span class="p">()));</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">file</span><span class="p">.</span><span class="nf">CreateText</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">stream</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"欢迎访问我博客 http://lindexi.gitee.io 里面有大量 UWP WPF 博客"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行程序点击按钮会发现 <code class="language-plaintext highlighter-rouge">var file = new FileInfo(str);</code> 说文件名太长</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">PathTooLongException</span><span class="p">:</span><span class="err">“指定的路径或文件名太长，或者两者都太长。完全限定文件名必须少于</span> <span class="m">260</span> <span class="err">个字符，并且目录名必须少于</span> <span class="m">248</span> <span class="err">个字符。”</span>
+</code></pre></div></div>
+
+<p>可以通过限定路径的方法解决</p>
+
+<p>在运行输入 gpedit.msc 打开策略编辑器</p>
+
+<p>点击计算机配置-管理模板-所有设置，找到启用win32长路径选项</p>
+
+<!-- ![](image/WPF 解决 PathTooLongException 路径太长/WPF 解决 PathTooLongException 路径太长0.png) -->
+
+<p><img src="https://i.loli.net/2018/12/19/5c19e81f1d00f.jpg" alt="" /></p>
+
+<p>点击编辑策略设置，启用</p>
+
+<!-- ![](image/WPF 解决 PathTooLongException 路径太长/WPF 解决 PathTooLongException 路径太长1.png) -->
+
+<p>如果要在应用程序可以使用长的文件名，当然单个文件名不能超过 265 字符，但是文件所在路径可以超过。需要在 .NET 4.6.2 以上，添加清单</p>
+
+<p>在清单 app.manifest 添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">application</span> <span class="n">xmlns</span><span class="p">=</span><span class="s">"urn:schemas-microsoft-com:asm.v3"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">windowsSettings</span> <span class="n">xmlns</span><span class="p">:</span><span class="n">ws2</span><span class="p">=</span><span class="s">"https://schemas.microsoft.com/SMI/2016/WindowsSettings"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="n">ws2</span><span class="p">:</span><span class="n">longPathAware</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">ws2</span><span class="p">:</span><span class="n">longPathAware</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="n">windowsSettings</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">application</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>此时可以尝试写长路径</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">folder</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetTempPath</span><span class="p">();</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">300</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">folder</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="n">i</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+                <span class="n">Directory</span><span class="p">.</span><span class="nf">CreateDirectory</span><span class="p">(</span><span class="n">folder</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="s">"1.txt"</span><span class="p">));</span>
+            <span class="kt">var</span> <span class="n">fileStream</span> <span class="p">=</span> <span class="n">file</span><span class="p">.</span><span class="nf">Create</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么在 dotnet core 下呢？其实在 dotnet core 的行为完全不同，通过 <a href="https://github.com/dotnet/runtime/issues/14062">Support long file names on Windows · Issue #14062 · dotnet/runtime</a> 可以了解到，在 dotnet core 古老的版本就更改了行为</p>
+
+<p>在 <a href="https://github.com/dotnet/corefx/pull/3001">dotnet/corefx#3001</a> 和 <a href="https://github.com/dotnet/corefx/pull/3010">dotnet/corefx#3010</a> 的更改，可以看到在 dotnet core 内部转换为 UNC 路径，可以自动解决路径问题，但是依然要求是 win10 下</p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file#maxpath">Naming Files, Paths, and Namespaces - Windows applications</a></p>
+
+<p><a href="https://blogs.msdn.microsoft.com/bclteam/2007/02/13/long-paths-in-net-part-1-of-3-kim-hamilton/">Long Paths in .NET, Part 1 of 3 [Kim Hamilton] – BCL Team Blog</a></p>
+
+<p><a href="https://blogs.msdn.microsoft.com/bclteam/2007/03/26/long-paths-in-net-part-2-of-3-long-path-workarounds-kim-hamilton/">Long Paths in .NET, Part 2 of 3: Long Path Workarounds [Kim Hamilton] – BCL Team Blog</a></p>
+
+<p><a href="https://blogs.msdn.microsoft.com/bclteam/2008/07/07/long-paths-in-net-part-3-of-3-redux-kim-hamilton/">Long Paths in .NET, Part 3 of 3 Redux [Kim Hamilton] – BCL Team Blog</a></p>
+
+<p><a href="https://corengen.wordpress.com/2008/04/06/using-long-paths-in-net/">Using long paths in .NET</a></p>
+
+<p><a href="https://blogs.msdn.microsoft.com/jeremykuhne/2016/06/21/more-on-new-net-path-handling/">More on new .NET path handling – Jeremy Kuhne’s Blog</a></p>
+
+:ET

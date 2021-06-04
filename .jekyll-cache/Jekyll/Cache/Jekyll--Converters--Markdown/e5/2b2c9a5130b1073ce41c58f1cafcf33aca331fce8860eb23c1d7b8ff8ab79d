@@ -1,0 +1,92 @@
+I"A<p>在找了很久的团队交流工具，发现了 Mattermost 最好用，但是还需要做一些定制化的功能，于是就找到了 Mattermost 插件开发，还找到了如何自己写服务集成到 Mattermost 里面
+本文告诉大家，通过写一个 ASP .NET Core 程序集成到 Mattermost 里面，在里面添加很多有趣的功能</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>在内网通过 Docker 部署 Mattermost 十分简单，但是也许会遇到 Docker 的坑，这些本文就不告诉大家了，官方有详细的文档</p>
+
+<p>在部署完成之后，在本地启动 Mattermost 连接上了服务器，可以开始开发自己的定制服务了</p>
+
+<p>首先创建一个测试使用的公共频道，我创建了 qeegearbejaidejereyean 频道，当然这个命名是随意输入的</p>
+
+<p>然后点击打开集成页面</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201951784850976" alt="" /></p>
+
+<!-- ![](image/dotnet core 集成到 Mattermost 聊天工具/dotnet core 集成到 Mattermost 聊天工具0.png) -->
+
+<p>在这里选择引入 Webhook 的方式</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201951784924310" alt="" /></p>
+
+<!-- ![](image/dotnet core 集成到 Mattermost 聊天工具/dotnet core 集成到 Mattermost 聊天工具1.png) -->
+
+<p>点击添加钩子</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20195178500833" alt="" /></p>
+
+<!-- ![](image/dotnet core 集成到 Mattermost 聊天工具/dotnet core 集成到 Mattermost 聊天工具2.png) -->
+
+<p>输入一个标题和选择频道</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201951785037963" alt="" /></p>
+
+<!-- ![](image/dotnet core 集成到 Mattermost 聊天工具/dotnet core 集成到 Mattermost 聊天工具3.png) -->
+
+<p>现在就可以看到一个链接了</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201951785122324" alt="" /></p>
+
+<!-- ![](image/dotnet core 集成到 Mattermost 聊天工具/dotnet core 集成到 Mattermost 聊天工具4.png) -->
+
+<p>我的链接是 <a href="http://127.0.0.1:8065/hooks/xjkyn7ks1pn7xeho1f5ifxqhxh">http://127.0.0.1:8065/hooks/xjkyn7ks1pn7xeho1f5ifxqhxh</a> 请将本文下面代码用到的这个链接替换为你自己的</p>
+
+<p>新建一个 ASP .NET Core 程序，选择 API 程序</p>
+
+<p>然后创建一个控制器，里面添加一个 Foo 方法，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">Route</span><span class="p">(</span><span class="s">"api/[controller]"</span><span class="p">)]</span>
+    <span class="p">[</span><span class="n">ApiController</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">MattermostController</span> <span class="p">:</span> <span class="n">ControllerBase</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">HttpGet</span><span class="p">(</span><span class="s">"Foo"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+ 
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 Foo 里面添加一些代码，发送字符串需要封装一个 json 发出去，这个json的格式非常简单</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="s">"text"</span><span class="p">:</span> <span class="s">"需要发送的内容"</span><span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过 Post 的方式发送出去，发送的链接就是刚才记下的 <a href="http://127.0.0.1:8065/hooks/xjkyn7ks1pn7xeho1f5ifxqhxh">http://127.0.0.1:8065/hooks/xjkyn7ks1pn7xeho1f5ifxqhxh</a> 链接，请将这个链接替换为你自己的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">HttpGet</span><span class="p">(</span><span class="s">"Foo"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">httpClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+            <span class="n">StringContent</span> <span class="n">content</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringContent</span><span class="p">(</span><span class="s">"{\"text\": \"林德熙是逗比\"}"</span><span class="p">,</span><span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">,</span> <span class="s">"application/json"</span><span class="p">);</span>
+            <span class="n">httpClient</span><span class="p">.</span><span class="nf">PostAsync</span><span class="p">(</span><span class="s">"http://127.0.0.1:8065/hooks/xjkyn7ks1pn7xeho1f5ifxqhxh"</span><span class="p">,</span> <span class="n">content</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时运行代码，在 Foo 方法可以在访问的时候发送 林德熙是逗比 到输入的链接里面，在 Mattermost 通过这个链接将信息显示</p>
+
+<p>通过访问<a href="http://localhost:51559/api/Mattermost/Foo">http://localhost:51559/api/Mattermost/Foo</a> 触发 Foo 方法，在 Foo 方法里面发送数据</p>
+
+<p>访问之后可以看到刚才创建的频道显示了信息</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201951792512127" alt="" /></p>
+
+<!-- ![](image/dotnet core 集成到 Mattermost 聊天工具/dotnet core 集成到 Mattermost 聊天工具5.png) -->
+
+<p>当然一个服务肯定不是这么简单，例如可以用来集成自己的 gogs 或自己的待办或催小伙伴吃饭</p>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/30bec7c4a3a4094b47ef65fe276c32b2e1128127/NecalemberexjkynGijemneada">github</a></p>
+
+:ET

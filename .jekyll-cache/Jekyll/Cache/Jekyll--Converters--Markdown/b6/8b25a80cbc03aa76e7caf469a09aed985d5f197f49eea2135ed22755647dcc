@@ -1,0 +1,106 @@
+I"�&<p>我在写一个简单的功能，需要将两个不同的数组合并到一起，但是我的功能只是做只读，如果合并的方法需要申请额外的内存空间，将降低性能。本文写了一个简单的方法，通过判断下标的方法做遍历多个数组组合在一起，通过判断当前获取的下标在对应哪个数组下标范围内，返回对应数组的元素</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/10/9 15:15:10 -->
+
+<!-- csdn -->
+
+<p>合并多个数组或列表有多个不同的方法，但是我找到的方法都需要额外申请内存空间，需要做一次数组元素复制，相对性能比较差，如果是做只读，功能和 Span 相反，那么可以通过遍历的数组下标判断</p>
+
+<p>下面方法可以在项目用，做法很简单，看代码也就知道</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Collections</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Linq</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">CombineReadonlyList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">IReadOnlyList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">CombineReadonlyList</span><span class="p">(</span><span class="k">params</span> <span class="n">IReadOnlyList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;[]</span> <span class="n">source</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Source</span> <span class="p">=</span> <span class="n">source</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IReadOnlyList</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;[]</span> <span class="n">Source</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="nf">GetEnumerator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Source</span><span class="p">.</span><span class="nf">SelectMany</span><span class="p">(</span><span class="n">readOnlyList</span> <span class="p">=&gt;</span> <span class="n">readOnlyList</span><span class="p">).</span><span class="nf">GetEnumerator</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="n">IEnumerator</span> <span class="n">IEnumerable</span><span class="p">.</span><span class="nf">GetEnumerator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nf">GetEnumerator</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Count</span> <span class="p">=&gt;</span> <span class="n">Source</span><span class="p">.</span><span class="nf">Sum</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+
+        <span class="k">public</span> <span class="n">T</span> <span class="k">this</span><span class="p">[</span><span class="kt">int</span> <span class="n">index</span><span class="p">]</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">index</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">source</span> <span class="p">=</span> <span class="n">Source</span><span class="p">;</span>
+
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">list</span> <span class="k">in</span> <span class="n">source</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="p">&lt;</span> <span class="n">list</span><span class="p">.</span><span class="n">Count</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span> <span class="n">list</span><span class="p">[</span><span class="n">n</span><span class="p">];</span>
+                    <span class="p">}</span>
+
+                    <span class="n">n</span> <span class="p">-=</span> <span class="n">list</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">IndexOutOfRangeException</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个类如果不算传入的只读列表的原列表的更改，这个类是线程安全的</p>
+
+<p>可能遇到的坑是传入的只读列表的原列表添加了值，也就是 <code class="language-plaintext highlighter-rouge">CombineReadonlyList[n]</code> 执行两遍获取的元素可能不相同</p>
+
+<p>更多有趣的数组定义请看 <a href="https://github.com/KodamaSakuno/Sakuno.Base/tree/master/src/Sakuno.Base/Collections">Sakuno.Base.Collections github</a></p>
+
+<p>如果不需要获取指定下标，那么可以使用 ReadOnlyCollection 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">CombineReadonlyCollection</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">IReadOnlyCollection</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">CombineReadonlyCollection</span><span class="p">(</span><span class="k">params</span> <span class="n">IReadOnlyCollection</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;[]</span> <span class="n">source</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Source</span> <span class="p">=</span> <span class="n">source</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IReadOnlyCollection</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;[]</span> <span class="n">Source</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">IEnumerator</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="nf">GetEnumerator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Source</span><span class="p">.</span><span class="nf">SelectMany</span><span class="p">(</span><span class="n">readOnlyList</span> <span class="p">=&gt;</span> <span class="n">readOnlyList</span><span class="p">).</span><span class="nf">GetEnumerator</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="n">IEnumerator</span> <span class="n">IEnumerable</span><span class="p">.</span><span class="nf">GetEnumerator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="nf">GetEnumerator</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Count</span> <span class="p">=&gt;</span> <span class="n">Source</span><span class="p">.</span><span class="nf">Sum</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span><span class="p">.</span><span class="n">Count</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果你觉得 GetEnumerator 方法写的不够快，可以试试下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">list</span> <span class="k">in</span> <span class="n">Source</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">list</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">yield</span> <span class="k">return</span> <span class="n">temp</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/2472c94382e5f8aaf5f5c689ac78668f1883e8b6/Fujeencemwebaeahale">github</a> 欢迎小伙伴访问</p>
+
+:ET

@@ -1,0 +1,179 @@
+I"`H<p>本文翻译：http://xamlnative.com/2016/04/14/xamarin-forms-a-simple-circular-progress-control/ 里面都是胡说的，如果看不懂可以联系邮箱
+源代码：https://github.com/billreiss/xamlnative/tree/master/XamarinForms/CircularProgress
+最近作者需要做一个简单的圆形的等待控件在一个Xamarin Forms应用，效果可以看
+<img src="http://img.blog.csdn.net/20160428145540311" alt="这里写图片描述" /></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+<!-- 标签：Xamarin -->
+
+<div id="toc"></div>
+
+<p>看起来很容易做，不知道怎么微软就没有弄个这么好看，微软没有，我们来直接做，看起来这个很简单</p>
+
+<p>原来的进度条是一个线，没有UWP那个ring，我要做一个，可以使用本地控制、自定义渲染器渲染、使用组件里面弄很多我之前做的、到Nuget找，这些都觉得不是我要的。</p>
+
+<p>看到他们没有，我就很高兴，我可以做一个很厉害的，自然这里我是原文的那个，写了Xaml的大神</p>
+
+<p>我首先拿出一个本子，我应该弄矢量图形，在Xamarin原生还没有，我会为每个平台定制渲染，所以他不支持我不能使用，我想到使用图片，矢量图片，既然想要图片我如何让很多图片看起来是一个</p>
+
+<p><img src="http://img.blog.csdn.net/20160428150315349" alt="这里写图片描述" /></p>
+
+<p>我想到简单使用两图，实际对称两图是表示4图，不停覆盖的两个图片表示进度，两个图片颜色不同</p>
+
+<p><img src="http://img.blog.csdn.net/20160428150542049" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160428150553877" alt="这里写图片描述" /></p>
+
+<p>图片可以在：https://github.com/billreiss/xamlnative/tree/master/XamarinForms/CircularProgress/CircularProgress/CircularProgress.Droid/Resources/drawable</p>
+
+<p>两个保存格式Png图片，一个图表示0-50%，我们叫第一图“completed”，第二“pending”，颜色深的是第一，进度我们需要一个completed，两个pending，我们先放completed，然后在它上面放pending，在pending对面放pending，第一个图在代码叫“progress1”，第二“background1”，第二个覆盖第一个，第三个pending旋转180，总的一个蓝色圆，这是0%</p>
+
+<p><img src="http://img.blog.csdn.net/20160428151156551" alt="这里写图片描述" /></p>
+
+<p>25%：我们旋转pending第二个，可以让看到下面的图，这个我们覆盖原来的pending因为颜色一样，所以我们就可以看到25%</p>
+
+<p><img src="http://img.blog.csdn.net/20160428151500833" alt="这里写图片描述" /></p>
+
+<p>50%：我们需要改变，两个completed，一个pending，pending覆盖completed，但是只是覆盖一个，他们的层次：</p>
+
+<ul>
+  <li>completed</li>
+  <li>pending</li>
+  <li>completed</li>
+</ul>
+
+<p>可以让pending覆盖右边的completed，超过50%让pending右旋</p>
+
+<p>如果觉得上面说的还是不知道，可以看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Linq</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Text</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">Xamarin.Forms</span><span class="p">;</span>
+ 
+<span class="k">namespace</span> <span class="nn">CircularProgress</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">CircularProgressControl</span> <span class="p">:</span> <span class="n">Grid</span>
+    <span class="p">{</span>
+        <span class="n">View</span> <span class="n">progress1</span><span class="p">;</span>
+        <span class="n">View</span> <span class="n">progress2</span><span class="p">;</span>
+        <span class="n">View</span> <span class="n">background1</span><span class="p">;</span>
+        <span class="n">View</span> <span class="n">background2</span><span class="p">;</span>
+        <span class="k">public</span> <span class="nf">CircularProgressControl</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">progress1</span> <span class="p">=</span> <span class="nf">CreateImage</span><span class="p">(</span><span class="s">"progress_done"</span><span class="p">);</span>
+            <span class="n">background1</span> <span class="p">=</span> <span class="nf">CreateImage</span><span class="p">(</span><span class="s">"progress_pending"</span><span class="p">);</span>
+            <span class="n">background2</span> <span class="p">=</span> <span class="nf">CreateImage</span><span class="p">(</span><span class="s">"progress_pending"</span><span class="p">);</span>
+            <span class="n">progress2</span> <span class="p">=</span> <span class="nf">CreateImage</span><span class="p">(</span><span class="s">"progress_done"</span><span class="p">);</span>
+            <span class="nf">HandleProgressChanged</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+        <span class="p">}</span>
+ 
+        <span class="k">private</span> <span class="n">View</span> <span class="nf">CreateImage</span><span class="p">(</span><span class="kt">string</span> <span class="n">v1</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">img</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Image</span><span class="p">();</span>
+            <span class="n">img</span><span class="p">.</span><span class="n">Source</span> <span class="p">=</span> <span class="n">ImageSource</span><span class="p">.</span><span class="nf">FromFile</span><span class="p">(</span><span class="n">v1</span> <span class="p">+</span> <span class="s">".png"</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">img</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">img</span><span class="p">;</span>
+        <span class="p">}</span>
+ 
+        <span class="k">public</span> <span class="k">static</span> <span class="n">BindableProperty</span> <span class="n">ProgressProperty</span> <span class="p">=</span>
+    <span class="n">BindableProperty</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="s">"Progress"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">CircularProgressControl</span><span class="p">),</span> <span class="m">0d</span><span class="p">,</span> <span class="n">propertyChanged</span><span class="p">:</span> <span class="n">ProgressChanged</span><span class="p">);</span>
+ 
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ProgressChanged</span><span class="p">(</span><span class="n">BindableObject</span> <span class="n">bindable</span><span class="p">,</span> <span class="kt">object</span> <span class="n">oldValue</span><span class="p">,</span> <span class="kt">object</span> <span class="n">newValue</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">c</span> <span class="p">=</span> <span class="n">bindable</span> <span class="k">as</span> <span class="n">CircularProgressControl</span><span class="p">;</span>
+            <span class="n">c</span><span class="p">.</span><span class="nf">HandleProgressChanged</span><span class="p">(</span><span class="nf">Clamp</span><span class="p">((</span><span class="kt">double</span><span class="p">)</span><span class="n">oldValue</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">),</span> <span class="nf">Clamp</span><span class="p">((</span><span class="kt">double</span><span class="p">)</span><span class="n">newValue</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">));</span>
+        <span class="p">}</span>
+ 
+        <span class="k">static</span> <span class="kt">double</span> <span class="nf">Clamp</span><span class="p">(</span><span class="kt">double</span> <span class="k">value</span><span class="p">,</span> <span class="kt">double</span> <span class="n">min</span><span class="p">,</span> <span class="kt">double</span> <span class="n">max</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">&lt;=</span> <span class="n">max</span> <span class="p">&amp;&amp;</span> <span class="k">value</span> <span class="p">&gt;=</span> <span class="n">min</span><span class="p">)</span> <span class="k">return</span> <span class="k">value</span><span class="p">;</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">&gt;</span> <span class="n">max</span><span class="p">)</span> <span class="k">return</span> <span class="n">max</span><span class="p">;</span>
+            <span class="k">else</span> <span class="k">return</span> <span class="n">min</span><span class="p">;</span>
+        <span class="p">}</span>
+ 
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">HandleProgressChanged</span><span class="p">(</span><span class="kt">double</span> <span class="n">oldValue</span><span class="p">,</span> <span class="kt">double</span> <span class="n">p</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="p">&lt;</span> <span class="p">.</span><span class="m">5</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">oldValue</span> <span class="p">&gt;=</span> <span class="p">.</span><span class="m">5</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// this code is CPU intensive so only do it if we go from &gt;=50% to &lt;50%</span>
+                    <span class="n">background1</span><span class="p">.</span><span class="n">IsVisible</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                    <span class="n">progress2</span><span class="p">.</span><span class="n">IsVisible</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+                    <span class="n">background2</span><span class="p">.</span><span class="n">Rotation</span> <span class="p">=</span> <span class="m">180</span><span class="p">;</span>
+                    <span class="n">progress1</span><span class="p">.</span><span class="n">Rotation</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="kt">double</span> <span class="n">rotation</span> <span class="p">=</span> <span class="m">360</span> <span class="p">*</span> <span class="n">p</span><span class="p">;</span>
+                <span class="n">background1</span><span class="p">.</span><span class="n">Rotation</span> <span class="p">=</span> <span class="n">rotation</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">oldValue</span> <span class="p">&lt;</span> <span class="p">.</span><span class="m">5</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// this code is CPU intensive so only do it if we go from &lt;50% to &gt;=50%</span>
+                    <span class="n">background1</span><span class="p">.</span><span class="n">IsVisible</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+                    <span class="n">progress2</span><span class="p">.</span><span class="n">IsVisible</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                    <span class="n">progress1</span><span class="p">.</span><span class="n">Rotation</span> <span class="p">=</span> <span class="m">180</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="kt">double</span> <span class="n">rotation</span> <span class="p">=</span> <span class="m">360</span> <span class="p">*</span> <span class="n">p</span><span class="p">;</span>
+                <span class="n">background2</span><span class="p">.</span><span class="n">Rotation</span> <span class="p">=</span> <span class="n">rotation</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+ 
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Progress</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="k">this</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">ProgressProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">ProgressProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们需要把图片放在不同平台的文件夹，ios放在Resources文件夹，Android放在 AndroidResource</p>
+
+<p>我们把控件放MainPage.xaml</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-8" ?&gt;</span>
+<span class="nt">&lt;ContentPage</span> <span class="na">xmlns=</span><span class="s">"http://xamarin.com/schemas/2014/forms"</span>
+             <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2009/xaml"</span>
+             <span class="na">x:Class=</span><span class="s">"CircularProgress.MainPage"</span>
+             <span class="na">xmlns:local=</span><span class="s">"clr-namespace:CircularProgress"</span> <span class="na">BackgroundColor=</span><span class="s">"White"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;Grid&gt;</span>
+    <span class="nt">&lt;local:CircularProgressControl</span> <span class="na">x:Name=</span><span class="s">"progressControl"</span> <span class="na">Progress=</span><span class="s">"0"</span> <span class="na">HorizontalOptions=</span><span class="s">"Center"</span> <span class="na">VerticalOptions=</span><span class="s">"Center"</span> <span class="na">WidthRequest=</span><span class="s">"60"</span> <span class="na">HeightRequest=</span><span class="s">"60"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/ContentPage&gt;</span>
+</code></pre></div></div>
+
+<p>我们让time进度加0.1每0.02s</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">namespace</span> <span class="nn">CircularProgress</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainPage</span> <span class="p">:</span> <span class="n">ContentPage</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">Xamarin</span><span class="p">.</span><span class="n">Forms</span><span class="p">.</span><span class="n">Device</span><span class="p">.</span><span class="nf">StartTimer</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(.</span><span class="m">02</span><span class="p">),</span> <span class="n">OnTimer</span><span class="p">);</span>
+        <span class="p">}</span>
+ 
+        <span class="k">private</span> <span class="kt">bool</span> <span class="nf">OnTimer</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">progress</span> <span class="p">=</span> <span class="p">(</span><span class="n">progressControl</span><span class="p">.</span><span class="n">Progress</span> <span class="p">+</span> <span class="p">.</span><span class="m">1</span><span class="p">)</span> <span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">progress</span> <span class="p">&gt;</span> <span class="m">1</span><span class="p">)</span> <span class="n">progress</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="n">progressControl</span><span class="p">.</span><span class="n">Progress</span> <span class="p">=</span> <span class="n">progress</span><span class="p">;</span>
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>不使用自定义渲染，可以在各个平台没有使用厉害的技术覆盖两个图做出从0-100%，可以使用不同角度表示0.001</p>
+
+<p>本文：http://blog.csdn.net/lindexi_gd</p>
+
+:ET

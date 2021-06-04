@@ -1,0 +1,134 @@
+I"�3<p>本文将安利大家一个好用的工具，用来解决这样的问题，我有一个任务，要求这个任务在执行过程中不能被重入，只有在任务执行完成之后才能重置状态重新执行一次。换句话说就是在此任务正在执行过程中，不能重复进入此任务。同时在任务执行过程中，不能重置任务状态。在任务执行完成之后，可以保存任务的状态，直接返回任务结果。在任务执行完成之后，可以调用重置状态方法，让任务可以再次重新调用</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/25 9:20:45 -->
+
+<p>本文的这个 ExecuteOnceAwaiter 是放在 <a href="https://www.nuget.org/packages/dotnetCampus.AsyncWorkerCollection">dotnetCampus.AsyncWorkerCollection</a> 库的工具，此项目在 <a href="https://github.com/dotnet-campus/AsyncWorkerCollection">github</a> 开源，开源地址请看 <a href="https://github.com/dotnet-campus/AsyncWorkerCollection">https://github.com/dotnet-campus/AsyncWorkerCollection</a></p>
+
+<h2 id="适用">适用</h2>
+
+<p>支持本机内多线程调用某一确定的任务的执行，任务仅执行一次，多次调用均返回相同结果</p>
+
+<p>在任务执行完成之后，可以重置任务状态，让任务再次执行</p>
+
+<p>如用来作为执行 同步 这个业务的工具。也就是在 同步 这个业务执行过程中，不允许再次执行 同步 这个业务。同时只要同步过了，那么再次调用只是返回同步结果。只有在同步之后状态发生变更之后，才能再次同步</p>
+
+<h2 id="使用方法">使用方法</h2>
+
+<p>通过 NuGet 安装 <a href="https://www.nuget.org/packages/dotnetCampus.AsyncWorkerCollection">dotnetCampus.AsyncWorkerCollection</a> 库</p>
+
+<p>使用 ExecuteOnceAwaiter 需要创建传入执行的任务，传入任务支持给定任务返回值的泛形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">ExecuteOnceAwaiter</span><span class="p">&lt;</span><span class="n">FooInfo</span><span class="p">&gt;</span> <span class="n">ExecuteOnceAwaiter</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">executeOnceAwaiter</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ExecuteOnceAwaiter</span><span class="p">&lt;</span><span class="n">FooInfo</span><span class="p">&gt;(</span><span class="n">AsyncAction</span><span class="p">);</span>
+            <span class="n">ExecuteOnceAwaiter</span> <span class="p">=</span> <span class="n">executeOnceAwaiter</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面代码的 AsyncAction 可以是委托或本地方法，要求此方法返回值是 <code class="language-plaintext highlighter-rouge">Task&lt;FooInfo&gt;</code> 而此返回值 <code class="language-plaintext highlighter-rouge">FooInfo</code> 是自定义的类型，用于替换 ExecuteOnceAwaiter 的泛形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">FooInfo</span><span class="p">&gt;</span> <span class="nf">AsyncAction</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>调用 ExecuteOnceAwaiter 的方法只有两个，一个是 ExecuteAsync 另一个是 ResetWhileCompleted 方法</p>
+
+<p>调用 ExecuteAsync 的方法可以执行任务，如果任务的状态是没有执行，那么任务将执行。如果任务正在执行，或执行完成，那么将不会再次执行任务，而是返回 Task 用于等待获取任务执行结果</p>
+
+<p>调用 ResetWhileCompleted 方法可以用来重置任务的状态，可以让任务支持再次被调用。重置任务状态仅在任务没有执行或任务执行完成之后才能生效。如果此时任务正在执行，那么调用 ResetWhileCompleted 方法 将什么都不做</p>
+
+<h2 id="例子">例子</h2>
+
+<p>本文使用一个简单的 WPF 作为例子，这个界面很简单，就两个按钮，一个是启动任务，另一个是重置任务</p>
+
+<!-- ![](image/C# dotnet 高性能多线程工具 ExecuteOnceAwaiter 只执行一次的任务/C# dotnet 高性能多线程工具 ExecuteOnceAwaiter 只执行一次的任务0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202092594236174.jpg" alt="" /></p>
+
+<!-- ![](image/C# dotnet 高性能多线程工具 ExecuteOnceAwaiter 只执行一次的任务/C# dotnet 高性能多线程工具 ExecuteOnceAwaiter 只执行一次的任务1.gif) -->
+
+<p>执行的效果如下图，在点击启动任务多次的时候，只有一个任务在执行。在任务执行过程点击重置任务是啥都不做。在任务执行完成之后，点击重置任务，可以重新运行任务</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2FC%2523%2520dotnet%2520%25E9%25AB%2598%25E6%2580%25A7%25E8%2583%25BD%25E5%25A4%259A%25E7%25BA%25BF%25E7%25A8%258B%25E5%25B7%25A5%25E5%2585%25B7%2520ExecuteOnceAwaiter%2520%25E5%258F%25AA%25E6%2589%25A7%25E8%25A1%258C%25E4%25B8%2580%25E6%25AC%25A1%25E7%259A%2584%25E4%25BB%25BB%25E5%258A%25A11.gif" alt="" /></p>
+
+<p>界面代码如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"Auto"</span><span class="nt">&gt;&lt;/RowDefinition&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;Grid&gt;</span>
+            <span class="nt">&lt;TextBlock</span> <span class="na">x:Name=</span><span class="s">"LogTextBlock"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">TextWrapping=</span><span class="s">"Wrap"</span> <span class="na">VerticalAlignment=</span><span class="s">"Bottom"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+        <span class="nt">&lt;/Grid&gt;</span>
+        <span class="nt">&lt;StackPanel</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span>
+                    <span class="na">Orientation=</span><span class="s">"Horizontal"</span> <span class="nt">&gt;</span>
+            <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Content=</span><span class="s">"启动任务"</span> <span class="na">Click=</span><span class="s">"StartTaskButton_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+            <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Content=</span><span class="s">"重置任务"</span> <span class="na">Click=</span><span class="s">"ResetTaskButton_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+        <span class="nt">&lt;/StackPanel&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>后台代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Interaction logic for MainWindow.xaml</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainWindow</span> <span class="p">:</span> <span class="n">Window</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">ExecuteOnceAwaiter</span><span class="p">&lt;</span><span class="n">FooInfo</span><span class="p">&gt;</span> <span class="n">ExecuteOnceAwaiter</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">executeOnceAwaiter</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ExecuteOnceAwaiter</span><span class="p">&lt;</span><span class="n">FooInfo</span><span class="p">&gt;(</span><span class="n">AsyncAction</span><span class="p">);</span>
+            <span class="n">ExecuteOnceAwaiter</span> <span class="p">=</span> <span class="n">executeOnceAwaiter</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">FooInfo</span><span class="p">&gt;</span> <span class="nf">AsyncAction</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">InvokeAsync</span><span class="p">(()</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">LogTextBlock</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="s">$"执行任务 </span><span class="p">{</span><span class="n">i</span><span class="p">+</span><span class="m">1</span><span class="p">}</span><span class="s">/10\r\n"</span><span class="p">;</span>
+                <span class="p">});</span>
+
+                <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromMilliseconds</span><span class="p">(</span><span class="m">500</span><span class="p">));</span>
+            <span class="p">}</span>
+         
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">FooInfo</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">StartTaskButton_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">LogTextBlock</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="s">$"点击启动任务按钮\r\n"</span><span class="p">;</span>
+
+            <span class="n">ExecuteOnceAwaiter</span><span class="p">.</span><span class="nf">ExecuteAsync</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">ResetTaskButton_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">LogTextBlock</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="s">$"点击重置任务按钮\r\n"</span><span class="p">;</span>
+
+            <span class="n">ExecuteOnceAwaiter</span><span class="p">.</span><span class="nf">ResetWhileCompleted</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">FooInfo</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/84ea6d8eaa7cdf4cbef9e1782d04e6f8590ea939/NedairkaweeBiheefallbahejay">github</a>欢迎小伙伴访问</p>
+
+<h2 id="感谢">感谢</h2>
+
+<p>此库 <a href="https://github.com/dotnet-campus/AsyncWorkerCollection">dotnet-campus/AsyncWorkerCollection: 多线程异步工具</a> 由多线程砖家<a href="https://xinyuehtx.github.io/">头像</a> 用了一年的时间写的。在我所在团队的各大项目使用，经过两年时间大概 200 万台设备的测试是稳的。但是多线程很复杂，因为自己业务使用也许没有测试出坑，于是开源出来，请小伙伴协助测试</p>
+
+:ET

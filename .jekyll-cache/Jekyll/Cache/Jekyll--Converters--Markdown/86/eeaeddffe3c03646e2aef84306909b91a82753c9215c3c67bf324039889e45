@@ -1,0 +1,58 @@
+I"R<p>本文告诉大家一个 WPF 的已知问题，如果窗口在创建的时候，设置在屏幕外，那这个窗口将不会进行实际的渲染，将这个窗口从屏幕外移到屏幕内的时候，将会出现窗口内容的一次闪烁。换句话说就是存在窗口内容的重渲染</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/10/7 12:54:38 -->
+
+<p>什么是窗口在屏幕外创建？简单说法就是窗口不在屏幕内，如窗口的 Top 或 Left 太大或太小等，如下面代码创建窗口，而我的屏幕没有那么大，因此窗口就显示在我的屏幕外</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">window</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Window</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Gray</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span>
+                <span class="n">Top</span> <span class="p">=</span> <span class="m">100000</span> <span class="c1">// 手动高亮，我的屏幕没有那么大</span>
+            <span class="p">};</span>
+
+            <span class="n">window</span><span class="p">.</span><span class="nf">Show</span><span class="p">();</span>
+
+            <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Yield</span><span class="p">();</span>
+            <span class="n">window</span><span class="p">.</span><span class="n">Top</span> <span class="p">=</span> <span class="m">200</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行如上面代码，可以看到在 <code class="language-plaintext highlighter-rouge">window.Top = 200;</code> 调用的时候，将窗口从屏幕外移动到屏幕内时，窗口的背景从白色切换为灰色。如果你看不到，只能证明你的电脑性能太好了，换个渣设备试试</p>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/d8516f04/NerehebunaywarRoheeyeekularu">github</a> 欢迎小伙伴访问</p>
+
+<p>如果你将设置窗口的位置，也就是设置 <code class="language-plaintext highlighter-rouge">Top = 100000 // 手动高亮，我的屏幕没有那么大</code> 放在 Show 之后的一个 Render 内，那么依然窗口闪烁</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">window</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Window</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Gray</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="m">200</span><span class="p">,</span>
+            <span class="p">};</span>
+
+            <span class="n">window</span><span class="p">.</span><span class="nf">Show</span><span class="p">();</span>
+
+            <span class="c1">// 设置为 Render 优先级，那么用户将看到窗口显示然后消失</span>
+            <span class="c1">//await Dispatcher.Yield(DispatcherPriority.Render);</span>
+
+            <span class="c1">// 设置为 Normal 优先级，那么窗口依然没有渲染</span>
+            <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Yield</span><span class="p">(</span><span class="n">DispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">);</span>
+
+            <span class="n">window</span><span class="p">.</span><span class="n">Top</span> <span class="p">=</span> <span class="m">100000</span><span class="p">;</span> <span class="c1">// 手动高亮，我的屏幕没有那么大</span>
+
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">1</span><span class="p">));</span>
+            <span class="n">window</span><span class="p">.</span><span class="n">Top</span> <span class="p">=</span> <span class="m">200</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果放在 Render 外，此时用户就可以先看到窗口显示在屏幕上，然后窗口再消失，依然可以看到窗口闪烁。但是如果窗口能足够卡，也许此时很多设备都是看不到这个创建的窗口</p>
+
+:ET

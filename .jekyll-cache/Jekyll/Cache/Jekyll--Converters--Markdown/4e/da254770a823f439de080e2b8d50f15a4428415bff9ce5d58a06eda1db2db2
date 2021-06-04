@@ -1,0 +1,31 @@
+I"$	<p>如果在命令行或 cmd 批处理文件通过 move 移动文件夹的时候，移动的文件夹是跨驱动器的，那么将会显示拒绝访问</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>解决通过 move 移动文件夹到不同的驱动器需要通过先复制文件夹到另一个驱动器，然后删除文件夹的方法解决</p>
+
+<p>复制文件夹可以使用 xcopy 的方法</p>
+
+<p>如复制文件，无论文件夹里面的文件是否隐藏文件。复制文件夹里面的子文件夹，无论子文件夹是否空的。忽略提示需要覆盖的文件，可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xcopy</span> <span class="err">原有的文件夹</span> <span class="err">移动到的文件夹</span>  <span class="p">/</span><span class="n">H</span> <span class="p">/</span><span class="n">E</span> <span class="p">/</span><span class="n">Y</span> 
+</code></pre></div></div>
+
+<p>然后通过 rd 删除文件夹，在 rd 可以使用 /s /q 除目录本身外，还将删除指定目录下的所有子目录和文件，安静模式，带 /S 删除目录树时不要求确认</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">rd</span> <span class="err">原有的文件夹</span> <span class="p">/</span><span class="n">s</span> <span class="p">/</span><span class="n">q</span>
+</code></pre></div></div>
+
+<p>这样就可以做到移动文件夹到另一个服务器</p>
+
+<p>在 cmd 对于参数是不区分大写和小写，如 <code class="language-plaintext highlighter-rouge">/s</code> 和 <code class="language-plaintext highlighter-rouge">/S</code> 是相同的</p>
+
+<p><a href="https://www.cnblogs.com/yang-hao/p/6003308.html">xcopy-参数详解 - 疯狂的tiger - 博客园</a></p>
+
+<p><a href="https://blog.csdn.net/grey_csdn/article/details/77727591">Windows下使用CMD命令复制多层级目录 - 小灰笔记 - CSDN博客</a></p>
+
+<p>我通过这个技术让希沃白板课件缓存文件夹可以放在有空间的盘，请看<a href="http://bbs.seewoedu.cn/forum.php?mod=viewthread&amp;tid=17342&amp;extra=">希沃白板课件缓存文件夹迁移工具 解决C盘空间不足 - 分享汇 - 希沃论坛</a></p>
+
+:ET

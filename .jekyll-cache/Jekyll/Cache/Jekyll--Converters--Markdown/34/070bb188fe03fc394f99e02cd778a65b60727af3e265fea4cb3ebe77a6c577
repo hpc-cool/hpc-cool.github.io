@@ -1,0 +1,446 @@
+I"��<p>本文主要：如何开发一个 visual Studio 扩展，其实扩展也叫插件。
+那么就是如何开发一个 vs插件。
+本文也记录了我调试 VisualStudio 半个月过程遇到的坑。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/5/28 19:51:49 -->
+
+<!-- 标签：VisualStudio -->
+<div id="toc"></div>
+
+<p>我写这博客时候，是我在开发一个插件：<a href="https://marketplace.visualstudio.com/items?itemName=lindexigd.vs-extension-18109">编码规范工具</a>。记录的是我从不知道到发布插件，如果遇到了开发中的问题，欢迎交流。</p>
+
+<h2 id="安装-visual-studio-sdk">安装 Visual Studio SDK</h2>
+
+<p>首先需要安装 Visual Studio SDK ，安装不需要其它的工具就可以，直接使用vs安装包。</p>
+
+<p>我的是 Visual Studio 2015 ，所以我到这个页面：https://msdn.microsoft.com/en-us/library/bb166441 看教程。</p>
+
+<p>垃圾wr（我说的就是微软），找个东西好难</p>
+
+<p>首先是需要安装 SDK ，如果一开始没有安装的话，那么在控制面板，找到 vS 右击，修改 VS ，然后选择工具安装。</p>
+
+<p><img src="http://image.acmx.xyz/dac58ce0-c90f-489f-9ac0-83aadcf143db201711291648.jpg" alt="" /></p>
+
+<p>选择修改，然后选最后一个工具</p>
+
+<p><img src="http://image.acmx.xyz/dac58ce0-c90f-489f-9ac0-83aadcf143db201711291724.jpg" alt="" /></p>
+
+<p>我的是中文，可能翻译不一样，不过相信这一点压力对大家没有什么。</p>
+
+<p>然后就来说下如何做插件，主要教程是看： http://dotneteers.net/blogs/divedeeper/archive/2008/01/06/LearnVSXNowPart3.aspx ，除了国外的还有国内的大神翻译：http://www.cnblogs.com/default/archive/2010/02/27/1674832.html 这里是一系列。</p>
+
+<p>那么我将会来说下使用一个简单的方法去做一个 Command ，功能是可以判断 VS 工程的所有文件编码。</p>
+
+<p>首先是新建一个插件项目。打开 vs ，新建一个 VSIXProject</p>
+
+<p><img src="http://image.acmx.xyz/dac58ce0-c90f-489f-9ac0-83aadcf143db201711291848.jpg" alt="" /></p>
+
+<p>新建之后居然发现有一个  index.html 我开始还以为是 写html 来着，还好不是，这个 index.html 只是卖萌的而已。</p>
+
+<h2 id="添加菜单">添加菜单</h2>
+
+<p>那么新建完 VSIXProject 我们就开始编写按钮，虽然说是按钮，其实是菜单，在这里，全部的按钮都是和菜单一样。</p>
+
+<p>那么我们直接新建 Command ，注意他的位置是在哪。</p>
+
+<p><img src="http://image.acmx.xyz/dac58ce0-c90f-489f-9ac0-83aadcf143db201711292118.jpg" alt="" /></p>
+
+<p>新建出来可以看到多了好多文件，其中 .vsct 是核心，如果想知道关于他更多，请去中文博客：http://www.cnblogs.com/default/archive/2010/06/28/1766451.html</p>
+
+<p>我先放出做出了的菜单。</p>
+
+<p><img src="http://image.acmx.xyz/dac58ce0-c90f-489f-9ac0-83aadcf143db201711292847.jpg" alt="" /></p>
+
+<p>首先打开 <code class="language-plaintext highlighter-rouge">*.vsct</code> 在 Symbols 添加 id ，我们添加 EncodingNormalizerMenu ，EncodingNormalizerId2，他们的值随意给。关于这个 GUID 或者其它的，其实我也不懂。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;GuidSymbol</span> <span class="na">name=</span><span class="s">"guidEncodingNormalizerPackageCmdSet"</span> <span class="na">value=</span><span class="s">"{0640f5ce-e6bc-43ba-b45e-497d70819a20}"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;IDSymbol</span> <span class="na">name=</span><span class="s">"MyMenuGroup"</span> <span class="na">value=</span><span class="s">"0x1020"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;IDSymbol</span> <span class="na">name=</span><span class="s">"EncodingNormalizerId"</span> <span class="na">value=</span><span class="s">"0x0100"</span> <span class="nt">/&gt;</span>
+      
+        <span class="c">&lt;!--添加 EncodingNormalizerMenu ，EncodingNormalizerId2--&gt;</span>
+        <span class="nt">&lt;IDSymbol</span> <span class="na">name=</span><span class="s">"EncodingNormalizerMenu"</span> <span class="na">value=</span><span class="s">"0x1021"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;IDSymbol</span> <span class="na">name=</span><span class="s">"EncodingNormalizerId2"</span> <span class="na">value=</span><span class="s">"0x0101"</span> <span class="nt">/&gt;</span>
+
+    <span class="nt">&lt;/GuidSymbol&gt;</span>
+</code></pre></div></div>
+
+<p>然后是创建菜单 在<code class="language-plaintext highlighter-rouge">&lt;Command&gt;</code>下面使用<code class="language-plaintext highlighter-rouge">&lt;Menus&gt;</code></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Menus&gt;</span>
+      <span class="nt">&lt;Menu</span> <span class="na">guid=</span><span class="s">"guidEncodingNormalizerPackageCmdSet"</span> <span class="na">id=</span><span class="s">"EncodingNormalizerMenu"</span>
+      <span class="na">type=</span><span class="s">"Menu"</span> <span class="na">priority=</span><span class="s">"0x100"</span><span class="nt">&gt;</span>
+        <span class="c">&lt;!--注意这个id 和 type--&gt;</span>
+        <span class="nt">&lt;Parent</span> <span class="na">guid=</span><span class="s">"guidSHLMainMenu"</span> <span class="na">id=</span><span class="s">"IDG_VS_MM_BUILDDEBUGRUN"</span> <span class="nt">/&gt;</span>
+        <span class="c">&lt;!--这里的id是说他在哪--&gt;</span>
+        <span class="nt">&lt;Strings&gt;</span>
+          <span class="c">&lt;!--按钮显示的字--&gt;</span>
+          <span class="nt">&lt;ButtonText&gt;</span>规范编码<span class="nt">&lt;/ButtonText&gt;</span>
+          <span class="c">&lt;!--命令名--&gt;</span>
+          <span class="nt">&lt;CommandName&gt;</span>EncodingNormalizer<span class="nt">&lt;/CommandName&gt;</span>
+        <span class="nt">&lt;/Strings&gt;</span>
+      <span class="nt">&lt;/Menu&gt;</span>
+    <span class="nt">&lt;/Menus&gt;</span>
+  
+</code></pre></div></div>
+
+<p>然后修改 Groups ，修改 Parent 的 guid 为 Menu 的，修改 id 为 Menu 的。不一样就不在一个菜单。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="nt">&lt;Groups&gt;</span>
+      <span class="nt">&lt;Group</span> <span class="na">guid=</span><span class="s">"guidEncodingNormalizerPackageCmdSet"</span> <span class="na">id=</span><span class="s">"MyMenuGroup"</span> <span class="na">priority=</span><span class="s">"0x0600"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Parent</span> <span class="na">guid=</span><span class="s">"guidEncodingNormalizerPackageCmdSet"</span> <span class="na">id=</span><span class="s">"EncodingNormalizerMenu"</span><span class="nt">/&gt;</span>
+      <span class="nt">&lt;/Group&gt;</span>
+    <span class="nt">&lt;/Groups&gt;</span>
+</code></pre></div></div>
+
+<p>然后添加按钮，注意按钮需要 id 、priority、CommandName 和之前默认的不一样。</p>
+
+<p>添加了按钮，我们需要添加事件，在 .cs 构造 
+我们使用 CommandID 绑定，我们需要知道 按钮在哪个组，我们直接使用 CommandSet 还需要知道 按钮的 id ，第一个按钮是 0x0100 就是CommandId，第二个是 0x0101 ，于是就写 <code class="language-plaintext highlighter-rouge">new CommandID(CommandSet, 0x0101)</code> 使用第二个按钮</p>
+
+<p>那么使用了按钮，我们需要关联事件使用，我的 MenuItemCallback 事件作为按钮点击使用函数。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                  <span class="n">menuItem</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MenuCommand</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MenuItemCallback</span><span class="p">,</span> <span class="n">menuCommandID</span><span class="p">);</span>
+                <span class="n">commandService</span><span class="p">.</span><span class="nf">AddCommand</span><span class="p">(</span><span class="n">menuItem</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>代码全部在<a href="https://github.com/iip-easi/EncodingNormalior">全球同性交友平台</a>，上面写的代码在 EncodingNormalizerVsx/EncodingNormalizer.cs</p>
+
+<p>接着就是需要加上文件编码检查，在我之前写的 C# 判断文件编码 博客有说道如何检测文件编码。</p>
+
+<p>关于 EncodingNormalizer 为何需要写私有构造以及他的代码为何是需要使用下面的结构，因为这时ms自己加的，我就不去改他了。默认创建的文件就是：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Initialize</span><span class="p">(</span><span class="n">Package</span> <span class="n">package</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Instance</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">EncodingNormalizer</span><span class="p">(</span><span class="n">package</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="n">EncodingNormalizer</span> <span class="n">Instance</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+              <span class="k">private</span> <span class="nf">EncodingNormalizer</span><span class="p">(</span><span class="n">Package</span> <span class="n">package</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">package</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="s">"package"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">this</span><span class="p">.</span><span class="n">package</span> <span class="p">=</span> <span class="n">package</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">commandService</span> <span class="p">=</span> <span class="n">ServiceProvider</span><span class="p">.</span><span class="nf">GetService</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">IMenuCommandService</span><span class="p">))</span> <span class="k">as</span> <span class="n">OleMenuCommandService</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">commandService</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+               <span class="c1">//这里写按钮</span>
+                  <span class="n">menuItem</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MenuCommand</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">MenuItemCallback</span><span class="p">,</span> <span class="n">menuCommandID</span><span class="p">);</span>
+                <span class="n">commandService</span><span class="p">.</span><span class="nf">AddCommand</span><span class="p">(</span><span class="n">menuItem</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>文件的其他都是后面加的，所以可以看到，需要添加的按钮写的在构造的哪里，而且打开 xxPagexx 的文件可以发现，这个创建就在 Initialize 使用，也就是下面的代码调用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">EncodingNormalizerPackage</span> <span class="p">:</span> <span class="n">Package</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     EncodingNormalizerPackage GUID string.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">PackageGuidString</span> <span class="p">=</span> <span class="s">"ffc5dabf-5ded-4433-8225-73b47e154210"</span><span class="p">;</span>
+
+        <span class="err">#</span><span class="n">region</span> <span class="n">Package</span> <span class="n">Members</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     Initialization of the package; this method is called right after the package is sited, so this is the place</span>
+        <span class="c1">///     where you can put all the initialization code that rely on services provided by VisualStudio.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">Initialize</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">EncodingNormalizer</span><span class="p">.</span><span class="nf">Initialize</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">Initialize</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>所以在开始传入自己，因为传入之后可以通过 ServiceProvider.GetService 获得按钮添加的位置，之后就在他这里添加按钮的对应事件，添加时需要使用和按钮一样的id，这里建议写一个变量。</p>
+
+<h2 id="增加选项">增加选项</h2>
+
+<p>我们需要保存一些设置，那么如何自定义配置的界面，把配置页面放在工具-&gt;选项，可以参见 http://www.cnblogs.com/winkingzhang 提供的方法，我使用了他的方法，很简单。还有垃圾wr的方法 https://github.com/Microsoft/VSSDK-Extensibility-Samples/blob/646de671c1a65ca49e9fce397baefe217e9123e8/Options_Page/Readme.md</p>
+
+<p>首先打开 <code class="language-plaintext highlighter-rouge">*Package.cs</code> ，不过我们需要新建一个类 DefinitionPage ，不需要在这个类写什么。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">DefinitionPage</span>
+    <span class="p">{</span>
+        
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后添加 ProvideProfile ，需要写类型、分类名称、页面名称、资源ID。关于 ProvideProfile 可以去：https://msdn.microsoft.com/zh-cn/library/microsoft.visualstudio.shell.provideprofileattribute.aspx</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">[</span><span class="nf">ProvideProfile</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">DefinitionPage</span><span class="p">),</span> <span class="s">"PowerExtension"</span><span class="p">,</span> <span class="s">"DefinitionPage"</span><span class="p">,</span><span class="m">101</span><span class="p">,</span><span class="m">104</span><span class="p">,</span><span class="k">true</span><span class="p">)]</span>
+  <span class="p">[</span><span class="nf">ProvideOptionPage</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">DefinitionPage</span><span class="p">),</span> <span class="s">"PowerExtension"</span><span class="p">,</span> <span class="s">"DefinitionPage"</span><span class="p">,</span> <span class="m">101</span><span class="p">,</span> <span class="m">104</span><span class="p">,</span> <span class="k">true</span><span class="p">)]</span>
+   
+</code></pre></div></div>
+<p>PowerExtension 就是显示在选项的一级菜单，DefinitionPage就是二级菜单。</p>
+
+<p>我这里把 PowerExtension 改为 EncodingNormalizer</p>
+
+<p>我们选项不需要复杂的，只需要使用默认的，于是我们添加属性 <code class="language-plaintext highlighter-rouge">CriterionEncoding</code>。</p>
+
+<p>添加时候，需要让 DefinitionPage 使用 DialogPage</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">ClassInterface</span><span class="p">(</span><span class="n">ClassInterfaceType</span><span class="p">.</span><span class="n">AutoDual</span><span class="p">)]</span>
+    <span class="p">[</span><span class="nf">Guid</span><span class="p">(</span><span class="n">GuidStrings</span><span class="p">.</span><span class="n">GuidDefinitionPage</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">DefinitionPage</span> <span class="p">:</span> <span class="n">DialogPage</span>
+</code></pre></div></div>
+
+<p>GuidStrings.GuidDefinitionPage) 是我自己定义的GUID放在一起的类，实际没有用</p>
+
+<p>需要让属性知道设置的标题，点击显示的 Description ，于是我就写下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 规范格式</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="p">[</span><span class="nf">Category</span><span class="p">(</span><span class="s">"规定编码"</span><span class="p">)]</span>
+        <span class="p">[</span><span class="nf">Description</span><span class="p">(</span><span class="s">"规定的编码，如果是ascii 那么无论是选择utf8或GBK都判断为对"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">Encoding</span> <span class="n">CriterionEncoding</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/dac58ce0-c90f-489f-9ac0-83aadcf143db201711211410.jpg" alt="" /></p>
+
+<p>如果需要复杂窗体，新建一个 用户控件，注意是 WinForm 控件，然后 override Window。</p>
+
+<p>假如我有一个控件 View.DefinitionPage ，那么我可以使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="n">IWin32Window</span> <span class="n">Window</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_definitionPage</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">_definitionPage</span> <span class="p">=</span> <span class="k">new</span> <span class="n">View</span><span class="p">.</span><span class="nf">DefinitionPage</span><span class="p">();</span>
+                <span class="p">}</span>
+                <span class="n">_definitionPage</span><span class="p">.</span><span class="n">Owner</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+                <span class="n">_definitionPage</span><span class="p">.</span><span class="nf">InitializeLifetimeService</span><span class="p">();</span>
+                <span class="k">return</span> <span class="n">_definitionPage</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">private</span> <span class="n">View</span><span class="p">.</span><span class="n">DefinitionPage</span> <span class="n">_definitionPage</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>那么如何读取 vs扩展配置 ？</p>
+
+<p>vsx的配置保存使用上面的方法，就自动保存配置注册表，于是如何去读，就是问题。</p>
+
+<p>读取 vs插件 配置的方法是在 <code class="language-plaintext highlighter-rouge">*Package.cs</code> 写静态的 <code class="language-plaintext highlighter-rouge">Ensure*Package</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="n">EncodingNormalizerPackage</span> <span class="nf">EnsureEncodingNormalizerPackage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">IVsShell</span> <span class="n">shell</span> <span class="p">=</span> <span class="n">Package</span><span class="p">.</span><span class="nf">GetGlobalService</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">SVsShell</span><span class="p">))</span> <span class="k">as</span> <span class="n">IVsShell</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">shell</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">IVsPackage</span> <span class="n">package</span><span class="p">;</span>
+                <span class="n">Guid</span> <span class="n">guid</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Guid</span><span class="p">(</span><span class="n">EncodingNormalizerPackage</span><span class="p">.</span><span class="n">PackageGuidString</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">ErrorHandler</span><span class="p">.</span><span class="nf">Succeeded</span><span class="p">(</span><span class="n">shell</span><span class="p">.</span><span class="nf">IsPackageLoaded</span><span class="p">(</span><span class="k">ref</span> <span class="n">guid</span><span class="p">,</span> <span class="k">out</span> <span class="n">package</span><span class="p">)))</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">package</span> <span class="k">as</span> <span class="n">EncodingNormalizerPackage</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">ErrorHandler</span><span class="p">.</span><span class="nf">Succeeded</span><span class="p">(</span><span class="n">shell</span><span class="p">.</span><span class="nf">LoadPackage</span><span class="p">(</span><span class="k">ref</span> <span class="n">guid</span><span class="p">,</span> <span class="k">out</span> <span class="n">package</span><span class="p">)))</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">package</span> <span class="k">as</span> <span class="n">EncodingNormalizerPackage</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>EncodingNormalizerPackage 是我的类，大家替换他为你的类，然后拿到了EncodingNormalizerPackage还需要拿到他的页面属性</p>
+
+<p>DefinitionPage 就是我上面定义的选项</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="n">DefinitionPage</span> <span class="nf">DefinitionPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">EncodingNormalizerPackage</span> <span class="n">package</span> <span class="p">=</span> <span class="nf">EnsureEncodingNormalizerPackage</span><span class="p">();</span>
+            <span class="k">return</span> <span class="n">package</span><span class="p">?.</span><span class="nf">GetDialogPage</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">DefinitionPage</span><span class="p">))</span> <span class="k">as</span> <span class="n">DefinitionPage</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么在上面定义的 CriterionEncoding 也可以拿到，这样就可以读配置了。</p>
+
+<p>修改 CriterionEncoding 关闭 vs，可以看到下次打开值还在，他是写在注册表。</p>
+
+<p>我发现写注册表对于List的和一些类型都不好，于是我用了写文件，写文件可以写在用户文档。</p>
+
+<p><code class="language-plaintext highlighter-rouge">System.Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)</code> 获取用户文档，在里面新建文件夹，然后就可以写入读取。</p>
+
+<p>如果需要做方法去和 Resharper 的注册等差不多的页面，那么可以使用 Window 弹出。</p>
+
+<p>首先创建一个 UserControl 然后写一个复杂的界面，假如我写了一个叫 ConformPage 的控件，那么我如何去显示他。可以使用下面代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Window</span> <span class="n">window</span> <span class="p">=</span> <span class="k">new</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="nf">Window</span><span class="p">();</span>
+            <span class="n">ConformPage</span> <span class="n">conformPage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ConformPage</span><span class="p">();</span>
+            <span class="n">window</span><span class="p">.</span><span class="n">Content</span> <span class="p">=</span> <span class="n">conformPage</span><span class="p">;</span>
+            <span class="n">window</span><span class="p">.</span><span class="n">Title</span> <span class="p">=</span> <span class="s">"编码规范工具"</span><span class="p">;</span>
+            <span class="n">window</span><span class="p">.</span><span class="nf">Show</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>从零做一个扩展，可以参见：http://www.cnblogs.com/stg609/p/3711443.html</p>
+
+<h2 id="传到商店">传到商店</h2>
+
+<p>做完了功能，我们需要发布扩展，我们要把按钮加上好看的 ico 。</p>
+
+<p>首先，下载一张图。</p>
+
+<p>把图片改为 32bits 16x16。修改图片可以使用 http://www.easyicon.net/ 在线转换。</p>
+
+<p>图片放到工程，我放在 Resource ，我给他名称 code_711px_16_easyicon.net.png</p>
+
+<p>打开 <code class="language-plaintext highlighter-rouge">*.vsct</code> ，在 Symbols 添加 一个GUID。这需要给他名称和ID</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="nt">&lt;GuidSymbol</span> <span class="na">name=</span><span class="s">"EncodingNormalizerIdICO"</span> <span class="na">value=</span><span class="s">"{B1E160E6-CC24-4FD5-857F-69F45DCEE27B}"</span>
+                <span class="nt">&gt;</span>
+      <span class="nt">&lt;IDSymbol</span> <span class="na">name=</span><span class="s">"bmpPic1"</span> <span class="na">value=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/GuidSymbol&gt;</span>
+</code></pre></div></div>
+
+<p>然后在 Bitmaps 添加 Bitmap ，他的 guid 就是我们上面 EncodingNormalizerIdICO ，href 是图片所在文件夹，usedList 写 IDSymbol 。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;Bitmap</span> <span class="na">guid=</span><span class="s">"EncodingNormalizerIdICO"</span> <span class="na">href=</span><span class="s">"Resources\code_711px_16_easyicon.net.png"</span> <span class="na">usedList=</span><span class="s">"bmpPic1"</span><span class="nt">/&gt;</span>
+
+</code></pre></div></div>
+
+<p>然后在我们需要的按钮 Icon 的 guid 写 guid，在 id 写 IDSymbol 。</p>
+
+<p>这样就好啦。</p>
+
+<p>如果发现有自己做的和我讲的不同，那么一定是有一点我没说道，去我的github看我做的。</p>
+
+<p>图片可以把多个图片放在一起，于是按照一个图片 16x16 读取，这就是多个<code class="language-plaintext highlighter-rouge">IDSymbol</code>做的。</p>
+
+<h2 id="获取工程所有项目">获取工程所有项目</h2>
+
+<p>我需要获取用户工程的所有项目，我开始使用<code class="language-plaintext highlighter-rouge">dte.Solution.Projects</code>但是放在文件夹的项目获取不到，所以使用堆栈提供的方法。</p>
+
+<p>这个方法写在<a href="http://lindexi.oschina.io/lindexi/post/C-%E8%A7%A3%E6%9E%90-sln-%E6%96%87%E4%BB%B6/">C＃ 解析 sln 文件</a> 可是 vs 说找到不 Microsoft.Build.dll 所以这个方法还是不可以的。那么如何从 dte 获取所有项目？我找到一个大神博客：http://www.wwwlicious.com/2011/03/29/envdte-getting-all-projects-html/</p>
+
+<p>开始判断是不是文件夹，如果是的话，递归函数获取文件夹所有项目。</p>
+
+<p>我以为文件夹不是 <code class="language-plaintext highlighter-rouge">Project</code> 但是后来发现，工程的文件夹也是 <code class="language-plaintext highlighter-rouge">Project</code> 文件夹可以通过<code class="language-plaintext highlighter-rouge">ProjectKinds.vsProjectKindSolutionFolder</code>判断。</p>
+
+<p>那么如何获得 文件夹所有文件夹和项目，其实 <code class="language-plaintext highlighter-rouge">Project</code> 有 ProjectItems 可以获取。</p>
+
+<p>于是可以使用这个方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Project</span><span class="p">&gt;</span> <span class="nf">GetSolutionFolderProjects</span><span class="p">(</span><span class="n">Project</span> <span class="n">solutionFolder</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">List</span><span class="p">&lt;</span><span class="n">Project</span><span class="p">&gt;</span> <span class="n">list</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Project</span><span class="p">&gt;();</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;=</span> <span class="n">solutionFolder</span><span class="p">.</span><span class="n">ProjectItems</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">subProject</span> <span class="p">=</span> <span class="n">solutionFolder</span><span class="p">.</span><span class="n">ProjectItems</span><span class="p">.</span><span class="nf">Item</span><span class="p">(</span><span class="n">i</span><span class="p">).</span><span class="n">SubProject</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">subProject</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">continue</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="c1">// If this is another solution folder, do a recursive call, otherwise add</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">subProject</span><span class="p">.</span><span class="n">Kind</span> <span class="p">==</span> <span class="n">ProjectKinds</span><span class="p">.</span><span class="n">vsProjectKindSolutionFolder</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">list</span><span class="p">.</span><span class="nf">AddRange</span><span class="p">(</span><span class="nf">GetSolutionFolderProjects</span><span class="p">(</span><span class="n">subProject</span><span class="p">));</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">list</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">subProject</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">list</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>一开始判断是不是文件夹，如果是就使用 GetSolutionFolderProjects 得到所有的项目，这样就可以获得工程所有项目。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">dte</span><span class="p">.</span><span class="n">Solution</span><span class="p">.</span><span class="n">Projects</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">temp</span> <span class="k">is</span> <span class="n">Project</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(((</span><span class="n">Project</span><span class="p">)</span> <span class="n">temp</span><span class="p">).</span><span class="n">Kind</span> <span class="p">==</span> <span class="n">ProjectKinds</span><span class="p">.</span><span class="n">vsProjectKindSolutionFolder</span><span class="p">)</span>
+        <span class="p">{</span>
+           <span class="n">project</span><span class="p">.</span><span class="nf">AddRange</span><span class="p">(</span> <span class="nf">GetSolutionFolderProjects</span><span class="p">((</span><span class="n">Project</span><span class="p">)</span> <span class="n">temp</span><span class="p">));</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+           <span class="n">project</span><span class="p">.</span><span class="nf">Add</span><span class="p">((</span><span class="n">Project</span><span class="p">)</span><span class="n">temp</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<script src="https://gist.github.com/lindexi/3105bd0f0c5225bec4aa476f84dd29db.js"></script>
+
+<p>代码：https://gist.github.com/lindexi/3105bd0f0c5225bec4aa476f84dd29db</p>
+
+<h2 id="升级-2017">升级 2017</h2>
+
+<p>如果有之前扩展需要升级，参见 <a href="https://docs.microsoft.com/en-us/visualstudio/extensibility/how-to-migrate-extensibility-projects-to-visual-studio-2017">https://docs.microsoft.com/en-us/visualstudio/extensibility/how-to-migrate-extensibility-projects-to-visual-studio-2017</a></p>
+
+<ol>
+  <li>安装 vs2017 需要添加扩展</li>
+</ol>
+
+<p>关于vs2017 可以到我网盘下载，参见：<a href="https://blog.lindexi.com/post/C-7.0.html">https://blog.lindexi.com/post/C-7.0.html</a></p>
+
+<ol>
+  <li>打开 Nuget 升级，把所有提示升级的都升级。</li>
+</ol>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017323202746.jpg" alt="" /></p>
+
+<ol>
+  <li>打开 source.extension.vsixmanifest</li>
+</ol>
+
+<p>选 InstallationTarget 包括各版本</p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017323202935.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017323202922.jpg" alt="" /></p>
+
+<ol>
+  <li>打开属性，修改路径</li>
+</ol>
+
+<p>启动外部程序<code class="language-plaintext highlighter-rouge">C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\devenv.exe</code></p>
+
+<p><img src="http://image.acmx.xyz/AwCCAwMAItoFAMV%2BBQA28wYAAQAEAK4%2BAQBmQwIAaOgJAOjZ%2F2017323203341.jpg" alt="" /></p>
+
+<ol>
+  <li>
+    <p>启动项目</p>
+  </li>
+  <li>
+    <p>把插件共享 https://visualstudiogallery.msdn.microsoft.com/site/upload/view</p>
+  </li>
+</ol>
+
+<p>参见：http://blog.csdn.net/liuruxin/article/details/17955363</p>
+
+<p>https://github.com/Microsoft/VSSDK-Extensibility-Samples</p>
+
+<p>https://msdn.microsoft.com/zh-cn/library/cc138589</p>
+
+<p>https://msdn.microsoft.com/zh-cn/library/dn705845</p>
+
+<p>https://msdn.microsoft.com/zh-cn/library/mt683786</p>
+
+<p>代码：https://github.com/lindexi/EncodingNormalior</p>
+
+<p>如果开发中遇到问题，欢迎联系 <a href="mailto:lindexi_gd@163.com">lindexi_gd@163.com</a></p>
+
+<p>现在我还有另一个插件：<a href="http://download.csdn.net/detail/lindexi_gd/9833388">图片注释</a> 这个插件不是我写的，我是修改的，所以没有发布，如果需要就在这里下。</p>
+
+<p>推荐<a href="https://blog.csdn.net/lj22377/article/details/84641077">VS插件开发笔记 - 禾木 - CSDN博客</a></p>
+
+:ET

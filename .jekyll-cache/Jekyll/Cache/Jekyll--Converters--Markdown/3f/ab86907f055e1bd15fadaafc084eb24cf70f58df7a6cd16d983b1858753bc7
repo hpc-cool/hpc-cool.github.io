@@ -1,0 +1,126 @@
+I"[4<p>在客户端开发，可以使用 .NET Core 3.0 开发 WPF 程序，可以使用 EF Core 连接数据库。客户端的数据库使用 SQLite 在不同的版本需要在客户端运行做数据库迁移升级数据库</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/12/19 8:56:35 -->
+
+<!-- csdn -->
+
+<p>在 WPF 使用 EF Core 可以安装下面的库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"Microsoft.AspNetCore.Mvc.NewtonsoftJson"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"3.0.0"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"Microsoft.EntityFrameworkCore.Design"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"3.0.0"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">PrivateAssets</span><span class="p">&gt;</span><span class="n">all</span><span class="p">&lt;/</span><span class="n">PrivateAssets</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">IncludeAssets</span><span class="p">&gt;</span><span class="n">runtime</span><span class="p">;</span> <span class="n">build</span><span class="p">;</span> <span class="n">native</span><span class="p">;</span> <span class="n">contentfiles</span><span class="p">;</span> <span class="n">analyzers</span><span class="p">;</span> <span class="n">buildtransitive</span><span class="p">&lt;/</span><span class="n">IncludeAssets</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PackageReference</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"Microsoft.EntityFrameworkCore"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"3.0.0"</span><span class="p">/&gt;</span>
+  <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"Microsoft.EntityFrameworkCore.Sqlite"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"3.0.0"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"Microsoft.EntityFrameworkCore.SqlServer"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"3.0.0"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>先创建一个 Model 类，在这个类里面需要添加 Id 属性，如创建资源类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">ResourceModel</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">DatabaseGenerated</span><span class="p">(</span><span class="n">DatabaseGeneratedOption</span><span class="p">.</span><span class="n">Identity</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceId</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceName</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">LocalPath</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceSign</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceFileDetail</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后创建数据类，用于连接数据库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">KekairwuceeYernellijewhebere</span> <span class="p">:</span> <span class="n">DbContext</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">DbSet</span><span class="p">&lt;</span><span class="n">ResourceModel</span><span class="p">&gt;</span> <span class="n">ResourceModel</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnConfiguring</span><span class="p">(</span><span class="n">DbContextOptionsBuilder</span> <span class="n">optionsBuilder</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="s">"FileManger.db"</span><span class="p">);</span>
+            <span class="n">file</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetFullPath</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+            <span class="n">optionsBuilder</span>
+                <span class="p">.</span><span class="nf">UseSqlite</span><span class="p">(</span><span class="s">$"Filename=</span><span class="p">{</span><span class="n">file</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>重写 OnConfiguring 方法在里面写连接方法，此时就完成了数据定义，但是还没有创建数据库</p>
+
+<p>使用命令行进行数据库迁移，数据库迁移就是创建数据库相关代码，在第一次进行迁移将会自动创建代码用于创建数据库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">ef</span> <span class="n">migrations</span> <span class="k">add</span> <span class="err">版本名</span> 
+</code></pre></div></div>
+
+<p>上面代码的版本名可以随意命名，如我是这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">ef</span> <span class="n">migrations</span> <span class="k">add</span> <span class="n">Lindexi</span> 
+</code></pre></div></div>
+
+<p>执行上面代码可以看到在项目里面添加了 Migrations 文件夹，这个文件夹里面包含数据库的迁移代码</p>
+
+<p>在主函数可以使用下面代码创建数据库，如果数据库已经创建了那么将什么都不做</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kekairwuceeYernellijewhebere</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">KekairwuceeYernellijewhebere</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">kekairwuceeYernellijewhebere</span><span class="p">.</span><span class="n">Database</span><span class="p">.</span><span class="nf">Migrate</span><span class="p">();</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果只是一次性创建，之后不执行修改的，可以使用 EnsureCreated 函数创建，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">kekairwuceeYernellijewhebere</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">KekairwuceeYernellijewhebere</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">kekairwuceeYernellijewhebere</span><span class="p">.</span><span class="n">Database</span><span class="p">.</span><span class="nf">EnsureCreated</span><span class="p">();</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意使用 EnsureCreated 函数创建之后，将在下次调用 Database.Migrate 函数时提示下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Microsoft.Data.Sqlite.SqliteException:“SQLite Error 1: 'table "ResourceModel" already exists'.”
+</code></pre></div></div>
+
+<p>如果软件更新了，需要修改 ResourceModel 的内容，添加一个属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">public</span> <span class="k">class</span> <span class="nc">ResourceModel</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">DatabaseGenerated</span><span class="p">(</span><span class="n">DatabaseGeneratedOption</span><span class="p">.</span><span class="n">Identity</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceId</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="p">+</span>       <span class="k">public</span> <span class="kt">string</span> <span class="n">WaircegalhallwayneeHuwairfejaije</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceName</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">LocalPath</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceSign</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ResourceFileDetail</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么在修改代码之后，再次执行迁移命令</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">ef</span> <span class="n">migrations</span> <span class="k">add</span> <span class="err">版本名</span> 
+</code></pre></div></div>
+
+<p>此时建议创建迁移代码，在软件运行的时候执行 Migrate 函数将会自动升级数据库</p>
+
+<p>如果数据库是需要升级的，那么请使用 Database.Migrate 函数创建数据库，之后可以在访问数据库之前调用这个函数让数据库如果没有更新就自动更新</p>
+
+<p>每次调用 Migrate 都需要一定的时间，建议在另一个线程运行</p>
+
+<p>如果在运行 SaveChanges 提示 <code class="language-plaintext highlighter-rouge">no such table</code> 那么可能是在调用 <code class="language-plaintext highlighter-rouge">Migrate</code> 等方法之前没有先调用 <code class="language-plaintext highlighter-rouge">dotnet ef migrations</code> 创建迁移类</p>
+
+:ET

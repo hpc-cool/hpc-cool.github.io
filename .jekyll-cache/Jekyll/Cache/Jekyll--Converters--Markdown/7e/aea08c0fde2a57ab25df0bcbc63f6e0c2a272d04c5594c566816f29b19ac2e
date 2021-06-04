@@ -1,0 +1,67 @@
+I"}<p>本文告诉大家在 OpenXML SDK 里面文本框的文本带自动编号的项目符号，不同的编号在 OpenXML SDK 上的枚举值</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/26 17:08:16 -->
+
+<p>在 OpenXML SDK 使用 <a href="https://docs.microsoft.com/zh-cn/dotnet/api/documentformat.openxml.drawing.textautonumberschemevalues">TextAutoNumberSchemeValues</a> 枚举表示自动编号的项目符号使用的自动编号是哪个</p>
+
+<p>本文告诉大家对应的值的枚举值</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ArabicPeriod  1.2.3.
+ArabicParenR  1)2)3)
+RomanUpperCharacterPeriod  I. II. III.
+RomanLowerCharacterPeriod  i. ii. iii.
+AlphaUpperCharacterPeriod  A. B. C.
+AlphaLowerCharacterParenR  a) b) c)
+AlphaLowerCharacterPeriod  a. b. c.
+CircleNumberDoubleBytePlain  ① ② ③
+EastAsianJapaneseDoubleBytePeriod  一. 二.
+</code></pre></div></div>
+
+<h2 id="arabicperiod">ArabicPeriod</h2>
+
+<!-- ![](image/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值0.png) -->
+<p><img src="http://image.acmx.xyz/lindexi%2F2020326172152923.jpg" alt="" /></p>
+
+<h2 id="romanuppercharacterperiod">RomanUpperCharacterPeriod</h2>
+
+<!-- ![](image/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20203261721428156.jpg" alt="" /></p>
+
+<h2 id="alphauppercharacterperiod">AlphaUpperCharacterPeriod</h2>
+
+<!-- ![](image/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020326172266980.jpg" alt="" /></p>
+
+<h2 id="alphalowercharacterparenr">AlphaLowerCharacterParenR</h2>
+
+<!-- ![](image/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020326172231169.jpg" alt="" /></p>
+
+<h2 id="circlenumberdoublebyteplain">CircleNumberDoubleBytePlain</h2>
+
+<!-- ![](image/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值6.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20203261729295719.jpg" alt="" /></p>
+
+<h2 id="eastasianjapanesedoublebyteperiod">EastAsianJapaneseDoubleBytePeriod</h2>
+
+<!-- ![](image/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值7.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20203261729517413.jpg" alt="" /></p>
+
+<h2 id="alphalowercharacterperiod">AlphaLowerCharacterPeriod</h2>
+
+<!-- ![](image/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值/C# dotnet 带编号项目符号在 OpenXML SDK 对应的枚举值5.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20203261722596311.jpg" alt="" /></p>
+
+<p>这就是 PPT 页面上的常用的枚举值</p>
+
+<p>更多细节请看 ECMA-376 的 20.1.10.61 章文档</p>
+
+:ET

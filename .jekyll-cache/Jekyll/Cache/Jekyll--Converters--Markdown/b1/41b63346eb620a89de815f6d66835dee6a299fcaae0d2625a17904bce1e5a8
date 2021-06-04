@@ -1,0 +1,3 @@
+I"�<p>在开发 dotnet tool 时，我将规范编码的库作为 dotnet tool 发布，但是在发布的时候本地进行安装提示DotnetToolReference 项目类型仅可包含 DotnetTool 类 型的引用</p>
+
+:ET

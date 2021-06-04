@@ -1,0 +1,151 @@
+I"�<<p>本文来告诉大家 WPF 已知问题，在用户的设备上，如果不存在 Arial 字体，同时安装了一些诡异的字体，那么也许就会让应用在使用到诡异的字体的时候，软件闪退</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/7 17:16:35 -->
+
+<!-- 标签：WPF，WPF源代码 -->
+
+<!-- 发布 -->
+
+<p>在 WPF 的 FontFamily.cs 字体类里面，有一个叫 FirstFontFamily 的属性，这个属性的逻辑代码里面将包括在当前字体太过诡异时，自动 Fallback 到默认的字体，而默认的字体就是 Arial 字体。这个属性将会在很多逻辑被调用，如获取 FamilyNames 时</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">LanguageSpecificStringDictionary</span> <span class="n">FamilyNames</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="n">CompositeFontFamily</span> <span class="n">compositeFont</span> <span class="p">=</span> <span class="n">FirstFontFamily</span> <span class="k">as</span> <span class="n">CompositeFontFamily</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">compositeFont</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// Return the read/write dictionary of family names.</span>
+                    <span class="k">return</span> <span class="n">compositeFont</span><span class="p">.</span><span class="n">FamilyNames</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="c1">// Return a wrapper for the cached family's read-only dictionary.</span>
+                    <span class="k">return</span> <span class="k">new</span> <span class="nf">LanguageSpecificStringDictionary</span><span class="p">(</span><span class="n">FirstFontFamily</span><span class="p">.</span><span class="n">Names</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在进入到寻找 Fallback 字体将会进入到 Invariant 的 Assert 判断方法，在这里面找不到 Arial 字体时，将会进入 Environment.FailFast 让应用程序闪退</p>
+
+<p>以下是 FirstFontFamily 属性的代码，代码我删除了不关键部分</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">if</span> <span class="p">(</span><span class="n">family</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> 
+ <span class="p">{</span> 
+     <span class="n">FontStyle</span> <span class="n">style</span>     <span class="p">=</span> <span class="n">FontStyles</span><span class="p">.</span><span class="n">Normal</span><span class="p">;</span> 
+     <span class="n">FontWeight</span> <span class="n">weight</span>   <span class="p">=</span> <span class="n">FontWeights</span><span class="p">.</span><span class="n">Normal</span><span class="p">;</span> 
+     <span class="n">FontStretch</span> <span class="n">stretch</span> <span class="p">=</span> <span class="n">FontStretches</span><span class="p">.</span><span class="n">Normal</span><span class="p">;</span> 
+     <span class="n">family</span> <span class="p">=</span> <span class="nf">FindFirstFontFamilyAndFace</span><span class="p">(</span><span class="k">ref</span> <span class="n">style</span><span class="p">,</span> <span class="k">ref</span> <span class="n">weight</span><span class="p">,</span> <span class="k">ref</span> <span class="n">stretch</span><span class="p">);</span> 
+  
+     <span class="k">if</span> <span class="p">(</span><span class="n">family</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> 
+     <span class="p">{</span> 
+     	 <span class="c1">// 进入这里的逻辑将会去寻找 Fallback 字体</span>
+         <span class="c1">// fall back to null font </span>
+         <span class="n">family</span> <span class="p">=</span> <span class="nf">LookupFontFamily</span><span class="p">(</span><span class="n">NullFontFamilyCanonicalName</span><span class="p">);</span> 
+         <span class="n">Invariant</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">family</span> <span class="p">!=</span> <span class="k">null</span><span class="p">);</span> 
+     <span class="p">}</span> 
+</code></pre></div></div>
+
+<p>在 LookupFontFamily 函数里面，将会尝试去寻找 Arial 字体，上面代码的 NullFontFamilyCanonicalName 默认就是使用 Arial 字体</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">CanonicalFontFamilyReference</span> <span class="n">NullFontFamilyCanonicalName</span> <span class="p">=</span> <span class="n">CanonicalFontFamilyReference</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="s">"#ARIAL"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在 LookupFontFamily 函数里面将会调用 LookupFontFamilyAndFace 函数去寻找传入的字体，寻找的方法是从 <code class="language-plaintext highlighter-rouge">_defaultFamilyCollection</code> 去寻找传入的字体</p>
+
+<p>这里的 <code class="language-plaintext highlighter-rouge">_defaultFamilyCollection</code> 是在静态构造时获取的，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">volatile</span> <span class="n">FamilyCollection</span> <span class="n">_defaultFamilyCollection</span> <span class="p">=</span> <span class="nf">PreCreateDefaultFamilyCollection</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>以上的 PreCreateDefaultFamilyCollection 函数，实际就是读取 WindowsFontsUriObject 列表，这里的 Windows 指的不是窗口，而是指 Windows 系统</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">FamilyCollection</span> <span class="nf">PreCreateDefaultFamilyCollection</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">FamilyCollection</span> <span class="n">familyCollection</span> <span class="p">=</span> <span class="n">FamilyCollection</span><span class="p">.</span><span class="nf">FromWindowsFonts</span><span class="p">(</span><span class="n">Util</span><span class="p">.</span><span class="n">WindowsFontsUriObject</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">familyCollection</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上的 WindowsFontsUriObject 定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">WinDir</span> <span class="p">=</span> <span class="s">"windir"</span><span class="p">;</span>
+
+            <span class="kt">string</span> <span class="n">s</span> <span class="p">=</span> <span class="n">Environment</span><span class="p">.</span><span class="nf">GetEnvironmentVariable</span><span class="p">(</span><span class="n">WinDir</span><span class="p">)</span> <span class="p">+</span> <span class="s">@"\Fonts\"</span><span class="p">;</span>
+
+            <span class="n">_windowsFontsLocalPath</span> <span class="p">=</span> <span class="n">s</span><span class="p">.</span><span class="nf">ToUpperInvariant</span><span class="p">();</span>
+
+            <span class="n">_windowsFontsUriObject</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">_windowsFontsLocalPath</span><span class="p">,</span> <span class="n">UriKind</span><span class="p">.</span><span class="n">Absolute</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>也就是说读取的就是 windir 文件夹下的 Fonts 文件夹，也就是 <code class="language-plaintext highlighter-rouge">C:\Windows\Fonts\</code> 文件夹</p>
+
+<p>在 LookupFontFamilyAndFace 将会尝试去从 <code class="language-plaintext highlighter-rouge">C:\Windows\Fonts\</code> 文件夹寻找字体</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">IFontFamily</span> <span class="n">fontFamily</span> <span class="p">=</span> <span class="n">familyCollection</span><span class="p">.</span><span class="nf">LookupFamily</span>
+                <span class="p">(</span>
+                    <span class="n">canonicalFamilyReference</span><span class="p">.</span><span class="n">FamilyName</span><span class="p">,</span>
+                    <span class="k">ref</span> <span class="n">style</span><span class="p">,</span>
+                    <span class="k">ref</span> <span class="n">weight</span><span class="p">,</span>
+                    <span class="k">ref</span> <span class="n">stretch</span>
+                <span class="p">);</span>
+</code></pre></div></div>
+
+<p>假定用户从 <code class="language-plaintext highlighter-rouge">C:\Windows\Fonts\</code> 文件夹删除了 Arial 字体，那么将找不到字体，返回是空</p>
+
+<p>也就是 LookupFontFamily 将返回空</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">static</span> <span class="n">IFontFamily</span> <span class="nf">LookupFontFamily</span><span class="p">(</span><span class="n">CanonicalFontFamilyReference</span> <span class="n">canonicalName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">FontStyle</span> <span class="n">style</span>     <span class="p">=</span> <span class="n">FontStyles</span><span class="p">.</span><span class="n">Normal</span><span class="p">;</span>
+            <span class="n">FontWeight</span> <span class="n">weight</span>   <span class="p">=</span> <span class="n">FontWeights</span><span class="p">.</span><span class="n">Normal</span><span class="p">;</span>
+            <span class="n">FontStretch</span> <span class="n">stretch</span> <span class="p">=</span> <span class="n">FontStretches</span><span class="p">.</span><span class="n">Normal</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="nf">LookupFontFamilyAndFace</span><span class="p">(</span><span class="n">canonicalName</span><span class="p">,</span> <span class="k">ref</span> <span class="n">style</span><span class="p">,</span> <span class="k">ref</span> <span class="n">weight</span><span class="p">,</span> <span class="k">ref</span> <span class="n">stretch</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 FirstFontFamily 属性里面，判断字体存在的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">family</span> <span class="p">=</span> <span class="nf">LookupFontFamily</span><span class="p">(</span><span class="n">NullFontFamilyCanonicalName</span><span class="p">);</span>
+ <span class="n">Invariant</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">family</span> <span class="p">!=</span> <span class="k">null</span><span class="p">);</span> 
+</code></pre></div></div>
+
+<p>在用户删除了 Arial 字体，将会让 family 是空，而在 Invariant 的定义代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">internal</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Assert</span><span class="p">(</span><span class="kt">bool</span> <span class="n">condition</span><span class="p">)</span> 
+ <span class="p">{</span> 
+     <span class="k">if</span> <span class="p">(!</span><span class="n">condition</span><span class="p">)</span> 
+     <span class="p">{</span> 
+         <span class="nf">FailFast</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span> 
+     <span class="p">}</span> 
+ <span class="p">}</span> 
+</code></pre></div></div>
+
+<p>以上的 FailFast 方法将会调用 Environment.FailFast 方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">private</span> <span class="c1">// DO NOT MAKE PUBLIC OR INTERNAL -- See security note </span>
+     <span class="k">static</span> <span class="k">void</span> <span class="nf">FailFast</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">,</span> <span class="kt">string</span> <span class="n">detailMessage</span><span class="p">)</span> 
+ <span class="p">{</span> 
+     <span class="k">if</span> <span class="p">(</span><span class="n">Invariant</span><span class="p">.</span><span class="n">IsDialogOverrideEnabled</span><span class="p">)</span> 
+     <span class="p">{</span> 
+         <span class="c1">// This is the override for stress and other automation. </span>
+         <span class="c1">// Automated systems can't handle a popup-dialog, so let </span>
+         <span class="c1">// them jump straight into the debugger. </span>
+         <span class="n">Debugger</span><span class="p">.</span><span class="nf">Break</span><span class="p">();</span> 
+     <span class="p">}</span> 
+  
+     <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="k">false</span><span class="p">,</span> <span class="s">"Invariant failure: "</span> <span class="p">+</span> <span class="n">message</span><span class="p">,</span> <span class="n">detailMessage</span><span class="p">);</span> 
+  
+     <span class="n">Environment</span><span class="p">.</span><span class="nf">FailFast</span><span class="p">(</span><span class="n">SR</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="n">SRID</span><span class="p">.</span><span class="n">InvariantFailure</span><span class="p">));</span> 
+ <span class="p">}</span> 
+</code></pre></div></div>
+
+<p>调用 Environment.FailFast 之后，应用程序就闪退了，只有在系统事件里面看到记录</p>
+
+<p>我认为这是一个不合理的设计，至少在框架层不应该有这样的逻辑，作为一个十分成熟的 UI 框架，应该能兼容各个诡异的系统，我将这个问题报告给官方，请看 <a href="https://github.com/dotnet/wpf/issues/4464">WPF known issues: Application will FailFast when not find the Arial font from system · Issue #4464 · dotnet/wpf</a></p>
+
+:ET

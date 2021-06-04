@@ -1,0 +1,16 @@
+I"�<p>在U盘放在打印的设备打印一个文件之后，发现U盘的文件夹都找不到了</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/12/14 19:24:56 -->
+
+<!-- csdn -->
+
+<p>解决方法是在命令行输入下面命令，假设 U 盘的盘符是 H 盘</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">attrib</span> <span class="p">-</span><span class="n">h</span> <span class="p">-</span><span class="n">r</span> <span class="p">-</span><span class="n">s</span> <span class="p">/</span><span class="n">s</span> <span class="p">/</span><span class="n">d</span> <span class="n">H</span><span class="p">:</span><span class="err">\</span><span class="p">*.*</span>
+</code></pre></div></div>
+
+<p>替换上面的 <code class="language-plaintext highlighter-rouge">H:\*.*</code> 为你的盘符 <code class="language-plaintext highlighter-rouge">盘符:\*.*</code> 运行需要等待一会</p>
+
+:ET

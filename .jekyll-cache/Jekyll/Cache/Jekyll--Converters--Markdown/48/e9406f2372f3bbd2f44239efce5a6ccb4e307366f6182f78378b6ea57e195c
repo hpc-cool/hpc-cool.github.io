@@ -1,0 +1,71 @@
+I"�<p>本文告诉大家几个方法在 xaml 的 TextBlock 的 Text 换行</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/17 16:02:29 -->
+
+<!-- csdn -->
+
+<p>在 xaml 可以使用 <code class="language-plaintext highlighter-rouge">&amp;#x0a;</code> 表示换行，所以最简单的方法是在 Text 里面输入 <code class="language-plaintext highlighter-rouge">&amp;#x0a;</code> 换行</p>
+
+<p>如显示下面的图片，可以使用下面代码</p>
+
+<!-- ![](image/win10 uwp 在 xaml 让 TextBlock 换行/win10 uwp 在 xaml 让 TextBlock 换行0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20181117153856312" alt="" /></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"换行的最简单方法&amp;#x0a;欢迎访问我博客 lindexi.gitee.io 里面有大量 UWP WPF 博客
+"</span> 
+                   <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span>
+                   <span class="na">VerticalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>如果换行需要使用 <code class="language-plaintext highlighter-rouge">\r\n</code> 可以在 xaml 使用 <code class="language-plaintext highlighter-rouge">&amp;#x0d;&amp;#x0a;</code> 替换</p>
+
+<p>如果是在 WPF 可以通过 <code class="language-plaintext highlighter-rouge">LineBreak</code> 的方法换行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span>
+                   <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">Text</span><span class="p">&gt;</span>
+                <span class="err">换行的最简单方法</span>
+                <span class="p">&lt;</span><span class="n">LineBreak</span><span class="p">/&gt;</span>
+                <span class="err">欢迎访问我博客</span> <span class="n">lindexi</span><span class="p">.</span><span class="n">gitee</span><span class="p">.</span><span class="n">io</span> <span class="err">里面有大量</span> <span class="n">UWP</span> <span class="n">WPF</span> <span class="err">博客</span>
+            <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">Text</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>但是上面的方法无法在 UWP 使用</p>
+
+<p>好在可以使用<code class="language-plaintext highlighter-rouge">xml:space="preserve"</code>直接输入换行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">xml</span><span class="p">:</span><span class="n">space</span><span class="p">=</span><span class="s">"preserve"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">Text</span><span class="p">&gt;</span>
+                <span class="err">换行的最简单方法</span>
+                <span class="err">欢迎访问我博客</span> <span class="n">lindexi</span><span class="p">.</span><span class="n">gitee</span><span class="p">.</span><span class="n">io</span> <span class="err">里面有大量</span> <span class="n">UWP</span> <span class="n">WPF</span> <span class="err">博客</span>
+            <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">Text</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>添加了 <code class="language-plaintext highlighter-rouge">space</code> 就可以在换行的时候自动换行</p>
+
+<p>如果担心在 元素 上添加 <code class="language-plaintext highlighter-rouge">xml:space="preserve"</code> 会让其他的功能不好用，可以使用资源的方法，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">x</span><span class="p">:</span><span class="n">String</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"str"</span> <span class="n">xml</span><span class="p">:</span><span class="n">space</span><span class="p">=</span><span class="s">"preserve"</span><span class="p">&gt;</span>
+                <span class="err">换行的最简单方法</span>
+                <span class="err">欢迎访问我博客</span> <span class="n">lindexi</span><span class="p">.</span><span class="n">gitee</span><span class="p">.</span><span class="n">io</span> <span class="err">里面有大量</span> <span class="n">UWP</span> <span class="n">WPF</span> <span class="err">博客</span>
+            <span class="p">&lt;/</span><span class="n">x</span><span class="p">:</span><span class="n">String</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> 
+                   <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{StaticResource str}"</span><span class="p">&gt;</span>
+         
+        <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>使用了 <code class="language-plaintext highlighter-rouge">xml:space="preserve"</code> 会将行前的空格也加上</p>
+
+<!-- ![](image/win10 uwp 在 xaml 让 TextBlock 换行/win10 uwp 在 xaml 让 TextBlock 换行1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018111716224687" alt="" /></p>
+
+:ET

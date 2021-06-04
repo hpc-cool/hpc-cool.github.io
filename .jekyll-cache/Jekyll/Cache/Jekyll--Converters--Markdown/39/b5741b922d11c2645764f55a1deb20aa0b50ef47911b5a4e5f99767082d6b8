@@ -1,0 +1,4 @@
+I"<p>最近在使用 smms 图床上传发现需要使用 UserAgent ，不然不会返回值。
+所以我就询问了<a href="https://t.me/smms_images">群里</a>大神，他们告诉我需要设置 UserAgent ，本文就是告诉大家如何设置 HttpClient 的浏览器标识</p>
+
+:ET

@@ -1,0 +1,154 @@
+I"~O<p>默认的 WPF 的支持点击穿透的透明背景窗口，是通过 AllowsTransparency 实现的，但是此方法的性能比较低。本文来告诉大家一个高性能的方法，通过此方法制作出来的 WPF 窗口可以获取很高的性能，设置透明和设置窗口不透明之间几乎没有性能差别</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/1/4 9:09:54 -->
+
+<!-- 发布 -->
+
+<p>本文的方法由 <a href="https://blog.sdlsj.net/">少珺</a> 小伙伴提供，我只是代为整理博客。本文的方法是基于 <a href="https://blog.walterlv.com/post/wpf-transparent-window-without-allows-transparency.html">WPF 制作高性能的透明背景异形窗口（使用 WindowChrome 而不要使用 AllowsTransparency=True） - walterlv</a> 但是 walterlv 大大的方法没有提供可穿透的功能，而本文是提供了全穿透的功能</p>
+
+<p>默认的 WPF 提供的 AllowsTransparency 的方法，这个方法可以适用在让窗口透明的部分能点击穿透，窗口不透明部分点击不穿透。但根据 <a href="https://blog.lindexi.com/post/WPF-%E4%BB%8E%E6%9C%80%E5%BA%95%E5%B1%82%E6%BA%90%E4%BB%A3%E7%A0%81%E4%BA%86%E8%A7%A3-AllowsTransparency-%E6%80%A7%E8%83%BD%E5%B7%AE%E7%9A%84%E5%8E%9F%E5%9B%A0.html">WPF 从最底层源代码了解 AllowsTransparency 性能差的原因</a> 可以了解到此方法的性能比较低</p>
+
+<p>本文提供的方法是使用 <a href="https://blog.walterlv.com/post/wpf-transparent-window-without-allows-transparency.html">WPF 制作高性能的透明背景异形窗口（使用 WindowChrome 而不要使用 AllowsTransparency=True） - walterlv</a>  来实现高性能的，同时通过 WS_EX_TRANSPARENT 设置整个窗口全穿透</p>
+
+<p>因此本文的方法是要么整个窗口透明不穿透，要么就是整个窗口透明穿透。而做不到和 WPF 提供的 AllowsTransparency 的方法让透明的部分支持穿透。但本文的方法的性能特别强</p>
+
+<p>在开始之前，请完全抄袭 <a href="https://blog.walterlv.com/post/wpf-transparent-window-without-allows-transparency.html">WPF 制作高性能的透明背景异形窗口（使用 WindowChrome 而不要使用 AllowsTransparency=True） - walterlv</a>  这篇博客的内容</p>
+
+<p>接下来给上面的这个方法添加支持全窗口点击穿透功能，因为本文使用到 WS_EX_TRANSPARENT 的方法设置窗口全穿透，此时需要给窗口加上 WS_EX_LAYERED 样式。而在 WPF 中，如果窗口在未设置 AllowsTransparency = true 时，会自动去掉 WS_EX_LAYERED 样式。根据完全开源的 WPF 仓库，可以找到这段逻辑，放在 HwndTarget 类，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">HwndTarget</span> <span class="p">:</span> <span class="n">CompositionTarget</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// The HwndTarget needs to see all windows messages so that</span>
+        <span class="c1">/// it can appropriately react to them.</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">internal</span> <span class="n">IntPtr</span> <span class="nf">HandleMessage</span><span class="p">(</span><span class="n">WindowMessage</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wparam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lparam</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="p">{</span>
+                	<span class="c1">// 忽略其他代码</span>
+                <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_STYLECHANGING</span><span class="p">:</span>
+                    <span class="k">unsafe</span>
+                    <span class="p">{</span>
+                        <span class="n">NativeMethods</span><span class="p">.</span><span class="n">STYLESTRUCT</span> <span class="p">*</span> <span class="n">styleStruct</span> <span class="p">=</span> <span class="p">(</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">STYLESTRUCT</span> <span class="p">*)</span> <span class="n">lparam</span><span class="p">;</span>
+
+                        <span class="k">if</span> <span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="n">wparam</span> <span class="p">==</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">GWL_EXSTYLE</span><span class="p">)</span>
+                        <span class="p">{</span>
+                        	<span class="c1">// 这里的 UsesPerPixelOpacity 属性就是由 AllowsTransparency 决定的</span>
+                            <span class="k">if</span><span class="p">(</span><span class="n">UsesPerPixelOpacity</span><span class="p">)</span>
+                            <span class="p">{</span>
+                                <span class="c1">// We need layered composition to accomplish per-pixel opacity.</span>
+                                <span class="c1">//</span>
+                                <span class="n">styleStruct</span><span class="p">-&gt;</span><span class="n">styleNew</span> <span class="p">|=</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_EX_LAYERED</span><span class="p">;</span>
+                            <span class="p">}</span>
+                            <span class="k">else</span>
+                            <span class="p">{</span>
+                                <span class="c1">// No properties that require layered composition exist.</span>
+                                <span class="c1">// Make sure the layered bit is off.</span>
+                                <span class="c1">//</span>
+                                <span class="c1">// Note: this prevents an external program from making</span>
+                                <span class="c1">// us system-layered (if we are a top-level window).</span>
+                                <span class="c1">//</span>
+                                <span class="c1">// If we are a child window, we still can't stop our</span>
+                                <span class="c1">// parent from being made system-layered, and we will</span>
+                                <span class="c1">// end up leaving visual artifacts on the screen under</span>
+                                <span class="c1">// WindowsXP.</span>
+                                <span class="c1">//</span>
+                                <span class="n">styleStruct</span><span class="p">-&gt;</span><span class="n">styleNew</span> <span class="p">&amp;=</span> <span class="p">(~</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_EX_LAYERED</span><span class="p">);</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+
+                    <span class="k">break</span><span class="p">;</span>
+             <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>为了能够让 WPF 支持在没有设置 AllowsTransparency = true 时也能设置为 WS_EX_LAYERED 样式，就需要使用一点 Hack 的代码，感谢 <a href="https://blog.sdlsj.net/">少珺</a> 小伙伴找到这个有趣的方法。在 WPF 机制里面，添加 AddHook 执行逻辑是有顺序的，而上面代码的 HandleMessage 其实也是一个消息循环的 Hook 的逻辑。为了让 WPF 支持设置 WS_EX_LAYERED 样式，可以在上面 HwndTarget 的逻辑运行完成之后，运行咱自己的逻辑，再设置一遍。此时因为咱的逻辑在 HwndTarget 之后执行，因此咱的逻辑就覆盖了 HwndTarget 的设置</p>
+
+<p>在窗口的 Loaded 事件里面添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">PerformanceDesktopTransparentWindow_Loaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="p">((</span><span class="n">HwndSource</span><span class="p">)</span><span class="n">PresentationSource</span><span class="p">.</span><span class="nf">FromVisual</span><span class="p">(</span><span class="k">this</span><span class="p">)).</span><span class="nf">AddHook</span><span class="p">((</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="c1">//想要让窗口透明穿透鼠标和触摸等，需要同时设置 WS_EX_LAYERED 和 WS_EX_TRANSPARENT 样式，</span>
+                <span class="c1">//确保窗口始终有 WS_EX_LAYERED 这个样式，并在开启穿透时设置 WS_EX_TRANSPARENT 样式</span>
+                <span class="c1">//但是WPF窗口在未设置 AllowsTransparency = true 时，会自动去掉 WS_EX_LAYERED 样式（在 HwndTarget 类中)，</span>
+                <span class="c1">//如果设置了 AllowsTransparency = true 将使用WPF内置的低性能的透明实现，</span>
+                <span class="c1">//所以这里通过 Hook 的方式，在不使用WPF内置的透明实现的情况下，强行保证这个样式存在。</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="p">==</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">Win32</span><span class="p">.</span><span class="n">WM</span><span class="p">.</span><span class="n">STYLECHANGING</span> <span class="p">&amp;&amp;</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span><span class="n">wParam</span> <span class="p">==</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span><span class="n">Win32</span><span class="p">.</span><span class="n">GetWindowLongFields</span><span class="p">.</span><span class="n">GWL_EXSTYLE</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">styleStruct</span> <span class="p">=</span> <span class="p">(</span><span class="n">STYLESTRUCT</span><span class="p">)</span><span class="n">Marshal</span><span class="p">.</span><span class="nf">PtrToStructure</span><span class="p">(</span><span class="n">lParam</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">STYLESTRUCT</span><span class="p">));</span>
+                    <span class="n">styleStruct</span><span class="p">.</span><span class="n">styleNew</span> <span class="p">|=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">Win32</span><span class="p">.</span><span class="n">ExtendedWindowStyles</span><span class="p">.</span><span class="n">WS_EX_LAYERED</span><span class="p">;</span>
+                    <span class="n">Marshal</span><span class="p">.</span><span class="nf">StructureToPtr</span><span class="p">(</span><span class="n">styleStruct</span><span class="p">,</span> <span class="n">lParam</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+                    <span class="n">handled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">return</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时就完成了让窗口设置 WS_EX_LAYERED 这个样式的功能了，以上代码完成之后，在设置窗口是否点击穿透，就可以用上 WS_EX_TRANSPARENT 样式了，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置点击穿透到后面透明的窗口</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">SetTransparentHitThrough</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_dwmEnabled</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">SetWindowLongPtr</span><span class="p">(</span><span class="n">_hwnd</span><span class="p">,</span> <span class="n">Win32</span><span class="p">.</span><span class="n">GetWindowLongFields</span><span class="p">.</span><span class="n">GWL_EXSTYLE</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">IntPtr</span><span class="p">)(</span><span class="kt">int</span><span class="p">)((</span><span class="kt">long</span><span class="p">)</span><span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetWindowLongPtr</span><span class="p">(</span><span class="n">_hwnd</span><span class="p">,</span> <span class="n">Win32</span><span class="p">.</span><span class="n">GetWindowLongFields</span><span class="p">.</span><span class="n">GWL_EXSTYLE</span><span class="p">)</span> <span class="p">|</span> <span class="p">(</span><span class="kt">long</span><span class="p">)</span><span class="n">Win32</span><span class="p">.</span><span class="n">ExtendedWindowStyles</span><span class="p">.</span><span class="n">WS_EX_TRANSPARENT</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Transparent</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置点击命中，不会穿透到后面的窗口</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">SetTransparentNotHitThrough</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_dwmEnabled</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">SetWindowLongPtr</span><span class="p">(</span><span class="n">_hwnd</span><span class="p">,</span> <span class="n">Win32</span><span class="p">.</span><span class="n">GetWindowLongFields</span><span class="p">.</span><span class="n">GWL_EXSTYLE</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">IntPtr</span><span class="p">)(</span><span class="kt">int</span><span class="p">)((</span><span class="kt">long</span><span class="p">)</span><span class="n">Win32</span><span class="p">.</span><span class="n">User32</span><span class="p">.</span><span class="nf">GetWindowLongPtr</span><span class="p">(</span><span class="n">_hwnd</span><span class="p">,</span> <span class="n">Win32</span><span class="p">.</span><span class="n">GetWindowLongFields</span><span class="p">.</span><span class="n">GWL_EXSTYLE</span><span class="p">)</span> <span class="p">&amp;</span> <span class="p">~(</span><span class="kt">long</span><span class="p">)</span><span class="n">Win32</span><span class="p">.</span><span class="n">ExtendedWindowStyles</span><span class="p">.</span><span class="n">WS_EX_TRANSPARENT</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">Background</span> <span class="p">=</span> <span class="n">BrushCreator</span><span class="p">.</span><span class="nf">GetOrCreate</span><span class="p">(</span><span class="s">"#0100000"</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过 WS_EX_TRANSPARENT 样式，就能设置窗口是否全穿透。上面代码用到了我定义的 Win32 的相关方法，这部分代码很多用到了 Enum 枚举的二进制计算方法，因此看起来相对复杂一点</p>
+
+<p>细心的小伙伴会看到，其实我是区分了 <code class="language-plaintext highlighter-rouge">_dwmEnabled</code> 才决定是否使用 WS_EX_TRANSPARENT 的方式设置透明，原因是 <a href="https://blog.walterlv.com/post/wpf-transparent-window-without-allows-transparency.html">WPF 制作高性能的透明背景异形窗口（使用 WindowChrome 而不要使用 AllowsTransparency=True） - walterlv</a> 的方法只支持在有开启 DWM 的模式下才能用上，否则透明部分会显示黑色</p>
+
+<p>判断是否开启 DWM 可以使用 Dwmapi.dll 提供的 DwmIsCompositionEnabled 方法，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">Dwmapi</span>
+        <span class="p">{</span>
+            <span class="k">public</span> <span class="k">const</span> <span class="kt">string</span> <span class="n">LibraryName</span> <span class="p">=</span> <span class="s">"Dwmapi.dll"</span><span class="p">;</span>
+
+            <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="n">LibraryName</span><span class="p">,</span> <span class="n">ExactSpelling</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="n">PreserveSig</span> <span class="p">=</span> <span class="k">false</span><span class="p">)]</span>
+            <span class="p">[</span><span class="k">return</span><span class="p">:</span> <span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">Bool</span><span class="p">)]</span>
+            <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">DwmIsCompositionEnabled</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 win7 系统，可以动态更改这个值。但是在 Win10 系统默认都是开启的</p>
+
+<p>如果没有开启 DwmIsCompositionEnabled 那么依然只能使用 AllowsTransparency 的方式设置透明</p>
+
+<p>本文的没有在博客写的代码包括了，如何设置窗口样式以及 win32 方法的定义，这些代码我都放在 <a href="https://github.com/lindexi/lindexi_gd/tree/b26274ae/RuhuyagayBemkaijearfear">github</a> 欢迎小伙伴访问，这里面包含了所有逻辑，包括博客里面没有放的代码</p>
+
+<p>尽管上面代码有点 Hack 但我已经在尝试在产品级使用了，暂时还没有发现什么锅</p>
+
+:ET

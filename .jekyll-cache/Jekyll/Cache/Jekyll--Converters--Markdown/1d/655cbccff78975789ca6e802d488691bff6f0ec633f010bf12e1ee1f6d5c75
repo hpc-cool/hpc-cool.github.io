@@ -1,0 +1,99 @@
+I"�(<p>在 C++ 需要使用 GetSystemFirmwareTable 的方法来获得 PC 的序列号，需要写的代码很多，但是在 C# 可以使用 WMI 来拿到序列号</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<!-- 标签：dotnet,C#,WMI -->
+
+<p>首先是安装 System.Management ，安装了这个库，在 dotnet framework 和 dotnet core 都可以使用本文的方法获取 PC 的序列号</p>
+
+<p>安装 System.Management 的方法是通过 Nuget 搜索<code class="language-plaintext highlighter-rouge">System.Management</code>然后安装，如果使用的是VisualStudio 2017项目格式就可以复制下面代码到项目文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">PackageReference</span> <span class="n">Include</span><span class="p">=</span><span class="s">"System.Management"</span> <span class="n">Version</span><span class="p">=</span><span class="s">"4.5.0"</span> <span class="p">/&gt;</span>
+
+</code></pre></div></div>
+
+<p>我比较喜欢第二个方法来安装，因为这个速度比较快</p>
+
+<p>安装完成使用 WMI 拿到序列号需要的代码很少，请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">search</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ManagementObjectSearcher</span><span class="p">(</span><span class="s">"SELECT * FROM Win32_BIOS"</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">mobos</span> <span class="p">=</span> <span class="n">search</span><span class="p">.</span><span class="nf">Get</span><span class="p">();</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">mobos</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">object</span> <span class="n">serial</span> <span class="p">=</span> <span class="n">temp</span><span class="p">[</span><span class="s">"SerialNumber"</span><span class="p">];</span> <span class="c1">// ProcessorID if you use Win32_CPU</span>
+                    <span class="n">pcsn</span> <span class="p">=</span> <span class="n">serial</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">pcsn</span><span class="p">);</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就可以拿到序列号，但是可能有些设备是没有序列号，很多时候是返回下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">To</span> <span class="n">be</span> <span class="n">filled</span> <span class="k">by</span> <span class="n">O</span><span class="p">.</span><span class="n">E</span><span class="p">.</span><span class="n">M</span>
+<span class="n">To</span> <span class="n">be</span> <span class="n">filled</span> <span class="k">by</span> <span class="n">O</span><span class="p">.</span><span class="n">E</span><span class="p">.</span><span class="n">M</span><span class="p">.</span>
+<span class="n">Default</span>
+<span class="n">Default</span> <span class="kt">string</span>
+
+</code></pre></div></div>
+
+<p>上面代码最后一行就是空白，所以需要先做判断是不是存在序列号，所有代码请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 获得pc号</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetPcsnString</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">pcsn</span> <span class="p">=</span> <span class="s">""</span><span class="p">;</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">search</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ManagementObjectSearcher</span><span class="p">(</span><span class="s">"SELECT * FROM Win32_BIOS"</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">mobos</span> <span class="p">=</span> <span class="n">search</span><span class="p">.</span><span class="nf">Get</span><span class="p">();</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">mobos</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">object</span> <span class="n">serial</span> <span class="p">=</span> <span class="n">temp</span><span class="p">[</span><span class="s">"SerialNumber"</span><span class="p">];</span> <span class="c1">// ProcessorID if you use Win32_CPU</span>
+                    <span class="n">pcsn</span> <span class="p">=</span> <span class="n">serial</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">pcsn</span><span class="p">);</span>
+
+                    <span class="k">if</span>
+                    <span class="p">(</span>
+                        <span class="p">!</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">pcsn</span><span class="p">)</span>
+                        <span class="p">&amp;&amp;</span> <span class="n">pcsn</span> <span class="p">!=</span> <span class="s">"To be filled by O.E.M"</span> <span class="c1">//没有找到</span>
+                        <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">pcsn</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"O.E.M"</span><span class="p">)</span>
+                        <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">pcsn</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"OEM"</span><span class="p">)</span>
+                        <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">pcsn</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"Default"</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">break</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">else</span>
+                    <span class="p">{</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"默认值"</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+                <span class="c1">// 无法处理</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">pcsn</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要知道，使用这个方法获取 序列号是比较耗性能的，建议放在其他线程获取</p>
+
+<p>在 C# 中，如果也使用 GetSystemFirmwareTable 可以参阅 <a href="https://github.com/lindexi/lindexi_gd/tree/142c54bc/KerboberlarYearlewerfibai">https://github.com/lindexi/lindexi_gd/tree/142c54bc/KerboberlarYearlewerfibai</a></p>
+
+<p>调用 GetSystemFirmwareTable 的性能还是不错的，我使用 Benchmark 测试，调用两次的时间是 30us 左右</p>
+
+<p>如果只是需要读取 BIOS 的 SystemManufacturer 等信息，可以通过注册表的 <code class="language-plaintext highlighter-rouge">HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS</code> 读取，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"SystemManufacturer=</span><span class="p">{</span><span class="n">Registry</span><span class="p">.</span><span class="n">LocalMachine</span><span class="p">.</span><span class="nf">OpenSubKey</span><span class="p">(</span><span class="s">@"HARDWARE\DESCRIPTION\System\BIOS"</span><span class="p">).</span><span class="nf">GetValue</span><span class="p">(</span><span class="s">"SystemManufacturer"</span><span class="p">)}</span><span class="s">"</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"SystemProductName=</span><span class="p">{</span><span class="n">Registry</span><span class="p">.</span><span class="n">LocalMachine</span><span class="p">.</span><span class="nf">OpenSubKey</span><span class="p">(</span><span class="s">@"HARDWARE\DESCRIPTION\System\BIOS"</span><span class="p">).</span><span class="nf">GetValue</span><span class="p">(</span><span class="s">"SystemProductName"</span><span class="p">)}</span><span class="s">"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>通过注册表读取无论是性能还是稳定性都更好，注册表大概是 15us 能读取</p>
+
+:ET

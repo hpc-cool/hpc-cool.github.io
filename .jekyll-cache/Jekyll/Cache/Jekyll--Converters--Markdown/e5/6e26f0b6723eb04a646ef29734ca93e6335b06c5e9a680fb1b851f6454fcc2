@@ -1,0 +1,40 @@
+I"�<p>在尝试优化性能的时候，如何可以了解到在应用程序启动的过程中，在什么步骤开始加载了某些 Dll 文件</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/4/8 17:57:19 -->
+
+<!-- 发布 -->
+
+<p>在 VisualStudio 的 调试-&gt;窗口-&gt;模块 可以看到当前应用程序加载的所有模块，也就是应用程序加载了哪些 Dll 文件</p>
+
+<p>一个调试方法是在合适的逻辑里面添加断点，或者在软件启动完成之后，通过模块了解应用程序加载了哪些 DLL 文件，从而了解应用程序启动慢是否因为加载了不应该加载的模块</p>
+
+<p>在 dotnet 里面，可以通过辅助的代码了解是在哪些模块加载了 DLL 文件，例如我在调试的 <a href="https://github.com/dotnet-campus/SharpVectors">SVG 库</a> 是在哪个模块加载的，我不期望在启动的过程中有加载 SVG 相关的 DLL 文件，那么我可以如何了解到是在应用程序的哪个逻辑里面加载的？可以通过在应用程序的主函数里面添加如下代码用来在加载到 <a href="https://github.com/dotnet-campus/SharpVectors">SharpVectors</a> 模块进入断点</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">STAThread</span><span class="p">]</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">AppDomain</span><span class="p">.</span><span class="n">CurrentDomain</span><span class="p">.</span><span class="n">AssemblyLoad</span> <span class="p">+=</span> <span class="n">CurrentDomain_AssemblyLoad</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">CurrentDomain_AssemblyLoad</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">AssemblyLoadEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">LoadedAssembly</span><span class="p">.</span><span class="n">FullName</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="s">"SharpVectors"</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Debugger</span><span class="p">.</span><span class="nf">Break</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果是在 WPF 默认的应用里面，没有 Main 函数，那么写到 App 的构造函数也可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="nf">App</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">AppDomain</span><span class="p">.</span><span class="n">CurrentDomain</span><span class="p">.</span><span class="n">AssemblyLoad</span> <span class="p">+=</span> <span class="n">CurrentDomain_AssemblyLoad</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在进入 CurrentDomain_AssemblyLoad 函数加载到 SharpVectors 的模块的时候，将会进入断点。通过调用堆栈，可以了解到是在访问到哪个业务逻辑需要加载的，然后再调试这个业务逻辑是否需要放在启动的过程</p>
+
+:ET

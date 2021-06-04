@@ -1,0 +1,178 @@
+I"�S<p>手绘笔迹实际上就是需要支持回放的，手绘笔迹指的是在应用程序里面支持回放出手绘出来的笔迹。本文来告诉大家一个简易的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/10/24 9:07:26 -->
+
+<p>啥都不说，先来一张图</p>
+
+<!-- ![](image/WPF 简易手绘笔迹支持回放的方法/WPF 简易手绘笔迹支持回放的方法0.gif) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2FWPF%2520%25E7%25AE%2580%25E6%2598%2593%25E6%2589%258B%25E7%25BB%2598%25E7%25AC%2594%25E8%25BF%25B9%25E6%2594%25AF%25E6%258C%2581%25E5%259B%259E%25E6%2594%25BE%25E7%259A%2584%25E6%2596%25B9%25E6%25B3%25950.gif" alt="" /></p>
+
+<p>在抬手的时候绘制出刚才所画的笔迹，做动画画出笔迹，就和手绘差不多的效果</p>
+
+<p>下面来告诉大家核心的原理</p>
+
+<p>在 WPF 中，可以使用一个叫路径动画的功能，通过这个功能可以传入一个 Path 路径就能动画出这个轨迹</p>
+
+<p>在 WPF 中，笔迹的底层绘制是使用 Geometry 进行绘制。而刚好 Geometry 就是 Path 的数据层，也就是手绘出来的笔迹可以拿到 Geometry 然后创建出 Path 路径进行轨迹动画</p>
+
+<p>在 WPF 中，有 OpacityMask 可以实现蒙层，这个蒙层的功能就是只要蒙层里面有非透明的像素部分，将会显示原本元素上的这部分像素。这个蒙层是做刮刮卡的好工具，大概效果如下图</p>
+
+<!-- ![](image/WPF 简易手绘笔迹支持回放的方法/WPF 简易手绘笔迹支持回放的方法1.gif) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2FWPF%2520%25E7%25AE%2580%25E6%2598%2593%25E6%2589%258B%25E7%25BB%2598%25E7%25AC%2594%25E8%25BF%25B9%25E6%2594%25AF%25E6%258C%2581%25E5%259B%259E%25E6%2594%25BE%25E7%259A%2584%25E6%2596%25B9%25E6%25B3%25951.gif" alt="" /></p>
+
+<p>依靠上面三个机制就能实现手绘笔迹支持回放轨迹的动画功能</p>
+
+<p>当然，第一步是需要支持笔迹书写的功能，这部分功能还请看 <a href="https://blog.lindexi.com/post/WPF-%E6%9C%80%E7%AE%80%E9%80%BB%E8%BE%91%E5%AE%9E%E7%8E%B0%E5%A4%9A%E6%8C%87%E9%A1%BA%E6%BB%91%E7%9A%84%E7%AC%94%E8%BF%B9%E4%B9%A6%E5%86%99.html">WPF 最简逻辑实现多指顺滑的笔迹书写</a> 这篇博客的内容</p>
+
+<p>而第二步就是构建出路径动画出来，在开始下面代码之前，还需要在 <a href="https://blog.lindexi.com/post/WPF-%E6%9C%80%E7%AE%80%E9%80%BB%E8%BE%91%E5%AE%9E%E7%8E%B0%E5%A4%9A%E6%8C%87%E9%A1%BA%E6%BB%91%E7%9A%84%E7%AC%94%E8%BF%B9%E4%B9%A6%E5%86%99.html">WPF 最简逻辑实现多指顺滑的笔迹书写</a> 这篇博客先抄笔迹的实现代码，大概 150 行不到就可以完成了</p>
+
+<p>对之前代码做一点更改，在手指抬起的时候触发一下动画。在触发动画之前需要保存这个笔迹，用来给动画使用，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_StylusUp</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">StylusEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_currentStroke</span> <span class="p">=</span> <span class="n">StrokeVisualList</span><span class="p">[</span><span class="n">e</span><span class="p">.</span><span class="n">StylusDevice</span><span class="p">.</span><span class="n">Id</span><span class="p">].</span><span class="n">Stroke</span><span class="p">;</span>
+            <span class="n">StrokeVisualList</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">StylusDevice</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+            <span class="nf">StartAnimation</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">Stroke</span> <span class="n">_currentStroke</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>在 StartAnimation 方法里面将会播放动画，在开始写这部分代码之前，还需要做一点准备的知识。动画放在 XAML 编写框架将会比较简单，如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Window.Resources&gt;</span>
+        <span class="nt">&lt;Storyboard</span> <span class="na">x:Key=</span><span class="s">"StrokePointAnimation"</span> <span class="na">AutoReverse=</span><span class="s">"False"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;PointAnimationUsingPath</span> <span class="na">Storyboard.TargetName=</span><span class="s">"StrokePointGeometry"</span> <span class="na">Storyboard.TargetProperty=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Storyboard&gt;</span>
+    <span class="nt">&lt;/Window.Resources&gt;</span>
+
+        <span class="nt">&lt;Grid</span> <span class="na">Grid.Row=</span><span class="s">"0"</span> <span class="na">x:Name=</span><span class="s">"StrokeGrid"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Path</span> <span class="na">Fill=</span><span class="s">"Transparent"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;Path.Data&gt;</span>
+                    <span class="nt">&lt;EllipseGeometry</span> <span class="na">x:Name=</span><span class="s">"StrokePointGeometry"</span> <span class="na">RadiusX=</span><span class="s">"{Binding StrokePointThickness}"</span>
+                                     <span class="na">RadiusY=</span><span class="s">"{Binding StrokePointThickness}"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/Path.Data&gt;</span>
+            <span class="nt">&lt;/Path&gt;</span>
+        <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>如上面代码，将会使用动画移动 Path 元素，作用是修改 StrokePointGeometry 的中心点的坐标，修改坐标做路径动画</p>
+
+<p>上面代码的重点是 PointAnimationUsingPath 这句代码，让 StrokePointGeometry 的中心点的坐标做 Path 动画</p>
+
+<p>定义完成动画的框架之后，需要在后台代码先获取这个定义的动画框架的资源，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">Storyboard</span> <span class="nf">GetAnimationStoryboard</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">_storyboard</span> <span class="p">=</span> <span class="n">Resources</span><span class="p">[</span><span class="s">"StrokePointAnimation"</span><span class="p">]</span> <span class="k">as</span> <span class="n">Storyboard</span><span class="p">;</span>
+            <span class="k">return</span> <span class="n">_storyboard</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">private</span> <span class="n">Storyboard</span> <span class="n">_storyboard</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面代码有很大的优化空间，还请大家忽略这部分细节，咱继续开发动画部分的逻辑</p>
+
+<p>在刚才保存的 <code class="language-plaintext highlighter-rouge">_currentStroke</code> 里面获取 Geometry 的方法十分简单，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">Geometry</span> <span class="nf">GetCurrentGeometry</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_currentStroke</span><span class="p">.</span><span class="nf">GetGeometry</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在拿到 Geometry 就可以开始路径动画了，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">StartAnimation</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">geometry</span> <span class="p">=</span> <span class="nf">GetCurrentGeometry</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">storyboard</span> <span class="p">=</span> <span class="nf">GetAnimationStoryboard</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">storyboard</span><span class="p">.</span><span class="n">Children</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="k">is</span> <span class="n">PointAnimationUsingPath</span> <span class="n">pointAnimationUsingPath</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">pointAnimationUsingPath</span><span class="p">.</span><span class="n">PathGeometry</span> <span class="p">=</span> <span class="n">geometry</span><span class="p">.</span><span class="nf">GetFlattenedPathGeometry</span><span class="p">();</span>
+                <span class="n">pointAnimationUsingPath</span><span class="p">.</span><span class="n">Duration</span> <span class="p">=</span> <span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromMilliseconds</span><span class="p">(</span><span class="m">3000</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">storyboard</span><span class="p">.</span><span class="nf">Begin</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到代码非常简单，只是当前运行的时候啥都看不到，因为在 XAML 中的 Path 的颜色被我设置为透明。现在为了调试方便，咱将这个颜色修改一下，如下面代码所示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Row</span><span class="p">=</span><span class="s">"0"</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"StrokeGrid"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Path</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"Red"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Path</span><span class="p">.</span><span class="n">Data</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">EllipseGeometry</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"StrokePointGeometry"</span> <span class="n">RadiusX</span><span class="p">=</span><span class="s">"{Binding StrokePointThickness}"</span>
+                                     <span class="n">RadiusY</span><span class="p">=</span><span class="s">"{Binding StrokePointThickness}"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Path</span><span class="p">.</span><span class="n">Data</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Path</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 简易手绘笔迹支持回放的方法/WPF 简易手绘笔迹支持回放的方法2.gif) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2FWPF%2520%25E7%25AE%2580%25E6%2598%2593%25E6%2589%258B%25E7%25BB%2598%25E7%25AC%2594%25E8%25BF%25B9%25E6%2594%25AF%25E6%258C%2581%25E5%259B%259E%25E6%2594%25BE%25E7%259A%2584%25E6%2596%25B9%25E6%25B3%25952.gif" alt="" /></p>
+
+<p>为了做到如本文一开始给大家看的效果，需要添加一点代码，在做动画的时候，顺便如做刮刮卡一样的功能，让上面这个红点经过的路径的蒙层显示出后面的内容。而刚好这个点的轨迹就是笔迹的几何，因此只需要在笔迹上面放一个蒙层，然后在点做动画的时候实时更改这个蒙层就可以</p>
+
+<p>为了拿到点在做动画的时候的值，可以使用如下代码注册事件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">RegisterStoryboardHandler</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">descriptor</span> <span class="p">=</span>
+                <span class="n">DependencyPropertyDescriptor</span><span class="p">.</span><span class="nf">FromProperty</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Media</span><span class="p">.</span><span class="n">EllipseGeometry</span><span class="p">.</span><span class="n">CenterProperty</span><span class="p">,</span>
+                    <span class="k">typeof</span><span class="p">(</span><span class="n">EllipseGeometry</span><span class="p">));</span>
+            <span class="n">descriptor</span><span class="p">.</span><span class="nf">RemoveValueChanged</span><span class="p">(</span><span class="n">StrokePointGeometry</span><span class="p">,</span> <span class="n">StrokeAnimating</span><span class="p">);</span>
+            <span class="n">descriptor</span><span class="p">.</span><span class="nf">AddValueChanged</span><span class="p">(</span><span class="n">StrokePointGeometry</span><span class="p">,</span> <span class="n">StrokeAnimating</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的 StrokeAnimating 方法就是做蒙层的方法，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">bool</span> <span class="n">_isFirst</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">StrokeAnimating</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">animatedStrokeGrid</span> <span class="p">=</span> <span class="n">StrokeGrid</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_isFirst</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">_isFirst</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+                <span class="c1">// 设置背景这句话是重要的哦，否则Grid不会撑开宽度和高度</span>
+                <span class="n">animatedStrokeGrid</span><span class="p">.</span><span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Transparent</span><span class="p">;</span>
+
+                <span class="kt">var</span> <span class="n">mask</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DrawingBrush</span>
+                <span class="p">{</span>
+                    <span class="n">TileMode</span> <span class="p">=</span> <span class="n">TileMode</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">Stretch</span> <span class="p">=</span> <span class="n">Stretch</span><span class="p">.</span><span class="n">None</span><span class="p">,</span> <span class="n">AlignmentX</span> <span class="p">=</span> <span class="n">AlignmentX</span><span class="p">.</span><span class="n">Left</span><span class="p">,</span>
+                    <span class="n">AlignmentY</span> <span class="p">=</span> <span class="n">AlignmentY</span><span class="p">.</span><span class="n">Top</span>
+                <span class="p">};</span>
+                <span class="kt">var</span> <span class="n">geoMask</span> <span class="p">=</span> <span class="k">new</span> <span class="n">GeometryGroup</span> <span class="p">{</span><span class="n">FillRule</span> <span class="p">=</span> <span class="n">FillRule</span><span class="p">.</span><span class="n">Nonzero</span><span class="p">};</span>
+                <span class="n">mask</span><span class="p">.</span><span class="n">Drawing</span> <span class="p">=</span> <span class="k">new</span> <span class="n">GeometryDrawing</span> <span class="p">{</span><span class="n">Geometry</span> <span class="p">=</span> <span class="n">geoMask</span><span class="p">,</span> <span class="n">Brush</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Black</span><span class="p">};</span>
+                <span class="n">geoMask</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">RectangleGeometry</span><span class="p">(</span><span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="m">1</span><span class="p">)));</span>
+
+                <span class="n">animatedStrokeGrid</span><span class="p">.</span><span class="n">OpacityMask</span> <span class="p">=</span> <span class="n">mask</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="k">group</span> <span class="p">=</span> <span class="p">(</span><span class="n">GeometryGroup</span><span class="p">)</span> <span class="p">((</span><span class="n">GeometryDrawing</span><span class="p">)</span> <span class="p">((</span><span class="n">DrawingBrush</span><span class="p">)</span> <span class="n">animatedStrokeGrid</span><span class="p">.</span><span class="n">OpacityMask</span><span class="p">).</span><span class="n">Drawing</span><span class="p">)</span>
+                <span class="p">.</span><span class="n">Geometry</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">center</span> <span class="p">=</span> <span class="n">StrokePointGeometry</span><span class="p">.</span><span class="n">Center</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="n">StrokePointGeometry</span><span class="p">.</span><span class="n">RadiusX</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">y</span> <span class="p">=</span> <span class="n">StrokePointGeometry</span><span class="p">.</span><span class="n">RadiusY</span><span class="p">;</span>
+            <span class="k">group</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Media</span><span class="p">.</span><span class="nf">EllipseGeometry</span><span class="p">(</span><span class="n">center</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">));</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如上面代码，在 StrokeGrid 上面添加一个 DrawingBrush 作为 OpacityMask 的内容，此时在 OpacityMask 上面的任何绘制，都会修改蒙层的内容</p>
+
+<p>这就是整个的实现方法了</p>
+
+<p>而有很多细节需要继续处理的，包括笔迹的颜色，以及动画的速度。动画的速度是靠时间决定的，也就是需要计算不同长度的几何笔迹所需的时间等。还有做动画的圆点的宽度和高度以及笔迹粗细。如果这是作为文档的，还需要考虑笔迹的保存等内容，而在给用户写的时候，还需要考虑撤销重做。更高级一点的是需要考虑一下音效等</p>
+
+<p>以上其实就是来画手绘软件的手绘部分的 WPF 版的大概实现方法了，这是在 2018 的时候 邵猛 哥和我吹的时候告诉我的一个方法，详细请看 <a href="https://www.cnblogs.com/shaomeng/p/7474128.html">UWP 手绘视频创作工具技术分享系列</a></p>
+
+<p>本文的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/f068bda307dd92ce470dc716a312680ce676e2c3/CacearkurfoFawferehacheele">github</a> 欢迎小伙伴访问</p>
+
+:ET

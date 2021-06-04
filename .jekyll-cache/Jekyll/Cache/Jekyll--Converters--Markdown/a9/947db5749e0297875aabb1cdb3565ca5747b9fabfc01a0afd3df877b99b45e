@@ -1,0 +1,61 @@
+I"<p>本文告诉大家如何安装  wordpress ，在安装过程出现 <code class="language-plaintext highlighter-rouge">抱歉，我不能写入wp-config.php文件</code>如何解决</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<h2 id="下载-wordpress">下载 wordpress</h2>
+
+<p><a href="https://cn.wordpress.org/">China 简体中文 — WordPress</a></p>
+
+<h2 id="安装">安装</h2>
+
+<p>在安装之前，肯定已经安装好 lnmp ，安装方法请看<a href="https://www.jianshu.com/p/56750622cac9">搭建 WordPress 博客教程</a></p>
+
+<p>打开自己的网站就可以看到安装页面。</p>
+
+<p>写入自己的数据库、账号、密码</p>
+
+<p>如果安装过程出现下面的图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">抱歉，我不能写入</span><span class="n">wp</span><span class="p">-</span><span class="n">config</span><span class="p">.</span><span class="n">php</span><span class="err">文件</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201832125330.jpg" alt="" /></p>
+
+<p>那么需要拷贝这个内容，注意在文件最后添加 <code class="language-plaintext highlighter-rouge">?&gt;</code></p>
+
+<p>先查看一下文件，注意就在下面的文件夹里创建</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="n">root@host</span> <span class="k">default</span><span class="p">]</span><span class="err">#</span> <span class="n">ls</span>
+<span class="n">index</span><span class="p">.</span><span class="n">php</span>    <span class="n">wp</span><span class="p">-</span><span class="n">activate</span><span class="p">.</span><span class="n">php</span>     <span class="n">wp</span><span class="p">-</span><span class="n">comments</span><span class="p">-</span><span class="n">post</span><span class="p">.</span><span class="n">php</span>  <span class="n">wp</span><span class="p">-</span><span class="n">cron</span><span class="p">.</span><span class="n">php</span>        <span class="n">wp</span><span class="p">-</span><span class="n">load</span><span class="p">.</span><span class="n">php</span>   <span class="n">wp</span><span class="p">-</span><span class="n">settings</span><span class="p">.</span><span class="n">php</span>   <span class="n">xmlrpc</span><span class="p">.</span><span class="n">php</span>
+<span class="n">license</span><span class="p">.</span><span class="n">txt</span>  <span class="n">wp</span><span class="p">-</span><span class="n">admin</span>            <span class="n">wp</span><span class="p">-</span><span class="n">config</span><span class="p">-</span><span class="n">sample</span><span class="p">.</span><span class="n">php</span>  <span class="n">wp</span><span class="p">-</span><span class="n">includes</span>        <span class="n">wp</span><span class="p">-</span><span class="n">login</span><span class="p">.</span><span class="n">php</span>  <span class="n">wp</span><span class="p">-</span><span class="n">signup</span><span class="p">.</span><span class="n">php</span>
+<span class="n">readme</span><span class="p">.</span><span class="n">html</span>  <span class="n">wp</span><span class="p">-</span><span class="n">blog</span><span class="p">-</span><span class="n">header</span><span class="p">.</span><span class="n">php</span>  <span class="n">wp</span><span class="p">-</span><span class="n">content</span>            <span class="n">wp</span><span class="p">-</span><span class="n">links</span><span class="p">-</span><span class="n">opml</span><span class="p">.</span><span class="n">php</span>  <span class="n">wp</span><span class="p">-</span><span class="n">mail</span><span class="p">.</span><span class="n">php</span>   <span class="n">wp</span><span class="p">-</span><span class="n">trackback</span><span class="p">.</span><span class="n">php</span>
+<span class="p">[</span><span class="n">root@host</span> <span class="k">default</span><span class="p">]</span><span class="err">#</span>
+
+</code></pre></div></div>
+
+<p>创建文件 wp-config.php 然后粘贴上面复制的内容，注意添加<code class="language-plaintext highlighter-rouge">?&gt;</code>，默认的 wordpress 的内容最后面是没有添加<code class="language-plaintext highlighter-rouge">?&gt;</code>，我尝试直接复制，结果页面打开无法使用。创建文件的方法是使用下面代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vi</span>  <span class="n">wp</span><span class="p">-</span><span class="n">config</span><span class="p">.</span><span class="n">php</span>
+
+</code></pre></div></div>
+
+<p>可以看到输入上面命令就是进入了传说的 Linux 最好的编辑器，这个编辑器开始是不能做输入，直到按下<code class="language-plaintext highlighter-rouge">i</code>才可以进行输入。</p>
+
+<p>所以在进入之后按<code class="language-plaintext highlighter-rouge">i</code>，然后右击粘贴，因为 Linux 的 <code class="language-plaintext highlighter-rouge">ctrl</code>+<code class="language-plaintext highlighter-rouge">v</code> 不是粘贴，所以需要自己手动右击粘贴。</p>
+
+<p>这个编辑器的保存不是 <code class="language-plaintext highlighter-rouge">ctrl</code>+<code class="language-plaintext highlighter-rouge">v</code>而是输入<code class="language-plaintext highlighter-rouge">:wq</code>才是保存。w就是写入，q是保存。输入之前需要按<code class="language-plaintext highlighter-rouge">esc</code>，所以保存退出就是
+按<code class="language-plaintext highlighter-rouge">esc</code>然后按<code class="language-plaintext highlighter-rouge">:wq</code>退出</p>
+
+<p>这样设置就完成了，只需要返回页面点现在安装。</p>
+
+<p>这时可以看到一些奇怪的代码，不过直接返回安装的页面，也就是<code class="language-plaintext highlighter-rouge">http://你的网站/</code> 就可以看到这个页面</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20183213250.jpg" alt="" /></p>
+
+<p>写自己的账号密码就好</p>
+
+<p>欢迎大家来我的博客<a href="http://lindexi.ml/">lindexi </a>，多谢 翰斌 大神给我的域名</p>
+
+:ET

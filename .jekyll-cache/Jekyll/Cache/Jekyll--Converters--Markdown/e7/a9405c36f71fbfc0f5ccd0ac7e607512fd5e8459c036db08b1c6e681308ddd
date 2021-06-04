@@ -1,0 +1,48 @@
+I"�<p>在新的 VisualStudio 支持使用 NuGet 符号服务器，可以支持新的 Portable PDB 调试符号的库，本文告诉大家如何打包上传带符号的库和使用符号服务器</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/5/21 11:34:40 -->
+
+<!-- 标签：nuget -->
+
+<p>在 2018 的 11 月微软支持上传带符号的包到 NuGet.org 符号服务器，在使用 Visual Studio 2017 15.9 和以上版本可以支持打包 .NET Core 的 <a href="https://www.infoq.cn/article/2017/02/Portable-PDB">Portable PDB</a> 符号的库，或者使用 <a href="https://www.nuget.org/downloads">nuget.exe 4.9.0</a> 或 dotnet 命令行打包</p>
+
+<p>创建的带符号的库的后缀是 <code class="language-plaintext highlighter-rouge">.snupkg</code> 下面是一些打包方法</p>
+
+<p>使用 dotnet 命令行方法，以打包 Foo 项目为例</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">pack</span> <span class="n">Foo</span><span class="p">.</span><span class="n">csproj</span> <span class="p">--</span><span class="n">include</span><span class="p">-</span><span class="n">symbols</span> <span class="p">-</span><span class="n">p</span><span class="p">:</span><span class="n">SymbolPackageFormat</span><span class="p">=</span><span class="n">snupkg</span>
+</code></pre></div></div>
+
+<p>使用 nuget 命令行的方法，请看下面代码，请将 Foo.nuspec 替换为你自己需要的打包文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">nuget</span> <span class="n">pack</span> <span class="n">Foo</span><span class="p">.</span><span class="n">nuspec</span> <span class="p">-</span><span class="n">Symbols</span> <span class="p">-</span><span class="n">SymbolPackageFormat</span> <span class="n">snupkg</span>
+</code></pre></div></div>
+
+<p>使用 msbuild 命令行的方法，请替换为自己项目</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">msbuild</span> <span class="p">/</span><span class="n">t</span><span class="p">:</span><span class="n">pack</span> <span class="n">Foo</span><span class="p">.</span><span class="n">csproj</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">IncludeSymbols</span><span class="p">=</span><span class="k">true</span> <span class="p">/</span><span class="n">p</span><span class="p">:</span><span class="n">SymbolPackageFormat</span><span class="p">=</span><span class="n">snupkg</span>
+</code></pre></div></div>
+
+<p>此时打包出来的是 <code class="language-plaintext highlighter-rouge">.snupkg</code> 文件，可以用来上传到符号服务器</p>
+
+<p>上传的方法是打开<a href="https://www.nuget.org/packages/manage/upload">nuget.org</a>点击上传，传入文件</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201958213818688" alt="" /></p>
+
+<p>在 VisualStudio 使用 NuGet 符号服务器的方法是添加符号服务器 <code class="language-plaintext highlighter-rouge">https://symbols.nuget.org/download/symbols</code> 到工具-选项-调试-符号</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201958214432905" alt="" /></p>
+
+<p>注意，当前的符号服务器支持的 <code class="language-plaintext highlighter-rouge">.snupkg</code> 文件需要使用最新的<a href="https://github.com/dotnet/core/blob/master/Documentation/diagnostics/portable_pdb.md">portable pdb</a> 格式，关于 <a href="https://github.com/dotnet/core/blob/master/Documentation/diagnostics/portable_pdb.md">portable pdb</a> 请看<a href="https://www.infoq.cn/article/2017/02/Portable-PDB">介绍Portable PDB</a></p>
+
+<p>在 VisualStudio 2019 16.1 Preview 2 默认添加了符号服务器，可以点击勾选就可以使用</p>
+
+<p><a href="https://www.infoq.cn/article/2017/02/Portable-PDB">介绍Portable PDB</a></p>
+
+<p><a href="https://github.com/dotnet/core/blob/master/Documentation/diagnostics/portable_pdb.md">portable pdb</a></p>
+
+<p><a href="https://blog.nuget.org/20181116/Improved-debugging-experience-with-the-NuGet-org-symbol-server-and-snupkg.html">Improved package debugging experience with the NuGet.org symbol server</a></p>
+
+:ET

@@ -1,0 +1,159 @@
+I"�N<p>在 PowerShell 可以很容易使用 WMI 拿到系统的信息，如果有关注我的网站，就会发现我写了很多通过 WMI 拿到系统的显卡，系统安装的软件等方法，本文告诉大家如果通过 PowerShell 拿到 WMI 类里面的属性</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<!-- 标签：PowerShell,WMI -->
+
+<p>在 Windows 系统通过 Windows Management Instrumentation (WMI) 统一管理系统的配置，在 PowerShell 能使用 WMI 的功能进行获取系统</p>
+
+<p>很少有人知道 WMI 里面包含了多少可以使用的类，包括我之前写的很多博客，实际上也只是里面的很少，通过下面的例子告诉大家如何获取设备里面包含的类</p>
+
+<h2 id="获取-wmi-类">获取 WMI 类</h2>
+
+<p>在使用 WMI 之前需要知道 WMI 是能做什么的，这个方法能做的就是描述系统能被管理的资源，在系统里面包含了几百个类，一个类里面包含很多属性</p>
+
+<p>通过 Get-WmiObject 可以找到设备里面所有可以被找到的 WMI 类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">List</span>
+</code></pre></div></div>
+
+<p>在 Windows 10 设备，右击开始菜单，打开 PowerShell 输入上面代码，就可以看到输出</p>
+
+<p>在 Get-WmiObject 的参数可以加上计算机是哪个，支持访问局域网可以访问的计算机的信息</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">List</span> <span class="p">-</span><span class="n">ComputerName</span> <span class="m">192.168</span><span class="p">.</span><span class="m">1.29</span>
+</code></pre></div></div>
+
+<p>尝试在自己的系统输入一下，可以看到很多代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">List</span>
+
+<span class="n">Name</span>                                <span class="n">Methods</span>              <span class="n">Properties</span>
+<span class="p">----</span>                                <span class="p">-------</span>              <span class="p">----------</span>
+<span class="n">__thisNAMESPACE</span>                     <span class="p">{}</span>                   <span class="p">{</span><span class="n">SECURITY_DESCRIPTOR</span><span class="p">}</span>
+<span class="n">__Provider</span>                          <span class="p">{}</span>                   <span class="p">{</span><span class="n">Name</span><span class="p">}</span>
+<span class="n">__Win32Provider</span>                     <span class="p">{}</span>                   <span class="p">{</span><span class="n">ClientLoadableCLSID</span><span class="p">,</span> <span class="n">CLSID</span><span class="p">,</span> <span class="n">Concurrency</span><span class="p">,</span> <span class="n">DefaultMachineNam</span><span class="p">...</span>
+<span class="n">__ProviderRegistration</span>              <span class="p">{}</span>                   <span class="p">{</span><span class="n">provider</span><span class="p">}</span>
+<span class="n">__EventProviderRegistration</span>         <span class="p">{}</span>                   <span class="p">{</span><span class="n">EventQueryList</span><span class="p">,</span> <span class="n">provider</span><span class="p">}</span>
+<span class="n">__ObjectProviderRegistration</span>        <span class="p">{}</span>                   <span class="p">{</span><span class="n">InteractionType</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">QuerySupportLevels</span><span class="p">,</span> <span class="n">SupportsBat</span><span class="p">...</span>
+<span class="n">__ClassProviderRegistration</span>         <span class="p">{}</span>                   <span class="p">{</span><span class="n">CacheRefreshInterval</span><span class="p">,</span> <span class="n">InteractionType</span><span class="p">,</span> <span class="n">PerUserSchema</span><span class="p">,</span> <span class="n">prov</span><span class="p">...</span>
+<span class="n">__InstanceProviderRegistration</span>      <span class="p">{}</span>                   <span class="p">{</span><span class="n">InteractionType</span><span class="p">,</span> <span class="n">provider</span><span class="p">,</span> <span class="n">QuerySupportLevels</span><span class="p">,</span> <span class="n">SupportsBat</span><span class="p">...</span>
+<span class="n">__MethodProviderRegistration</span>        <span class="p">{}</span>                   <span class="p">{</span><span class="n">provider</span><span class="p">}</span>
+<span class="n">__PropertyProviderRegistration</span>      <span class="p">{}</span>                   <span class="p">{</span><span class="n">provider</span><span class="p">,</span> <span class="n">SupportsGet</span><span class="p">,</span> <span class="n">SupportsPut</span><span class="p">}</span>
+<span class="n">__EventConsumerProviderRegistration</span> <span class="p">{}</span>                   <span class="p">{</span><span class="n">ConsumerClassNames</span><span class="p">,</span> <span class="n">provider</span><span class="p">}</span>
+<span class="n">__NAMESPACE</span>                         <span class="p">{}</span>                   <span class="p">{</span><span class="n">Name</span><span class="p">}</span>
+<span class="n">__EventFilter</span>                       <span class="p">{}</span>                   <span class="p">{</span><span class="n">CreatorSID</span><span class="p">,</span> <span class="n">EventAccess</span><span class="p">,</span> <span class="n">EventNamespace</span><span class="p">,</span> <span class="n">Name</span><span class="p">...}</span>
+<span class="n">__EventConsumer</span>                     <span class="p">{}</span>                   <span class="p">{</span><span class="n">CreatorSID</span><span class="p">,</span> <span class="n">MachineName</span><span class="p">,</span> <span class="n">MaximumQueueSize</span><span class="p">}</span>
+<span class="n">__FilterToConsumerBinding</span>           <span class="p">{}</span>                   <span class="p">{</span><span class="n">Consumer</span><span class="p">,</span> <span class="n">CreatorSID</span><span class="p">,</span> <span class="n">DeliverSynchronously</span><span class="p">,</span> <span class="n">DeliveryQoS</span><span class="p">...}</span>
+<span class="n">__AggregateEvent</span>                    <span class="p">{}</span>                   <span class="p">{</span><span class="n">NumberOfEvents</span><span class="p">,</span> <span class="n">Representative</span><span class="p">}</span>
+<span class="n">__TimerNextFiring</span>                   <span class="p">{}</span>                   <span class="p">{</span><span class="n">NextEvent64BitTime</span><span class="p">,</span> <span class="n">TimerId</span><span class="p">}</span>
+<span class="n">__Event</span>                             <span class="p">{}</span>                   <span class="p">{</span><span class="n">SECURITY_DESCRIPTOR</span><span class="p">,</span> <span class="n">TIME_CREATED</span><span class="p">}</span>
+<span class="n">__ExtrinsicEvent</span>                    <span class="p">{}</span>                   <span class="p">{</span><span class="n">SECURITY_DESCRIPTOR</span><span class="p">,</span> <span class="n">TIME_CREATED</span><span class="p">}</span>
+<span class="n">Win32_DeviceChangeEvent</span>             <span class="p">{}</span>                   <span class="p">{</span><span class="n">EventType</span><span class="p">,</span> <span class="n">SECURITY_DESCRIPTOR</span><span class="p">,</span> <span class="n">TIME_CREATED</span><span class="p">}</span>
+<span class="n">Win32_SystemConfigurationChangeE</span><span class="p">...</span> <span class="p">{}</span>                   <span class="p">{</span><span class="n">EventType</span><span class="p">,</span> <span class="n">SECURITY_DESCRIPTOR</span><span class="p">,</span> <span class="n">TIME_CREATED</span><span class="p">}</span>
+
+<span class="c1">// 后面还有很多</span>
+</code></pre></div></div>
+
+<h2 id="显示-wmi-类的信息">显示 WMI 类的信息</h2>
+
+<p>从上面列出的任意一个 WMI 类，可以使用下面代码显示这个类里面的属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">Class</span> <span class="n">Win32_OperatingSystem</span>
+
+
+<span class="n">SystemDirectory</span> <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">WINDOWS</span><span class="err">\</span><span class="n">system32</span>
+<span class="n">Organization</span>    <span class="p">:</span>
+<span class="n">BuildNumber</span>     <span class="p">:</span> <span class="m">17763</span>
+<span class="n">RegisteredUser</span>  <span class="p">:</span> <span class="n">lindexi_gd@outlook</span><span class="p">.</span><span class="n">com</span>
+<span class="n">SerialNumber</span>    <span class="p">:</span> <span class="m">00331</span><span class="p">-</span><span class="m">10000</span><span class="p">-</span><span class="m">00001</span><span class="p">-</span><span class="n">AA523</span>
+<span class="n">Version</span>         <span class="p">:</span> <span class="m">10.0</span><span class="p">.</span><span class="m">17763</span>
+</code></pre></div></div>
+
+<p>这里的输出只是简要的信息，没有包含所有的属性，如果想输出所有的属性，可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">Class</span> <span class="n">Win32_OperatingSystem</span> <span class="p">|</span> <span class="n">Get</span><span class="p">-</span><span class="n">Member</span> <span class="p">-</span><span class="n">MemberType</span> <span class="n">Property</span>
+
+<span class="n">Name</span>                                      <span class="n">MemberType</span> <span class="n">Definition</span>
+<span class="p">----</span>                                      <span class="p">----------</span> <span class="p">----------</span>
+<span class="n">BootDevice</span>                                <span class="n">Property</span>   <span class="kt">string</span> <span class="n">BootDevice</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">BuildNumber</span>                               <span class="n">Property</span>   <span class="kt">string</span> <span class="n">BuildNumber</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">BuildType</span>                                 <span class="n">Property</span>   <span class="kt">string</span> <span class="n">BuildType</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">Caption</span>                                   <span class="n">Property</span>   <span class="kt">string</span> <span class="n">Caption</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">CodeSet</span>                                   <span class="n">Property</span>   <span class="kt">string</span> <span class="n">CodeSet</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">CountryCode</span>                               <span class="n">Property</span>   <span class="kt">string</span> <span class="n">CountryCode</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">CreationClassName</span>                         <span class="n">Property</span>   <span class="kt">string</span> <span class="n">CreationClassName</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">CSCreationClassName</span>                       <span class="n">Property</span>   <span class="kt">string</span> <span class="n">CSCreationClassName</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">CSDVersion</span>                                <span class="n">Property</span>   <span class="kt">string</span> <span class="n">CSDVersion</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="n">CSName</span>                                    <span class="n">Property</span>   <span class="kt">string</span> <span class="n">CSName</span> <span class="p">{</span><span class="k">get</span><span class="p">;</span><span class="k">set</span><span class="p">;}</span>
+<span class="c1">// 还有很多属性</span>
+</code></pre></div></div>
+
+<p>总结一下，获取一个 WMI  类的简洁属性，可以通过这个格式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">Class</span> <span class="err">某个类</span>
+</code></pre></div></div>
+
+<p>具体的类可以通过 <code class="language-plaintext highlighter-rouge">Get-WmiObject -List</code> 找到</p>
+
+<p>获取某个类里面包含的所有属性，通过这个格式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">Class</span> <span class="err">某个类</span>  <span class="p">|</span> <span class="n">Get</span><span class="p">-</span><span class="n">Member</span> <span class="p">-</span><span class="n">MemberType</span> <span class="n">Property</span>
+</code></pre></div></div>
+
+<p>如果需要获取某个类的某一些属性的值，可以通过下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">Class</span> <span class="err">某个类</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">Table</span> <span class="p">-</span><span class="n">Property</span> <span class="err">属性</span><span class="m">1</span><span class="p">,</span><span class="err">属性</span><span class="m">2</span>
+</code></pre></div></div>
+
+<p>如获取 Win32_OperatingSystem 的 TotalVirtualMemorySize 和 RegisteredUser 因为小伙伴的设备和我不相同，可以看到不一样的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">Class</span> <span class="n">Win32_OperatingSystem</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">Table</span> <span class="p">-</span><span class="n">Property</span> <span class="n">TotalVirtualMemorySize</span><span class="p">,</span><span class="n">RegisteredUser</span>
+
+<span class="n">TotalVirtualMemorySize</span> <span class="n">RegisteredUser</span>
+<span class="p">----------------------</span> <span class="p">--------------</span>
+              <span class="m">36052888</span> <span class="n">lindexi_gd@outlook</span><span class="p">.</span><span class="n">com</span>
+</code></pre></div></div>
+
+<p>如果有很多属性，可以通过列表的方法输出，将 <code class="language-plaintext highlighter-rouge">Format-Table</code> 修改为 <code class="language-plaintext highlighter-rouge">Format-List</code> 请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PS</span><span class="p">&gt;</span> <span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="p">-</span><span class="n">Class</span> <span class="n">Win32_OperatingSystem</span> <span class="p">-</span><span class="n">Namespace</span> <span class="n">root</span><span class="p">/</span><span class="n">cimv2</span> <span class="p">-</span><span class="n">ComputerName</span> <span class="p">.</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">TotalVirtualMemorySize</span><span class="p">,</span><span class="n">TotalVisibleMemorySize</span><span class="p">,</span><span class="n">FreePhysicalMemory</span><span class="p">,</span><span class="n">FreeVirtualMemory</span><span class="p">,</span><span class="n">FreeSpaceInPagingFiles</span>
+
+<span class="n">TotalVirtualMemorySize</span> <span class="p">:</span> <span class="m">36052888</span>
+<span class="n">TotalVisibleMemorySize</span> <span class="p">:</span> <span class="m">25042840</span>
+<span class="n">FreePhysicalMemory</span>     <span class="p">:</span> <span class="m">8510920</span>
+<span class="n">FreeVirtualMemory</span>      <span class="p">:</span> <span class="m">9954748</span>
+<span class="n">FreeSpaceInPagingFiles</span> <span class="p">:</span> <span class="m">10482656</span>
+</code></pre></div></div>
+
+<p>通过 WMI 可以拿很多属性</p>
+
+<ul>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/PowerShell-%E6%8B%BF%E5%88%B0%E6%98%BE%E5%8D%A1%E4%BF%A1%E6%81%AF.html">PowerShell 拿到显卡信息</a></p>
+  </li>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/PowerShell-%E9%80%9A%E8%BF%87-WMI-%E8%8E%B7%E5%8F%96%E8%AE%BE%E5%A4%87%E5%8E%82%E5%95%86.html">PowerShell 通过 WMI 获取设备厂商</a></p>
+  </li>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/PowerShell-%E9%80%9A%E8%BF%87-WMI-%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E4%BF%A1%E6%81%AF.html">PowerShell 通过 WMI 获取系统信息</a></p>
+  </li>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/PowerShell-%E9%80%9A%E8%BF%87-WMI-%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E5%AE%89%E8%A3%85%E7%9A%84%E9%A9%B1%E5%8A%A8.html">PowerShell 通过 WMI 获取系统安装的驱动</a></p>
+  </li>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/PowerShell-%E9%80%9A%E8%BF%87-WMI-%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E6%9C%8D%E5%8A%A1.html">PowerShell 通过 WMI 获取系统服务</a></p>
+  </li>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/PowerShell-%E9%80%9A%E8%BF%87-WMI-%E8%8E%B7%E5%8F%96%E8%A1%A5%E4%B8%81.html">PowerShell 通过 WMI 获取补丁</a></p>
+  </li>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/PowerShell-%E9%80%9A%E8%BF%87-WMI-%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E5%AE%89%E8%A3%85%E8%BD%AF%E4%BB%B6.html">PowerShell 通过 WMI 获取系统安装软件</a></p>
+  </li>
+</ul>
+
+<p><a href="https://docs.microsoft.com/en-us/powershell/scripting/samples/getting-wmi-objects--get-wmiobject-?view=powershell-6">Getting WMI Objects Get WmiObject</a></p>
+
+:ET

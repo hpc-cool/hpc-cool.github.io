@@ -1,0 +1,67 @@
+I"�<p>我需要做一个函数，显示 $x^2$ ，但是看起来用 TextBlock 做的不好看。
+我用 WPF 写的上标看起来不好看，但是最后有了一个简单方法让他好看。
+本文告诉大家如何做一个好看的上标。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:52 -->
+
+<div id="toc"></div>
+
+<p>一开始做的方法：</p>
+
+<p>把下面代码写在页面里，使用对齐是上面，改变字号，于是看起来就是上标。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="nt">&lt;TextBlock</span> <span class="na">x:Name=</span><span class="s">"TextBlock"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"y=x"</span><span class="nt">&gt;&lt;/Run&gt;</span>
+            <span class="nt">&lt;Run</span> <span class="na">Text=</span><span class="s">"2"</span> <span class="na">BaselineAlignment=</span><span class="s">"TextTop"</span>
+                 <span class="na">FontSize=</span><span class="s">"8"</span><span class="nt">&gt;&lt;/Run&gt;</span>
+        <span class="nt">&lt;/TextBlock&gt;</span>
+</code></pre></div></div>
+
+<p>于是看起来：</p>
+
+<p><img src="http://image.acmx.xyz/7abeb606-6faa-4f1e-ae7d-e19918db24e1QQ截图2017021015032520172101556.jpg" alt="" /></p>
+
+<p>其实已经可以了，但是发现距离很大，那么如何让距离变小？</p>
+
+<p>我找了很久，发现可以在 xaml.cs 上写。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">textBlock</span> <span class="p">=</span> <span class="n">TextBlock</span><span class="p">;</span>
+            <span class="n">textBlock</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Run</span><span class="p">(</span><span class="s">"y = "</span><span class="p">));</span>
+            <span class="n">textBlock</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Run</span><span class="p">(</span><span class="s">"x"</span><span class="p">));</span>
+            <span class="n">Run</span> <span class="n">run</span><span class="p">=</span><span class="k">new</span> <span class="nf">Run</span><span class="p">();</span>
+            <span class="n">run</span><span class="p">.</span><span class="n">FontSize</span> <span class="p">=</span> <span class="m">7</span><span class="p">;</span>
+            <span class="n">run</span><span class="p">.</span><span class="n">BaselineAlignment</span> <span class="p">=</span> <span class="n">BaselineAlignment</span><span class="p">.</span><span class="n">TextTop</span><span class="p">;</span>
+            <span class="n">run</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">"2"</span><span class="p">;</span>
+            <span class="n">textBlock</span><span class="p">.</span><span class="n">Inlines</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">run</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/7abeb606-6faa-4f1e-ae7d-e19918db24e1QQ截图201702101503252017210152621.jpg" alt="" /></p>
+
+<p>代码一样，但是写的地方不一样，可以看到现在的上标就好看了。</p>
+
+<p>UWP 上标也一样。为什么写在 Xaml 间隔会那么大，是不是WR弄的？其实试试下面代码，注意不要格式化，直接写的样子和我的一样试试。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"TextBlock"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">Inlines</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Run</span> <span class="n">Text</span><span class="p">=</span><span class="s">"y=x"</span><span class="p">/&gt;&lt;</span><span class="n">Run</span> <span class="n">Text</span><span class="p">=</span><span class="s">"2"</span> <span class="n">BaselineAlignment</span><span class="p">=</span><span class="s">"TextTop"</span>
+                 <span class="n">FontSize</span><span class="p">=</span><span class="s">"8"</span><span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">.</span><span class="n">Inlines</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/7abeb606-6faa-4f1e-ae7d-e19918db24e1QQ截图201702101503252017210153833.jpg" alt="" /></p>
+
+<p>原因就是Run写在两行，会把换行给记下，于是间隔就大了，写在一起的Run就不会出现这个距离。</p>
+
+<p>但是我的 格式化会把Run放在下一行，所以可能我这里看的好的，在你这就会换行，看起来上标就有了距离。</p>
+
+<p>我把他传上 csdn ，大家可以下载来验证。</p>
+
+<p>代码：<a href="http://download.csdn.net/detail/lindexi_gd/9751879">http://download.csdn.net/detail/lindexi_gd/9751879</a></p>
+
+<script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+:ET

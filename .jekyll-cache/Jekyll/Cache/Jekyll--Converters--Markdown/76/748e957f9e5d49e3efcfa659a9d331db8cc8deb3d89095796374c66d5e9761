@@ -1,0 +1,435 @@
+I"�D<p>我想得到我CSDN博客的阅读量，那么我应该做一个软件，这个软件可以查看当前的 csdn 博客访问量</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/6/23 11:02:01 -->
+
+<div id="toc"></div>
+<!-- csdn -->
+
+<h2 id="界面">界面</h2>
+
+<!-- ![](image/win10-uwp-csdn阅读-源代码/win10-uwp-csdn阅读-源代码0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201962311017367" alt="" /></p>
+
+<p>启动界面</p>
+
+<!-- ![](image/win10-uwp-csdn阅读-源代码/win10-uwp-csdn阅读-源代码1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201962311047858" alt="" /></p>
+
+<p>启动完成输入需要统计的博客的网址</p>
+
+<!-- ![](image/win10-uwp-csdn阅读-源代码/win10-uwp-csdn阅读-源代码2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201962311110365" alt="" /></p>
+
+<h2 id="代码">代码</h2>
+
+<p>看界面很简单，就一个List做的</p>
+
+<p>主要技术是爬虫</p>
+
+<p>我们先做一个<code class="language-plaintext highlighter-rouge">TextBox</code>放博客地址</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            &lt;TextBox Margin="10,10,10,10" Header="博客地址" PlaceholderText="http://blog.csdn.net/lindexi_gd" Text="{x:Bind view.PostCsdn.Url,Mode=TwoWay}"&gt;&lt;/TextBox&gt;
+
+</code></pre></div></div>
+
+<p>我们还需要类Post存放我们的博客</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public class Post : NotifyProperty
+    {
+        public Post()
+        {
+
+        }
+
+        /// &lt;summary&gt;
+        ///     阅读数
+        /// &lt;/summary&gt;
+        public string LinkView
+        {
+            set
+            {
+                _linkView = value;
+                OnPropertyChanged();
+            }
+            get
+            {
+                return _linkView;
+            }
+        }
+
+        public string Original
+        {
+            set
+            {
+                _original = value;
+                OnPropertyChanged();
+            }
+            get
+            {
+                return _original;
+            }
+        }
+
+        /// &lt;summary&gt;
+        ///     文章
+        /// &lt;/summary&gt;
+        public string Title
+        {
+            set;
+            get;
+        }
+
+        /// &lt;summary&gt;
+        ///     链接
+        /// &lt;/summary&gt;
+        public string Url
+        {
+            set;
+            get;
+        }
+
+        public string Time
+        {
+            set;
+            get;
+        }
+
+        public DateTime LastTime
+        {
+            set;
+            get;
+        }
+
+        public int AddView
+        {
+            set
+            {
+                _addView = value;
+                OnPropertyChanged();
+            }
+            get
+            {
+                return _addView;
+            }
+        }
+
+        public List&lt;Scrutiny&gt; ScrutinieCollection
+        {
+            set;
+            get;
+        }=new List&lt;Scrutiny&gt;();
+
+        public void ClonePost(Post post)
+        {
+            int postLinkView = int.Parse(post.LinkView);
+            int linkView = int.Parse(LinkView);
+            if (postLinkView &gt;= linkView)
+            {
+                AddView = postLinkView - linkView;
+            }
+            else
+            {
+                throw new FormatException();
+            }
+
+            LinkView = post.LinkView;
+            Time = post.Time;
+            LastTime = post.LastTime;
+            ScrutinieCollection.Add(new Scrutiny()
+            {
+                LinkView = LinkView,
+                Time = LastTime
+            });
+        }
+
+        private int _addView;
+
+        private string _linkView;
+        private string _original;
+    }
+</code></pre></div></div>
+
+<p>获得csdn的访问量积分等，我们需要得到我们现在所在的页，如果我们在第一页就获取，还获取最大页数，如果我们现在不是第一页就不获取</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        private void CompositionOriginal()
+        {
+            TotalPost = PostCollection.Count.ToString();
+            //Original
+            //var original = PostCollection.Where(temp =&gt; temp.Original == "ico ico_type_Original");
+            var original = PostCollection.Where(temp =&gt; temp.Original == "原");
+            Original = original.Count().ToString();
+            //Reprint
+            //var reprint = PostCollection.Where(temp =&gt; temp.Original == "ico ico_type_Translated");
+            var reprint = PostCollection.Where(temp =&gt; temp.Original == "转");
+            Reprint = reprint.Count().ToString();
+            //Translation
+            //var translation = PostCollection.Where(temp =&gt; temp.Original == "ico ico_type_Repost");
+            var translation = PostCollection.Where(temp =&gt; temp.Original == "翻");
+            Translation = translation.Count().ToString();
+        }
+
+        private void ResponseCallBack(IAsyncResult result)
+        {
+            HttpWebRequest http = (HttpWebRequest) result.AsyncState;
+            WebResponse webResponse = http.EndGetResponse(result);
+            using (Stream stream = webResponse.GetResponseStream())
+            {
+                using (StreamReader read = new StreamReader(stream))
+                {
+                    string content = read.ReadToEnd();
+                    try
+                    {
+                        UnEncoding(content);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Write(e.Message);
+                    }
+                }
+            }
+        }
+
+        private async void UnEncoding(string content)
+        {
+            //&lt;div id="article_list" class="contents"&gt;
+
+            //&lt;/div&gt;\s+&lt;!--显示分页--&gt;
+
+            //&lt;div id="article_list" class="contents"&gt;[^[&lt;/div&gt;\s+&lt;!--显示分页--&gt;]]+
+            Regex regex;
+
+            if (_maxPage == -1)
+            {
+                regex =
+                    new Regex("&lt;div id=\"papelist\" class=\"pagelist\"&gt;\\s{0,}&lt;span&gt;\\s{0,}\\d+条\\s{0,}共(\\d+)页&lt;/span&gt;");
+                //&lt;div id="papelist" class="pagelist"&gt;
+                //&lt;span&gt; 109条  共3页&lt;/span&gt;
+
+                //&lt;div id="papelist" class="pagelist"&gt;\s{0,}&lt;span&gt;\s{0,}\d+条\s{0,}共(\d+)页&lt;/span&gt;
+                foreach (Match temp in regex.Matches(content))
+                {
+                    _maxPage = int.Parse(temp.Groups[1].Value);
+                    break;
+                }
+
+                //&lt;ul id="blog_rank"&gt;
+                //&lt;li&gt;访问：&lt;span&gt;81372次&lt;/span&gt;&lt;/li&gt;
+                //&lt;li&gt;积分：&lt;span&gt;2098&lt;/span&gt; &lt;/li&gt; 
+
+                //&lt;ul id="blog_rank"&gt;\s{0,}&lt;li&gt;\s{0,}访问：\s{0,}&lt;span&gt;(\d+)次&lt;/span&gt;\s{0,}&lt;/li&gt;
+                //\s{0,}&lt;li&gt;\s{0,}积分：\s{0,}&lt;span&gt;(\d+)&lt;/span&gt;\s{0,}&lt;/li&gt;
+                regex = new Regex("&lt;ul id=\"blog_rank\"&gt;\\s{0,}&lt;li&gt;\\s{0,}访问：\\s{0,}&lt;span&gt;(\\d+)次&lt;/span&gt;\\s{0,}&lt;/li&gt;" +
+                                  "\\s{0,}&lt;li&gt;\\s{0,}积分：\\s{0,}&lt;span&gt;(\\d+)&lt;/span&gt;\\s{0,}&lt;/li&gt;");
+                foreach (Match temp in regex.Matches(content))
+                {
+                    //_maxPage = int.Parse(temp.Groups[1].Value);
+                    int total = int.Parse(temp.Groups[1].Value);
+                    int integral = int.Parse(temp.Groups[2].Value);
+                    Integral = integral.ToString();
+                    if (!string.IsNullOrEmpty(TotalView) &amp;&amp; TotalView != "0")
+                    {
+                        AddView = (total - int.Parse(TotalView)).ToString();
+                    }
+                    TotalView = total.ToString();
+                }
+            }
+
+            regex = new Regex(@"&lt;div id=""article_list"" class=""contents""&gt;([\w|\W]+)&lt;/div&gt;\s+&lt;!--显示分页--&gt;");
+            //&lt;div id="article_list" class="contents"&gt;([\w|\W]+)&lt;/div&gt;\s+&lt;!--显示分页--&gt;
+            var match = regex.Matches(content);
+            foreach (Match temp in match)
+            {
+                content = temp.Groups[1].Value;
+                break;
+            }
+            //&lt;div class="list_item list_view"&gt;
+            //&lt;div class="article_title"&gt; 
+            //&lt;span class="ico ico_type_Original"&gt;&lt;/span&gt;
+            //&lt;h1&gt;
+            // &lt;span class="link_title"&gt;&lt;a href="/lindexi_gd/article/details/51344676"&gt;
+            //C#将dll打包到程序中
+            //&lt;/a&gt;&lt;/span&gt;
+            //&lt;/h1&gt;
+            //&lt;/div&gt;
+            //&lt;div class="article_manage"&gt;
+            //&lt;span class="link_postdate"&gt;2016-05-29 08:56&lt;/span&gt;
+            //&lt;span class="link_view" title="阅读次数"&gt;&lt;a href="/lindexi_gd/article/details/51344676" title="阅读次数"&gt;阅读&lt;/a&gt;(25)&lt;/span&gt;
+
+            //&lt;div class="list_item list_view"&gt;\s{0,}&lt;div class="article_title"&gt;\s{0,}
+            //&lt;span class="ico\s{0,}([\w|_]+)"&gt;&lt;/span&gt;\s{0,}
+            //&lt;h1&gt;\s{0,}&lt;span class="link_title"&gt;&lt;a href="/([\w|_]+)/article/details/(\d+)"&gt;\s{0,}
+            //(.+)\s{0,}&lt;/a&gt;&lt;/span&gt;
+            //\s{0,}&lt;/h1&gt;\s{0,}
+            //&lt;/div&gt;\s{0,}&lt;div class="article_manage"&gt;\s{0,}&lt;span class="link_postdate"&gt;(\d+-\d+-\d+ \d+:\d+)&lt;/span&gt;\s{0,}
+            //&lt;span class="link_view" title="阅读次数"&gt;&lt;a href="/[\w|_]+/article/details/\d+" title="阅读次数"&gt;阅读&lt;/a&gt;\((\d+)\)&lt;/span&gt;
+            regex =
+                new Regex(
+                    "&lt;div class=\"list_item list_view\"&gt;\\s{0,}&lt;div class=\"article_title\"&gt;\\s{0,}&lt;span class=\"ico\\s{0,}([\\w|_]+)\"&gt;&lt;/span&gt;\\s{0,}" +
+                    "&lt;h1&gt;\\s{0,}&lt;span class=\"link_title\"&gt;&lt;a href=\"/([\\w|_]+)/article/details/(\\d+)\"&gt;\\s{0,}" +
+                    "(.+)\\s{0,}&lt;/a&gt;&lt;/span&gt;" +
+                    "\\s{0,}&lt;/h1&gt;\\s{0,}" +
+                    "&lt;/div&gt;\\s{0,}&lt;div class=\"article_manage\"&gt;\\s{0,}&lt;span class=\"link_postdate\"&gt;(\\d+-\\d+-\\d+ \\d+:\\d+)&lt;/span&gt;\\s{0,}" +
+                    "&lt;span class=\"link_view\" title=\"阅读次数\"&gt;&lt;a href=\"/[\\w|_]+/article/details/\\d+\" title=\"阅读次数\"&gt;阅读&lt;/a&gt;\\((\\d+)\\)&lt;/span&gt;");
+            match = regex.Matches(content);
+
+            DateTime time = DateTime.Now;
+
+            //List&lt;Post&gt; post = match.Cast&lt;Match&gt;().Select(temp =&gt; new Post()
+            //{
+            //    Original = temp.Groups[1].Value,
+            //    Url = "/" + temp.Groups[2].Value + "/article/details/" + temp.Groups[3].Value,
+            //    Title = temp.Groups[4].Value.Replace("\r","").Replace("\n","").Trim(),
+            //    Time = temp.Groups[5].Value,
+            //    LinkView = temp.Groups[6].Value,
+            //    AddView = 0,
+            //    LastTime = time
+            //}).ToList();
+
+            List&lt;Post&gt; post = new List&lt;Post&gt;();
+
+            foreach (Match temp in match)
+            {
+                var original = temp.Groups[1].Value;
+                var url = "/" + temp.Groups[2].Value + "/article/details/" + temp.Groups[3].Value;
+                var title = temp.Groups[4].Value.Replace("\r", "").Replace("\n", "").Trim();
+                var timePost = temp.Groups[5].Value;
+                var linkView = temp.Groups[6].Value;
+
+                if (original == "ico_type_Original")
+                {
+                    original = "原";
+                }
+                else if (original == "ico_type_Translated")
+                {
+                    original = "翻";
+                }
+                else
+                {
+                    original = "转";
+                }
+
+                post.Add(new Post()
+                {
+                    Original = original,
+                    Url = url,
+                    Title = title,
+                    Time = timePost,
+                    LinkView = linkView,
+                    AddView = 0,
+                    LastTime = time
+                });
+            }
+
+            //\s{0,}
+            await DispatcherPost(post);
+
+            if (_page == -1)
+            {
+                _page = 2;
+            }
+            else
+            {
+                _page++;
+            }
+
+            HttpGet();
+
+            //HttpClient client = new HttpClient()
+            //{
+            //    Timeout = new TimeSpan(1000)
+            //};
+        }
+
+        private async Task DispatcherPost(IEnumerable&lt;Post&gt; post)
+        {
+            //var postTitle=PostCollection.Where(temp=&gt;temp.Title==post.Title)
+            foreach (var temp in post)
+            {
+                await DispatcherPost(temp);
+            }
+            //await Window.Current.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =&gt;
+            // {
+            //     foreach (var temp in post)
+            //     {
+            //         PostCollection.Add(temp);
+            //     }
+            // });
+        }
+
+        private async Task DispatcherPost(Post post)
+        {
+            var postTitle = PostCollection.Where(temp =&gt; temp.Title == post.Title);
+            if (postTitle.Any())
+            {
+                var temp = postTitle.First();
+                temp.ClonePost(post);
+            }
+            else
+            {
+                //await Window.Current.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =&gt;
+                //{
+                //    PostCollection.Add(post);
+                //});
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+                    () =&gt;
+                    {
+                        PostCollection.Add(post);
+                    });
+            }
+        }
+</code></pre></div></div>
+
+<p>现在我使用的方法是 <a href="https://blog.lindexi.com/post/asp-dotnet-core-%E9%80%9A%E8%BF%87%E5%9B%BE%E7%89%87%E7%BB%9F%E8%AE%A1-csdn-%E7%94%A8%E6%88%B7%E8%AE%BF%E9%97%AE.html">asp dotnet core 通过图片统计 csdn 用户访问</a></p>
+
+<h2 id="listview宽度过小">ListView宽度过小</h2>
+
+<p>这个问题简单。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="nt">&lt;ListView.ItemContainerStyle&gt;</span>
+
+                    <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"ListViewItem"</span><span class="nt">&gt;</span>
+
+                        <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"HorizontalContentAlignment"</span>
+
+                                <span class="na">Value=</span><span class="s">"Stretch"</span><span class="nt">&gt;&lt;/Setter&gt;</span>
+
+                    <span class="nt">&lt;/Style&gt;</span>
+
+                <span class="nt">&lt;/ListView.ItemContainerStyle&gt;</span>
+</code></pre></div></div>
+
+<p><img src="https://ooo.0o0.ooo/2016/09/09/57d2a38d3dc4c.png" alt="QQ截图20160909195739.png" /></p>
+
+<p>我们可以使用我们的ListView放数据</p>
+
+<h2 id="获取博客">获取博客</h2>
+
+<p>获取博客可以访问网站，获取源码，使用匹配到的数据</p>
+
+<p>我们写软件，一般是用用一个页面来做导航，这个页面就是一个Frame，然后包含各种导航，所以这个页面会一直存在我们的内存。</p>
+
+<p>然后我们需要把MainPage一开始就导航到我们这个页面，我们可以拿到我们的Content，然后把Content给一个Frame，用Frame导航。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">Frame</span> <span class="n">frame</span><span class="p">=</span><span class="n">Content</span> <span class="k">as</span> <span class="n">Frame</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">frame</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">frame</span><span class="p">=</span><span class="k">new</span> <span class="nf">Frame</span><span class="p">();</span>
+                <span class="n">Content</span> <span class="p">=</span> <span class="n">frame</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">frame</span><span class="p">.</span><span class="nf">Navigate</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">View</span><span class="p">.</span><span class="n">AssBjPage</span><span class="p">));</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">if (frame == null)</code>一定会true，因为Content 一般是Grid，我们把content改为Frame</p>
+
+:ET

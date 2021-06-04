@@ -1,0 +1,60 @@
+I"s<p>本文告诉大家如何输入颜色，如<code class="language-plaintext highlighter-rouge">0xFFFF8000</code>转换为 Orange 在 winforms 程序</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/9/30 18:27:49 -->
+
+<p>可以使用下面代码转换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">HexColorTranslator</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">static</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span> <span class="n">_hex2Name</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span> <span class="n">Hex2Name</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">_hex2Name</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">_hex2Name</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;(</span><span class="n">StringComparer</span><span class="p">.</span><span class="n">OrdinalIgnoreCase</span><span class="p">);</span>
+                    <span class="k">foreach</span> <span class="p">(</span><span class="n">KnownColor</span> <span class="n">ce</span> <span class="k">in</span> <span class="k">typeof</span><span class="p">(</span><span class="n">KnownColor</span><span class="p">).</span><span class="nf">GetEnumValues</span><span class="p">())</span>
+                    <span class="p">{</span>
+                        <span class="kt">var</span> <span class="n">name</span> <span class="p">=</span> <span class="n">ce</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+                        <span class="kt">var</span> <span class="n">color</span> <span class="p">=</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromKnownColor</span><span class="p">(</span><span class="n">ce</span><span class="p">);</span>
+                        <span class="kt">var</span> <span class="n">hex</span> <span class="p">=</span> <span class="nf">HexConverter</span><span class="p">(</span><span class="n">color</span><span class="p">);</span>
+                        <span class="n">_hex2Name</span><span class="p">[</span><span class="n">hex</span><span class="p">]</span> <span class="p">=</span> <span class="n">name</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+
+                <span class="k">return</span> <span class="n">_hex2Name</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">HexConverter</span><span class="p">(</span><span class="n">Color</span> <span class="n">c</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">c</span><span class="p">.</span><span class="n">R</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X2"</span><span class="p">)</span> <span class="p">+</span> <span class="n">c</span><span class="p">.</span><span class="n">G</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X2"</span><span class="p">)</span> <span class="p">+</span> <span class="n">c</span><span class="p">.</span><span class="n">B</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X2"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetKnownColorFromHex</span><span class="p">(</span><span class="kt">string</span> <span class="n">hex</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">hex</span> <span class="p">=</span> <span class="n">hex</span><span class="p">.</span><span class="nf">TrimStart</span><span class="p">(</span><span class="sc">'#'</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Hex2Name</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="n">hex</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">result</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="s">"???"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>调用的方式是传入颜色</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">HexColorTranslator</span><span class="p">.</span><span class="nf">GetKnownColorFromHex</span><span class="p">(</span><span class="s">"#FFFF8000"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>参见：
+https://stackoverflow.com/a/51238017/6116637</p>
+
+:ET

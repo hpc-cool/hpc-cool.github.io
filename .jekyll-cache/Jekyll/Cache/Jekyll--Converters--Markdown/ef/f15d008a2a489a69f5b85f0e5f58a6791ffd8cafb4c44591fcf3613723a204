@@ -1,0 +1,273 @@
+I"�{<p>现在很多人还是使用笔和纸来记录，那么可以在电脑输入方式和之前使用的方式一样，很多用户觉得会方便。在win10 我们有一个简单的方法去让用户输入，<code class="language-plaintext highlighter-rouge">InkCanvas</code>。现在edge，OneNote这些都有使用<code class="language-plaintext highlighter-rouge">InkCanvas</code>,我们可以在我们的手机上手写，我们也可以在我们电脑上用鼠标写，然后我们可以把我们写的保存图片，可以识别文字。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/4/12 14:19:58 -->
+
+<div id="toc"></div>
+
+<p>win10 可以很简单在我们的 app 使用自然输入，这篇文章主要翻译<a href="https://blogs.windows.com/buildingapps/2015/09/08/going-beyond-keyboard-mouse-and-touch-with-natural-input-10-by-10/">https://blogs.windows.com/buildingapps/2015/09/08/going-beyond-keyboard-mouse-and-touch-with-natural-input-10-by-10/</a>  一些内容是参见<a href="http://www.wangchenran.com/win10uwp%E5%BC%80%E5%8F%91-ink.html">陈染大神</a></p>
+
+<p>做法简单，我们有垃圾微软的<code class="language-plaintext highlighter-rouge">InkCanvas </code>，这个控件可以手写，需要我们在页面使用他：</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Grid&gt;</span>
+  <span class="nt">&lt;InkCanvas</span> <span class="na">x:Name=</span><span class="s">"ink_canvas"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>然后我们就可以写出我们的字，试试使用鼠标在程序写字。下面的不是我写的，是垃圾微软的。</p>
+
+<p><img src="http://az648995.vo.msecnd.net/win/2015/09/1_ink.png" alt="这里写图片描述" /></p>
+
+<p><code class="language-plaintext highlighter-rouge">InkPresenter</code>可以获取 InkCanvas 基础对象，可以设置输入为笔，触摸，鼠标，上面那个是从微软拿来，因为我是在用电脑。</p>
+
+<p>为了画出上面的图，我们可以设置<code class="language-plaintext highlighter-rouge">ink_canvas.InkPresenter.InputDeviceTypes= CoreInputDeviceTypes.Mouse;</code>如果我们有鼠标还要在手机运行，我们可以来<code class="language-plaintext highlighter-rouge">|</code>然后写手机，这样就可以使用多个方法。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">ink_canvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">InputDeviceTypes</span><span class="p">=</span> <span class="n">CoreInputDeviceTypes</span><span class="p">.</span><span class="n">Mouse</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160412164054442" alt="这里写图片描述" /></p>
+
+<p>如果我们需要输入笔和鼠标 <code class="language-plaintext highlighter-rouge">ink_canvas.InkPresenter.InputDeviceTypes= CoreInputDeviceTypes.Mouse|CoreInputDeviceTypes.Pen;</code> ，关于这个枚举，参见<a href="http://lindexi.oschina.io/lindexi//post/C-%E6%9E%9A%E4%B8%BE%E4%B8%AD%E4%BD%BF%E7%94%A8Flags%E7%89%B9%E6%80%A7/">C＃枚举中使用Flags特性</a></p>
+
+<p>画出的线我们也可以设置 线大小，颜色，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">InkDrawingAttributes</span> <span class="n">attribute</span> <span class="p">=</span> <span class="n">ink_canvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="nf">CopyDefaultDrawingAttributes</span><span class="p">();</span>
+
+            <span class="n">attribute</span><span class="p">.</span><span class="n">Color</span> <span class="p">=</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Colors</span><span class="p">.</span><span class="n">Crimson</span><span class="p">;</span><span class="c1">//颜色</span>
+            <span class="n">attribute</span><span class="p">.</span><span class="n">PenTip</span> <span class="p">=</span> <span class="n">PenTipShape</span><span class="p">.</span><span class="n">Rectangle</span><span class="p">;</span><span class="c1">//笔尖类型设置</span>
+            <span class="n">attribute</span><span class="p">.</span><span class="n">PenTipTransform</span> <span class="p">=</span> <span class="n">System</span><span class="p">.</span><span class="n">Numerics</span><span class="p">.</span><span class="n">Matrix3x2</span><span class="p">.</span><span class="nf">CreateRotation</span><span class="p">((</span><span class="kt">float</span><span class="p">)</span><span class="n">Math</span><span class="p">.</span><span class="n">PI</span> <span class="p">/</span> <span class="m">4</span><span class="p">);</span><span class="c1">////笔尖形状矩阵</span>
+            <span class="n">attribute</span><span class="p">.</span><span class="n">Size</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="m">2</span><span class="p">,</span> <span class="m">6</span><span class="p">);</span><span class="c1">//画笔粗细</span>
+
+            <span class="n">ink_canvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="nf">UpdateDefaultDrawingAttributes</span><span class="p">(</span><span class="n">attribute</span><span class="p">);</span>
+</code></pre></div></div>
+<h2 id="保存修改加载ink">保存，修改，加载ink</h2>
+
+<p>我们可以给用户选择他当前使用橡皮擦、铅笔还是他需要的。
+我们给用户按钮铅笔，橡皮擦</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid</span> <span class="na">Background=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Grid&gt;</span>
+            <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+                <span class="nt">&lt;RowDefinition</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"Auto"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;InkCanvas</span> <span class="na">x:Name=</span><span class="s">"ink_canvas"</span> <span class="na">Grid.RowSpan=</span><span class="s">"2"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;CommandBar</span> <span class="na">Grid.Row=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;AppBarButton</span> <span class="na">Icon=</span><span class="s">"Edit"</span> <span class="na">Click=</span><span class="s">"pencil"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;AppBarButton</span> <span class="na">Click=</span><span class="s">"eraser"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;AppBarButton.Icon&gt;</span>
+                        <span class="nt">&lt;BitmapIcon</span> <span class="na">UriSource=</span><span class="s">"ms-appx:///Assets/eraser_128px_1197233_easyicon.net.ico"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/AppBarButton.Icon&gt;</span>
+                <span class="nt">&lt;/AppBarButton&gt;</span>
+            <span class="nt">&lt;/CommandBar&gt;</span>
+        <span class="nt">&lt;/Grid&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+<p>点击时，修改笔为橡皮擦或其他的，只需要设置当前的笔</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">eraser</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ink_canvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">InputProcessingConfiguration</span><span class="p">.</span><span class="n">Mode</span> <span class="p">=</span>
+    <span class="n">InkInputProcessingMode</span><span class="p">.</span><span class="n">Erasing</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">pencil</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ink_canvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">InputProcessingConfiguration</span><span class="p">.</span><span class="n">Mode</span> <span class="p">=</span>
+                <span class="n">InkInputProcessingMode</span><span class="p">.</span><span class="n">Inking</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>点击橡皮可以擦掉，但是有些诡异，大家可以自己去写，自己去玩，就知道</p>
+
+<p>接下来告诉大家，如何
+保存墨迹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">FileSavePicker</span> <span class="n">picker</span> <span class="p">=</span> <span class="k">new</span> <span class="n">FileSavePicker</span>
+            <span class="p">{</span>
+                <span class="n">SuggestedStartLocation</span> <span class="p">=</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Pickers</span><span class="p">.</span><span class="n">PickerLocationId</span><span class="p">.</span><span class="n">PicturesLibrary</span>
+            <span class="p">};</span><span class="c1">//建议我们选择在图片，其实这个不用写</span>
+            <span class="n">picker</span><span class="p">.</span><span class="n">FileTypeChoices</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"Gif"</span><span class="p">,</span> <span class="k">new</span>
+            <span class="n">System</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Generic</span><span class="p">.</span><span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="p">{</span> <span class="s">".gif"</span> <span class="p">});</span><span class="c1">//类型gif，其实是isf</span>
+            <span class="c1">//名称</span>
+            <span class="n">picker</span><span class="p">.</span><span class="n">SuggestedFileName</span> <span class="p">=</span> <span class="s">"http://blog.csdn.net/lindexi_gd"</span><span class="p">;</span>
+            <span class="n">StorageFile</span> <span class="n">file</span> <span class="p">=</span> <span class="k">await</span> <span class="n">picker</span><span class="p">.</span><span class="nf">PickSaveFileAsync</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="k">null</span> <span class="p">!=</span> <span class="n">file</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">try</span>
+                <span class="p">{</span>
+                    <span class="k">using</span> <span class="p">(</span><span class="n">IRandomAccessStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">file</span><span class="p">.</span><span class="nf">OpenAsync</span><span class="p">(</span><span class="n">FileAccessMode</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">))</span>
+                    <span class="p">{</span>
+                        <span class="k">await</span> <span class="n">ink_canvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">StrokeContainer</span><span class="p">.</span><span class="nf">SaveAsync</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+                <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">//http://blog.csdn.net/lindexi_gd</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>陈染大神的保存，我们上面保存是 gif</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1">//声明一个流来存储墨迹信息</span>
+    <span class="n">IRandomAccessStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">();</span>
+    <span class="c1">//保存墨迹信息到流</span>
+    <span class="c1">//拿到流了就可以随意处置墨迹了，可以保持到App内部 也可以保存为文件，我们直接保存为文件</span>
+    <span class="k">await</span> <span class="n">InkCanvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">StrokeContainer</span><span class="p">.</span><span class="nf">SaveAsync</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+    <span class="c1">//创建一个文件保存对话框</span>
+    <span class="kt">var</span> <span class="n">picker</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Pickers</span><span class="p">.</span><span class="n">FileSavePicker</span>
+    <span class="p">{</span>
+        <span class="n">SuggestedStartLocation</span> <span class="p">=</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Pickers</span><span class="p">.</span><span class="n">PickerLocationId</span><span class="p">.</span><span class="n">DocumentsLibrary</span>
+    <span class="p">};</span>
+    <span class="c1">//文件类型</span>
+    <span class="n">picker</span><span class="p">.</span><span class="n">FileTypeChoices</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"INK files"</span><span class="p">,</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;()</span> <span class="p">{</span> <span class="s">".ink"</span> <span class="p">});</span>
+    <span class="c1">//弹出保存对话框</span>
+    <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">await</span> <span class="n">picker</span><span class="p">.</span><span class="nf">PickSaveFileAsync</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">file</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">return</span><span class="p">;</span>
+ 
+    <span class="n">CachedFileManager</span><span class="p">.</span><span class="nf">DeferUpdates</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+    <span class="c1">//将流转为byte</span>
+    <span class="kt">var</span> <span class="n">bt</span> <span class="p">=</span> <span class="k">await</span> <span class="nf">ConvertImagetoByte</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+    <span class="c1">//写入文件</span>
+    <span class="k">await</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">FileIO</span><span class="p">.</span><span class="nf">WriteBytesAsync</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">bt</span><span class="p">);</span>
+    <span class="c1">//保存</span>
+    <span class="k">await</span> <span class="n">CachedFileManager</span><span class="p">.</span><span class="nf">CompleteUpdatesAsync</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+
+<span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">[</span><span class="k">]&gt;</span> <span class="nf">ConvertImagetoByte</span><span class="p">(</span><span class="n">IRandomAccessStream</span> <span class="n">fileStream</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">//IRandomAccessStream fileStream = await image.OpenAsync(FileAccessMode.Read);</span>
+    <span class="kt">var</span> <span class="n">reader</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Streams</span><span class="p">.</span><span class="nf">DataReader</span><span class="p">(</span><span class="n">fileStream</span><span class="p">.</span><span class="nf">GetInputStreamAt</span><span class="p">(</span><span class="m">0</span><span class="p">));</span>
+    <span class="k">await</span> <span class="n">reader</span><span class="p">.</span><span class="nf">LoadAsync</span><span class="p">((</span><span class="kt">uint</span><span class="p">)</span><span class="n">fileStream</span><span class="p">.</span><span class="n">Size</span><span class="p">);</span>
+ 
+    <span class="kt">byte</span><span class="p">[]</span> <span class="n">pixels</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">fileStream</span><span class="p">.</span><span class="n">Size</span><span class="p">];</span>
+ 
+    <span class="n">reader</span><span class="p">.</span><span class="nf">ReadBytes</span><span class="p">(</span><span class="n">pixels</span><span class="p">);</span>
+ 
+    <span class="k">return</span> <span class="n">pixels</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>保存的东西可以加载，需要加载第一步是获得文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="c1">//创建一个文件选择器</span>
+           <span class="kt">var</span> <span class="n">picker</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Pickers</span><span class="p">.</span><span class="n">FileOpenPicker</span>
+           <span class="p">{</span>
+               <span class="n">SuggestedStartLocation</span> <span class="p">=</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Storage</span><span class="p">.</span><span class="n">Pickers</span><span class="p">.</span><span class="n">PickerLocationId</span><span class="p">.</span><span class="n">DocumentsLibrary</span>
+           <span class="p">};</span>
+           <span class="c1">//规定文件类型</span>
+           <span class="n">picker</span><span class="p">.</span><span class="n">FileTypeFilter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">".ink"</span><span class="p">);</span>
+           <span class="c1">//显示选择器</span>
+           <span class="kt">var</span> <span class="n">pickedFile</span> <span class="p">=</span> <span class="k">await</span> <span class="n">picker</span><span class="p">.</span><span class="nf">PickSingleFileAsync</span><span class="p">();</span>
+           <span class="k">if</span> <span class="p">(</span><span class="n">pickedFile</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+           <span class="p">{</span>
+               <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">await</span> <span class="n">pickedFile</span><span class="p">.</span><span class="nf">OpenReadAsync</span><span class="p">();</span>
+               <span class="c1">//加载墨迹</span>
+               <span class="k">await</span> <span class="n">InkCanvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">StrokeContainer</span><span class="p">.</span><span class="nf">LoadAsync</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+           <span class="p">}</span>
+</code></pre></div></div>
+<p>如何获得文件参见：<a href="http://lindexi.oschina.io/lindexi//post/win10-uwp-%E4%BF%9D%E5%AD%98%E7%94%A8%E6%88%B7%E9%80%89%E6%8B%A9%E6%96%87%E4%BB%B6%E5%A4%B9/">win10 uwp 保存用户选择文件夹</a></p>
+
+<h2 id="uwp-手写清理笔画">UWP 手写清理笔画</h2>
+
+<p>我们写完一个字需要清理我们笔画，可以使用clear</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ink</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">StrokeContainer</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+</code></pre></div></div>
+
+<h2 id="手写识别">手写识别</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">//手写识别</span>
+    <span class="kt">var</span> <span class="n">container</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InkRecognizerContainer</span><span class="p">();</span>
+    <span class="c1">//使用墨迹识别</span>
+    <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">container</span><span class="p">.</span><span class="nf">RecognizeAsync</span><span class="p">(</span><span class="n">InkCanvas</span><span class="p">.</span><span class="n">InkPresenter</span><span class="p">.</span><span class="n">StrokeContainer</span><span class="p">,</span> <span class="n">InkRecognitionTarget</span><span class="p">.</span><span class="n">All</span><span class="p">);</span>
+    <span class="c1">//获取识别结果  InkRecognitionResult 对象中还能获取候选字</span>
+    <span class="kt">var</span> <span class="n">txt</span> <span class="p">=</span> <span class="n">result</span><span class="p">[</span><span class="m">0</span><span class="p">].</span><span class="nf">GetTextCandidates</span><span class="p">()[</span><span class="m">0</span><span class="p">];</span>
+</code></pre></div></div>
+<p>手写识别来自 <a href="http://www.wangchenran.com/win10uwp开发-ink.html">http://www.wangchenran.com/win10uwp开发-ink.html</a></p>
+
+<p>但是我们每次需要使用<code class="language-plaintext highlighter-rouge">InkCanvas</code>需要使用很多按钮，微软给了我们<code class="language-plaintext highlighter-rouge">Ink Toolbar </code>可以简单使用。
+扩展下载：<a href="https://marketplace.visualstudio.com/items?itemName=InkToolbarControlTeam.InkToolbarcontrolforUniversalWindowsapps">https://visualstudiogallery.msdn.microsoft.com/58194dfe-df44-4c4e-893a-1eca40675269</a></p>
+
+<p><img src="http://img.blog.csdn.net/20160901165925839" alt="这里写图片描述" /></p>
+
+<p>首先安装该工具扩展，然后引用InkToolbar Control.dll，接着在View中声明控件:</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xmlns</span><span class="p">:</span><span class="n">ink</span><span class="p">=</span><span class="s">"using:Microsoft.Labs.InkToolbarControl"</span>
+ 
+ 
+<span class="p">&lt;</span><span class="n">ink</span><span class="p">:</span><span class="n">InkToolbar</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"bar_InkTool"</span>
+ 
+ 
+<span class="n">TargetInkCanvas</span><span class="p">=</span><span class="s">"{x:Bind InkCanvas}"</span>
+ 
+ 
+<span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Top"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Right"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">TargetInkCanvas</code>属性bind到要设置的<code class="language-plaintext highlighter-rouge">InkCanvas</code>上即可。</p>
+
+<h2 id="无法识别手写">无法识别手写</h2>
+
+<p>首先我们手写需要安装。</p>
+
+<p>如果我们没法识别，那么检查设置时间语言，检查安装语言，下载手写</p>
+
+<p>那么我们可以使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">container</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InkRecognizerContainer</span><span class="p">();</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">container</span><span class="p">.</span><span class="nf">GetRecognizers</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">Text</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="n">temp</span><span class="p">.</span><span class="n">Name</span> <span class="p">+</span> <span class="s">"\r\n"</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>来看我们安装了哪些，有安装才能使用</p>
+
+<p>源代码 https://github.com/lindexi/UWP/tree/master/uwp/src/Ink</p>
+
+<h2 id="语音">语音</h2>
+
+<p>现在很多人都是使用语音输入，把文字转为语音我已经写了一篇博客。</p>
+
+<p>我们需要先有麦克风，需要权限</p>
+
+<p><img src="http://img.blog.csdn.net/20160416103452875" alt="这里写图片描述" /></p>
+
+<p>首先我们需要设置语言，因为需要的识别，可以使用 web 的接口，所以就需要添加麦克风、网络的权限。</p>
+
+<p>下面的代码就是告诉用户需要输入的内容，然后进行转换。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Language</span> <span class="n">language</span> <span class="p">=</span> <span class="n">SpeechRecognizer</span><span class="p">.</span><span class="n">SystemSpeechLanguage</span><span class="p">;</span>
+            <span class="n">speechRecognizer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SpeechRecognizer</span><span class="p">(</span><span class="n">language</span><span class="p">);</span>
+
+            <span class="c1">// 使用web</span>
+            <span class="n">SpeechRecognitionTopicConstraint</span> <span class="n">web_search_grammar</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SpeechRecognitionTopicConstraint</span><span class="p">(</span><span class="n">SpeechRecognitionScenario</span><span class="p">.</span><span class="n">WebSearch</span><span class="p">,</span> <span class="s">"webSearch"</span><span class="p">);</span> 
+            <span class="n">speechRecognizer</span><span class="p">.</span><span class="n">Constraints</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">web_search_grammar</span><span class="p">);</span>
+
+            <span class="n">speechRecognizer</span><span class="p">.</span><span class="n">UIOptions</span><span class="p">.</span><span class="n">AudiblePrompt</span> <span class="p">=</span> <span class="s">"你想要说什么"</span><span class="p">;</span>
+            <span class="n">speechRecognizer</span><span class="p">.</span><span class="n">UIOptions</span><span class="p">.</span><span class="n">ExampleText</span> <span class="p">=</span> <span class="s">"http://blog.csdn.net/lindexi_gd"</span><span class="p">;</span>
+
+            <span class="n">SpeechRecognitionCompilationResult</span> <span class="n">compilation_result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">speechRecognizer</span><span class="p">.</span><span class="nf">CompileConstraintsAsync</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">compilation_result</span><span class="p">.</span><span class="n">Status</span> <span class="p">==</span> <span class="n">SpeechRecognitionResultStatus</span><span class="p">.</span><span class="n">Success</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 识别</span>
+                <span class="n">IAsyncOperation</span><span class="p">&lt;</span><span class="n">SpeechRecognitionResult</span><span class="p">&gt;</span> <span class="n">recognition_operation</span> <span class="p">=</span> <span class="n">speechRecognizer</span><span class="p">.</span><span class="nf">RecognizeWithUIAsync</span><span class="p">();</span>
+                <span class="n">SpeechRecognitionResult</span> <span class="n">speech_recognition_result</span> <span class="p">=</span> <span class="k">await</span> <span class="n">recognition_operation</span><span class="p">;</span>
+                <span class="n">SpeechRecognitionConfidence</span> <span class="n">confidence</span> <span class="p">=</span> <span class="n">speech_recognition_result</span><span class="p">.</span><span class="n">Confidence</span><span class="p">;</span><span class="c1">//置信度</span>
+                <span class="kt">string</span> <span class="n">text</span> <span class="p">=</span> <span class="n">speech_recognition_result</span><span class="p">.</span><span class="n">Text</span><span class="p">;</span><span class="c1">//获取语音</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>语音：https://msdn.microsoft.com/zh-cn/library/windows/apps/dn596121.aspx</p>
+
+<p>http://stackoverflow.com/questions/32153880/how-to-render-inkcanvas-to-an-image-in-uwp-windows-10-application/32551620</p>
+
+<p>https://blogs.windows.com/buildingapps/2015/09/08/going-beyond-keyboard-mouse-and-touch-with-natural-input-10-by-10/</p>
+
+:ET

@@ -1,0 +1,123 @@
+I"_(<p>九幽数据统计是统计和分析数据来源，用户使用，先申请账号</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>http://www.windows.sc</p>
+
+<p><img src="image/201611220331168.png" alt="这里写图片描述" /></p>
+
+<p>创建应用</p>
+
+<p><img src="image/201611220345291.png" alt="这里写图片描述" /></p>
+
+<p>图片要<code class="language-plaintext highlighter-rouge">72*72</code>的，然后请看下面的图片，记密钥</p>
+
+<p><img src="image/201611220348976.png" alt="这里写图片描述" /></p>
+
+<p>在项目Nuget进行搜索，然后下载安装</p>
+
+<p><img src="image/201611220373361.png" alt="这里写图片描述" /></p>
+
+<p><img src="image/20161122037747.png" alt="这里写图片描述" /></p>
+
+<p>在App.xaml.cs添加<code class="language-plaintext highlighter-rouge">Suspending</code>和<code class="language-plaintext highlighter-rouge">Resuming</code>准备给九幽发信息，这时莫老板就会收到消息</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">public</span> <span class="nf">App</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Microsoft</span><span class="p">.</span><span class="n">ApplicationInsights</span><span class="p">.</span><span class="n">WindowsAppInitializer</span><span class="p">.</span><span class="nf">InitializeAsync</span><span class="p">(</span>
+                <span class="n">Microsoft</span><span class="p">.</span><span class="n">ApplicationInsights</span><span class="p">.</span><span class="n">WindowsCollectors</span><span class="p">.</span><span class="n">Metadata</span> <span class="p">|</span>
+                <span class="n">Microsoft</span><span class="p">.</span><span class="n">ApplicationInsights</span><span class="p">.</span><span class="n">WindowsCollectors</span><span class="p">.</span><span class="n">Session</span><span class="p">);</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">Suspending</span> <span class="p">+=</span> <span class="n">OnSuspending</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">Resuming</span> <span class="p">+=</span> <span class="n">App_Resuming</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">App_Resuming</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="kt">object</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">track</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnActivated</span><span class="p">(</span><span class="n">IActivatedEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnActivated</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+            <span class="nf">track</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">track</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">JYAnalyticsUniversal</span><span class="p">.</span><span class="n">JYAnalytics</span><span class="p">.</span><span class="nf">StartTrackAsync</span><span class="p">(</span><span class="s">"你的key"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>同样在OnLaunched加<code class="language-plaintext highlighter-rouge">track</code>表示这时已经启动。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nf">track</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>在OnSuspending加<code class="language-plaintext highlighter-rouge">EndTrackAsync</code>，需要注意代码的位置</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">OnSuspending</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">SuspendingEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">deferral</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">SuspendingOperation</span><span class="p">.</span><span class="nf">GetDeferral</span><span class="p">();</span>
+            <span class="c1">//TODO: 保存应用程序状态并停止任何后台活动</span>
+            <span class="k">await</span> <span class="n">JYAnalyticsUniversal</span><span class="p">.</span><span class="n">JYAnalytics</span><span class="p">.</span><span class="nf">EndTrackAsync</span><span class="p">();</span> <span class="c1">//需注意此处代码位置不可更改 </span>
+            <span class="n">deferral</span><span class="p">.</span><span class="nf">Complete</span><span class="p">();</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>运行，等待九幽，因为鹤鹤跑了，所有只能靠莫老板统计了，等一下就可以看到了，大概是几个小时。</p>
+
+<p>如果需要使用页面统计，那么需要添加的代码就是使用<code class="language-plaintext highlighter-rouge">TrackPageStart</code>，里面就写进入哪个类。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnNavigatedFrom</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">Navigation</span><span class="p">.</span><span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnNavigatedFrom</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+            <span class="n">JYAnalytics</span><span class="p">.</span><span class="nf">TrackPageEnd</span><span class="p">(</span><span class="s">"main_page"</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">Navigation</span><span class="p">.</span><span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+            <span class="n">JYAnalytics</span><span class="p">.</span><span class="nf">TrackPageStart</span><span class="p">(</span><span class="s">"main_page"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>如果需要统计一个特殊的事件，那么请使用<code class="language-plaintext highlighter-rouge">TrackEvent</code>，传入一个字符串，可以得到一个事件的次数，如在点击打开游戏，就发送统计。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">JYAnalytics</span><span class="p">.</span><span class="nf">TrackEvent</span><span class="p">(</span><span class="s">"StartTimes"</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>除了输入字符串，还可以输入 id 和参数，当然都是字符串，例如需要统计用于打开<code class="language-plaintext highlighter-rouge">blog.csdn.net/lindexi_gd</code>，那么可以使用下面代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="kt">string</span> <span class="n">eventId</span><span class="p">=</span><span class="err">“</span><span class="n">open</span><span class="s">";//当前统计的事件
+</span><span class="kt">string</span> <span class="n">lable</span><span class="p">=</span><span class="s">"打开blog.csdn.net/lindexi_gd"</span><span class="p">;</span><span class="c1">//描述当前id</span>
+<span class="n">JYAnalytics</span><span class="p">.</span><span class="nf">TrackEvent</span><span class="p">(</span><span class="n">eventId</span><span class="p">,</span><span class="n">lable</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>除了可以统计事件，还可以统计错误，同样是字符串。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">string</span> <span class="n">error</span><span class="p">=</span><span class="s">"软件启动发现错误"</span><span class="err">；</span>
+<span class="n">JYAnalytics</span><span class="p">.</span><span class="nf">TrackError</span><span class="p">(</span><span class="n">error</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>在开始运行的时候，还需要在在Package.appxmanifest功能，选择Internet(客户端服务器)使用</p>
+
+<p><img src="image/201611220506879.png" alt="这里写图片描述" /></p>
+
+:ET

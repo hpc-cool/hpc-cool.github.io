@@ -1,0 +1,59 @@
+I"�<p>本文将告诉大家如何在 Unity3D 中通过键盘或鼠标进行控制 Unity3D 的相机移动。在 Unity3D 中的相机相当于人的视角，通过移动相机可以用来修改咱界面看到的画面</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/15 17:10:45 -->
+
+<p>在 Unity3D 中，通过创建脚本的方式，让脚本附加到某个物体上，即可让脚本作用到某个物体上。而这个物体可以是相机。咱先创建一个空白的 Unity3D 项目，接下来创建一个 C# 脚本，当然了，这几个步骤还需要大家自己去摸索一下界面或者看一下新手教程视频哈</p>
+
+<p>新建一个 Move.cs 的 C# 脚本文件，接下来右击此文件使用 C# 项目打开，在 VisualStudio 中添加如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System.Collections</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">UnityEngine.Animations</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="k">class</span> <span class="nc">Move</span> <span class="p">:</span> <span class="n">MonoBehaviour</span>
+<span class="p">{</span>
+    <span class="c1">// Start is called before the first frame update</span>
+    <span class="k">void</span> <span class="nf">Start</span><span class="p">()</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">float</span> <span class="n">Speed</span> <span class="p">=</span> <span class="m">10</span><span class="p">;</span>
+
+    <span class="c1">// Update is called once per frame</span>
+    <span class="k">void</span> <span class="nf">Update</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">horizontalAsixName</span> <span class="p">=</span> <span class="s">"Horizontal"</span><span class="p">;</span>
+        <span class="kt">var</span> <span class="n">horizontal</span> <span class="p">=</span> <span class="n">Input</span><span class="p">.</span><span class="nf">GetAxis</span><span class="p">(</span><span class="n">horizontalAsixName</span><span class="p">);</span>
+
+        <span class="kt">var</span> <span class="n">verticalAsixName</span> <span class="p">=</span> <span class="s">"Vertical"</span><span class="p">;</span>
+        <span class="kt">var</span> <span class="n">vertical</span> <span class="p">=</span> <span class="n">Input</span><span class="p">.</span><span class="nf">GetAxis</span><span class="p">(</span><span class="n">verticalAsixName</span><span class="p">);</span>
+
+        <span class="kt">var</span> <span class="n">z</span> <span class="p">=</span> <span class="m">0f</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">Input</span><span class="p">.</span><span class="nf">GetButton</span><span class="p">(</span><span class="s">"Fire1"</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">z</span> <span class="p">=</span> <span class="m">1f</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">Input</span><span class="p">.</span><span class="nf">GetButton</span><span class="p">(</span><span class="s">"Fire2"</span><span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">z</span> <span class="p">=</span> <span class="p">-</span><span class="m">0.1f</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="n">transform</span><span class="p">.</span><span class="nf">Translate</span><span class="p">(</span><span class="k">new</span> <span class="nf">Vector3</span><span class="p">(</span><span class="n">horizontal</span><span class="p">,</span> <span class="n">vertical</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="p">*</span> <span class="n">Time</span><span class="p">.</span><span class="n">deltaTime</span> <span class="p">*</span> <span class="n">Speed</span><span class="p">,</span> <span class="n">Space</span><span class="p">.</span><span class="n">World</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上代码即可实现通过上下左右或 wasd 键盘控制物体上下左右移动，然后通过鼠标的左键和右键进行前进和后退</p>
+
+<p>通过 Input.GetAxis 传入参数，即可获取水平或垂直方式的移动量，因为不同的业务下需要的速度不相同，因此咱以上还添加了 Speed 字段用于配置速度。在 Unity3D 里面的规矩标准和 dotnet 通用的有一点不相同的是允许公开 Behavior 等的字段</p>
+
+<p>而 Z 轴方向，用来控制前进和后退的，就通过 Fire1 和 Fire2 分别获取左键和右键，通过此方式即可完成代码。更多请参阅 <a href="https://blog.lindexi.com/post/Unity3d-%E8%BF%9E%E7%BB%AD%E6%8C%89%E9%94%AE%E5%A4%84%E7%90%86%E5%92%8C%E5%8D%95%E6%AC%A1%E6%8C%89%E9%94%AE%E5%A4%84%E7%90%86.html">Unity3d 连续按键处理和单次按键处理</a></p>
+
+<p>下一步就是将此 Move.cs 文件拖放到相机上即可</p>
+
+:ET

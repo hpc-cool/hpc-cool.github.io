@@ -1,0 +1,54 @@
+I")<p>本文告诉大家如何在 UOS 国产系统上安装 dotnet sdk 的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/4 8:50:35 -->
+
+<p>使用的 UOS 是 UOS 20 x64 版本，这个系统版本是基于 debian 10 的，可以使用 debian 10 的方法安装</p>
+
+<p>进入 UOS 系统，点击左下角的图标，也就是相当于 Windows 的开始按钮，点击终端。这里的终端就是命令行工具类似 Windows 的 cmd 工具</p>
+
+<!-- ![](image/dotnet 在 UOS 国产系统上安装 Mono 开发工具的方法/dotnet 在 UOS 国产系统上安装 Mono 开发工具的方法0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2Fdotnet%2520%25E5%259C%25A8%2520UOS%2520%25E5%259B%25BD%25E4%25BA%25A7%25E7%25B3%25BB%25E7%25BB%259F%25E4%25B8%258A%25E5%25AE%2589%25E8%25A3%2585%2520Mono%2520%25E5%25BC%2580%25E5%258F%2591%25E5%25B7%25A5%25E5%2585%25B7%25E7%259A%2584%25E6%2596%25B9%25E6%25B3%25950.png" alt="" /></p>
+
+<p>进入 <code class="language-plaintext highlighter-rouge">/etc/apt</code> 文件夹，在终端输入下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cd</span> <span class="p">/</span><span class="n">etc</span><span class="p">/</span><span class="n">apt</span>
+</code></pre></div></div>
+
+<p>使用 vim 工具编辑 sources.list 文件，添加 debian 源</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vim</span> <span class="n">sources</span><span class="p">.</span><span class="n">list</span>
+</code></pre></div></div>
+
+<p>在 vim 工具里面，是纯命令行工具，按下 <code class="language-plaintext highlighter-rouge">i</code> 进入输入编辑模式，输入 debian 源</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>deb https://mirrors.ustc.edu.cn/debian buster main contrib non-free
+</code></pre></div></div>
+
+<p>然后注释掉其他的源</p>
+
+<!-- ![](image/dotnet 在 UOS 国产系统上安装 dotnet sdk 的方法/dotnet 在 UOS 国产系统上安装 dotnet sdk 的方法0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020931729581851.jpg" alt="" /></p>
+
+<p>按照 <a href="https://docs.microsoft.com/zh-cn/dotnet/core/install/linux-debian?WT.mc_id=WD-MVP-5003260">在 Debian 上安装 .NET Core </a> 的方法，在命令行输入下面代码，将 Microsoft 包签名密钥添加到受信任密钥列表，并添加包存储库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="c1">//packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb</span>
+<span class="n">sudo</span> <span class="n">dpkg</span> <span class="p">-</span><span class="n">i</span> <span class="n">packages</span><span class="p">-</span><span class="n">microsoft</span><span class="p">-</span><span class="n">prod</span><span class="p">.</span><span class="n">deb</span>
+</code></pre></div></div>
+
+<p>接下来开始安装 dotnet sdk 在控制台输入下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">sudo</span> <span class="n">apt</span><span class="p">-</span><span class="k">get</span> <span class="n">update</span><span class="p">;</span> <span class="err">\</span>
+  <span class="n">sudo</span> <span class="n">apt</span><span class="p">-</span><span class="k">get</span> <span class="n">install</span> <span class="p">-</span><span class="n">y</span> <span class="n">apt</span><span class="p">-</span><span class="n">transport</span><span class="p">-</span><span class="n">https</span> <span class="p">&amp;&amp;</span> <span class="err">\</span>
+  <span class="n">sudo</span> <span class="n">apt</span><span class="p">-</span><span class="k">get</span> <span class="n">update</span> <span class="p">&amp;&amp;</span> <span class="err">\</span>
+  <span class="n">sudo</span> <span class="n">apt</span><span class="p">-</span><span class="k">get</span> <span class="n">install</span> <span class="p">-</span><span class="n">y</span> <span class="n">dotnet</span><span class="p">-</span><span class="n">sdk</span><span class="p">-</span><span class="m">3.1</span>
+</code></pre></div></div>
+
+<p>欢迎小伙伴加入 xamarin 国产 UOS 开发群： 810052083</p>
+
+<p>如果安装失败了，请看 <a href="https://docs.microsoft.com/zh-cn/dotnet/core/install/linux-debian?WT.mc_id=WD-MVP-5003260">官方文档</a></p>
+
+:ET

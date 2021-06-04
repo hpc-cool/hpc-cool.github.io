@@ -1,0 +1,336 @@
+I"��<p>最近使用 WPF 程序，在不停插拔触摸设备会让 WPF 程序触摸失效。通过分析 WPF 源代码可以找到 WPF 触摸失效的原因。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/15 8:12:47 -->
+
+<!-- csdn -->
+<!-- 标签：WPF，触摸 -->
+
+<p>在 Windows 会将所有的 Hid （输入）设备在插拔的时候通过 Windows 消息进行更新设备信息。在触摸的时候，通过一个线程用来收集触摸信息。</p>
+
+<p>本文下面的代码是通过 <a href="https://walterlv.github.io/post/edit-and-recompile-assembly-using-dnspy.html">dnSpy</a>反编译调试。</p>
+
+<h2 id="存在的问题">存在的问题</h2>
+
+<p>通过 WPF 的源代码可以发现存在两个问题，两个问题在两个不同的类</p>
+
+<ul>
+  <li>
+    <p>在 PenThreadWorker 的 GetPenEventMultiple 传入 <code class="language-plaintext highlighter-rouge">_handles</code> 为空数组，并且进行无限的等待</p>
+  </li>
+  <li>
+    <p>WorkerOperationGetTabletsInfo 的 OnDoWork 出现 <code class="language-plaintext highlighter-rouge">COMException</code> 返回空的数组，原本存在触摸设备识别为不存在</p>
+  </li>
+</ul>
+
+<h2 id="解决方法">解决方法</h2>
+
+<p>在重新插拔触摸屏就可以恢复。</p>
+
+<p>通过降低 CPU 频率可以减少触摸失效</p>
+
+<h2 id="原理">原理</h2>
+
+<p>需要从 WPF 代码解释为什么会出现这个问题</p>
+
+<p>在 WPF 的 PresentationCore.dll 有一个类 PenThreadWorker 就是用来收集用户的触摸。这个类的构造函数创建了一个线程，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>			<span class="k">new</span> <span class="nf">Thread</span><span class="p">(</span><span class="k">new</span> <span class="nf">ThreadStart</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">ThreadProc</span><span class="p">))</span>
+			<span class="p">{</span>
+				<span class="n">IsBackground</span> <span class="p">=</span> <span class="k">true</span>
+			<span class="p">}.</span><span class="nf">Start</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>这个线程的实际代码是 <code class="language-plaintext highlighter-rouge">ThreadProc</code> 函数，在这个函数的第一句话是设置这个线程的线程名为<code class="language-plaintext highlighter-rouge">Stylus Input</code> 然后进入一个循环</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">while</span> <span class="p">(!</span><span class="k">this</span><span class="p">.</span><span class="n">__disposed</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="c1">// 初始化触摸设备代码</span>
+
+    <span class="k">for</span> <span class="p">(;;)</span>
+    <span class="p">{</span>
+		<span class="c1">// 这是获取触摸流程循环</span>
+		<span class="c1">// 获取用户触摸代码</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个 <code class="language-plaintext highlighter-rouge">ThreadProc</code> 有两层循环，初始化流程循环用于在初始化触摸设备，用于更新 <code class="language-plaintext highlighter-rouge">PenContext</code> 的值。获取触摸流程循环用于拿到用户触摸相关。很多的时候，在用户正常使用的流程只是运行初始化流程循环一次，之后在用户触摸的时候就通过获取触摸流程循环拿到值。本文下面就会使用初始化流程循环指代第一层循环，使用获取触摸流程循环指代第二层循环。</p>
+
+<!-- ![](image/WPF 插拔触摸设备触摸失效/WPF 插拔触摸设备触摸失效0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20188915134246" alt="" /></p>
+
+<p>获取触摸流程循环是通过 <code class="language-plaintext highlighter-rouge">penimc2_v0400.dll</code> 来拿到触摸收集进程收集到的点。</p>
+
+<!-- ![](image/WPF 插拔触摸设备触摸失效/WPF 插拔触摸设备触摸失效1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018891514031" alt="" /></p>
+
+<p>在程序开始运行到<code class="language-plaintext highlighter-rouge">UnsafeNativeMethods.GetPenEvent(this._handles[0], this._pimcResetHandle.Value, out num, out stylusPointerId, out cPackets, out cbPacket, out pPackets)</code>线程就会在这里等待，一旦屏幕任何部分收到触摸信息，就会继续。线程等待的方法是因为在构造函数使用了 <code class="language-plaintext highlighter-rouge">CreateResetEvent</code> 创建信号量，创建信号量传入 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 在收到用户触摸时才释放，于是线程才可以继续运行。</p>
+
+<!-- ![](image/WPF 插拔触摸设备触摸失效/WPF 插拔触摸设备触摸失效2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201889152326728" alt="" /></p>
+
+<p>上面的代码是只处理存在 一个 PenContext 的情况，如果存在多个 PenContext 就会运行 <code class="language-plaintext highlighter-rouge">UnsafeNativeMethods.GetPenEventMultiple(this._handles.Length, this._h
+t num, out stylusPointerId, out cPackets, out cbPacket, out pPackets)
+</code> 的方法，这个方法和 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 一样在没有收到触摸信息时会卡住，一旦屏幕任何部分收到触摸信息，就会继续。这里的代码需要简单的介绍</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(;;)</span>
+<span class="p">{</span>
+	<span class="c1">// 无限循环，直到发现设备更新</span>
+	<span class="kt">int</span> <span class="n">num</span><span class="p">;</span><span class="c1">// 表示事件，事件是数值</span>
+	<span class="c1">// 707：PenInRange</span>
+	<span class="c1">// 708：PenOutOfRange</span>
+	<span class="c1">// 709：PenDown</span>
+	<span class="c1">// 710：PenUp</span>
+	<span class="c1">// 711：Packets</span>
+	<span class="kt">int</span> <span class="n">stylusPointerId</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">cPackets</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">cbPacket</span><span class="p">;</span>
+	<span class="n">IntPtr</span> <span class="n">pPackets</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">num2</span><span class="p">;</span> <span class="c1">// 是那个 PenContext 拿到触摸</span>
+	<span class="c1">// 如果只有一个 PenContext 就使用下面代码</span>
+	<span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">_handles</span><span class="p">.</span><span class="n">Length</span> <span class="p">==</span> <span class="m">1</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="k">if</span> <span class="p">(!</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">GetPenEvent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">_handles</span><span class="p">[</span><span class="m">0</span><span class="p">],</span> <span class="k">this</span><span class="p">.</span><span class="n">_pimcResetHandle</span><span class="p">.</span><span class="n">Value</span><span class="p">,</span> <span class="k">out</span> <span class="n">num</span><span class="p">,</span> <span class="k">out</span> <span class="n">stylusPointerId</span><span class="p">,</span> <span class="k">out</span> <span class="n">cPackets</span><span class="p">,</span> <span class="k">out</span> <span class="n">cbPacket</span><span class="p">,</span> <span class="k">out</span> <span class="n">pPackets</span><span class="p">))</span>
+		<span class="p">{</span>
+			<span class="c1">// 如果更新触摸屏，这里会返回，到初始化流程循环</span>
+
+			<span class="k">break</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="c1">// 因为只有一个 PenContext 于是使用数组第一个</span>
+		<span class="n">num2</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="c1">// 如果有比较多个 PenContext 就使用下面代码</span>
+	<span class="k">else</span> <span class="k">if</span> <span class="p">(!</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">GetPenEventMultiple</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">_handles</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">_handles</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">_pimcResetHandle</span><span class="p">.</span><span class="n">Value</span><span class="p">,</span> <span class="k">out</span> <span class="n">num2</span><span class="p">,</span> <span class="k">out</span> <span class="n">num</span><span class="p">,</span> <span class="k">out</span> <span class="n">stylusPointerId</span><span class="p">,</span> <span class="k">out</span> <span class="n">cPackets</span><span class="p">,</span> <span class="k">out</span> <span class="n">cbPacket</span><span class="p">,</span> <span class="k">out</span> <span class="n">pPackets</span><span class="p">))</span>
+	<span class="p">{</span>
+		<span class="c1">// 如果更新触摸屏，这里会返回，到初始化流程循环</span>
+
+		<span class="k">break</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">num</span> <span class="p">!=</span> <span class="m">1</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="c1">// 拿到用户触摸的所在 penContext 这个 _penContexts 是弱引用</span>
+		<span class="n">PenContext</span> <span class="n">penContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">_penContexts</span><span class="p">[</span><span class="n">num2</span><span class="p">].</span><span class="n">Target</span> <span class="k">as</span> <span class="n">PenContext</span><span class="p">;</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">penContext</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+		<span class="p">{</span>
+			<span class="c1">// 执行 penContext 将触摸发送到框架</span>
+			<span class="k">this</span><span class="p">.</span><span class="nf">FireEvent</span><span class="p">(</span><span class="n">penContext</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">stylusPointerId</span><span class="p">,</span> <span class="n">cPackets</span><span class="p">,</span> <span class="n">cbPacket</span><span class="p">,</span> <span class="n">pPackets</span><span class="p">);</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">else</span>
+	<span class="p">{</span>
+		<span class="k">this</span><span class="p">.</span><span class="nf">FlushCache</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+		<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">j</span> <span class="p">&lt;</span> <span class="k">this</span><span class="p">.</span><span class="n">_penContexts</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">j</span><span class="p">++)</span>
+		<span class="p">{</span>
+			<span class="n">PenContext</span> <span class="n">penContext2</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">_penContexts</span><span class="p">[</span><span class="n">j</span><span class="p">].</span><span class="n">Target</span> <span class="k">as</span> <span class="n">PenContext</span><span class="p">;</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">penContext2</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="n">penContext2</span><span class="p">.</span><span class="nf">FirePenOutOfRange</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">Environment</span><span class="p">.</span><span class="n">TickCount</span><span class="p">);</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个代码看起来可以很好工作，但是不要忘了，如果有用户在不停出现插拔触摸屏，会出现什么？</p>
+
+<p>因为 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 和 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code> 都只有在触摸屏收到触摸信息或者 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> 被释放会返回，而在用户拔出触摸屏时，触摸屏是没有收到触摸信息，于是 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 和 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code> 不会因为收到触摸信息返回。在 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 和 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code> 收到触摸信息返回的是 true 而在释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> 返回的是 false 于是上面代码就根据这个方法判断返回，如果是因为释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> 就是因为更新了 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 从初始化流程循环可以运行 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 而不是等待触摸，这个过程在用户插拔触摸屏很有用。</p>
+
+<p>从上面的代码可以知道，更新触摸的代码只会执行一次，因为在初始化流程循环会使用一个数组复制<code class="language-plaintext highlighter-rouge">_workerOperation</code>并且清空，然后运行。这个过程使用了锁，于是更新触摸的代码只会执行一次。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">PenThreadWorker</span><span class="p">.</span><span class="n">WorkerOperation</span><span class="p">[]</span> <span class="n">array</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+<span class="c1">// 这是一个锁，防止在这个线程运行时，修改 _workerOperation 的值</span>
+<span class="kt">object</span> <span class="n">workerOperationLock</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">_workerOperationLock</span><span class="p">;</span>
+<span class="c1">// 复制 _workerOperation 到数组，然后清空这个 _workerOperation 这样做是防止在其他线程等太久</span>
+<span class="c1">// 如果不复制，直接执行  _workerOperation 而且执行的时间比较长，那么在其他线程需要修改 _workerOperation 就需要等很久，通过这个方法可以先复制到新的数组，复制完成就可以修改</span>
+<span class="k">lock</span> <span class="p">(</span><span class="n">workerOperationLock</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">_workerOperation</span><span class="p">.</span><span class="n">Count</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">array</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">_workerOperation</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">();</span>
+		<span class="k">this</span><span class="p">.</span><span class="n">_workerOperation</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">array</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+<span class="p">{</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">array</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+	<span class="p">{</span>
+		<span class="n">array</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="nf">DoWork</span><span class="p">();</span>
+	<span class="p">}</span>
+	<span class="n">array</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>那么第二个问题，这个 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 是从哪里赋值的？实际上调用 <code class="language-plaintext highlighter-rouge">WorkerAddPenContext</code> 函数或调用 <code class="language-plaintext highlighter-rouge">WorkerRemovePenContext</code> 函数时，就会修改这个值。这个函数就是在触摸屏插拔的时候触发。</p>
+
+<p>下面是尝试在各个 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 加入和运行的时候输出的日志</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 拔</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.458</span> <span class="n">WorkerGetTabletsInfo</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.462</span> <span class="n">Clear</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.468</span> <span class="n">WorkerRemovePenContext</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.472</span> <span class="n">Clear</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.475</span> <span class="n">WorkerGetTabletsInfo</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.480</span> <span class="n">Clear</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.493</span> <span class="n">WorkerReleaseTabletLocks</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">24.499</span> <span class="n">Clear</span>
+<span class="c1">// 插</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.623</span> <span class="n">WorkerGetTabletInfo</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.628</span> <span class="n">Clear</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.632</span> <span class="n">WorkerAcquireTabletLocks</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.640</span> <span class="n">Clear</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.648</span> <span class="n">WorkerCreateContext</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.657</span> <span class="n">Clear</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.671</span> <span class="n">WorkerAddPenContext</span>
+<span class="m">14</span><span class="p">:</span><span class="m">51</span><span class="p">:</span><span class="m">25.677</span> <span class="n">Clear</span>
+</code></pre></div></div>
+
+<p>在所有的设备修改都会触发 windows 消息，在 <code class="language-plaintext highlighter-rouge">HwndWrapper.WndProc</code> 可以收到 Windows 消息</p>
+
+<p>如果收到的消息是 <code class="language-plaintext highlighter-rouge">WM_TABLET_ADDED</code> 或 <code class="language-plaintext highlighter-rouge">WM_TABLET_DELETED</code> 就会在 <code class="language-plaintext highlighter-rouge">SystemResources.SystemThemeFilterMessage</code> 调用 <code class="language-plaintext highlighter-rouge">InvalidateTabletDevices</code> 刷新触摸屏</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">private</span> <span class="k">static</span> <span class="n">IntPtr</span> <span class="nf">SystemThemeFilterMessage</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span>
+    <span class="p">{</span>
+    	<span class="n">WindowMessage</span> <span class="n">message</span> <span class="p">=</span> <span class="p">(</span><span class="n">WindowMessage</span><span class="p">)</span><span class="n">msg</span><span class="p">;</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="p">{</span>
+        	<span class="c1">// 其他忽略消息</span>
+            <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_TABLET_ADDED</span><span class="p">:</span>
+                 <span class="nf">InvalidateTabletDevices</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">lParam</span><span class="p">);</span>
+                 <span class="k">break</span><span class="p">;</span>
+ 
+            <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_TABLET_DELETED</span><span class="p">:</span>
+                 <span class="nf">InvalidateTabletDevices</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">lParam</span><span class="p">);</span>
+                 <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 <code class="language-plaintext highlighter-rouge">InvalidateTabletDevices</code> 函数是将消息转发 <code class="language-plaintext highlighter-rouge">StylusLogic.CurrentStylusLogic?.HandleMessage(msg, wParam, lParam);</code> 使用<code class="language-plaintext highlighter-rouge">StylusLogic.HandleMessage</code> 处理</p>
+
+<p>这里因为 <code class="language-plaintext highlighter-rouge">StylusLogic</code> 调用基类 WispLogic 的 <code class="language-plaintext highlighter-rouge">HandleMessage</code> 方法，所以下面的代码是在<code class="language-plaintext highlighter-rouge">WispLogic</code> 运行。因为存在添加和移除设备两个不同的消息，所以下面分为两条路径。但是无论是哪条路径最后都是到 <code class="language-plaintext highlighter-rouge">RefreshTablets</code> 先禁用当前的 PenContext 再收集当前的 PenContext 然后启用</p>
+
+<!-- ![](image/WPF 插拔触摸设备触摸失效/WPF 插拔触摸设备触摸失效3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201889165035286" alt="" /></p>
+
+<p>禁用 PenContext 的方法是调用 <code class="language-plaintext highlighter-rouge">PenContext.Disable</code> ，这个方法传入一个 bool 告诉是否关闭 <code class="language-plaintext highlighter-rouge">WorkerThread</code> 这里都是使用 false ，这里核心就是 <code class="language-plaintext highlighter-rouge">_penThreadPenContext.RemovePenContext(this)</code> 这里的 <code class="language-plaintext highlighter-rouge">RemovePenContext</code> 会调用 <code class="language-plaintext highlighter-rouge">PenThreadWorker.WorkerRemovePenContext</code> 这个函数不是立刻运行移除，这个函数先添加 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 然后释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> 等待 Stylus Input 处理完成再继续。</p>
+
+<p>是否还记得刚才的 <code class="language-plaintext highlighter-rouge">ThreadProc</code> 获取触摸流程循环，在用户没有触摸时，假设只有一个 PenContext 会在 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 等待，等待的方法是通过  <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> ，现在在 <code class="language-plaintext highlighter-rouge">WorkerRemovePenContext</code> 函数释放了，于是 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 就会返回。这里返回是 false 于是退出获取触摸流程循环，进入初始化流程循环，这时的 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 有一个值 <code class="language-plaintext highlighter-rouge">WorkerOperationRemoveContext</code>。在初始化流程循环使用 <code class="language-plaintext highlighter-rouge">WorkerOperationRemoveContext.OnDoWork</code> 通过 DoWork 使用 <code class="language-plaintext highlighter-rouge">RemovePenContext</code> 移除。这里就是 <code class="language-plaintext highlighter-rouge">RemovePenContext</code> 移除 <code class="language-plaintext highlighter-rouge">PenContext</code> 的过程。</p>
+
+<p>因为上面说了很多细节，但是从代码看，这个流程从主线程通过先添加 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 加入如何处理的代码，然后通过释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> 让处理输入的线程退出获取触摸流程循环，在初始化流程循环处理。</p>
+
+<p>收集当前的 PenContext 是使用 <code class="language-plaintext highlighter-rouge">WispTabletDevices.UpdateTablets</code> 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">WispLogic</span><span class="p">.</span><span class="n">cs</span>
+
+		<span class="k">private</span> <span class="k">void</span> <span class="nf">RefreshTablets</span><span class="p">()</span>
+		<span class="p">{</span>
+			<span class="k">foreach</span> <span class="p">(</span><span class="n">PenContexts</span> <span class="n">penContexts</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="n">__penContextsMap</span><span class="p">.</span><span class="n">Values</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="n">penContexts</span><span class="p">.</span><span class="nf">Disable</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+			<span class="p">}</span>
+			<span class="k">this</span><span class="p">.</span><span class="n">WispTabletDevices</span><span class="p">.</span><span class="nf">UpdateTablets</span><span class="p">();</span>
+			<span class="k">foreach</span> <span class="p">(</span><span class="n">PenContexts</span> <span class="n">penContexts2</span> <span class="k">in</span> <span class="k">this</span><span class="p">.</span><span class="n">__penContextsMap</span><span class="p">.</span><span class="n">Values</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="n">penContexts2</span><span class="p">.</span><span class="nf">Enable</span><span class="p">();</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>在 UpdateTablets 实际是调用 <code class="language-plaintext highlighter-rouge">UpdateTabletsImpl</code> 这里有一句代码是 <code class="language-plaintext highlighter-rouge">penThread.WorkerGetTabletsInfo</code> ，而 <code class="language-plaintext highlighter-rouge">penThread.WorkerGetTabletsInfo</code> 是调用<code class="language-plaintext highlighter-rouge">penThreadWorker.WorkerGetTabletsInfo</code> 这里会释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> ，也就是在 <code class="language-plaintext highlighter-rouge">ThreadProc</code> 的获取触摸流程循环就会退出。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>		<span class="p">[</span><span class="n">SecurityCritical</span><span class="p">]</span>
+		<span class="k">internal</span> <span class="n">TabletDeviceInfo</span><span class="p">[]</span> <span class="nf">WorkerGetTabletsInfo</span><span class="p">()</span>
+		<span class="p">{</span>
+			<span class="n">PenThreadWorker</span><span class="p">.</span><span class="n">WorkerOperationGetTabletsInfo</span> <span class="n">workerOperationGetTabletsInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PenThreadWorker</span><span class="p">.</span><span class="nf">WorkerOperationGetTabletsInfo</span><span class="p">();</span>
+			<span class="kt">object</span> <span class="n">workerOperationLock</span> <span class="p">=</span> <span class="k">this</span><span class="p">.</span><span class="n">_workerOperationLock</span><span class="p">;</span>
+			<span class="k">lock</span> <span class="p">(</span><span class="n">workerOperationLock</span><span class="p">)</span>
+			<span class="p">{</span>
+				<span class="k">this</span><span class="p">.</span><span class="n">_workerOperation</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">workerOperationGetTabletsInfo</span><span class="p">);</span>
+			<span class="p">}</span>
+			<span class="c1">// 这里释放 _pimcResetHandle 会让 ThreadProc 的 GetPenEvent 等代码返回</span>
+			<span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">RaiseResetEvent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">_pimcResetHandle</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+			<span class="n">workerOperationGetTabletsInfo</span><span class="p">.</span><span class="n">DoneEvent</span><span class="p">.</span><span class="nf">WaitOne</span><span class="p">();</span>
+			<span class="n">workerOperationGetTabletsInfo</span><span class="p">.</span><span class="n">DoneEvent</span><span class="p">.</span><span class="nf">Close</span><span class="p">();</span>
+			<span class="k">return</span> <span class="n">workerOperationGetTabletsInfo</span><span class="p">.</span><span class="n">TabletDevicesInfo</span><span class="p">;</span>
+		<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里 WorkerOperationGetTabletsInfo 就是更新的代码，这里使用 COM 通过<a href="https://blog.csdn.net/a1875566250/article/details/7885905">CoCreateInstance</a> 新建 PimcManager 通过 <code class="language-plaintext highlighter-rouge">PenThreadWorker.GetTabletInfoHelper</code> 拿到 <code class="language-plaintext highlighter-rouge">_tabletDevicesInfo</code> 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnDoWork</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="k">try</span>
+                <span class="p">{</span>
+                    <span class="c1">// create new collection of tablets</span>
+                    <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">Penimc</span><span class="p">.</span><span class="n">IPimcManager</span> <span class="n">pimcManager</span> <span class="p">=</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">Penimc</span><span class="p">.</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">PimcManager</span><span class="p">;</span>
+                    <span class="n">pimcManager</span><span class="p">.</span><span class="nf">GetTabletCount</span><span class="p">(</span><span class="k">out</span> <span class="kt">var</span> <span class="n">cTablets</span><span class="p">);</span>
+ 
+                    <span class="n">TabletDeviceInfo</span><span class="p">[]</span> <span class="n">tablets</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TabletDeviceInfo</span><span class="p">[</span><span class="n">cTablets</span><span class="p">];</span>
+ 
+                    <span class="k">for</span> <span class="p">(</span> <span class="kt">uint</span> <span class="n">iTablet</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">iTablet</span> <span class="p">&lt;</span> <span class="n">cTablets</span><span class="p">;</span> <span class="n">iTablet</span><span class="p">++</span> <span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">Penimc</span><span class="p">.</span><span class="n">IPimcTablet</span> <span class="n">pimcTablet</span><span class="p">;</span>
+                        <span class="n">pimcManager</span><span class="p">.</span><span class="nf">GetTablet</span><span class="p">(</span><span class="n">iTablet</span><span class="p">,</span> <span class="k">out</span> <span class="n">pimcTablet</span><span class="p">);</span>
+
+                        <span class="c1">// 出现 System.Runtime.InteropServices.COMException</span>
+                        <span class="c1">// 0x800706BA</span>
+                        <span class="n">tablets</span><span class="p">[</span><span class="n">iTablet</span><span class="p">]</span> <span class="p">=</span> <span class="n">PenThreadWorker</span><span class="p">.</span><span class="nf">GetTabletInfoHelper</span><span class="p">(</span><span class="n">pimcTablet</span><span class="p">);</span>
+                    <span class="p">}</span>
+ 
+                    <span class="c1">// Set result data and signal we are done.</span>
+                    <span class="n">_tabletDevicesInfo</span> <span class="p">=</span> <span class="n">tablets</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">catch</span> <span class="p">(</span> <span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">InteropServices</span><span class="p">.</span><span class="n">COMException</span> <span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// result will not be initialized if we fail due to a COM exception.</span>
+                    <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"WorkerOperationGetTabletsInfo.OnDoWork failed due to a COMException"</span><span class="p">);</span>
+ 
+                    <span class="c1">// return no devices found on error.</span>
+                    <span class="n">_tabletDevicesInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="n">TabletDeviceInfo</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+                <span class="p">}</span>
+                <span class="c1">// 其他异常</span>
+            <span class="p">}</span>
+ 
+</code></pre></div></div>
+
+<p>如果在 <code class="language-plaintext highlighter-rouge">GetTabletInfoHelper</code> 出现 <code class="language-plaintext highlighter-rouge">COMException</code> 或 <code class="language-plaintext highlighter-rouge">ArgumentException</code>就会返回空的数组，因为无法拿到触摸设备，在 WPF 触摸失效。</p>
+
+<p>下面的图片就是在普通的插拔触摸屏和快速插拔触摸屏时不同的输出，可以看到在快速插拔的时候在  <code class="language-plaintext highlighter-rouge">GetTabletInfoHelper</code> 出现了 <code class="language-plaintext highlighter-rouge">ArgumentException</code> 这时就会让 WPF 无法触摸</p>
+
+<!-- ![](image/WPF 插拔触摸设备触摸失效/WPF 插拔触摸设备触摸失效4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201881010271273" alt="" /></p>
+
+<p>因为在 WispLogic 的 RefreshTablets 先禁用了 PenContexts 但是在更新 UpdateTablets 返回的是空数组，于是重新打开 PenContexts 就找不到触摸屏，所以就触摸失效</p>
+
+<h2 id="代码存在的问题">代码存在的问题</h2>
+
+<p>在上面所说的 <code class="language-plaintext highlighter-rouge">GetTabletInfoHelper</code> 出现 <code class="language-plaintext highlighter-rouge">COMException</code> 返回数组会出现异常会让 WPF 触摸失效。因为在用户插入触摸屏时触发了 TabletAdded 消息，在之后用户触摸时不会有其他的插拔触摸相关消息。所以在第一次收到<code class="language-plaintext highlighter-rouge">WM_TABLET_ADDED</code>做初始化时，如果出现了 <code class="language-plaintext highlighter-rouge">COMException</code> 等返回空数组就会失去初始化时机。</p>
+
+<p>第二个问题是因为消息循环和获得输入的线程是两个线程，两个线程之间比较难做到同步，特别是使用释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> 的方法让输入线程重新调用 <code class="language-plaintext highlighter-rouge">_workerOperation</code> ，在插拔触摸屏需要触发多个 Windows 消息，几乎每个消息都需要插入一个  <code class="language-plaintext highlighter-rouge">_workerOperation</code> 并且使用等待的方式。只要出现线程调度没有处理好，就会出现原来需要添加的 PenContext 没有添加，这时就无法获得触摸。</p>
+
+<p>除了调度的时机，在 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程是使用 <code class="language-plaintext highlighter-rouge">_pimcResetHandle.Value</code> 在 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 等函数进行等待。而 <code class="language-plaintext highlighter-rouge">_workerOperation</code> 如 <code class="language-plaintext highlighter-rouge">WorkerGetTabletsInfo</code> 是从主线程的消息循环进入的，这个函数是将 <code class="language-plaintext highlighter-rouge">WorkerOperationGetTabletsInfo</code> 加入到  <code class="language-plaintext highlighter-rouge">_workerOperation</code>  然后释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle.Value</code> 通过释放  <code class="language-plaintext highlighter-rouge">_pimcResetHandle.Value</code> 在 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程就可以从 <code class="language-plaintext highlighter-rouge">GetPenEvent</code> 等函数返回，这时进入循环执行 <code class="language-plaintext highlighter-rouge">_workerOperation</code> ，然后主线程在等待  <code class="language-plaintext highlighter-rouge">WorkerOperationGetTabletsInfo</code> 的完成才可以继续代码。这样也就是原来的主线程是需要通过释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle.Value</code> 让 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程运行一段代码，并且主线程需要等待 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程运行完成才可以继续。而我看了里面的代码，实在没必要让这些代码在 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程运行。现在 WPF 这些代码的性能会比直接在主线程运行要低，因为代码运行的时间是 主线程释放 <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> 等待 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程运行完成，等待 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程运行完成需要等待 CPU 调度 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程运行代码，还需要等待 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程运行完成之后设置<code class="language-plaintext highlighter-rouge">AutoResetEvent</code>这个等待的时间相对直接在主线程运行是长很多，而且只要 CPU 一直不调度 <code class="language-plaintext highlighter-rouge">Stylus Input</code> 线程就需要一直等，不如重新创建线程。</p>
+
+<p>第三个问题是在 <code class="language-plaintext highlighter-rouge">PenThreadWorker</code> 的 <code class="language-plaintext highlighter-rouge">ThreadProc</code> 的获取触摸流程循环只判断 <code class="language-plaintext highlighter-rouge">_handles.Length == 1</code> 时调用 GetPenEvent 其他的时候调用 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code>  也就是在 <code class="language-plaintext highlighter-rouge">_handles.Length</code> 为 0 时也是调用 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code> 这从开发的 API 设计上看，如果没有 <code class="language-plaintext highlighter-rouge">_handles</code> 也就是没有 PenContext 就不应该进入 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code> 函数。建议是没有 <code class="language-plaintext highlighter-rouge">_handles</code> 使用另外的函数进行等待。</p>
+
+<p>这里为什么在 <code class="language-plaintext highlighter-rouge">_handles.Length</code> 不是 1 需要使用 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code> 而不是直接返回的原因是觉得创建线程的代价太高，或如果不进入等待的函数就会进入循环，不停进入循环。实际上这里在 <code class="language-plaintext highlighter-rouge">_handles</code> 没有值就是用户没有触摸屏，用户插入触摸屏的时间是很少的，没有几个用户一天没事都在插入拔出触摸屏，所以在用户插入触摸屏时再创建一个新的线程，在用户拔出触摸屏去掉这个线程是可以的。 通过这样做减少在这个线程等待的时间，防止用户的软件因为在 <code class="language-plaintext highlighter-rouge">GetPenEventMultiple</code> 没有释放触摸失效。</p>
+
+<p>但是无论是什么方法都难以解决所有触摸问题，建议开发接口让应用去修改触摸相关的，如重新进行初始化触摸</p>
+
+<p>参见：</p>
+
+<p><a href="https://social.msdn.microsoft.com/Forums/en-US/a8b6dc70-1421-4e05-bc21-1ebb638ab866/wpf-and-custom-credential-provider-in-windows-7?forum=wpf">WPF and Custom Credential Provider in Windows 7</a></p>
+
+<p><a href="https://stackoverflow.com/questions/26476889/invalidcastexception-with-com-client-and-server-in-c-sharp">.net - InvalidCastException with COM client and server in C# - Stack Overflow</a></p>
+
+<p><a href="https://blog.csdn.net/WPwalter/article/details/77986954">WPF 程序无法触摸操作？我们一起来找原因和解决方法</a></p>
+
+:ET

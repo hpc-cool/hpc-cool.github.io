@@ -1,0 +1,49 @@
+I"�<p>尽管非官方提供的 Grid 行列简化版本特别多，但是在最近这样的简写方法才被合并到了主仓库。整个 Xamarin Forms 都是开源的，任何小伙伴都可以发布自己的私有版本。也因此有很多有趣的小伙伴说，我这么好的功能就是不想放在官方，我只是用的爽就可以了。不过，也有很多小伙伴十分慷慨，我就是要放在官方，让更多的小伙伴用的爽。本文要和大家介绍的是一个用起来爽的功能</p>
+
+<!--more-->
+
+<!-- CreateTime:6/22/2020 8:26:10 AM -->
+<!-- 标签：Xamarin -->
+
+<p>我的小伙伴 <a href="https://github.com/dotMorten">Morten Nielsen</a> 和我吹水说他有一个提议被合并到了 Xamarin 的官方主仓库里面，可以让 Grid 的行列定义更加简单</p>
+
+<p>让咱先看看原先版本的行列定义是怎样的</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;Grid.ColumnDefinitions&gt;</span>
+            <span class="nt">&lt;ColumnDefinition</span> <span class="na">Width=</span><span class="s">"1*"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;ColumnDefinition</span> <span class="na">Width=</span><span class="s">"2*"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;ColumnDefinition</span> <span class="na">Width=</span><span class="s">"Auto"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;ColumnDefinition</span> <span class="na">Width=</span><span class="s">"*"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;ColumnDefinition</span> <span class="na">Width=</span><span class="s">"300"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Grid.ColumnDefinitions&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"1*"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"Auto"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"25"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span> <span class="s">"14"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"20"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="c">&lt;!-- 忽略代码 --&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>这是标准版本的 Grid 行列布局定义，上面代码将定义了一个网格，可以看到代码量还是比较多的</p>
+
+<p>而简化之后的版本，可以使用如下定义</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Grid</span> <span class="na">ColumnDefinitions=</span><span class="s">"1*, 2*, Auto, *, 300"</span>
+      <span class="na">RowDefinitions=</span><span class="s">"1*, Auto, 25, 14, 20"</span><span class="nt">&gt;</span>
+        <span class="c">&lt;!-- 忽略代码 --&gt;</span>
+<span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>是不是觉得瞬间代码就变少了</p>
+
+<p>这个功能其实已经存在很久了，只是都没有合并到官方项目里面，毕竟这个写法还是有一定的争议的</p>
+
+<p>看起来这个写法不错，那么接下来我要在 WPF 官方开源项目里面顶一下 <a href="https://github.com/dotMorten">Morten Nielsen</a> 看看能不能将这样的代码也合并到 WPF 官方开源项目里面</p>
+
+<p>如果能赶上的话，大概可以在 WPF 的 .NET 5 发布，也就是 WPF 5 的时候一起上</p>
+
+:ET

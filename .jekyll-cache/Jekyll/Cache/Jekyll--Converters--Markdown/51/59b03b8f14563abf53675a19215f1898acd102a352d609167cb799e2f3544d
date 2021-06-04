@@ -1,0 +1,338 @@
+I"/�<p>本文来告诉大家如何在 Direct2D1 绘制基本图形，包括线段、矩形、椭圆</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<div id="toc"></div>
+<!-- 标签：WPF，D2D,DirectX,渲染 -->
+
+<p>本文是一个系列</p>
+
+<ul>
+  <li>
+    <p><a href="https://lindexi.oschina.io/lindexi/post/WPF-%E4%BD%BF%E7%94%A8-Direct2D1-%E7%94%BB%E5%9B%BE%E5%85%A5%E9%97%A8.html">WPF 使用 Direct2D1 画图入门</a></p>
+  </li>
+  <li>
+    <p><a href="https://lindexi.oschina.io/lindexi/post/WPF-%E4%BD%BF%E7%94%A8-Direct2D1-%E7%94%BB%E5%9B%BE-%E7%BB%98%E5%88%B6%E5%9F%BA%E6%9C%AC%E5%9B%BE%E5%BD%A2.html">WPF 使用 Direct2D1 画图 绘制基本图形</a></p>
+  </li>
+  <li>
+    <p><a href="https://lindexi.oschina.io/lindexi/post/WPF-%E4%BD%BF%E7%94%A8-SharpDX.html">WPF 使用 SharpDX</a></p>
+  </li>
+</ul>
+
+<p>本文的组织参考<a href="http://www.cnblogs.com/grenet/category/507059.html">Direct2D</a>，对大神表示感谢。</p>
+
+<p>在开始前先告诉大家为何需要使用 Direct2D ，虽然 WPF 也是基于 DX 进行渲染，但是 WPF 做了很多兼容处理，所以没有比直接使用 Direct2D 的性能高。经过测试，在使用下面的所有代码，占用 CPU 几乎都是 0% ，因为没有布局、透明和事件处理，所以速度是很快。</p>
+
+<h2 id="点">点</h2>
+
+<p>在 Direct2D 使用的 点是 Point2F ，传入的是两个 float ，和 Point 差不多。</p>
+
+<p>Point2F 也是一个结构体，所以和 Point 类型差不多</p>
+
+<h2 id="线段">线段</h2>
+
+<p>线段需要使用 DrawLine ，方法的签名</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">void</span> <span class="nf">DrawLine</span><span class="p">(</span><span class="n">Point2F</span> <span class="n">firstPoint</span> <span class="err">起始点</span> <span class="p">,</span> <span class="n">Point2F</span> <span class="n">secondPoint</span> <span class="err">终点</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">brush</span> <span class="err">笔刷</span><span class="p">,</span> <span class="kt">float</span> <span class="n">strokeWidth</span> <span class="err">线段宽度</span><span class="p">)</span>
+
+ <span class="k">public</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">DrawLine</span><span class="p">(</span><span class="n">Point2F</span> <span class="n">firstPoint</span><span class="p">,</span> <span class="n">Point2F</span> <span class="n">secondPoint</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">brush</span><span class="p">,</span> <span class="kt">float</span> <span class="n">strokeWidth</span><span class="p">,</span> <span class="n">StrokeStyle</span> <span class="n">strokeStyle</span> <span class="err">线段样式</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>所以使用下面的方法就可以在 (10,10) (100,10) 画出一条宽度为 2 的红线</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">),</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">10</span><span class="p">),</span>
+                <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)),</span> <span class="m">2</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20184191049105692.jpg" alt="" /></p>
+
+<p>上面的代码运行在<a href="https://lindexi.oschina.io/lindexi/post/WPF-%E4%BD%BF%E7%94%A8-Direct2D1-%E7%94%BB%E5%9B%BE%E5%85%A5%E9%97%A8.html">WPF 使用 Direct2D1 画图入门</a>文章的 OnRendering 方法，为了让大家也可以试试下面的代码，建议大家先去看这篇博客。</p>
+
+<p>关于笔刷会在后面说</p>
+
+<h2 id="strokestyle">StrokeStyle</h2>
+
+<p>可以看到上面线段的最后一个参数是 StrokeStyle 那么这个参数是如何创建？在 Direct2D 有很多类都不能直接直接创建需要使用 D2DFactory 或 RenderTarget 才能创建。StrokeStyle 就需要使用 D2DFactory 进行创建。</p>
+
+<p>创建 StrokeStyle 需要参数 StrokeStyleProperties，这个类的构造有两个重载，一个是不需要参数，另一个是需要很多参数。代码请看下面。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="nf">StrokeStyleProperties</span><span class="p">(</span><span class="n">CapStyle</span> <span class="n">startCap</span><span class="p">,</span> <span class="n">CapStyle</span> <span class="n">endCap</span><span class="p">,</span> <span class="n">CapStyle</span> <span class="n">dashCap</span><span class="p">,</span> <span class="n">LineJoin</span> <span class="n">lineJoin</span><span class="p">,</span> <span class="kt">float</span> <span class="n">miterLimit</span><span class="p">,</span> <span class="n">DashStyle</span> <span class="n">dashStyle</span><span class="p">,</span> <span class="kt">float</span> <span class="n">dashOffset</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>从代码的命名大概大家也可以知道 StrokeStyleProperties 参数的意思，下面先创建一个没有构造函数的来创建 StrokeStyle ，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">strokeStyleProperties</span> <span class="p">=</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">StrokeStyleProperties</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">strokeStyle</span> <span class="p">=</span> <span class="n">d2DFactory</span><span class="p">.</span><span class="nf">CreateStrokeStyle</span><span class="p">(</span><span class="n">strokeStyleProperties</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">BeginDraw</span><span class="p">();</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">10</span><span class="p">,</span><span class="m">10</span><span class="p">),</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span><span class="m">10</span><span class="p">),</span> <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)),</span><span class="m">2</span><span class="p">,</span> <span class="n">strokeStyle</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">EndDraw</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>需要注意，创建 strokeStyle 的工厂需要和创建 RenderTarget 一样，如果使用不一样的工厂就会出现下面异常。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Microsoft</span><span class="p">.</span><span class="n">WindowsAPICodePack</span><span class="p">.</span><span class="n">DirectX</span><span class="p">.</span><span class="n">Direct2D1</span><span class="p">.</span><span class="n">Direct2DException</span><span class="p">:</span><span class="err">“</span><span class="n">EndDraw</span> <span class="n">has</span> <span class="n">failed</span> <span class="n">with</span> <span class="n">error</span><span class="p">:</span> <span class="err">一起使用的对象必须创建自相同的工厂实例。</span> <span class="p">(</span><span class="err">异常来自</span> <span class="n">HRESULT</span><span class="p">:</span><span class="m">0x88990012</span><span class="p">)</span> <span class="n">Tags</span><span class="p">=(</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">).</span><span class="err">”</span>
+</code></pre></div></div>
+
+<p>所以需要修改<a href="https://lindexi.oschina.io/lindexi/post/WPF-%E4%BD%BF%E7%94%A8-Direct2D1-%E7%94%BB%E5%9B%BE%E5%85%A5%E9%97%A8.html">WPF 使用 Direct2D1 画图入门</a>文章的代码，把 D2DFactory 写为字段</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">CompositionTarget</span><span class="p">.</span><span class="n">Rendering</span> <span class="p">+=</span> <span class="n">OnRendering</span><span class="p">;</span>
+
+            <span class="n">Loaded</span> <span class="p">+=</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">d2DFactory</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">D2DFactory</span><span class="p">.</span><span class="nf">CreateFactory</span><span class="p">(</span><span class="n">D2D</span><span class="p">.</span><span class="n">D2DFactoryType</span><span class="p">.</span><span class="n">Multithreaded</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">windowHandle</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="k">this</span><span class="p">).</span><span class="n">Handle</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">renderTarget</span> <span class="p">=</span> <span class="n">d2DFactory</span><span class="p">.</span><span class="nf">CreateHwndRenderTarget</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">RenderTargetProperties</span><span class="p">(),</span>
+                    <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">HwndRenderTargetProperties</span><span class="p">(</span><span class="n">windowHandle</span><span class="p">,</span>
+                        <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">SizeU</span><span class="p">((</span><span class="kt">uint</span><span class="p">)</span> <span class="n">ActualWidth</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">ActualHeight</span><span class="p">),</span>
+                        <span class="n">D2D</span><span class="p">.</span><span class="n">PresentOptions</span><span class="p">.</span><span class="n">RetainContents</span><span class="p">));</span>
+
+                <span class="n">_redBrush</span> <span class="p">=</span> <span class="n">renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">));</span>
+
+                <span class="n">_greenBrush</span> <span class="p">=</span> <span class="n">renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">));</span>
+
+                <span class="n">_blueBrush</span> <span class="p">=</span> <span class="n">renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">,</span> <span class="m">1</span><span class="p">));</span>
+
+                <span class="n">_renderTarget</span> <span class="p">=</span> <span class="n">renderTarget</span><span class="p">;</span>
+
+                <span class="n">_d2DFactory</span> <span class="p">=</span> <span class="n">d2DFactory</span><span class="p">;</span>
+            <span class="p">};</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="strokestyleproperties">StrokeStyleProperties</h2>
+
+<p>关于 StrokeStyleProperties 需要说一下，就是各个参数。</p>
+
+<p>从名字可以看到 StartCap 和 EndCap 就是线段的两端的图形，可以选的参数</p>
+
+<ul>
+  <li>Flat</li>
+  <li>Square</li>
+  <li>Round</li>
+  <li>Triangle</li>
+</ul>
+
+<p>具体表示是什么，我会使用下面的例子</p>
+
+<h3 id="flat">Flat</h3>
+
+<p>平的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">strokeStyleProperties</span> <span class="p">=</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">StrokeStyleProperties</span><span class="p">();</span>
+
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">StartCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Flat</span><span class="p">;</span>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">EndCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Flat</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">strokeStyle</span> <span class="p">=</span> <span class="n">_d2DFactory</span><span class="p">.</span><span class="nf">CreateStrokeStyle</span><span class="p">(</span><span class="n">strokeStyleProperties</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">BeginDraw</span><span class="p">();</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">10</span><span class="p">,</span><span class="m">10</span><span class="p">),</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span><span class="m">10</span><span class="p">),</span> <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)),</span><span class="m">2</span><span class="p">,</span> <span class="n">strokeStyle</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">EndDraw</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20184191145368673.jpg" alt="" /></p>
+
+<h3 id="round">Round</h3>
+
+<p>圆的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="kt">float</span> <span class="n">h</span> <span class="p">=</span> <span class="m">10</span><span class="p">;</span>
+
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">StartCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Round</span><span class="p">;</span>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">EndCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Round</span><span class="p">;</span>
+            <span class="n">strokeStyle</span> <span class="p">=</span> <span class="n">_d2DFactory</span><span class="p">.</span><span class="nf">CreateStrokeStyle</span><span class="p">(</span><span class="n">strokeStyleProperties</span><span class="p">);</span>
+
+            <span class="n">h</span> <span class="p">+=</span> <span class="m">20</span><span class="p">;</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">BeginDraw</span><span class="p">();</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)),</span> <span class="m">5</span><span class="p">,</span> <span class="n">strokeStyle</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">EndDraw</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018419114895088.jpg" alt="" /></p>
+
+<h3 id="square">Square</h3>
+
+<p>方形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">StartCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Square</span><span class="p">;</span>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">EndCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Square</span><span class="p">;</span>
+            <span class="n">strokeStyle</span> <span class="p">=</span> <span class="n">_d2DFactory</span><span class="p">.</span><span class="nf">CreateStrokeStyle</span><span class="p">(</span><span class="n">strokeStyleProperties</span><span class="p">);</span>
+
+            <span class="n">h</span> <span class="p">+=</span> <span class="m">20</span><span class="p">;</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">BeginDraw</span><span class="p">();</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)),</span> <span class="m">5</span><span class="p">,</span> <span class="n">strokeStyle</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">EndDraw</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018419115013995.jpg" alt="" /></p>
+
+<h3 id="triangle">Triangle</h3>
+
+<p>三角形</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">StartCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Triangle</span><span class="p">;</span>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">EndCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Triangle</span><span class="p">;</span>
+            <span class="n">strokeStyle</span> <span class="p">=</span> <span class="n">_d2DFactory</span><span class="p">.</span><span class="nf">CreateStrokeStyle</span><span class="p">(</span><span class="n">strokeStyleProperties</span><span class="p">);</span>
+
+            <span class="n">h</span> <span class="p">+=</span> <span class="m">20</span><span class="p">;</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">BeginDraw</span><span class="p">();</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)),</span> <span class="m">5</span><span class="p">,</span> <span class="n">strokeStyle</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">EndDraw</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201841911520144.jpg" alt="" /></p>
+
+<h3 id="dashstyle">DashStyle</h3>
+
+<p>如果需要画虚线就可以使用 DashStyle ，虚线显示就是使用 CapStyle</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20184191158581837.jpg" alt="" /></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">DashStyle</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">DashStyle</span><span class="p">.</span><span class="n">DashDot</span><span class="p">;</span>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">DashCap</span> <span class="p">=</span> <span class="n">D2D</span><span class="p">.</span><span class="n">CapStyle</span><span class="p">.</span><span class="n">Square</span><span class="p">;</span>
+            <span class="n">strokeStyleProperties</span><span class="p">.</span><span class="n">DashOffset</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+
+            <span class="n">h</span> <span class="p">+=</span> <span class="m">20</span><span class="p">;</span>
+
+            <span class="n">strokeStyle</span> <span class="p">=</span> <span class="n">_d2DFactory</span><span class="p">.</span><span class="nf">CreateStrokeStyle</span><span class="p">(</span><span class="n">strokeStyleProperties</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">BeginDraw</span><span class="p">();</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawLine</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="n">h</span><span class="p">),</span>
+                <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">CreateSolidColorBrush</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">ColorF</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">1</span><span class="p">)),</span> <span class="m">5</span><span class="p">,</span> <span class="n">strokeStyle</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">EndDraw</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>大家自己试一试就知道</p>
+
+<p>里面还有属性 LineJoin 这个不是线段可以做的，是折线才可以使用，表示两个线段如何链接</p>
+
+<h2 id="矩形">矩形</h2>
+
+<p>画矩形使用 DrawRectangle ，参数需要传入 RectF 需要传入上下左右的浮点数。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawRectangle</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">RectF</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">),</span> <span class="n">brush</span><span class="p">,</span> <span class="m">10</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>矩形有两个重载</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">void</span> <span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">RectF</span> <span class="n">rect</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">brush</span><span class="p">,</span> <span class="kt">float</span> <span class="n">strokeWidth</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">DrawRectangle</span><span class="p">(</span><span class="n">RectF</span> <span class="n">rect</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">brush</span><span class="p">,</span> <span class="kt">float</span> <span class="n">strokeWidth</span><span class="p">,</span> <span class="n">StrokeStyle</span> <span class="n">strokeStyle</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>矩形的 StrokeStyle 和线段一样。</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20184191445547057.jpg" alt="" /></p>
+
+<h2 id="椭圆">椭圆</h2>
+
+<p>实际上画圆和椭圆是一样的，画圆的函数有两个重载</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">void</span> <span class="nf">DrawEllipse</span><span class="p">(</span><span class="n">Ellipse</span> <span class="n">ellipse</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">brush</span><span class="p">,</span> <span class="kt">float</span> <span class="n">strokeWidth</span><span class="p">)</span>
+
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">public</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">DrawEllipse</span><span class="p">(</span><span class="n">Ellipse</span> <span class="n">ellipse</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">brush</span><span class="p">,</span> <span class="kt">float</span> <span class="n">strokeWidth</span><span class="p">,</span> <span class="n">StrokeStyle</span> <span class="n">strokeStyle</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>需要先创建 Ellipse 和笔刷。</p>
+
+<p>创建 Ellipse 需要给圆心和两个轴，下面创建一个圆心在 (100,100) ，两个轴都是50的椭圆。实际上就是半径是50的圆形。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">ellipse</span> <span class="p">=</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Ellipse</span><span class="p">(</span><span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">Point2F</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">),</span> <span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018419145042837.jpg" alt="" /></p>
+
+<p>这就是绘制基本的图形。</p>
+
+<p>那么如何填充图形？实际上所有 Draw 都有对应的 Fill 函数，除了线段。所以填充就是调用对应的 Fill 函数。</p>
+
+<p>尝试运行程序，看看这时的 CPU ，实际上是几乎不会动，因为所有的计算都在 GPU 计算。不过程序里的代码包括创建图形，实际上是在 CPU 创建，但是因为速度很快，几乎不需要计算，所以需要的时间很短。</p>
+
+<h2 id="文字">文字</h2>
+
+<p>最后就是告诉大家如何绘制文字。</p>
+
+<p>绘制文字需要使用 DirectWrite ，需要先创建 DWriteFactory 然后才可以绘制文本。</p>
+
+<p>绘制文本有多个方式，因为需要的很多参数都不能直接创建需要使用 DWriteFactory 创建，所以这里需要先使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">dWriteFactory</span> <span class="p">=</span> <span class="n">DWriteFactory</span><span class="p">.</span><span class="nf">CreateFactory</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>创建文字有多个方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">DrawText</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">,</span> <span class="n">TextFormat</span> <span class="n">textFormat</span><span class="p">,</span> <span class="n">RectF</span> <span class="n">layoutRect</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">defaultForegroundBrush</span><span class="p">)</span>
+
+<span class="k">public</span> <span class="k">void</span> <span class="nf">DrawText</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">,</span> <span class="n">TextFormat</span> <span class="n">textFormat</span><span class="p">,</span> <span class="n">RectF</span> <span class="n">layoutRect</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">defaultForegroundBrush</span><span class="p">,</span> <span class="n">MeasuringMode</span> <span class="n">measuringMode</span><span class="p">)</span>
+
+<span class="k">public</span> <span class="k">void</span> <span class="nf">DrawText</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">,</span> <span class="n">TextFormat</span> <span class="n">textFormat</span><span class="p">,</span> <span class="n">RectF</span> <span class="n">layoutRect</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">defaultForegroundBrush</span><span class="p">,</span> <span class="n">DrawTextOptions</span> <span class="n">options</span><span class="p">)</span>
+
+<span class="k">public</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">DrawText</span><span class="p">(</span><span class="kt">string</span> <span class="n">text</span><span class="p">,</span> <span class="n">TextFormat</span> <span class="n">textFormat</span><span class="p">,</span> <span class="n">RectF</span> <span class="n">layoutRect</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">defaultForegroundBrush</span><span class="p">,</span> <span class="n">DrawTextOptions</span> <span class="n">options</span><span class="p">,</span> <span class="n">MeasuringMode</span> <span class="n">measuringMode</span><span class="p">)</span>
+
+
+ <span class="k">public</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">DrawTextLayout</span><span class="p">(</span><span class="n">Point2F</span> <span class="n">origin</span><span class="p">,</span> <span class="n">TextLayout</span> <span class="n">textLayout</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">defaultForegroundBrush</span><span class="p">)</span>
+
+ <span class="k">public</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">DrawTextLayout</span><span class="p">(</span><span class="n">Point2F</span> <span class="n">origin</span><span class="p">,</span> <span class="n">TextLayout</span> <span class="n">textLayout</span><span class="p">,</span> <span class="n">Brush</span> <span class="n">defaultForegroundBrush</span><span class="p">,</span> <span class="n">DrawTextOptions</span> <span class="n">options</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>因为有很多个参数，需要大家自己去试试</p>
+
+<p>下面来写出简单文字</p>
+
+<p><img src="https://i.loli.net/2018/04/19/5ad83f4ecdf15.gif" alt="" /></p>
+
+<p>需要先创建 textFormat 需要告诉使用哪个字形，和字体大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">textFormat</span> <span class="p">=</span> <span class="n">dWriteFactory</span><span class="p">.</span><span class="nf">CreateTextFormat</span><span class="p">(</span><span class="s">"宋体"</span><span class="p">,</span> <span class="m">20</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>下面就是画出文字，文字换行可以使用<code class="language-plaintext highlighter-rouge">\n</code>，复杂的换行请使用文字重载方法，这里我就不说了</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">BeginDraw</span><span class="p">();</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">DrawText</span><span class="p">(</span><span class="s">"lindexi 本文所有博客放在 lindexi.oschina.io \n欢迎大家来访问\n\n这是系列博客，告诉大家如何在 WPF 使用Direct2D1"</span><span class="p">,</span> <span class="n">textFormat</span><span class="p">,</span> <span class="k">new</span> <span class="n">D2D</span><span class="p">.</span><span class="nf">RectF</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">1000</span><span class="p">,</span> <span class="m">1000</span><span class="p">),</span> <span class="n">brush</span><span class="p">);</span>
+
+            <span class="n">_renderTarget</span><span class="p">.</span><span class="nf">EndDraw</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>需要说的是 Windows API Code Pack 1.1 已经很久没更新，而且有错误，所以建议使用 <a href="http://www.sharpdx.org/">SharpDX</a></p>
+
+<p>参见：<a href="https://www.codeproject.com/Articles/113991/Using-Direct-D-with-WPF">Using Direct2D with WPF - CodeProject</a></p>
+
+<p>https://jeremiahmorrill.wordpress.com/2011/02/14/a-critical-deep-dive-into-the-wpf-rendering-system/</p>
+
+:ET

@@ -1,0 +1,73 @@
+I"�<p>本文告诉大家如何通过 WMI 获取用户已经安装的驱动程序</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:59 -->
+
+<!-- 标签：dotnet,C#,WMI -->
+
+<p>通过 Win32_SystemDriver 可以获取用户已经安装的驱动程序</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">mc</span> <span class="p">=</span> <span class="s">"Win32_SystemDriver"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">managementObject</span> <span class="p">=</span> <span class="k">new</span><span class="p">[]</span>
+            <span class="p">{</span>
+                    <span class="s">"Caption"</span><span class="p">,</span>
+                    <span class="c1">//"CreationClassName",</span>
+                    <span class="c1">//"Description",</span>
+                    <span class="c1">//"DisplayName",</span>
+                    <span class="c1">//"InstallDate",</span>
+                    <span class="s">"Name"</span><span class="p">,</span>
+                    <span class="c1">//"PathName",</span>
+                    <span class="c1">//"ServiceType",</span>
+                    <span class="c1">//"StartMode",</span>
+                    <span class="s">"State"</span><span class="p">,</span>
+            <span class="p">};</span>
+            <span class="n">ManagementClass</span> <span class="n">managementClass</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ManagementClass</span><span class="p">(</span><span class="n">mc</span><span class="p">);</span>
+            <span class="n">ManagementObjectCollection</span> <span class="n">managementObjectCollection</span> <span class="p">=</span> <span class="n">managementClass</span><span class="p">.</span><span class="nf">GetInstances</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="n">ManagementObject</span> <span class="n">m</span> <span class="k">in</span> <span class="n">managementObjectCollection</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">managementObject</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">try</span>
+                    <span class="p">{</span>
+                        <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+                        <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">" "</span><span class="p">);</span>
+                        <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="n">temp</span><span class="p">]?.</span><span class="nf">ToString</span><span class="p">()</span> <span class="p">??</span> <span class="s">""</span><span class="p">);</span>
+                        <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"\n"</span><span class="p">);</span>
+                    <span class="p">}</span>
+                    <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">temp</span> <span class="p">+</span> <span class="s">" "</span> <span class="p">+</span> <span class="n">e</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"\n"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">str</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>对于驱动程序只需要知道驱动程序是哪个，是否运行就可以，至于安装日期和在安装在哪很多时候不需要知道</p>
+
+<p>输出 str 的内容</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Caption</span> <span class="p">:</span> <span class="n">Windows</span> <span class="n">Driver</span> <span class="n">Foundation</span> <span class="p">-</span> <span class="n">User</span><span class="p">-</span><span class="n">mode</span> <span class="n">Driver</span> <span class="n">Framework</span> <span class="n">Reflector</span>
+<span class="n">Name</span>    <span class="p">:</span> <span class="n">WUDFRd</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Running</span>
+
+<span class="n">Caption</span> <span class="p">:</span> <span class="n">WPD</span> <span class="err">文件系统驱动程序</span>
+<span class="n">Name</span>    <span class="p">:</span> <span class="n">WUDFWpdFs</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Running</span>
+
+<span class="n">Caption</span> <span class="p">:</span> <span class="n">XINPUT</span> <span class="n">HID</span> <span class="err">筛选器驱动程序</span>
+<span class="n">Name</span>    <span class="p">:</span> <span class="n">xinputhid</span>
+<span class="n">State</span>   <span class="p">:</span> <span class="n">Stopped</span>
+</code></pre></div></div>
+
+<p>驱动的内容很多，我就不全部放在代码</p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/win32-systemdriver">Win32_SystemDriver class - Windows applications</a></p>
+
+:ET

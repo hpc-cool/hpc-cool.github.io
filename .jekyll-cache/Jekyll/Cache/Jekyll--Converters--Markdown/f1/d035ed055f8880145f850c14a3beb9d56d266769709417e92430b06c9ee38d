@@ -1,0 +1,97 @@
+I" <p>本文主要是因为汉堡菜单里面列出的菜单很多重复的图标和文字，我把它作为控件，因为是随便写，可能存在错误，如果发现了，请和我说或关掉浏览器，请不要发不良言论。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>我们使用汉堡菜单，经常需要一个
+<img src="http://img.blog.csdn.net/20160624111821645" alt="这里写图片描述" />
+需要一个图标和一个文字</p>
+
+<p>我开始写一个TextBlock做图标，一个写文字</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                            <span class="nt">&lt;ListViewItem.Content&gt;</span>
+                                <span class="nt">&lt;StackPanel</span> <span class="na">Orientation=</span><span class="s">"Horizontal"</span><span class="nt">&gt;</span>
+                                    <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">FontFamily=</span><span class="s">"Segoe MDL2 Assets"</span>
+                                         <span class="na">Text=</span><span class="s">"&amp;#xE77B;"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                                    <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Text=</span><span class="s">"登录"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                                <span class="nt">&lt;/StackPanel&gt;</span>
+                            <span class="nt">&lt;/ListViewItem.Content&gt;</span>
+</code></pre></div></div>
+
+<p>因为需要写3个地方是不一样，一个是文字、一个图标还有一次复制，我觉得复制不好，因为我还有很多软件，如果每个都这样，那么在TextBlock使用
+<img src="http://img.blog.csdn.net/20160624112019381" alt="这里写图片描述" />
+很多都是一样的</p>
+
+<p>一个方法是自己创建控件，我们右击View文件夹添加控件</p>
+
+<p>在控件写两个TextBlock，一个做图标，一个写文字</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;StackPanel</span> <span class="na">Orientation=</span><span class="s">"Horizontal"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">FontFamily=</span><span class="s">"Segoe MDL2 Assets"</span>
+                       <span class="na">Text=</span><span class="s">"{x:Bind IconString}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+            <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Text=</span><span class="s">"{x:Bind Text}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+        <span class="nt">&lt;/StackPanel&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>然后在<code class="language-plaintext highlighter-rouge">SplitViewItem.xaml.cs</code></p>
+
+<p>属性IconString，Text</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">IconStringProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"IconString"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">SplitViewItem</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">string</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">IconString</span>
+        <span class="p">{</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="nf">SetValue</span><span class="p">(</span><span class="n">IconStringProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">IconStringProperty</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">TextProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Text"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">SplitViewItem</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">string</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Text</span>
+        <span class="p">{</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="nf">SetValue</span><span class="p">(</span><span class="n">TextProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">TextProperty</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我把SplitViewItem扔View文件夹，在命名空间使用<code class="language-plaintext highlighter-rouge">EncryptionSyncFolder.View</code></p>
+
+<p>`    xmlns:view=”using:EncryptionSyncFolder.View”`</p>
+
+<p>本来需要很长的代码，现在修改成为一点点，其实就是导入我的自定义控件，首先在上面的代码是把view用作我的控件所在文件夹，反人类的Segoe MDL2 Assets 可以在http://modernicons.io/segoe-mdl2/cheatsheet/，找到你要的图标</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                        <span class="nt">&lt;ListViewItem&gt;</span>
+                            <span class="nt">&lt;ListViewItem.Content&gt;</span>
+                               <span class="nt">&lt;Grid&gt;</span>
+                                    <span class="nt">&lt;view:SplitViewItem</span> <span class="na">IconString=</span><span class="s">"&amp;#xE713;"</span> <span class="na">Text=</span><span class="s">"设置"</span><span class="nt">&gt;&lt;/view:SplitViewItem&gt;</span>
+                               <span class="nt">&lt;/Grid&gt;</span>
+                            <span class="nt">&lt;/ListViewItem.Content&gt;</span>
+                        <span class="nt">&lt;/ListViewItem&gt;</span>
+</code></pre></div></div>
+
+<h2 id="splitview-从右划出">SplitView 从右划出</h2>
+
+<p>修改PanelPlacement。</p>
+
+<p>多谢<a href="http://i.hexun.com/bzlbsd/default.html">Script</a></p>
+
+:ET

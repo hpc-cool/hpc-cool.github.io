@@ -1,0 +1,161 @@
+I"%0<p>本文收集 a:bodyPr 文本框属性 BodyProperties 的属性的作用</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/7/28 15:34:21 -->
+
+<p>根据 <a href="http://www.ecma-international.org/publications/standards/Ecma-376.htm">ECMA-376</a> 文档 21.1.2.1.1 bodyPr (Body Properties) 在 Office 的 OpenXML 使用这个属性定义文本框的属性</p>
+
+<p>本文的 OpneXMl SDK 的获取代码前提都有以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">(</span><span class="n">BodyProperties</span> <span class="n">textBodyProperties</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文会不断更新，因为属性太多了</p>
+
+<h2 id="文本自适应宽度">文本自适应宽度</h2>
+
+<p>文本框默认是固定宽度，使用 wrap (Text Wrapping Type) 属性，对应 OpenXML SDK 的 Wrap 属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">TextWrappingValues</span> <span class="n">textWrapping</span> <span class="p">=</span> <span class="n">bodyProperties</span><span class="p">?.</span><span class="n">Wrap</span><span class="p">?.</span><span class="n">Value</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>默认值是 <code class="language-plaintext highlighter-rouge">TextWrappingValues.Square</code> 表示固定宽度，而自适应宽度是 TextWrappingValues.None 属性</p>
+
+<p>那么自适应宽度和固定宽度有什么不同？原因在于如果在PPT里面新建一个文本框采用点击的方式，那么创建的就是自适应宽度文本框。如果拖动了一个矩形，那么就是固定宽度</p>
+
+<p>采用自适应宽度将在文本框宽度不够的时候自动添加宽度。而固定宽度则是超过了文本框宽度的文本自动换行</p>
+
+<p>另外自适应宽度的文本框会显示文本行末的下划线，而固定宽度不会显示，如下面两个课件。可以看到固定宽度的课件没有显示下划线，其实两个文档的元素都是相同的</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020728167134295.jpg" alt="" /></p>
+
+<p>我写了一个 WPF 应用，用来告诉大家如何拿到这个属性，代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/4e3b373f658864bbb6a60a4ce82d695cf7c7e1fd/KiwejeejiWhalfalqenel">github</a>欢迎小伙伴访问。代码包含了上面图片两个测试的 PPT 文件</p>
+
+<h2 id="文本边距">文本边距</h2>
+
+<p>文本框的文字和文本框是有边距的，这个边距使用 lIns 左边距和 tIns 上边距和 rIns 右边距和 bIns 下边距表示</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;a:bodyPr</span> <span class="na">lIns=</span><span class="s">"108000"</span> <span class="na">tIns=</span><span class="s">"180000"</span> <span class="na">rIns=</span><span class="s">"108000"</span> <span class="na">bIns=</span><span class="s">"180000"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;/a:bodyPr&gt;</span>
+</code></pre></div></div>
+
+<p>在 OpenXML SDK 的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">marginLeft</span> <span class="p">=</span> <span class="n">textBodyProperties</span><span class="p">.</span><span class="n">LeftInset</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">marginTop</span> <span class="p">=</span> <span class="n">textBodyProperties</span><span class="p">.</span><span class="n">TopInset</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">marginRight</span> <span class="p">=</span> <span class="n">textBodyProperties</span><span class="p">.</span><span class="n">RightInset</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">marginBottom</span> <span class="p">=</span> <span class="n">textBodyProperties</span><span class="p">.</span><span class="n">BottomInset</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>单位： EMU</p>
+
+<p>默认值如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">MarginThickness</span> <span class="n">DefaultMargin</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MarginThickness</span>
+        <span class="p">(</span>
+            <span class="k">new</span> <span class="nf">Inch</span><span class="p">(</span><span class="m">0.1</span><span class="p">).</span><span class="nf">ToPixel</span><span class="p">(),</span>
+            <span class="k">new</span> <span class="nf">Inch</span><span class="p">(</span><span class="m">0.05</span><span class="p">).</span><span class="nf">ToPixel</span><span class="p">(),</span>
+            <span class="k">new</span> <span class="nf">Inch</span><span class="p">(</span><span class="m">0.1</span><span class="p">).</span><span class="nf">ToPixel</span><span class="p">(),</span>
+            <span class="k">new</span> <span class="nf">Inch</span><span class="p">(</span><span class="m">0.05</span><span class="p">).</span><span class="nf">ToPixel</span><span class="p">()</span>
+        <span class="p">);</span>
+</code></pre></div></div>
+
+<p>对应在 PPT 的大小和属性界面</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020728164502443.jpg" alt="" /></p>
+
+<p>在 PPT 显示的是厘米单位，转换存在误差，例如上边距，采用 <a href="https://github.com/dotnet-campus/dotnetCampus.OfficeDocumentZiper">dotnetCampus.OfficeDocumentZipper</a> 工具可以辅助计算，可以看到如上面代码的 <code class="language-plaintext highlighter-rouge">0.05 Inch</code> 上边距，对应的是 <code class="language-plaintext highlighter-rouge">0.127 厘米</code> 但是在 PPT 实际显示的是 0.13 厘米</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20207281646172465.jpg" alt="" /></p>
+
+<p>我写了一个 WPF 应用读取 PPT 文件的文本框的边距</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020728175361077.jpg" alt="" /></p>
+
+<p>代码放在<a href="https://github.com/lindexi/lindexi_gd/tree/11ee2825f2b1eee1e5a68efe172e7346f866ad41/GakagaycalhechemNerehejejairairway">github</a>欢迎小伙伴访问。代码包含了上面图片测试的 PPT 文件</p>
+
+<h2 id="rotation">Rotation</h2>
+
+<p>Rotation</p>
+
+<p>OpneXMl SDK: <code class="language-plaintext highlighter-rouge">var rotation = textBodyProperties.Rotation;</code></p>
+
+<p>单位： EMU 角度</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:bodyPr</span> <span class="na">wrap=</span><span class="s">"square"</span> <span class="na">rot=</span><span class="s">"200000"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/a:bodyPr&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020729122273011.jpg" alt="" /></p>
+
+<p>用来表示整个文本框的旋转，可以使用负数。和使用 <code class="language-plaintext highlighter-rouge">a:xfrm</code> 的旋转不同的是，这里只是旋转文本框而不是旋转形状。旋转点是文本的左上角，注意是文本的左上角，会被 文本边距 影响，如修改文本边距比较大</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:bodyPr</span> <span class="na">wrap=</span><span class="s">"square"</span> <span class="na">lIns=</span><span class="s">"1080000"</span> <span class="na">tIns=</span><span class="s">"180000"</span> <span class="na">rIns=</span><span class="s">"108000"</span> <span class="na">bIns=</span><span class="s">"180000"</span> <span class="na">rot=</span><span class="s">"200000"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/a:bodyPr&gt;</span>
+</code></pre></div></div>
+
+<p>执行 PPT 的效果如下</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用5.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20207291225379437.jpg" alt="" /></p>
+
+<p>文字的宽度等排版依然按照文本没有旋转排版，在排版之后再对文本进行旋转，因此文本可以超过文本框</p>
+
+<h2 id="upright">upright</h2>
+
+<p>Text Upright</p>
+
+<p>OpneXMl SDK: <code class="language-plaintext highlighter-rouge">var upRight = textBodyProperties.UpRight;</code></p>
+
+<p>也许在 OpneXMl SDK 的命名是不对的，因此我给了一个 <a href="https://github.com/OfficeDev/Open-XML-SDK/issues/784">Issues</a> 也许会更改命名</p>
+
+<p>这个属性的英文描述博大精深，大概的意思其实是这个属性如果设置上去了，那么文本所在的形状的旋转将不会叠加在文本上，也就是无论形状如何旋转，文本的旋转都只受 textBodyProperties.Rotation 的影响</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:bodyPr</span> <span class="na">upright=</span><span class="s">"1"</span> <span class="na">rot=</span><span class="s">"540000"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;/a:bodyPr&gt;</span>
+</code></pre></div></div>
+
+<p>如上面代码，文本旋转了，但是此时的形状没有旋转，如下图</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用6.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20207291420455688.jpg" alt="" /></p>
+
+<p>而如果旋转了形状，可以看到文本的旋转角度没有变化</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用7.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20207291421248352.jpg" alt="" /></p>
+
+<p>这个属性默认值是 false 也就是跟随形状的旋转。这个属性除了影响跟随旋转同时也影响文本的旋转中心</p>
+
+<p>一个有趣的规则是当形状旋转超过 45 度的时候，那么文本的布局的宽度和高度将会受形状的高度和宽度的影响，也就是将宽度和高度倒过来。可以认为是文本是竖着放，也就是这个属性名的含义，此时文本的排版就会按照当前水平方向的形状具体是那一边靠近决定那一边作为宽度，如下图</p>
+
+<!-- ![](image/dotnet OpenXML 文本 BodyProperties 的属性作用/dotnet OpenXML 文本 BodyProperties 的属性作用8.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020729142559203.jpg" alt="" /></p>
+
+<p>此时的形状旋转让原本形状的作为高度的一边更靠近水平，于是就将原本高度的边作为文本宽度</p>
+
+<p>这个属性 Text Upright 的命名太对了，就是让文本竖放，忽略形状的影响。同时排版布局也是相同的逻辑。只是这个文本不是垂直文本，因此可以看到英文的强大</p>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+:ET

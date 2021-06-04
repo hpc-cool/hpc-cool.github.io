@@ -1,0 +1,3 @@
+I"L<p>本文告诉大家如何使用 SharpDX 在 D3DImage 显示。在上一篇<a href="https://lindexi.oschina.io/lindexi/post/WPF-%E4%BD%BF%E7%94%A8-SharpDX.html">WPF 使用 SharpDX</a>只是使用窗口，也就是无法使用其它的 WPF 控件。所以这一篇就来告诉大家如何使用 WPF 控件和使用 SharpDX 。</p>
+
+:ET

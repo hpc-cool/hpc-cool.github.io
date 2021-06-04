@@ -1,0 +1,294 @@
+I"��<p>颜色是一个大的主题，在 ECMA 376 里面用了 19 页 A4 描述了颜色，但仅是简单的描述。在 OpenXML 定义了 Scheme Color (schemeClr) 是用来表示主题的颜色，可以跟随主题的更改而更改颜色。例如我的文本设置为主题的文本颜色，那么在我更改文档主题的文本色就可以更改我的文本颜色</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/7 14:38:11 -->
+
+<p>在 OpenXML 的颜色里面，其中 Scheme Color （a:schemeClr） 是十分强大的，可以用来作为模版发布，让用户自己一键替换主题色。也提供了给智能排版协助更换主题色的方法</p>
+
+<p>在填充笔刷里，本文说的颜色是放在 SolidColorBrush 里面，也就是在 OpenXML 的 <code class="language-plaintext highlighter-rouge">a:solidFill</code> 里面的颜色，大概的文档代码请看下面</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:solidFill&gt;</span>
+	<span class="nt">&lt;a:schemeClr</span> <span class="na">val=</span><span class="s">"tx1"</span><span class="nt">&gt;</span>
+		<span class="nt">&lt;a:lumMod</span> <span class="na">val=</span><span class="s">"65000"</span> <span class="nt">/&gt;</span>
+		<span class="nt">&lt;a:lumOff</span> <span class="na">val=</span><span class="s">"35000"</span> <span class="nt">/&gt;</span>
+	<span class="nt">&lt;/a:schemeClr&gt;</span>
+<span class="nt">&lt;/a:solidFill&gt;</span>
+</code></pre></div></div>
+
+<p>上面代码的 <code class="language-plaintext highlighter-rouge">a:solidFill</code> 使用 <code class="language-plaintext highlighter-rouge">a:schemeClr</code> 填充，使用的值是 <code class="language-plaintext highlighter-rouge">val="tx1"</code> 而在 <code class="language-plaintext highlighter-rouge">a:schemeClr</code>  的 lumMod 和 lumOff 表示颜色转换，更多颜色转换请看 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E9%A2%9C%E8%89%B2%E5%8F%98%E6%8D%A2.html">dotnet OpenXML 颜色变换</a></p>
+
+<p>那么 <code class="language-plaintext highlighter-rouge">val="tx1"</code> 表示的颜色是什么？是否可以转 RGB 表示，其实这个值表示的是主题里面的 tx1 也就是 Text1 属性的颜色，需要再次去主题里面找到对应的颜色</p>
+
+<p>假定如上是放在 Slide 页面里面的某个文本的颜色，代码如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p:sp&gt;</span>
+  <span class="nt">&lt;p:nvSpPr&gt;</span>
+    <span class="nt">&lt;p:cNvPr</span> <span class="na">id=</span><span class="s">"2"</span> <span class="na">name=</span><span class="s">"标题 1"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;p:cNvSpPr&gt;</span>
+      <span class="nt">&lt;a:spLocks</span> <span class="na">noGrp=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/p:cNvSpPr&gt;</span>
+    <span class="nt">&lt;p:nvPr&gt;</span>
+      <span class="nt">&lt;p:ph</span> <span class="na">type=</span><span class="s">"ctrTitle"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/p:nvPr&gt;</span>
+  <span class="nt">&lt;/p:nvSpPr&gt;</span>
+  <span class="nt">&lt;p:spPr&gt;</span>
+    <span class="nt">&lt;a:xfrm&gt;</span>
+      <span class="nt">&lt;a:off</span> <span class="na">x=</span><span class="s">"568575"</span> <span class="na">y=</span><span class="s">"84959"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;a:ext</span> <span class="na">cx=</span><span class="s">"9144000"</span> <span class="na">cy=</span><span class="s">"635000"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/a:xfrm&gt;</span>
+  <span class="nt">&lt;/p:spPr&gt;</span>
+  <span class="nt">&lt;p:txBody&gt;</span>
+    <span class="nt">&lt;a:bodyPr</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:lstStyle</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;a:p&gt;</span>
+      <span class="nt">&lt;a:r&gt;</span>
+        <span class="nt">&lt;a:rPr</span> <span class="na">kumimoji=</span><span class="s">"1"</span> <span class="na">lang=</span><span class="s">"zh-CN"</span> <span class="na">altLang=</span><span class="s">"en-US"</span> <span class="na">b=</span><span class="s">"1"</span> <span class="na">dirty=</span><span class="s">"0"</span><span class="nt">&gt;</span>
+          <span class="nt">&lt;a:solidFill&gt;</span>
+            <span class="nt">&lt;a:schemeClr</span> <span class="na">val=</span><span class="s">"tx1"</span><span class="nt">&gt;</span>
+              <span class="nt">&lt;a:lumMod</span> <span class="na">val=</span><span class="s">"65000"</span> <span class="nt">/&gt;</span>
+              <span class="nt">&lt;a:lumOff</span> <span class="na">val=</span><span class="s">"35000"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;/a:schemeClr&gt;</span>
+          <span class="nt">&lt;/a:solidFill&gt;</span>
+          <span class="nt">&lt;a:ea</span> <span class="na">typeface=</span><span class="s">"微软雅黑"</span> <span class="na">panose=</span><span class="s">"020B0503020204020204"</span> <span class="na">charset=</span><span class="s">"-122"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/a:rPr&gt;</span>
+        <span class="nt">&lt;a:t&gt;</span>林德熙<span class="nt">&lt;/a:t&gt;</span>
+      <span class="nt">&lt;/a:r&gt;</span>
+    <span class="nt">&lt;/a:p&gt;</span>
+  <span class="nt">&lt;/p:txBody&gt;</span>
+<span class="nt">&lt;/p:sp&gt;</span>
+</code></pre></div></div>
+
+<p>此时想要拿到这个文本的字体的颜色，就需要先获取 Color Map 颜色表，然后找到 Color Scheme 读取实际颜色。默认的 Color Map 在 Slide Master 里面，关于 Slide Master 请看<a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E7%9A%84-Slide-Master-%E5%92%8C-Slide-Layout-%E6%98%AF%E4%BB%80%E4%B9%88.html">dotnet OpenXML 的 Slide Master 和 Slide Layout 是什么</a></p>
+
+<p>但是此时在页面里面依然可以通过 ColorMapOverride 重写颜色表，因此在 OpenXML SDK 里面需要这样获取，在拿到 SlidePart, SlideLayoutPart, SlideMasterPart 三个变量，然后先判断当前页面是否有重写，有的话使用当前页面，然后再使用 SlideLayout 的</p>
+
+<p>当然，如果此时的元素是放在 Slide Layout 的元素，那么就不能使用 Slide 的，大概代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">masterColorMap</span> <span class="p">=</span> <span class="n">slideMasterPart</span><span class="p">?.</span><span class="n">SlideMaster</span><span class="p">.</span><span class="n">ColorMap</span><span class="p">;</span>
+
+            <span class="c1">//从当前Slide获取ColorMap</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">slidePart</span><span class="p">?.</span><span class="n">Slide</span><span class="p">.</span><span class="n">ColorMapOverride</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">slidePart</span><span class="p">.</span><span class="n">Slide</span><span class="p">.</span><span class="n">ColorMapOverride</span><span class="p">.</span><span class="n">MasterColorMapping</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">masterColorMap</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">slidePart</span><span class="p">.</span><span class="n">Slide</span><span class="p">.</span><span class="n">ColorMapOverride</span><span class="p">.</span><span class="n">OverrideColorMapping</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">Slide</span><span class="p">.</span><span class="n">ColorMapOverride</span><span class="p">.</span><span class="n">OverrideColorMapping</span><span class="p">.</span><span class="nf">ToColorMap</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="c1">//从SlideLayout获取ColorMap</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">slideLayoutPart</span><span class="p">?.</span><span class="n">SlideLayout</span><span class="p">.</span><span class="n">ColorMapOverride</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">slideLayoutPart</span><span class="p">.</span><span class="n">SlideLayout</span><span class="p">.</span><span class="n">ColorMapOverride</span><span class="p">.</span><span class="n">MasterColorMapping</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">masterColorMap</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">slideLayoutPart</span><span class="p">.</span><span class="n">SlideLayout</span><span class="p">.</span><span class="n">ColorMapOverride</span><span class="p">.</span><span class="n">OverrideColorMapping</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">slideLayoutPart</span><span class="p">.</span><span class="n">SlideLayout</span><span class="p">.</span><span class="n">ColorMapOverride</span><span class="p">.</span><span class="n">OverrideColorMapping</span><span class="p">.</span><span class="nf">ToColorMap</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="c1">//从SlideMaster获取ColorMap</span>
+            <span class="k">return</span> <span class="n">masterColorMap</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面代码的 ToColorMap 是一个扩展方法，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 将&lt;see cref="OverrideColorMapping"/&gt;转换为&lt;see cref="ColorMap"/&gt;</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="mapping"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">ColorMap</span> <span class="nf">ToColorMap</span><span class="p">(</span><span class="k">this</span> <span class="n">OverrideColorMapping</span> <span class="n">mapping</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">ColorMap</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Accent1</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Accent1</span><span class="p">,</span>
+                <span class="n">Accent2</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Accent2</span><span class="p">,</span>
+                <span class="n">Accent3</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Accent3</span><span class="p">,</span>
+                <span class="n">Accent4</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Accent4</span><span class="p">,</span>
+                <span class="n">Accent5</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Accent5</span><span class="p">,</span>
+                <span class="n">Accent6</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Accent6</span><span class="p">,</span>
+                <span class="n">Background1</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Background1</span><span class="p">,</span>
+                <span class="n">Background2</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Background2</span><span class="p">,</span>
+                <span class="n">FollowedHyperlink</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">FollowedHyperlink</span><span class="p">,</span>
+                <span class="n">Hyperlink</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Hyperlink</span><span class="p">,</span>
+                <span class="n">Text1</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Text1</span><span class="p">,</span>
+                <span class="n">Text2</span> <span class="p">=</span> <span class="n">mapping</span><span class="p">.</span><span class="n">Text2</span>
+            <span class="p">};</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>颜色表在 Slide Master 的内容如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;p:clrMap</span> <span class="na">bg1=</span><span class="s">"lt1"</span> <span class="na">tx1=</span><span class="s">"dk1"</span> <span class="na">bg2=</span><span class="s">"lt2"</span> <span class="na">tx2=</span><span class="s">"dk2"</span> <span class="na">accent1=</span><span class="s">"accent1"</span> <span class="na">accent2=</span><span class="s">"accent2"</span> <span class="na">accent3=</span><span class="s">"accent3"</span> <span class="na">accent4=</span><span class="s">"accent4"</span> <span class="na">accent5=</span><span class="s">"accent5"</span> <span class="na">accent6=</span><span class="s">"accent6"</span> <span class="na">hlink=</span><span class="s">"hlink"</span> <span class="na">folHlink=</span><span class="s">"folHlink"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>也就是如上面文本使用的是 tx1 的颜色，在色表可以看到 <code class="language-plaintext highlighter-rouge">tx1="dk1"</code> 所以此时使用的是 <code class="language-plaintext highlighter-rouge">dk1</code> 的颜色，这个颜色需要在主题里面找到对应的颜色</p>
+
+<p>找到对应的主题的方法，在 OpenXML 里面可以使用如下方法拿到</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">//从当前Slide获取theme</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">slidePart</span><span class="p">?.</span><span class="n">ThemeOverridePart</span><span class="p">?.</span><span class="n">ThemeOverride</span><span class="p">?.</span><span class="n">ColorScheme</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">ThemeOverridePart</span><span class="p">.</span><span class="n">ThemeOverride</span><span class="p">.</span><span class="n">ColorScheme</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">//从SlideLayout获取theme</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">slideLayoutPart</span><span class="p">?.</span><span class="n">ThemeOverridePart</span><span class="p">?.</span><span class="n">ThemeOverride</span><span class="p">?.</span><span class="n">ColorScheme</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">slideLayoutPart</span><span class="p">.</span><span class="n">ThemeOverridePart</span><span class="p">.</span><span class="n">ThemeOverride</span><span class="p">.</span><span class="n">ColorScheme</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">//从SlideMaster获取theme</span>
+            <span class="k">return</span> <span class="n">slideMasterPart</span><span class="p">?.</span><span class="n">ThemePart</span><span class="p">?.</span><span class="n">Theme</span><span class="p">?.</span><span class="n">ThemeElements</span><span class="p">?.</span><span class="n">ColorScheme</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>如果是放在页面的元素，那么依次尝试获取 Slide 的主题，如果拿不到，就从 SlideLayout 获取，再获取不到就从 SlideMaster 获取。如果是 Slide Layout 的元素，那么先从 SlideLayout 获取，而不能从 Slide 获取，如果获取不到就从 SlideMaster 获取</p>
+
+<p>在拿到颜色表和主题，可以使用如下方法找到对应颜色</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">static</span> <span class="n">Color</span> <span class="nf">ToColor</span><span class="p">(</span><span class="k">this</span> <span class="n">SchemeColor</span> <span class="n">color</span><span class="p">,</span> <span class="n">ColorScheme</span> <span class="n">scheme</span><span class="p">,</span> <span class="n">ColorMap</span> <span class="n">map</span><span class="p">)</span>
+ <span class="p">{</span>
+ 	<span class="kt">var</span> <span class="k">value</span> <span class="p">=</span> <span class="n">color</span><span class="p">.</span><span class="n">Val</span><span class="p">.</span><span class="n">Value</span><span class="p">;</span>
+    <span class="k">value</span> <span class="p">=</span> <span class="nf">SchemeColorMap</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="n">map</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">schemeColor</span> <span class="p">=</span> <span class="nf">FindSchemeColor</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="n">scheme</span><span class="p">);</span>
+    <span class="c1">// 忽略代码</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>而 ColorMap 是非必须的，如果没有 ColorMap 那么就不需要使用 SchemeColorMap 方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">static</span> <span class="n">Color</span> <span class="nf">ToColor</span><span class="p">(</span><span class="k">this</span> <span class="n">SchemeColor</span> <span class="n">color</span><span class="p">,</span> <span class="n">ColorScheme</span> <span class="n">scheme</span><span class="p">,</span> <span class="n">ColorMap</span> <span class="n">map</span><span class="p">)</span>
+ <span class="p">{</span>
+ 	<span class="kt">var</span> <span class="k">value</span> <span class="p">=</span> <span class="n">color</span><span class="p">.</span><span class="n">Val</span><span class="p">.</span><span class="n">Value</span><span class="p">;</span>
+ 	<span class="k">if</span> <span class="p">(</span><span class="n">map</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+ 	<span class="p">{</span>
+ 		<span class="k">value</span> <span class="p">=</span> <span class="nf">SchemeColorMap</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="n">map</span><span class="p">);</span>
+ 	<span class="p">}</span>
+    
+    <span class="kt">var</span> <span class="n">schemeColor</span> <span class="p">=</span> <span class="nf">FindSchemeColor</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="n">scheme</span><span class="p">);</span>
+    <span class="c1">// 忽略代码</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的 SchemeColorMap 方法代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">private</span> <span class="k">static</span> <span class="n">SchemeColorValues</span> <span class="nf">SchemeColorMap</span><span class="p">(</span><span class="n">SchemeColorValues</span> <span class="k">value</span><span class="p">,</span> <span class="n">ColorMap</span> <span class="n">map</span><span class="p">)</span> <span class="p">=&gt;</span>
+     <span class="k">value</span> <span class="k">switch</span>
+     <span class="p">{</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent1</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Accent1</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent2</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Accent2</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent3</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Accent3</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent4</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Accent4</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent5</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Accent5</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent6</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Accent6</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark1</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark1</span><span class="p">,</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark2</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark2</span><span class="p">,</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">FollowedHyperlink</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">FollowedHyperlink</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Hyperlink</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Hyperlink</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light1</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light1</span><span class="p">,</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light2</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light2</span><span class="p">,</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Background1</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Background1</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Background2</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Background2</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Text1</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Text1</span><span class="p">),</span>
+         <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Text2</span> <span class="p">=&gt;</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">map</span><span class="p">.</span><span class="n">Text2</span><span class="p">),</span>
+         <span class="n">_</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent1</span><span class="p">,</span>
+     <span class="p">};</span>
+
+ <span class="k">private</span> <span class="k">static</span> <span class="n">SchemeColorValues</span> <span class="nf">IndexToSchemeColor</span><span class="p">(</span><span class="n">ColorSchemeIndexValues</span> <span class="k">value</span><span class="p">)</span> <span class="p">=&gt;</span>
+     <span class="k">value</span> <span class="k">switch</span>
+     <span class="p">{</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Accent1</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent1</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Accent2</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent2</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Accent3</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent3</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Accent4</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent4</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Accent5</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent5</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Accent6</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent6</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Dark1</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark1</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Dark2</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark2</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">FollowedHyperlink</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">FollowedHyperlink</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Hyperlink</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Hyperlink</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Light1</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light1</span><span class="p">,</span>
+         <span class="n">ColorSchemeIndexValues</span><span class="p">.</span><span class="n">Light2</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light2</span><span class="p">,</span>
+         <span class="n">_</span> <span class="p">=&gt;</span> <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent1</span><span class="p">,</span>
+     <span class="p">};</span>
+</code></pre></div></div>
+
+<p>这里的 FindSchemeColor 代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">Color2Type</span> <span class="nf">FindSchemeColor</span><span class="p">(</span><span class="n">SchemeColorValues</span> <span class="k">value</span><span class="p">,</span> <span class="n">ColorScheme</span> <span class="n">scheme</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="k">value</span> <span class="k">switch</span>
+            <span class="p">{</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent1</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Accent1Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent2</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Accent2Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent3</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Accent3Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent4</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Accent4Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent5</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Accent5Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Accent6</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Accent6Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark1</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Dark1Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Dark2</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Dark2Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">FollowedHyperlink</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">FollowedHyperlinkColor</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Hyperlink</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Hyperlink</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light1</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Light1Color</span><span class="p">,</span>
+                <span class="n">SchemeColorValues</span><span class="p">.</span><span class="n">Light2</span> <span class="p">=&gt;</span> <span class="n">scheme</span><span class="p">.</span><span class="n">Light2Color</span><span class="p">,</span>
+                <span class="n">_</span> <span class="p">=&gt;</span> <span class="k">null</span><span class="p">,</span>
+            <span class="p">};</span>
+</code></pre></div></div>
+
+<p>此时拿到的只是颜色，颜色可以选的值有很多</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;a:clrScheme</span> <span class="na">name=</span><span class="s">"Office"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;a:dk1&gt;</span>
+        <span class="nt">&lt;a:sysClr</span> <span class="na">val=</span><span class="s">"windowText"</span> <span class="na">lastClr=</span><span class="s">"000000"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:dk1&gt;</span>
+      <span class="nt">&lt;a:lt1&gt;</span>
+        <span class="nt">&lt;a:sysClr</span> <span class="na">val=</span><span class="s">"window"</span> <span class="na">lastClr=</span><span class="s">"FFFFFF"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:lt1&gt;</span>
+      <span class="nt">&lt;a:dk2&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"44546A"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:dk2&gt;</span>
+      <span class="nt">&lt;a:lt2&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"E7E6E6"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:lt2&gt;</span>
+      <span class="nt">&lt;a:accent1&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"4472C4"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:accent1&gt;</span>
+      <span class="nt">&lt;a:accent2&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"ED7D31"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:accent2&gt;</span>
+      <span class="nt">&lt;a:accent3&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"A5A5A5"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:accent3&gt;</span>
+      <span class="nt">&lt;a:accent4&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"FFC000"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:accent4&gt;</span>
+      <span class="nt">&lt;a:accent5&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"5B9BD5"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:accent5&gt;</span>
+      <span class="nt">&lt;a:accent6&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"70AD47"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:accent6&gt;</span>
+      <span class="nt">&lt;a:hlink&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"0563C1"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:hlink&gt;</span>
+      <span class="nt">&lt;a:folHlink&gt;</span>
+        <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"954F72"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;/a:folHlink&gt;</span>
+    <span class="nt">&lt;/a:clrScheme&gt;</span>
+</code></pre></div></div>
+
+<p>在这个颜色里面 dk1 的颜色是 sysClr 也就是 SystemColor 颜色，读取 lastClr 也就是 LastColor 属性就可以拿到颜色。而 SystemColor 的 val 表示的是使用系统的哪个颜色，因此是可以做到在不同的系统设置打开的文档的颜色是不同的。这部分获取的逻辑就相对复杂了，也不在本文范围</p>
+
+<p>本文的 Scheme Color 可以在 ECMA 376 的 20.1.2.3.29 schemeClr (Scheme Color) 找到。如果没有 OpenXML SDK 的定义辅助，也许这里的逻辑能坑你很久</p>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+:ET

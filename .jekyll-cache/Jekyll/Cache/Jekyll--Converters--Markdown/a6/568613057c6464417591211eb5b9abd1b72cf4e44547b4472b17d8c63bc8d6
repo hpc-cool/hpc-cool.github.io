@@ -1,0 +1,49 @@
+I"U<p>我有一个 NuGet 库有新的版本，但是我的服务器速度不够快，此时我第一次使用 NuGet 还原找不到库。在我服务器索引完成之后，再次使用 NuGet 会依然找不到这个库，而此时服务器准备完成。这是 NuGet 的缓存的坑</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/10/5 12:38:52 -->
+
+<p>我使用了 <a href="https://github.com/loic-sharma/BaGet">BaGet</a> 搭建我私有的 NuGet 服务器，他的速度很快，但是索引一个上传的 NuGet 库依然需要一定的时间。如果在 NuGet 服务器还没准备完成之前调用了 NuGet 的 restore 命令，此时预期是找不到 NuGet 的这个新版本的库</p>
+
+<p>但是在 NuGet 服务器准备完成之后，再次调用 NuGet 的还原命令，包括 dotnet restore 都会提示找不到这个版本的库，需要等待超长的时间才能拉</p>
+
+<p>一开始我以为是自己的 NuGet 服务器性能太差，后续在 WPF 官方开源仓库里面学到了这是 NuGet 的坑，在 WPF 的 <a href="https://github.com/dotnet/wpf/pull/3605/files">Merge WPF 5.0 GA (release/5.0) into WPF master by ryalanms · Pull Request #3605 · dotnet/wpf</a> 可以看到如下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Avoid using the http cache as workaround for https://github.com/NuGet/Home/issues/3116
+</code></pre></div></div>
+
+<p>在 NuGet 的官方开源仓库有小伙伴提出 <a href="https://github.com/NuGet/Home/issues/3116">NuGet should refresh its HTTP cache if it can’t find the package requested · Issue #3116 · NuGet/Home</a></p>
+
+<p>也就是 NuGet 没有刷新自己缓存认为不存在某个库，解决方法是加上 No Cache 命令，如下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>NuGet restore -NoCache
+</code></pre></div></div>
+
+<p>或</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet restore --no-cache
+</code></pre></div></div>
+
+<p>这是因为在 http-cache 文件夹里面没有刷新，关于这个文件夹请看 <a href="https://docs.microsoft.com/en-us/nuget/consume-packages/managing-the-global-packages-and-cache-folders">How to manage the global packages, cache, temp folders in NuGet</a></p>
+
+<p>路径如下</p>
+
+<ul>
+  <li>Windows: <code class="language-plaintext highlighter-rouge">%localappdata%\NuGet\v3-cache</code></li>
+  <li>Mac/Linux: <code class="language-plaintext highlighter-rouge">~/.local/share/NuGet/v3-cache</code></li>
+</ul>
+
+<p>可以使用下面代码清理</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>nuget locals http-cache -clear
+</code></pre></div></div>
+
+<p>或</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet nuget locals http-cache --clear
+</code></pre></div></div>
+
+<p>使用 No Cache 需要重新下载 NuGet 库，此时的速度比较慢，而使用清理 http-cache 只是刷新版本号的字符串，速度会更快</p>
+
+:ET

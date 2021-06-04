@@ -1,0 +1,84 @@
+I":+<p>本文告诉大家如何在 WPF 中使用 SkiaSharp 调用 Skia 这个全平台底层渲染框架，使用绘制命令在 WriteableBitmap 图片上绘制内容</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/31 12:30:28 -->
+
+<p>谷歌提出了 Skia 全平台渲染框架，这是一个很底层的框架，详细请看 <a href="https://github.com/google/skia">google/skia: Skia is a complete 2D graphic library for drawing Text, Geometries, and Images.</a></p>
+
+<p>而 SkiaSharp 是 mono 组织对 Skia 的 .NET 封装库，可以完全用到 Skia 的底层渲染能力，详细请看 <a href="https://github.com/mono/SkiaSharp/">mono/SkiaSharp: SkiaSharp is a cross-platform 2D graphics API for .NET platforms based on Google’s Skia Graphics Library. It provides a comprehensive 2D API that can be used across mobile, server and desktop models to render images.</a></p>
+
+<p>那么如何在 WPF 使用 SkiaSharp 绘制出 WriteableBitmap 在 WPF 中使用？其实 WriteableBitmap 是将一个数组里面的像素在屏幕显示，而 SKSurface 可以从一个像素数组开始创建，创建的时候需要规定这个数组对应的图片的格式，包括图片的大小以及 RGB 像素格式</p>
+
+<p>使用下面代码创建一个简单的界面，在这个界面里面点击按钮将会给 Image 控件赋值使用 Skia 创建的图片</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"Auto"</span><span class="nt">&gt;&lt;/RowDefinition&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;Image</span> <span class="na">x:Name=</span><span class="s">"Image"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;&lt;/Image&gt;</span>
+        <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">Content=</span><span class="s">"使用Skia绘制"</span> <span class="na">Click=</span><span class="s">"Button_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>在 WPF 里面创建一个 WriteableBitmap 可以使用如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">WriteableBitmap</span> <span class="nf">CreateImage</span><span class="p">(</span><span class="kt">int</span> <span class="n">width</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">writeableBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WriteableBitmap</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="n">PixelFormats</span><span class="p">.</span><span class="n">Bgra32</span><span class="p">,</span> <span class="n">BitmapPalettes</span><span class="p">.</span><span class="n">Halftone256Transparent</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">writeableBitmap</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>为什么需要创建一个方法来创建，原因是参数 PixelFormats.Bgra32 和 BitmapPalettes.Halftone256Transparent 将会和后续的 Skia 创建相关</p>
+
+<p>在 Skia 里面和 D2D 一样有 Surface 的概念，也就是可以将绘制命令输入到 Skia 绘制到 Surface 上，而绘制内容将会作为像素数组放在传入的数组里面</p>
+
+<p>小伙伴是否还记得 <a href="https://blog.lindexi.com/post/WPF-%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%AE%89%E5%85%A8%E4%BB%A3%E7%A0%81%E5%BF%AB%E9%80%9F%E4%BB%8E%E6%95%B0%E7%BB%84%E8%BD%AC-WriteableBitmap.html">WPF 使用不安全代码快速从数组转 WriteableBitmap</a> 的方法，其实 Skia 在 WriteableBitmap 绘制的本质就是这样</p>
+
+<p>在开始绘制之前需要调用 WriteableBitmap 的 Lock 方法，接着在绘制完成之后，需要调用 AddDirtyRect 和 Unlock 方法</p>
+
+<p>大概的绘制代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">UpdateImage</span><span class="p">(</span><span class="n">WriteableBitmap</span> <span class="n">writeableBitmap</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">width</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">writeableBitmap</span><span class="p">.</span><span class="n">Width</span><span class="p">,</span>
+                <span class="n">height</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">writeableBitmap</span><span class="p">.</span><span class="n">Height</span><span class="p">;</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Lock</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">skImageInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKImageInfo</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="n">width</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="n">height</span><span class="p">,</span>
+                <span class="n">ColorType</span> <span class="p">=</span> <span class="n">SKColorType</span><span class="p">.</span><span class="n">Bgra8888</span><span class="p">,</span>
+                <span class="n">AlphaType</span> <span class="p">=</span> <span class="n">SKAlphaType</span><span class="p">.</span><span class="n">Premul</span><span class="p">,</span>
+                <span class="n">ColorSpace</span> <span class="p">=</span> <span class="n">SKColorSpace</span><span class="p">.</span><span class="nf">CreateSrgb</span><span class="p">()</span>
+            <span class="p">};</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">surface</span> <span class="p">=</span> <span class="n">SKSurface</span><span class="p">.</span><span class="nf">Create</span><span class="p">(</span><span class="n">skImageInfo</span><span class="p">,</span> <span class="n">writeableBitmap</span><span class="p">.</span><span class="n">BackBuffer</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">SKCanvas</span> <span class="n">canvas</span> <span class="p">=</span> <span class="n">surface</span><span class="p">.</span><span class="n">Canvas</span><span class="p">;</span>
+                <span class="n">canvas</span><span class="p">.</span><span class="nf">Clear</span><span class="p">(</span><span class="k">new</span> <span class="nf">SKColor</span><span class="p">(</span><span class="m">130</span><span class="p">,</span> <span class="m">130</span><span class="p">,</span> <span class="m">130</span><span class="p">));</span>
+                <span class="n">canvas</span><span class="p">.</span><span class="nf">DrawText</span><span class="p">(</span><span class="s">"SkiaSharp on Wpf!"</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">200</span><span class="p">,</span> <span class="k">new</span> <span class="nf">SKPaint</span><span class="p">()</span> <span class="p">{</span> <span class="n">Color</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKColor</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="n">TextSize</span> <span class="p">=</span> <span class="m">100</span> <span class="p">});</span>
+                <span class="n">canvas</span><span class="p">.</span><span class="nf">DrawText</span><span class="p">(</span><span class="s">"https://blog.lindexi.com"</span><span class="p">,</span> <span class="k">new</span> <span class="nf">SKPoint</span><span class="p">(</span><span class="m">50</span><span class="p">,</span> <span class="m">500</span><span class="p">),</span> <span class="k">new</span> <span class="nf">SKPaint</span><span class="p">(</span><span class="k">new</span> <span class="nf">SKFont</span><span class="p">(</span><span class="n">SKTypeface</span><span class="p">.</span><span class="nf">FromFamilyName</span><span class="p">(</span><span class="s">"微软雅黑"</span><span class="p">)))</span>
+                <span class="p">{</span>
+                    <span class="n">Color</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SKColor</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span>
+                    <span class="n">TextSize</span> <span class="p">=</span> <span class="m">20</span>
+                <span class="p">});</span>
+            <span class="p">}</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">AddDirtyRect</span><span class="p">(</span><span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">));</span>
+            <span class="n">writeableBitmap</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>绘制界面大概如下</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20208301919281724.jpg" alt="" /></p>
+
+<p>本文的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/e414c652ae503d882ad13eb844e70f8bc787f287/ReewheaberekaiNayweelehe">github</a> 欢迎小伙伴访问</p>
+
+<p>更多使用方法还需要小伙伴自己去玩</p>
+
+<p>当前可以使用 SkiaSharp 支持 Window 端和 Linux 端以及 macOS 和 iOS 和安卓端的绘制，其中 Xamarin 中集成 Skia 的成熟度是最高的</p>
+
+:ET

@@ -1,0 +1,55 @@
+I"[<p>默认的 NavLink 的 Match 的默认值就是 NavLinkMatch.Prefix 表示只要当前的链接的路由的前部分和 href 的相同，那么将匹配上，修改样式为高亮</p>
+
+<!--more-->
+
+<!-- CreateTime:6/28/2020 8:40:39 AM -->
+
+<p>本文记于 2020.06.25 也许后续也有点变更</p>
+
+<p>在 NavLink 的取值上有两个可选的值，一个是 NavLinkMatch.All 另一个是 NavLinkMatch.Prefix 按照官方的定义如下</p>
+
+<ul>
+  <li>NavLinkMatch.All：NavLink 在与当前整个 URL 匹配的情况下处于活动状态。</li>
+  <li>NavLinkMatch.Prefix（默认）：NavLink 在与当前 URL 的任何前缀匹配的情况下处于活动状态。</li>
+</ul>
+
+<p>官方这两句是什么意思，可以看到在 NavLink 有一个 href 属性，如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;NavLink</span> <span class="na">class=</span><span class="s">"nav-link"</span> <span class="na">href=</span><span class="s">"counter"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"oi oi-plus"</span> <span class="na">aria-hidden=</span><span class="s">"true"</span><span class="nt">&gt;&lt;/span&gt;</span> Counter
+<span class="nt">&lt;/NavLink&gt;</span>
+</code></pre></div></div>
+
+<p>此时的 NavLink 没有添加 Match 的值，因此是默认 NavLinkMatch.Prefix 表示只要前缀是 counter 的就激活这一项</p>
+
+<p>因此访问链接如 <code class="language-plaintext highlighter-rouge">http://127.0.0.1:5000/counter/123</code> 或 <code class="language-plaintext highlighter-rouge">http://127.0.0.1:5000/counter</code> 处于都满足前缀是 coutner 因此激活这一项</p>
+
+<p>但如 <code class="language-plaintext highlighter-rouge">http://127.0.0.1:5000/counter123</code> 链接，此时是 <code class="language-plaintext highlighter-rouge">counter123</code> 不满足此前缀哦，不会激活这一项</p>
+
+<p>而 NavLinkMatch.All 要求是完全匹配，如将上面代码修改如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;NavLink</span> <span class="na">class=</span><span class="s">"nav-link"</span> <span class="na">href=</span><span class="s">"counter"</span> <span class="na">Match=</span><span class="s">"NavLinkMatch.All"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;span</span> <span class="na">class=</span><span class="s">"oi oi-plus"</span> <span class="na">aria-hidden=</span><span class="s">"true"</span><span class="nt">&gt;&lt;/span&gt;</span> Counter
+<span class="nt">&lt;/NavLink&gt;</span>
+</code></pre></div></div>
+
+<p>此时只有访问 <code class="language-plaintext highlighter-rouge">http://127.0.0.1:5000/counter</code> 才会激活，访问 <code class="language-plaintext highlighter-rouge">http://127.0.0.1:5000/counter/123</code> 不会激活</p>
+
+<p>默认创建的 Blazor 的 WebAssembly 项目可以在 <code class="language-plaintext highlighter-rouge">Shared\NavMenu.razor</code> 找到如上代码，默认只有 <code class="language-plaintext highlighter-rouge">href=""</code> 被设置为 <code class="language-plaintext highlighter-rouge">NavLinkMatch.All</code> 其他使用默认值</p>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/3cf2cdb488013b9022b23dde409e2cf23e393f20/HobilearnargurcalJudowokear">github</a> 欢迎小伙伴访问</p>
+
+<p>官方文档请看 <a href="https://docs.microsoft.com/zh-cn/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-3.1">ASP.NET Core Blazor 路由</a></p>
+
+<p>特别推荐两个很好用的 Blazor 的 UI 库</p>
+
+<ul>
+  <li>
+    <p><a href="https://github.com/wzxinchen/Blazui">wzxinchen/Blazui: Element的blazor版本，用 .NET 写前端的 UI 框架，无JS，无TS，非 Silverlight，非 WebForm，开箱即用</a></p>
+  </li>
+  <li>
+    <p><a href="https://github.com/ant-design-blazor/ant-design-blazor/">ant-design-blazor/ant-design-blazor: 🌈A set of enterprise-class UI components based on Ant Design and Blazor WebAssembly.</a></p>
+  </li>
+</ul>
+
+:ET

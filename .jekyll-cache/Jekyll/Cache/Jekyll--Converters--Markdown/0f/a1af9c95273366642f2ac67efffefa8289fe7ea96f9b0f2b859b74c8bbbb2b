@@ -1,0 +1,125 @@
+I"e)<p>在 Github 可以发布自己的 NuGet 库，本文将告诉大家如何发布</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/1/6 21:20:46 -->
+
+<!-- csdn -->
+
+<p>在 Github 的仓库的首页，可以看到 Package 功能</p>
+
+<!-- ![](image/Github 给仓库上传 NuGet 库/Github 给仓库上传 NuGet 库0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191019155624816" alt="" /></p>
+
+<p>点击打开一个项目的 Package 默认会邀请你加入，点击开启功能</p>
+
+<!-- ![](image/Github 给仓库上传 NuGet 库/Github 给仓库上传 NuGet 库1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191019155739966" alt="" /></p>
+
+<p>在 Github 会显示如何做 NuGet 的上传，上面的 <code class="language-plaintext highlighter-rouge">GH_TOKEN</code> 就是自己生成的代表自己密码，请看文档 <a href="https://help.github.com/cn/articles/creating-a-personal-access-token-for-the-command-line">创建用于命令行的个人访问令牌 - GitHub 帮助</a></p>
+
+<p>大概的方法就是点击 Settings -&gt; Developer settings -&gt; Personal access tokens 如下图</p>
+
+<p><img src="https://help.github.com/assets/images/help/settings/userbar-account-settings.png" alt="" /></p>
+
+<p><img src="https://help.github.com/assets/images/help/settings/developer-settings.png" alt="" /></p>
+
+<p><img src="https://help.github.com/assets/images/help/settings/personal_access_tokens_tab.png" alt="" /></p>
+
+<p>单击 Generate new token（生成新令牌）</p>
+
+<p><img src="https://help.github.com/assets/images/help/settings/generate_new_token.png" alt="" /></p>
+
+<p>输入随意的名字，然后注意勾选 Package 权限，也就是 <code class="language-plaintext highlighter-rouge">write:packages</code> 和 <code class="language-plaintext highlighter-rouge">read:packages</code> 权限</p>
+
+<!-- ![](image/Github 给仓库上传 NuGet 库/Github 给仓库上传 NuGet 库2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019101916040343" alt="" /></p>
+
+<p>将页面拉到最下，点击 Generate token 按钮就可以创建密码</p>
+
+<p>如图片的 <code class="language-plaintext highlighter-rouge">e9040b0fb3fbd0b4971660c1c04d615a630dce6e</code> 就是我创建的密码，这个密码请保存起来，因为刷新页面就看不到了</p>
+
+<!-- ![](image/Github 给仓库上传 NuGet 库/Github 给仓库上传 NuGet 库3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019101916321866" alt="" /></p>
+
+<p>然后在对应的仓库配置密码，在默认打开 package 页面的时候就可以看到</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="c1">// Step 1: Authenticate</span>
+<span class="err">$</span> <span class="n">nuget</span> <span class="n">source</span> <span class="n">Add</span> <span class="p">-</span><span class="n">Name</span> <span class="s">"GitHub"</span> <span class="p">-</span><span class="n">Source</span> <span class="s">"https://nuget.pkg.github.com/lindexi/index.json"</span> <span class="p">-</span><span class="n">UserName</span> <span class="n">lindexi</span> <span class="p">-</span><span class="n">Password</span> <span class="n">GH_TOKEN</span>
+
+<span class="c1">// Step 2: Pack</span>
+<span class="err">$</span> <span class="n">nuget</span> <span class="n">pack</span>
+
+<span class="c1">// Step 3: Publish</span>
+<span class="err">$</span> <span class="n">nuget</span> <span class="n">push</span> <span class="s">"lindexi_gd.nupkg"</span> <span class="p">-</span><span class="n">Source</span> <span class="s">"GitHub"</span> 
+</code></pre></div></div>
+
+<p>小伙伴的第一步的 Source 的内容请替换为你自己的仓库的内容，还需要替换的是刚才 github 生成的 <code class="language-plaintext highlighter-rouge">GH_TOKEN</code> 密码</p>
+
+<p>如我将 <code class="language-plaintext highlighter-rouge">GH_TOKEN</code> 替换为上面复制的密码，对每个组织和个人创建一个 Name 所以我就将上面的 <code class="language-plaintext highlighter-rouge">GitHub</code> 替换为 GitHubLindexi 这样就可以设置上传</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">nuget</span> <span class="n">source</span> <span class="n">Add</span> <span class="p">-</span><span class="n">Name</span> <span class="s">"GitHubLindexi"</span> <span class="p">-</span><span class="n">Source</span> <span class="s">"https://nuget.pkg.github.com/lindexi/index.json"</span> <span class="p">-</span><span class="n">UserName</span> <span class="n">lindexi</span> <span class="p">-</span><span class="n">Password</span> <span class="n">e9040b0fb3fbd0b4971660c1c04d615a630dce6e</span>
+</code></pre></div></div>
+
+<p>接下来创建一个测试的 NuGet 包</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="k">new</span> <span class="n">console</span> <span class="p">-</span><span class="n">o</span> <span class="n">Lindexi_gd</span>
+</code></pre></div></div>
+
+<p>然后编译生成 NuGet 库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cd</span> <span class="n">Lindexi_gd</span>
+<span class="n">dotnet</span> <span class="n">pack</span>
+<span class="n">cd</span> <span class="n">bin</span><span class="err">\</span><span class="n">Debug</span>
+</code></pre></div></div>
+
+<p>在 <code class="language-plaintext highlighter-rouge">bin\Debug</code> 文件夹可以看到 nupkg 文件，用下面命令上传</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">nuget</span> <span class="n">push</span> <span class="n">Lindexi_gd</span><span class="p">.</span><span class="m">1.0</span><span class="p">.</span><span class="m">0.</span><span class="n">nupkg</span> <span class="p">-</span><span class="n">Source</span> <span class="n">GithubLindexi</span>
+</code></pre></div></div>
+
+<p>刷新一下页面就可以看到上传的文件</p>
+
+<!-- ![](image/Github 给仓库上传 NuGet 库/Github 给仓库上传 NuGet 库4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019101916111211" alt="" /></p>
+
+<p>如果在上传的时候提示下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">RepoAcceptsPackageUploads</span><span class="p">:</span> <span class="n">Repository</span> <span class="s">"lindexi/HehuhallqaLinearjeebar.Source"</span> <span class="n">does</span> <span class="n">not</span> <span class="n">exist</span><span class="p">.</span>
+</code></pre></div></div>
+
+<p>原因是要求 NuGet 库的 id 必须要在对应的 github 组织找到对应的仓库，如我上面上传 HehuhallqaLinearjeebar.Source.1.0.0.nupkg 文件，但是我没有 HehuhallqaLinearjeebar.Source 仓库，所以提示不能上传</p>
+
+<p>此时可以通过在 <code class="language-plaintext highlighter-rouge">.nuspec</code> 文件添加 repository 属性，格式如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">repository</span> <span class="n">type</span><span class="p">=</span><span class="s">"git"</span> <span class="n">url</span><span class="p">=</span><span class="s">"https://github.com/lindexi/HehuhallqaLinearjeebar"</span><span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>这样多个库可以使用相同仓库，上面代码需要写到 package 的 metadata 才能使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">package</span> <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">metadata</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">id</span><span class="p">&gt;</span><span class="n">HehuhallqaLinearjeebar</span><span class="p">.</span><span class="n">Source</span><span class="p">&lt;/</span><span class="n">id</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">version</span><span class="p">&gt;</span><span class="m">1.0</span><span class="p">.</span><span class="m">3</span><span class="p">&lt;/</span><span class="n">version</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">authors</span><span class="p">&gt;</span><span class="n">lindexi</span><span class="p">&lt;/</span><span class="n">authors</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">description</span><span class="p">&gt;</span><span class="n">Sample</span> <span class="n">exists</span> <span class="n">only</span> <span class="n">to</span> <span class="n">show</span> <span class="n">a</span> <span class="n">sample</span> <span class="p">.</span><span class="n">nuspec</span> <span class="n">file</span><span class="p">.&lt;/</span><span class="n">description</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">language</span><span class="p">&gt;</span><span class="n">en</span><span class="p">-</span><span class="n">US</span><span class="p">&lt;/</span><span class="n">language</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">repository</span> <span class="n">type</span><span class="p">=</span><span class="s">"git"</span> <span class="n">url</span><span class="p">=</span><span class="s">"https://github.com/lindexi/HehuhallqaLinearjeebar"</span><span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="n">metadata</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">package</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>如果是在 csporj 可以通过添加下面属性</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;RepositoryType&gt;</span>git<span class="nt">&lt;/RepositoryType&gt;</span>
+    <span class="nt">&lt;RepositoryUrl&gt;</span>https://github.com/lindexi/UWP<span class="nt">&lt;/RepositoryUrl&gt;</span>
+</code></pre></div></div>
+
+<p>注意 RepositoryUrl 的格式是 用户名/仓库 如果自己的上传的文件是在仓库里面的文件夹，请写在 PackageProjectUrl 属性</p>
+
+:ET

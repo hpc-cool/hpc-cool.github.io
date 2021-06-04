@@ -1,0 +1,20 @@
+I"	<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>如果是路径相对路径，使用 Path 转换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="err">文件夹</span><span class="p">,</span> <span class="n">relativePath</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>文件夹就是相对的文件夹。</p>
+
+<p>这样就可以把相对路径转绝对。</p>
+
+<p>参见：<a href="http://stackoverflow.com/questions/4796254/relative-path-to-absolute-path-in-c">http://stackoverflow.com/questions/4796254/relative-path-to-absolute-path-in-c</a></p>
+
+<p><a href="https://blog.walterlv.com/post/make-relative-file-path.html">如何根据一个绝对文件路径生成一个相对文件路径 - walterlv</a></p>
+
+:ET

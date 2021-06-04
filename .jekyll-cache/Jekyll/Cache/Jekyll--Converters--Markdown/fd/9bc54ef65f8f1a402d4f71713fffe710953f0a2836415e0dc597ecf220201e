@@ -1,0 +1,56 @@
+I"�<p>本文告诉大家如何在 dotnet 程序获取当前进程</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/2 11:03:03 -->
+
+<!-- csdn -->
+
+<p>使用下面代码可以获取当前进程</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">process</span> <span class="p">=</span> <span class="n">Process</span><span class="p">.</span><span class="nf">GetCurrentProcess</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>那么这个方法的性能如何?</p>
+
+<p>这个获取的方法内部有缓存，第一次获取的速度会比较慢，稍后会比较快，我使用下面代码测量</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">stopwatch</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Stopwatch</span><span class="p">();</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">stopwatch</span><span class="p">.</span><span class="nf">Restart</span><span class="p">();</span>
+
+                <span class="kt">var</span> <span class="n">process</span> <span class="p">=</span> <span class="n">Process</span><span class="p">.</span><span class="nf">GetCurrentProcess</span><span class="p">();</span>
+                <span class="n">stopwatch</span><span class="p">.</span><span class="nf">Stop</span><span class="p">();</span>
+
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">stopwatch</span><span class="p">.</span><span class="n">ElapsedTicks</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>第一次运行的时候比较长，稍后运行速度会快很多</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="m">908</span>
+<span class="m">161</span>
+<span class="m">25</span>
+<span class="m">15</span>
+<span class="m">14</span>
+<span class="m">17</span>
+<span class="m">15</span>
+<span class="m">15</span>
+<span class="m">18</span>
+<span class="m">20</span>
+<span class="c1">// 忽略</span>
+</code></pre></div></div>
+
+<p>如果只是想要拿到进程号可以使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"kernel32.dll"</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">CharSet</span><span class="p">.</span><span class="n">Auto</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">int</span> <span class="nf">GetCurrentProcessId</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>使用上面代码获取的性能能更快，但第一次获取的速度也不快</p>
+
+<p>如果是在循环或其他代码里面，建议将进程号缓存起来</p>
+
+:ET

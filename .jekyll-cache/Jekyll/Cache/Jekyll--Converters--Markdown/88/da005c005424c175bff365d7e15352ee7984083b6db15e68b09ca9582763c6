@@ -1,0 +1,55 @@
+I"<p>本文告诉大家几个方法在 UWP 获取窗口的坐标和宽度高度</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/26 15:04:00 -->
+
+<!-- csdn -->
+
+<div id="toc"></div>
+
+<h2 id="获取可视范围">获取可视范围</h2>
+
+<p>获取窗口的可视大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">ViewManagement</span><span class="p">.</span><span class="n">ApplicationView</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">().</span><span class="n">VisibleBounds</span>
+</code></pre></div></div>
+
+<h2 id="获取当前窗口的坐标和宽度高度">获取当前窗口的坐标和宽度高度</h2>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Bounds</span>
+</code></pre></div></div>
+
+<h2 id="获取最前窗口的范围">获取最前窗口的范围</h2>
+
+<p>通过 Win32 的 Api 获取最前的窗口的范围</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">IntPtr</span> <span class="n">hWID</span> <span class="p">=</span> <span class="nf">GetForegroundWindow</span><span class="p">();</span>
+
+<span class="n">Rect</span> <span class="n">rect</span><span class="p">;</span>
+
+<span class="n">Rect</span><span class="p">*</span> <span class="n">ptr</span> <span class="p">=</span> <span class="p">&amp;</span><span class="n">rect</span><span class="p">;</span>
+
+<span class="nf">GetWindowRect</span><span class="p">(</span><span class="nf">GetForegroundWindow</span><span class="p">(),</span> <span class="n">pAngle</span><span class="p">);</span>
+
+<span class="k">return</span> <span class="n">rect</span><span class="p">;</span>
+
+
+
+    <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">CharSet</span><span class="p">.</span><span class="n">Ansi</span><span class="p">)]</span>
+    <span class="k">private</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">GetForegroundWindow</span><span class="p">();</span>
+
+    <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">CharSet</span><span class="p">.</span><span class="n">Ansi</span><span class="p">)]</span>
+    <span class="k">private</span> <span class="k">unsafe</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">Boolean</span> <span class="nf">GetWindowRect</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">intPtr</span><span class="p">,</span> <span class="n">Rect</span><span class="p">*</span> <span class="n">lpRect</span><span class="p">);</span>
+
+<span class="k">private</span> <span class="k">struct</span> <span class="nc">Rect</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">int</span> <span class="n">left</span><span class="p">;</span>
+    <span class="k">public</span> <span class="kt">int</span> <span class="n">top</span><span class="p">;</span>
+    <span class="k">public</span> <span class="kt">int</span> <span class="n">right</span><span class="p">;</span>
+    <span class="k">public</span> <span class="kt">int</span> <span class="n">bottom</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+:ET

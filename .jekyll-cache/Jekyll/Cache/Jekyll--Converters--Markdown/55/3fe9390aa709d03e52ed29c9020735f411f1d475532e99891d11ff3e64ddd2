@@ -1,0 +1,135 @@
+I"�><p>本文告诉大家如何通过 ScaleTransform 放大元素
+放大一个元素的方法有很多个，通过 ScaleTransform 放大是比较清真的</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/3/13 19:05:56 -->
+
+<!-- csdn -->
+
+<p>在 UWP 中 ScaleTransform 是属于 RenderTransform 的内容，所有的 UIElement 都有 RenderTransform 属性，通过设置这个属性可以做到在运行的时候修改渲染的元素</p>
+
+<p>如新建一个简单的 UWP 程序，里面就放一个按钮</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"Click"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>如果想要将按钮显示放大两倍，简单的方法是使用 ScaleTransform 设置两个方向放大</p>
+
+<p>修改一下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">StackPanel</span> <span class="n">Orientation</span><span class="p">=</span><span class="s">"Horizontal"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"放大前按钮"</span><span class="p">&gt;</span>
+
+                <span class="p">&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"放大的按钮"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Button</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">ScaleTransform</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ScaleTransform"</span> <span class="n">ScaleX</span><span class="p">=</span><span class="s">"2"</span> <span class="n">ScaleY</span><span class="p">=</span><span class="s">"2"</span><span class="p">&gt;&lt;/</span><span class="n">ScaleTransform</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Button</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/win10 uwp 使用 ScaleTransform 放大某个元素/win10 uwp 使用 ScaleTransform 放大某个元素0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019313172057692" alt="" /></p>
+
+<p>代码请看 <a href="https://github.com/lindexi/lindexi_gd/tree/2c00ce47ec76474b95953bbfc17e286d9938d534/HearqicalbasteKajalltearfearnahir">github</a></p>
+
+<p>从上面看到 ScaleTransform 支持两个方向的放大，可以设置两个方向为不同的值</p>
+
+<p>其实 ScaleTransform 还可以设置放大中心，也就是从那个点为中心放大</p>
+
+<p>默认没有设置是从 (0,0) 点也就是左上角的点开始放大，放大之后会保持左上角的坐标不变</p>
+
+<p>很多时候会使用到的是从中心放大，从中心放大需要设置放大元素的中心点，请看代码，在按钮点击的时候放大，中心点是按钮中心</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Button</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"放大的按钮"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Button</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ScaleTransform</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ScaleTransform"</span> <span class="n">ScaleX</span><span class="p">=</span><span class="s">"1"</span> <span class="n">ScaleY</span><span class="p">=</span><span class="s">"1"</span><span class="p">&gt;&lt;/</span><span class="n">ScaleTransform</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Button</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">button</span> <span class="p">=</span> <span class="p">(</span><span class="n">Button</span><span class="p">)</span> <span class="n">sender</span><span class="p">;</span>
+            <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">CenterX</span> <span class="p">=</span> <span class="n">button</span><span class="p">.</span><span class="n">ActualWidth</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">CenterY</span> <span class="p">=</span> <span class="n">button</span><span class="p">.</span><span class="n">ActualHeight</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+
+            <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">ScaleX</span> <span class="p">=</span> <span class="m">1.5</span><span class="p">;</span>
+            <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">ScaleY</span> <span class="p">=</span> <span class="m">1.5</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<!-- ![](image/win10 uwp 使用 ScaleTransform 放大某个元素/中心放大.gif) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019313174718402" alt="" /></p>
+
+<p>对比一下不设置的从左上角放大</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">ScaleX</span> <span class="p">=</span> <span class="m">1.5</span><span class="p">;</span>
+            <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">ScaleY</span> <span class="p">=</span> <span class="m">1.5</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019313174957992" alt="" /></p>
+
+<p>那么如何做缩放动画</p>
+
+<p>下面我使用一个没有一点优点的方法做动画，请小伙伴不要学习这个写法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="k">async</span> <span class="p">()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">await</span> <span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">Normal</span><span class="p">,</span> <span class="p">()</span> <span class="p">=&gt;</span>
+                    <span class="p">{</span>
+                        <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">ScaleX</span><span class="p">++;</span>
+                        <span class="n">ScaleTransform</span><span class="p">.</span><span class="n">ScaleY</span><span class="p">++;</span>
+                    <span class="p">});</span>
+
+                    <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">});</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我开启一个线程，使用一个无限循环，在里面使用 Task.Delay 做延迟</p>
+
+<p>因为在 UWP 不是主线程是不能访问主线程的元素，所以就需要通过 Dispatcher.RunAsync 让代码在主线程运行</p>
+
+<p>那么清真一点的方法是如何做呢？通过 xaml 写动画倒是一个不错的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="p">&lt;</span><span class="n">Button</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Content</span><span class="p">=</span><span class="s">"放大的按钮"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Button</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Storyboard</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"Storyboard"</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"ScaleTransform"</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"ScaleX"</span> <span class="n">To</span><span class="p">=</span><span class="s">"1.5"</span> <span class="n">Duration</span><span class="p">=</span><span class="s">"0:0:1"</span><span class="p">&gt;&lt;/</span><span class="n">DoubleAnimation</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">DoubleAnimation</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetName</span><span class="p">=</span><span class="s">"ScaleTransform"</span> <span class="n">Storyboard</span><span class="p">.</span><span class="n">TargetProperty</span><span class="p">=</span><span class="s">"ScaleY"</span> <span class="n">To</span><span class="p">=</span><span class="s">"1.5"</span> <span class="n">Duration</span><span class="p">=</span><span class="s">"0:0:1"</span><span class="p">&gt;&lt;/</span><span class="n">DoubleAnimation</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Storyboard</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Button</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Button</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">ScaleTransform</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ScaleTransform"</span> <span class="n">ScaleX</span><span class="p">=</span><span class="s">"1"</span> <span class="n">ScaleY</span><span class="p">=</span><span class="s">"1"</span><span class="p">&gt;&lt;/</span><span class="n">ScaleTransform</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Button</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>这时通过点击按钮拿到资源，运行动画</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">button</span> <span class="p">=</span> <span class="p">(</span><span class="n">Button</span><span class="p">)</span> <span class="n">sender</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">storyboard</span> <span class="p">=</span> <span class="p">(</span><span class="n">Storyboard</span><span class="p">)</span> <span class="n">button</span><span class="p">.</span><span class="n">Resources</span><span class="p">[</span><span class="s">"Storyboard"</span><span class="p">];</span>
+
+            <span class="n">storyboard</span><span class="p">.</span><span class="nf">Begin</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p><a href="https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.scaletransform">ScaleTransform Class (Windows.UI.Xaml.Media) - Windows UWP applications</a></p>
+
+:ET

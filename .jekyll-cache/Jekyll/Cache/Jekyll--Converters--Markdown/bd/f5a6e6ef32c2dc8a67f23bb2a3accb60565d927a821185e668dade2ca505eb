@@ -1,0 +1,66 @@
+I"�<p>本文告诉大家使用局部函数可能遇到的坑。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:52 -->
+
+<p>在以前，如果有一个事件<code class="language-plaintext highlighter-rouge">public event EventHandler Foo</code>和一个函数<code class="language-plaintext highlighter-rouge">private void Program_Foo(object sender, EventArgs e)</code>那么使用函数监听事件是很简单的，当然从事件取消函数也是很简单。请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">Foo</span> <span class="p">-=</span> <span class="n">Program_Foo</span><span class="p">;</span>
+                <span class="n">Foo</span> <span class="p">+=</span> <span class="n">Program_Foo</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">Foo</span><span class="p">.</span><span class="nf">GetInvocationList</span><span class="p">().</span><span class="n">Length</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>结果输出 1</p>
+
+<p>因为<code class="language-plaintext highlighter-rouge">GetInvocationList</code>是获得事件有多少监听，从上面代码看到，只有一个监听。</p>
+
+<p>如果把函数修改为局部，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">Foo</span> <span class="p">-=</span> <span class="n">Program_Foo</span><span class="p">;</span>
+                <span class="n">Foo</span> <span class="p">+=</span> <span class="n">Program_Foo</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">Foo</span><span class="p">.</span><span class="nf">GetInvocationList</span><span class="p">().</span><span class="n">Length</span><span class="p">);</span>
+
+            <span class="k">void</span> <span class="nf">Program_Foo</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在他会输出什么？</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171024152546.jpg" alt="" /></p>
+
+<p>看起来没有问题，但是如果再做出一些修改，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="nf">F</span><span class="p">();</span>
+            <span class="p">}</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">Foo</span><span class="p">.</span><span class="nf">GetInvocationList</span><span class="p">().</span><span class="n">Length</span><span class="p">);</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">F</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Foo</span> <span class="p">-=</span> <span class="n">Program_Foo</span><span class="p">;</span>
+            <span class="n">Foo</span> <span class="p">+=</span> <span class="n">Program_Foo</span><span class="p">;</span>
+
+            <span class="k">void</span> <span class="nf">Program_Foo</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在输出是什么？</p>
+
+<p>还是 1</p>
+
+<p>所以可以直接使用局部函数</p>
+
+:ET

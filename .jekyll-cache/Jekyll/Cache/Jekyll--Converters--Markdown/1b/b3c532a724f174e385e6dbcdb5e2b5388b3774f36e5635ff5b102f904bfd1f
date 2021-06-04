@@ -1,0 +1,149 @@
+I"�=<p>大神问，如何在 ListView 绑定前一项，于是我下面告诉大家如何在 ListView 绑定前一项</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<!-- csdn -->
+
+<h2 id="wpf-绑定前一项">WPF 绑定前一项</h2>
+
+<p>可以使用绑定的 RelativeSource 就可以绑定前一项，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">ListView</span> <span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListViewItem</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">ListViewItem</span><span class="p">.</span><span class="n">Style</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Style</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Style</span><span class="p">.</span><span class="n">Triggers</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">DataTrigger</span> <span class="n">Binding</span><span class="p">=</span><span class="s">"{Binding RelativeSource={RelativeSource PreviousData}}"</span><span class="p">&gt;</span>
+                                
+                            <span class="p">&lt;/</span><span class="n">DataTrigger</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Style</span><span class="p">.</span><span class="n">Triggers</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">ListViewItem</span><span class="p">.</span><span class="n">Style</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListViewItem</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<h2 id="uwp-绑定前一项">UWP 绑定前一项</h2>
+
+<p>如果需要在ListView 让每个项绑定前一个项的内容，那么就是本文要说的。</p>
+
+<p>首先有一个数据的类，我新建一个 Foo</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">_name</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_name</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_name</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="nf">OnPropertyChanged</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+
+        <span class="k">protected</span> <span class="k">virtual</span> <span class="k">void</span> <span class="nf">OnPropertyChanged</span><span class="p">([</span><span class="n">CallerMemberName</span><span class="p">]</span> <span class="kt">string</span> <span class="n">propertyName</span> <span class="p">=</span> <span class="k">null</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">PropertyChanged</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PropertyChangedEventArgs</span><span class="p">(</span><span class="n">propertyName</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>然后在界面做一个简单的列表，需要有两个TextBlock 一个绑定这一项的数据，一个绑定上一个项的数据</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{Binding Foo}"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">DataTemplate</span> <span class="n">DataType</span><span class="p">=</span><span class="s">"local:Foo"</span><span class="p">&gt;</span>
+                   <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding Name}"</span> <span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                       <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"上一个的"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,100,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">""</span> <span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                   <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>后台代码需要创建一个数据，但是这个数据我不会在运行添加</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;</span> <span class="n">Foo</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;()</span>
+        <span class="p">{</span>
+            <span class="k">new</span> <span class="nf">Foo</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">Name</span> <span class="p">=</span> <span class="s">"lindexi"</span>
+            <span class="p">},</span>
+            <span class="k">new</span> <span class="n">Foo</span>
+            <span class="p">{</span>
+                <span class="n">Name</span> <span class="p">=</span> <span class="s">"csdn"</span>
+            <span class="p">}</span>
+        <span class="p">};</span>
+</code></pre></div></div>
+
+<p>这样看起来就是简单的代码，但是如果需要绑定上一项就需要添加一个新类</p>
+
+<p>假如从后台拿到一个 TextBlock ，那么如何从这个 TextBlock 拿到这个的 DataContext ，可以获得他上一级的，虽然从这里拿到也可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="kt">var</span> <span class="n">grid</span> <span class="p">=</span> <span class="p">(</span><span class="n">FrameworkElement</span><span class="p">)</span> <span class="n">text</span><span class="p">.</span><span class="n">Parent</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="p">(</span><span class="n">Foo</span><span class="p">)</span> <span class="n">grid</span><span class="p">.</span><span class="n">DataContext</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>那么如何从 Grid 拿到ListView ，如果拿到这个就可以拿到绑定的数据，所以就可以从绑定的数据拿到当前的上一项，然后绑定。</p>
+
+<p>如果需要从 Grid 拿到 ListView ，简单的代码是一个循环</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="kt">var</span> <span class="n">temp</span> <span class="p">=</span> <span class="n">grid</span><span class="p">;</span>
+            <span class="k">while</span> <span class="p">(!(</span><span class="n">temp</span> <span class="k">is</span> <span class="n">ListView</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">temp</span> <span class="p">=</span> <span class="p">(</span><span class="n">FrameworkElement</span><span class="p">)</span> <span class="n">VisualTreeHelper</span><span class="p">.</span><span class="nf">GetParent</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就拿到了，那么拿到数据就可以绑定</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="kt">var</span> <span class="n">foo2</span> <span class="p">=</span> <span class="p">(</span><span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;)</span> <span class="p">((</span><span class="n">ListView</span><span class="p">)</span> <span class="n">temp</span><span class="p">).</span><span class="n">ItemsSource</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">n</span> <span class="p">=</span> <span class="n">foo2</span><span class="p">.</span><span class="nf">ToList</span><span class="p">();</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">n</span><span class="p">.</span><span class="nf">IndexOf</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span> <span class="p">&gt;</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Binding</span> <span class="n">bind</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Binding</span><span class="p">(</span><span class="s">"Name"</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Source</span> <span class="p">=</span> <span class="n">n</span><span class="p">[</span><span class="n">n</span><span class="p">.</span><span class="nf">IndexOf</span><span class="p">(</span><span class="n">foo</span><span class="p">)</span> <span class="p">-</span> <span class="m">1</span><span class="p">],</span>
+                <span class="p">};</span>
+                <span class="n">BindingOperations</span><span class="p">.</span><span class="nf">SetBinding</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">TextBlock</span><span class="p">.</span><span class="n">TextProperty</span><span class="p">,</span> <span class="n">bind</span><span class="p">);</span>
+            <span class="p">};</span>
+</code></pre></div></div>
+
+<p>一开始如何拿到 TextBlock ，可以使用一个附加属性来拿</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">FooProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">RegisterAttached</span><span class="p">(</span>
+            <span class="s">"Foo"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">object</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Foo1</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">object</span><span class="p">),</span> <span class="n">FooPropertyChangedCallback</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetFoo</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">,</span> <span class="kt">object</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">FooProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">object</span> <span class="nf">GetFoo</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kt">object</span><span class="p">)</span> <span class="n">element</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">FooProperty</span><span class="p">);</span>
+        <span class="p">}</span>
+
+                      <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                      <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding Name}"</span> <span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                       <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"上一个的"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,100,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">""</span> <span class="n">local</span><span class="p">:</span><span class="n">Foo1</span><span class="p">.</span><span class="n">Foo</span><span class="p">=</span><span class="s">"{Binding RelativeSource={RelativeSource Self}}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                   <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>然后把代码写到 FooPropertyChangedCallback 就可以了</p>
+
+<p>代码很简单，我就不写所有代码</p>
+
+<p>代码：<a href="http://download.csdn.net/download/lindexi_gd/9979367">[免费]ListViewBindLastItem 1.0-CSDN下载</a></p>
+:ET

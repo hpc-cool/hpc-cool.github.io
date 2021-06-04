@@ -1,0 +1,63 @@
+I"<p>在 WPF 使用 Skia 做渲染工具，如果绘制的中文都是方块，也许是字体的问题。字体的问题是 Skia 没有找到字体，本文告诉大家如何修复</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/31 12:30:28 -->
+
+<p>在 Skia 使用特定字体，可以使用 SkiaSharp 的 SKTypeface 方法指定</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">name</span> <span class="p">=</span> <span class="s">"微软雅黑"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">skTypeface</span> <span class="p">=</span> <span class="n">SKTypeface</span><span class="p">.</span><span class="nf">FromFamilyName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>但是如何判断 Skia 找不到字体？可以判断字体名</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">name</span> <span class="p">=</span> <span class="s">"微软雅黑"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">skTypeface</span> <span class="p">=</span> <span class="n">SKTypeface</span><span class="p">.</span><span class="nf">FromFamilyName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">skTypeface</span><span class="p">.</span><span class="n">FamilyName</span> <span class="p">!=</span> <span class="n">name</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 字体加载失败了</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>解决方法是通过 WPF 辅助拿到字体，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">fontFamily</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">familyNamesValue</span> <span class="k">in</span> <span class="n">fontFamily</span><span class="p">.</span><span class="n">FamilyNames</span><span class="p">.</span><span class="n">Values</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">skTypeface</span> <span class="p">=</span> <span class="n">SKTypeface</span><span class="p">.</span><span class="nf">FromFamilyName</span><span class="p">(</span><span class="n">familyNamesValue</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">skTypeface</span><span class="p">.</span><span class="n">FamilyName</span> <span class="p">==</span> <span class="n">familyNamesValue</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码存在的坑是 SKTypeface 是需要手动释放的资源，因此优化的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">name</span> <span class="p">=</span> <span class="s">"微软雅黑"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">skTypeface</span> <span class="p">=</span> <span class="n">SKTypeface</span><span class="p">.</span><span class="nf">FromFamilyName</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">skTypeface</span><span class="p">.</span><span class="n">FamilyName</span> <span class="p">!=</span> <span class="n">name</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 字体加载失败了</span>
+                <span class="n">skTypeface</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">fontFamily</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="n">name</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">familyNamesValue</span> <span class="k">in</span> <span class="n">fontFamily</span><span class="p">.</span><span class="n">FamilyNames</span><span class="p">.</span><span class="n">Values</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">skTypeface</span> <span class="p">=</span> <span class="n">SKTypeface</span><span class="p">.</span><span class="nf">FromFamilyName</span><span class="p">(</span><span class="n">familyNamesValue</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">skTypeface</span><span class="p">.</span><span class="n">FamilyName</span> <span class="p">==</span> <span class="n">familyNamesValue</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">skTypeface</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要在绘制之后调用 Dispose 释放字体</p>
+
+:ET

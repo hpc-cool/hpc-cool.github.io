@@ -1,0 +1,1075 @@
+I"�<p>我们经常看到有代码使用 NotNull 特性，这时如果我们输入可空参数，Resharper 就会告诉我们，输入了空参数。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>但是我们自己加 [NotNull] 是提示没有的，那么如何在代码加上 NotNull</p>
+
+<p>首先，打开 Resharper -&gt; option -&gt; Code Inspection -&gt;Code Annotations</p>
+
+<p><img src="http://img.blog.csdn.net/20170117104554602?watermark/3/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbGluZGV4aV9nZA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述" /></p>
+
+<p>点击复制到剪贴板</p>
+
+<p>然后在 Properties 新建一个 Annotations.cs</p>
+
+<p>在里面全选粘贴</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="cm">/* MIT License
+
+Copyright (c) 2016 JetBrains http://www.jetbrains.com
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. */</span>
+
+<span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+
+<span class="cp">#pragma warning disable 1591
+</span><span class="c1">// ReSharper disable UnusedMember.Global</span>
+<span class="c1">// ReSharper disable MemberCanBePrivate.Global</span>
+<span class="c1">// ReSharper disable UnusedAutoPropertyAccessor.Global</span>
+<span class="c1">// ReSharper disable IntroduceOptionalParameters.Global</span>
+<span class="c1">// ReSharper disable MemberCanBeProtected.Global</span>
+<span class="c1">// ReSharper disable InconsistentNaming</span>
+
+<span class="k">namespace</span> <span class="nn">EncodingNormalior.Annotations</span>
+<span class="p">{</span>
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the value of the marked element could be &lt;c&gt;null&lt;/c&gt; sometimes,</span>
+  <span class="c1">/// so the check for &lt;c&gt;null&lt;/c&gt; is necessary before its usage.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [CanBeNull] object Test() =&gt; null;</span>
+  <span class="c1">/// </span>
+  <span class="c1">/// void UseTest() {</span>
+  <span class="c1">///   var p = Test();</span>
+  <span class="c1">///   var s = p.ToString(); // Warning: Possible 'System.NullReferenceException'</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Delegate</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Event</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Interface</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">GenericParameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">CanBeNullAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the value of the marked element could never be &lt;c&gt;null&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [NotNull] object Foo() {</span>
+  <span class="c1">///   return null; // Warning: Possible 'null' assignment</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Delegate</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Event</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Interface</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">GenericParameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">NotNullAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Can be appplied to symbols of types derived from IEnumerable as well as to symbols of Task</span>
+  <span class="c1">/// and Lazy classes to indicate that the value of a collection item, of the Task.Result property</span>
+  <span class="c1">/// or of the Lazy.Value property can never be null.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Delegate</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ItemNotNullAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Can be appplied to symbols of types derived from IEnumerable as well as to symbols of Task</span>
+  <span class="c1">/// and Lazy classes to indicate that the value of a collection item, of the Task.Result property</span>
+  <span class="c1">/// or of the Lazy.Value property can be null.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Delegate</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ItemCanBeNullAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the marked method builds string by format pattern and (optional) arguments.</span>
+  <span class="c1">/// Parameter, which contains format string, should be given in constructor. The format string</span>
+  <span class="c1">/// should be in &lt;see cref="string.Format(IFormatProvider,string,object[])"/&gt;-like form.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [StringFormatMethod("message")]</span>
+  <span class="c1">/// void ShowError(string message, params object[] args) { /* do something */ }</span>
+  <span class="c1">/// </span>
+  <span class="c1">/// void Foo() {</span>
+  <span class="c1">///   ShowError("Failed: {0}"); // Warning: Non-existing argument in format string</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Constructor</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Delegate</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">StringFormatMethodAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="c1">/// &lt;param name="formatParameterName"&gt;</span>
+    <span class="c1">/// Specifies which parameter of an annotated method should be treated as format-string</span>
+    <span class="c1">/// &lt;/param&gt;</span>
+    <span class="k">public</span> <span class="nf">StringFormatMethodAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">formatParameterName</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">FormatParameterName</span> <span class="p">=</span> <span class="n">formatParameterName</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">FormatParameterName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// For a parameter that is expected to be one of the limited set of values.</span>
+  <span class="c1">/// Specify fields of which type should be used as values for this parameter.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span><span class="p">,</span>
+    <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ValueProviderAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">ValueProviderAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">name</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Name</span> <span class="p">=</span> <span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the function argument should be string literal and match one</span>
+  <span class="c1">/// of the parameters of the caller function. For example, ReSharper annotates</span>
+  <span class="c1">/// the parameter of &lt;see cref="System.ArgumentNullException"/&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// void Foo(string param) {</span>
+  <span class="c1">///   if (param == null)</span>
+  <span class="c1">///     throw new ArgumentNullException("par"); // Warning: Cannot resolve symbol</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">InvokerParameterNameAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the method is contained in a type that implements</span>
+  <span class="c1">/// &lt;c&gt;System.ComponentModel.INotifyPropertyChanged&lt;/c&gt; interface and this method</span>
+  <span class="c1">/// is used to notify that some property value changed.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;remarks&gt;</span>
+  <span class="c1">/// The method should be non-static and conform to one of the supported signatures:</span>
+  <span class="c1">/// &lt;list&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;NotifyChanged(string)&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;NotifyChanged(params string[])&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;NotifyChanged{T}(Expression{Func{T}})&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;NotifyChanged{T,U}(Expression{Func{T,U}})&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;SetProperty{T}(ref T, T, string)&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;/list&gt;</span>
+  <span class="c1">/// &lt;/remarks&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// public class Foo : INotifyPropertyChanged {</span>
+  <span class="c1">///   public event PropertyChangedEventHandler PropertyChanged;</span>
+  <span class="c1">/// </span>
+  <span class="c1">///   [NotifyPropertyChangedInvocator]</span>
+  <span class="c1">///   protected virtual void NotifyChanged(string propertyName) { ... }</span>
+  <span class="c1">///</span>
+  <span class="c1">///   string _name;</span>
+  <span class="c1">/// </span>
+  <span class="c1">///   public string Name {</span>
+  <span class="c1">///     get { return _name; }</span>
+  <span class="c1">///     set { _name = value; NotifyChanged("LastName"); /* Warning */ }</span>
+  <span class="c1">///   }</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;</span>
+  <span class="c1">/// Examples of generated notifications:</span>
+  <span class="c1">/// &lt;list&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;NotifyChanged("Property")&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;NotifyChanged(() =&amp;gt; Property)&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;NotifyChanged((VM x) =&amp;gt; x.Property)&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;c&gt;SetProperty(ref myField, value, "Property")&lt;/c&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;/list&gt;</span>
+  <span class="c1">/// &lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">NotifyPropertyChangedInvocatorAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">NotifyPropertyChangedInvocatorAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+    <span class="k">public</span> <span class="nf">NotifyPropertyChangedInvocatorAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">parameterName</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">ParameterName</span> <span class="p">=</span> <span class="n">parameterName</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">ParameterName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Describes dependency between method input and output.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;syntax&gt;</span>
+  <span class="c1">/// &lt;p&gt;Function Definition Table syntax:&lt;/p&gt;</span>
+  <span class="c1">/// &lt;list&gt;</span>
+  <span class="c1">/// &lt;item&gt;FDT      ::= FDTRow [;FDTRow]*&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;FDTRow   ::= Input =&amp;gt; Output | Output &amp;lt;= Input&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;Input    ::= ParameterName: Value [, Input]*&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;Output   ::= [ParameterName: Value]* {halt|stop|void|nothing|Value}&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;Value    ::= true | false | null | notnull | canbenull&lt;/item&gt;</span>
+  <span class="c1">/// &lt;/list&gt;</span>
+  <span class="c1">/// If method has single input parameter, it's name could be omitted.&lt;br/&gt;</span>
+  <span class="c1">/// Using &lt;c&gt;halt&lt;/c&gt; (or &lt;c&gt;void&lt;/c&gt;/&lt;c&gt;nothing&lt;/c&gt;, which is the same) for method output</span>
+  <span class="c1">/// means that the methos doesn't return normally (throws or terminates the process).&lt;br/&gt;</span>
+  <span class="c1">/// Value &lt;c&gt;canbenull&lt;/c&gt; is only applicable for output parameters.&lt;br/&gt;</span>
+  <span class="c1">/// You can use multiple &lt;c&gt;[ContractAnnotation]&lt;/c&gt; for each FDT row, or use single attribute</span>
+  <span class="c1">/// with rows separated by semicolon. There is no notion of order rows, all rows are checked</span>
+  <span class="c1">/// for applicability and applied per each program state tracked by R# analysis.&lt;br/&gt;</span>
+  <span class="c1">/// &lt;/syntax&gt;</span>
+  <span class="c1">/// &lt;examples&gt;&lt;list&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;code&gt;</span>
+  <span class="c1">/// [ContractAnnotation("=&amp;gt; halt")]</span>
+  <span class="c1">/// public void TerminationMethod()</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;code&gt;</span>
+  <span class="c1">/// [ContractAnnotation("halt &amp;lt;= condition: false")]</span>
+  <span class="c1">/// public void Assert(bool condition, string text) // regular assertion method</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;code&gt;</span>
+  <span class="c1">/// [ContractAnnotation("s:null =&amp;gt; true")]</span>
+  <span class="c1">/// public bool IsNullOrEmpty(string s) // string.IsNullOrEmpty()</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;code&gt;</span>
+  <span class="c1">/// // A method that returns null if the parameter is null,</span>
+  <span class="c1">/// // and not null if the parameter is not null</span>
+  <span class="c1">/// [ContractAnnotation("null =&amp;gt; null; notnull =&amp;gt; notnull")]</span>
+  <span class="c1">/// public object Transform(object data) </span>
+  <span class="c1">/// &lt;/code&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;item&gt;&lt;code&gt;</span>
+  <span class="c1">/// [ContractAnnotation("=&amp;gt; true, result: notnull; =&amp;gt; false, result: null")]</span>
+  <span class="c1">/// public bool TryParse(string s, out Person result)</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/item&gt;</span>
+  <span class="c1">/// &lt;/list&gt;&lt;/examples&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ContractAnnotationAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">ContractAnnotationAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">contract</span><span class="p">)</span>
+      <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">contract</span><span class="p">,</span> <span class="k">false</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">ContractAnnotationAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">contract</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">forceFullStates</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Contract</span> <span class="p">=</span> <span class="n">contract</span><span class="p">;</span>
+      <span class="n">ForceFullStates</span> <span class="p">=</span> <span class="n">forceFullStates</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Contract</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">bool</span> <span class="n">ForceFullStates</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that marked element should be localized or not.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [LocalizationRequiredAttribute(true)]</span>
+  <span class="c1">/// class Foo {</span>
+  <span class="c1">///   string str = "my string"; // Warning: Localizable string</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">All</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">LocalizationRequiredAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">LocalizationRequiredAttribute</span><span class="p">()</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="k">true</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">LocalizationRequiredAttribute</span><span class="p">(</span><span class="kt">bool</span> <span class="n">required</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Required</span> <span class="p">=</span> <span class="n">required</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">bool</span> <span class="n">Required</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the value of the marked type (or its derivatives)</span>
+  <span class="c1">/// cannot be compared using '==' or '!=' operators and &lt;c&gt;Equals()&lt;/c&gt;</span>
+  <span class="c1">/// should be used instead. However, using '==' or '!=' for comparison</span>
+  <span class="c1">/// with &lt;c&gt;null&lt;/c&gt; is always permitted.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [CannotApplyEqualityOperator]</span>
+  <span class="c1">/// class NoEquality { }</span>
+  <span class="c1">/// </span>
+  <span class="c1">/// class UsesNoEquality {</span>
+  <span class="c1">///   void Test() {</span>
+  <span class="c1">///     var ca1 = new NoEquality();</span>
+  <span class="c1">///     var ca2 = new NoEquality();</span>
+  <span class="c1">///     if (ca1 != null) { // OK</span>
+  <span class="c1">///       bool condition = ca1 == ca2; // Warning</span>
+  <span class="c1">///     }</span>
+  <span class="c1">///   }</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Interface</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Struct</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">CannotApplyEqualityOperatorAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// When applied to a target attribute, specifies a requirement for any type marked</span>
+  <span class="c1">/// with the target attribute to implement or inherit specific type or types.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [BaseTypeRequired(typeof(IComponent)] // Specify requirement</span>
+  <span class="c1">/// class ComponentAttribute : Attribute { }</span>
+  <span class="c1">/// </span>
+  <span class="c1">/// [Component] // ComponentAttribute requires implementing IComponent interface</span>
+  <span class="c1">/// class MyComponent : IComponent { }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="p">[</span><span class="nf">BaseTypeRequired</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Attribute</span><span class="p">))]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">BaseTypeRequiredAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">BaseTypeRequiredAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="n">Type</span> <span class="n">baseType</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">BaseType</span> <span class="p">=</span> <span class="n">baseType</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="n">Type</span> <span class="n">BaseType</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the marked symbol is used implicitly (e.g. via reflection, in external library),</span>
+  <span class="c1">/// so this symbol will not be marked as unused (as well as by other usage inspections).</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">All</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">UsedImplicitlyAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">UsedImplicitlyAttribute</span><span class="p">()</span>
+      <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">,</span> <span class="n">ImplicitUseTargetFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">UsedImplicitlyAttribute</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span> <span class="n">useKindFlags</span><span class="p">)</span>
+      <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">useKindFlags</span><span class="p">,</span> <span class="n">ImplicitUseTargetFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">UsedImplicitlyAttribute</span><span class="p">(</span><span class="n">ImplicitUseTargetFlags</span> <span class="n">targetFlags</span><span class="p">)</span>
+      <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">,</span> <span class="n">targetFlags</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">UsedImplicitlyAttribute</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span> <span class="n">useKindFlags</span><span class="p">,</span> <span class="n">ImplicitUseTargetFlags</span> <span class="n">targetFlags</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">UseKindFlags</span> <span class="p">=</span> <span class="n">useKindFlags</span><span class="p">;</span>
+      <span class="n">TargetFlags</span> <span class="p">=</span> <span class="n">targetFlags</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">ImplicitUseKindFlags</span> <span class="n">UseKindFlags</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">ImplicitUseTargetFlags</span> <span class="n">TargetFlags</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Should be used on attributes and causes ReSharper to not mark symbols marked with such attributes</span>
+  <span class="c1">/// as unused (as well as by other usage inspections)</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">GenericParameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MeansImplicitUseAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">MeansImplicitUseAttribute</span><span class="p">()</span>
+      <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">,</span> <span class="n">ImplicitUseTargetFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">MeansImplicitUseAttribute</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span> <span class="n">useKindFlags</span><span class="p">)</span>
+      <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">useKindFlags</span><span class="p">,</span> <span class="n">ImplicitUseTargetFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">MeansImplicitUseAttribute</span><span class="p">(</span><span class="n">ImplicitUseTargetFlags</span> <span class="n">targetFlags</span><span class="p">)</span>
+      <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span><span class="p">.</span><span class="n">Default</span><span class="p">,</span> <span class="n">targetFlags</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">MeansImplicitUseAttribute</span><span class="p">(</span><span class="n">ImplicitUseKindFlags</span> <span class="n">useKindFlags</span><span class="p">,</span> <span class="n">ImplicitUseTargetFlags</span> <span class="n">targetFlags</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">UseKindFlags</span> <span class="p">=</span> <span class="n">useKindFlags</span><span class="p">;</span>
+      <span class="n">TargetFlags</span> <span class="p">=</span> <span class="n">targetFlags</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">UsedImplicitly</span><span class="p">]</span> <span class="k">public</span> <span class="n">ImplicitUseKindFlags</span> <span class="n">UseKindFlags</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">UsedImplicitly</span><span class="p">]</span> <span class="k">public</span> <span class="n">ImplicitUseTargetFlags</span> <span class="n">TargetFlags</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="n">Flags</span><span class="p">]</span>
+  <span class="k">public</span> <span class="k">enum</span> <span class="n">ImplicitUseKindFlags</span>
+  <span class="p">{</span>
+    <span class="n">Default</span> <span class="p">=</span> <span class="n">Access</span> <span class="p">|</span> <span class="n">Assign</span> <span class="p">|</span> <span class="n">InstantiatedWithFixedConstructorSignature</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Only entity marked with attribute considered used.&lt;/summary&gt;</span>
+    <span class="n">Access</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Indicates implicit assignment to a member.&lt;/summary&gt;</span>
+    <span class="n">Assign</span> <span class="p">=</span> <span class="m">2</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Indicates implicit instantiation of a type with fixed constructor signature.</span>
+    <span class="c1">/// That means any unused constructor parameters won't be reported as such.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="n">InstantiatedWithFixedConstructorSignature</span> <span class="p">=</span> <span class="m">4</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Indicates implicit instantiation of a type.&lt;/summary&gt;</span>
+    <span class="n">InstantiatedNoFixedConstructorSignature</span> <span class="p">=</span> <span class="m">8</span><span class="p">,</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Specify what is considered used implicitly when marked</span>
+  <span class="c1">/// with &lt;see cref="MeansImplicitUseAttribute"/&gt; or &lt;see cref="UsedImplicitlyAttribute"/&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="n">Flags</span><span class="p">]</span>
+  <span class="k">public</span> <span class="k">enum</span> <span class="n">ImplicitUseTargetFlags</span>
+  <span class="p">{</span>
+    <span class="n">Default</span> <span class="p">=</span> <span class="n">Itself</span><span class="p">,</span>
+    <span class="n">Itself</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Members of entity marked with attribute are considered used.&lt;/summary&gt;</span>
+    <span class="n">Members</span> <span class="p">=</span> <span class="m">2</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Entity marked with attribute and all its members considered used.&lt;/summary&gt;</span>
+    <span class="n">WithMembers</span> <span class="p">=</span> <span class="n">Itself</span> <span class="p">|</span> <span class="n">Members</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// This attribute is intended to mark publicly available API</span>
+  <span class="c1">/// which should not be removed and so is treated as used.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">MeansImplicitUse</span><span class="p">(</span><span class="n">ImplicitUseTargetFlags</span><span class="p">.</span><span class="n">WithMembers</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">PublicAPIAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">PublicAPIAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">PublicAPIAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">comment</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Comment</span> <span class="p">=</span> <span class="n">comment</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Comment</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Tells code analysis engine if the parameter is completely handled when the invoked method is on stack.</span>
+  <span class="c1">/// If the parameter is a delegate, indicates that delegate is executed while the method is executed.</span>
+  <span class="c1">/// If the parameter is an enumerable, indicates that it is enumerated while the method is executed.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">InstantHandleAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that a method does not make any observable state changes.</span>
+  <span class="c1">/// The same as &lt;c&gt;System.Diagnostics.Contracts.PureAttribute&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [Pure] int Multiply(int x, int y) =&gt; x * y;</span>
+  <span class="c1">/// </span>
+  <span class="c1">/// void M() {</span>
+  <span class="c1">///   Multiply(123, 42); // Waring: Return value of pure method is not used</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">PureAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the return value of method invocation must be used.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MustUseReturnValueAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">MustUseReturnValueAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">MustUseReturnValueAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">justification</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Justification</span> <span class="p">=</span> <span class="n">justification</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Justification</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates the type member or parameter of some type, that should be used instead of all other ways</span>
+  <span class="c1">/// to get the value that type. This annotation is useful when you have some "context" value evaluated</span>
+  <span class="c1">/// and stored somewhere, meaning that all other ways to get this value must be consolidated with existing one.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// class Foo {</span>
+  <span class="c1">///   [ProvidesContext] IBarService _barService = ...;</span>
+  <span class="c1">/// </span>
+  <span class="c1">///   void ProcessNode(INode node) {</span>
+  <span class="c1">///     DoSomething(node, node.GetGlobalServices().Bar);</span>
+  <span class="c1">///     //              ^ Warning: use value of '_barService' field</span>
+  <span class="c1">///   }</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span> <span class="p">|</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Interface</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Struct</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">GenericParameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">ProvidesContextAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that a parameter is a path to a file or a folder within a web project.</span>
+  <span class="c1">/// Path can be relative or absolute, starting from web root (~).</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">PathReferenceAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">PathReferenceAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">PathReferenceAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">,</span> <span class="n">PathReference</span><span class="p">]</span> <span class="kt">string</span> <span class="n">basePath</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">BasePath</span> <span class="p">=</span> <span class="n">basePath</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">BasePath</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// An extension method marked with this attribute is processed by ReSharper code completion</span>
+  <span class="c1">/// as a 'Source Template'. When extension method is completed over some expression, it's source code</span>
+  <span class="c1">/// is automatically expanded like a template at call site.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;remarks&gt;</span>
+  <span class="c1">/// Template method body can contain valid source code and/or special comments starting with '$'.</span>
+  <span class="c1">/// Text inside these comments is added as source code when the template is applied. Template parameters</span>
+  <span class="c1">/// can be used either as additional method parameters or as identifiers wrapped in two '$' signs.</span>
+  <span class="c1">/// Use the &lt;see cref="MacroAttribute"/&gt; attribute to specify macros for parameters.</span>
+  <span class="c1">/// &lt;/remarks&gt;</span>
+  <span class="c1">/// &lt;example&gt;</span>
+  <span class="c1">/// In this example, the 'forEach' method is a source template available over all values</span>
+  <span class="c1">/// of enumerable types, producing ordinary C# 'foreach' statement and placing caret inside block:</span>
+  <span class="c1">/// &lt;code&gt;</span>
+  <span class="c1">/// [SourceTemplate]</span>
+  <span class="c1">/// public static void forEach&amp;lt;T&amp;gt;(this IEnumerable&amp;lt;T&amp;gt; xs) {</span>
+  <span class="c1">///   foreach (var x in xs) {</span>
+  <span class="c1">///      //$ $END$</span>
+  <span class="c1">///   }</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;</span>
+  <span class="c1">/// &lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">SourceTemplateAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Allows specifying a macro for a parameter of a &lt;see cref="SourceTemplateAttribute"&gt;source template&lt;/see&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;remarks&gt;</span>
+  <span class="c1">/// You can apply the attribute on the whole method or on any of its additional parameters. The macro expression</span>
+  <span class="c1">/// is defined in the &lt;see cref="MacroAttribute.Expression"/&gt; property. When applied on a method, the target</span>
+  <span class="c1">/// template parameter is defined in the &lt;see cref="MacroAttribute.Target"/&gt; property. To apply the macro silently</span>
+  <span class="c1">/// for the parameter, set the &lt;see cref="MacroAttribute.Editable"/&gt; property value = -1.</span>
+  <span class="c1">/// &lt;/remarks&gt;</span>
+  <span class="c1">/// &lt;example&gt;</span>
+  <span class="c1">/// Applying the attribute on a source template method:</span>
+  <span class="c1">/// &lt;code&gt;</span>
+  <span class="c1">/// [SourceTemplate, Macro(Target = "item", Expression = "suggestVariableName()")]</span>
+  <span class="c1">/// public static void forEach&amp;lt;T&amp;gt;(this IEnumerable&amp;lt;T&amp;gt; collection) {</span>
+  <span class="c1">///   foreach (var item in collection) {</span>
+  <span class="c1">///     //$ $END$</span>
+  <span class="c1">///   }</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;</span>
+  <span class="c1">/// Applying the attribute on a template method parameter:</span>
+  <span class="c1">/// &lt;code&gt;</span>
+  <span class="c1">/// [SourceTemplate]</span>
+  <span class="c1">/// public static void something(this Entity x, [Macro(Expression = "guid()", Editable = -1)] string newguid) {</span>
+  <span class="c1">///   /*$ var $x$Id = "$newguid$" + x.ToString();</span>
+  <span class="c1">///   x.DoSomething($x$Id); */</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;</span>
+  <span class="c1">/// &lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">MacroAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Allows specifying a macro that will be executed for a &lt;see cref="SourceTemplateAttribute"&gt;source template&lt;/see&gt;</span>
+    <span class="c1">/// parameter when the template is expanded.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Expression</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Allows specifying which occurrence of the target parameter becomes editable when the template is deployed.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="c1">/// &lt;remarks&gt;</span>
+    <span class="c1">/// If the target parameter is used several times in the template, only one occurrence becomes editable;</span>
+    <span class="c1">/// other occurrences are changed synchronously. To specify the zero-based index of the editable occurrence,</span>
+    <span class="c1">/// use values &gt;= 0. To make the parameter non-editable when the template is expanded, use -1.</span>
+    <span class="c1">/// &lt;/remarks&gt;&gt;</span>
+    <span class="k">public</span> <span class="kt">int</span> <span class="n">Editable</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// Identifies the target parameter of a &lt;see cref="SourceTemplateAttribute"&gt;source template&lt;/see&gt; if the</span>
+    <span class="c1">/// &lt;see cref="MacroAttribute"/&gt; is applied on a template method.</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Target</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcAreaMasterLocationFormatAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcAreaMasterLocationFormatAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">format</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Format</span> <span class="p">=</span> <span class="n">format</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Format</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcAreaPartialViewLocationFormatAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcAreaPartialViewLocationFormatAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">format</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Format</span> <span class="p">=</span> <span class="n">format</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Format</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcAreaViewLocationFormatAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcAreaViewLocationFormatAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">format</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Format</span> <span class="p">=</span> <span class="n">format</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Format</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcMasterLocationFormatAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcMasterLocationFormatAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">format</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Format</span> <span class="p">=</span> <span class="n">format</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Format</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcPartialViewLocationFormatAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcPartialViewLocationFormatAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">format</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Format</span> <span class="p">=</span> <span class="n">format</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Format</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcViewLocationFormatAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcViewLocationFormatAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">format</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Format</span> <span class="p">=</span> <span class="n">format</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Format</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. If applied to a parameter, indicates that the parameter</span>
+  <span class="c1">/// is an MVC action. If applied to a method, the MVC action name is calculated</span>
+  <span class="c1">/// implicitly from the context. Use this attribute for custom wrappers similar to</span>
+  <span class="c1">/// &lt;c&gt;System.Web.Mvc.Html.ChildActionExtensions.RenderAction(HtmlHelper, String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcActionAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcActionAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">AspMvcActionAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">anonymousProperty</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">AnonymousProperty</span> <span class="p">=</span> <span class="n">anonymousProperty</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">AnonymousProperty</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. Indicates that a parameter is an MVC area.</span>
+  <span class="c1">/// Use this attribute for custom wrappers similar to</span>
+  <span class="c1">/// &lt;c&gt;System.Web.Mvc.Html.ChildActionExtensions.RenderAction(HtmlHelper, String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcAreaAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcAreaAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">AspMvcAreaAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">anonymousProperty</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">AnonymousProperty</span> <span class="p">=</span> <span class="n">anonymousProperty</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">AnonymousProperty</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. If applied to a parameter, indicates that the parameter is</span>
+  <span class="c1">/// an MVC controller. If applied to a method, the MVC controller name is calculated</span>
+  <span class="c1">/// implicitly from the context. Use this attribute for custom wrappers similar to</span>
+  <span class="c1">/// &lt;c&gt;System.Web.Mvc.Html.ChildActionExtensions.RenderAction(HtmlHelper, String, String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcControllerAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspMvcControllerAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">AspMvcControllerAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">anonymousProperty</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">AnonymousProperty</span> <span class="p">=</span> <span class="n">anonymousProperty</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">AnonymousProperty</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. Indicates that a parameter is an MVC Master. Use this attribute</span>
+  <span class="c1">/// for custom wrappers similar to &lt;c&gt;System.Web.Mvc.Controller.View(String, String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcMasterAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. Indicates that a parameter is an MVC model type. Use this attribute</span>
+  <span class="c1">/// for custom wrappers similar to &lt;c&gt;System.Web.Mvc.Controller.View(String, Object)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcModelTypeAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. If applied to a parameter, indicates that the parameter is an MVC</span>
+  <span class="c1">/// partial view. If applied to a method, the MVC partial view name is calculated implicitly</span>
+  <span class="c1">/// from the context. Use this attribute for custom wrappers similar to</span>
+  <span class="c1">/// &lt;c&gt;System.Web.Mvc.Html.RenderPartialExtensions.RenderPartial(HtmlHelper, String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcPartialViewAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. Allows disabling inspections for MVC views within a class or a method.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcSuppressViewErrorAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. Indicates that a parameter is an MVC display template.</span>
+  <span class="c1">/// Use this attribute for custom wrappers similar to </span>
+  <span class="c1">/// &lt;c&gt;System.Web.Mvc.Html.DisplayExtensions.DisplayForModel(HtmlHelper, String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcDisplayTemplateAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. Indicates that a parameter is an MVC editor template.</span>
+  <span class="c1">/// Use this attribute for custom wrappers similar to</span>
+  <span class="c1">/// &lt;c&gt;System.Web.Mvc.Html.EditorExtensions.EditorForModel(HtmlHelper, String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcEditorTemplateAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. Indicates that a parameter is an MVC template.</span>
+  <span class="c1">/// Use this attribute for custom wrappers similar to</span>
+  <span class="c1">/// &lt;c&gt;System.ComponentModel.DataAnnotations.UIHintAttribute(System.String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcTemplateAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. If applied to a parameter, indicates that the parameter</span>
+  <span class="c1">/// is an MVC view component. If applied to a method, the MVC view name is calculated implicitly</span>
+  <span class="c1">/// from the context. Use this attribute for custom wrappers similar to</span>
+  <span class="c1">/// &lt;c&gt;System.Web.Mvc.Controller.View(Object)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcViewAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. If applied to a parameter, indicates that the parameter</span>
+  <span class="c1">/// is an MVC view component name.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcViewComponentAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. If applied to a parameter, indicates that the parameter</span>
+  <span class="c1">/// is an MVC view component view. If applied to a method, the MVC view component view name is default.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcViewComponentViewAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// ASP.NET MVC attribute. When applied to a parameter of an attribute,</span>
+  <span class="c1">/// indicates that this parameter is an MVC action name.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;example&gt;&lt;code&gt;</span>
+  <span class="c1">/// [ActionName("Foo")]</span>
+  <span class="c1">/// public ActionResult Login(string returnUrl) {</span>
+  <span class="c1">///   ViewBag.ReturnUrl = Url.Action("Foo"); // OK</span>
+  <span class="c1">///   return RedirectToAction("Bar"); // Error: Cannot resolve action</span>
+  <span class="c1">/// }</span>
+  <span class="c1">/// &lt;/code&gt;&lt;/example&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMvcActionSelectorAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">HtmlElementAttributesAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">HtmlElementAttributesAttribute</span><span class="p">()</span> <span class="p">{</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">HtmlElementAttributesAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">name</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Name</span> <span class="p">=</span> <span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Field</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">HtmlAttributeValueAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">HtmlAttributeValueAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">name</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Name</span> <span class="p">=</span> <span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Razor attribute. Indicates that a parameter or a method is a Razor section.</span>
+  <span class="c1">/// Use this attribute for custom wrappers similar to </span>
+  <span class="c1">/// &lt;c&gt;System.Web.WebPages.WebPageBase.RenderSection(String)&lt;/c&gt;.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorSectionAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates how method, constructor invocation or property access</span>
+  <span class="c1">/// over collection type affects content of the collection.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Constructor</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">CollectionAccessAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">CollectionAccessAttribute</span><span class="p">(</span><span class="n">CollectionAccessType</span> <span class="n">collectionAccessType</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">CollectionAccessType</span> <span class="p">=</span> <span class="n">collectionAccessType</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">CollectionAccessType</span> <span class="n">CollectionAccessType</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="n">Flags</span><span class="p">]</span>
+  <span class="k">public</span> <span class="k">enum</span> <span class="n">CollectionAccessType</span>
+  <span class="p">{</span>
+    <span class="c1">/// &lt;summary&gt;Method does not use or modify content of the collection.&lt;/summary&gt;</span>
+    <span class="n">None</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Method only reads content of the collection but does not modify it.&lt;/summary&gt;</span>
+    <span class="n">Read</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Method can change content of the collection but does not add new elements.&lt;/summary&gt;</span>
+    <span class="n">ModifyExistingContent</span> <span class="p">=</span> <span class="m">2</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Method can add new elements to the collection.&lt;/summary&gt;</span>
+    <span class="n">UpdatedContent</span> <span class="p">=</span> <span class="n">ModifyExistingContent</span> <span class="p">|</span> <span class="m">4</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the marked method is assertion method, i.e. it halts control flow if</span>
+  <span class="c1">/// one of the conditions is satisfied. To set the condition, mark one of the parameters with </span>
+  <span class="c1">/// &lt;see cref="AssertionConditionAttribute"/&gt; attribute.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AssertionMethodAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates the condition parameter of the assertion method. The method itself should be</span>
+  <span class="c1">/// marked by &lt;see cref="AssertionMethodAttribute"/&gt; attribute. The mandatory argument of</span>
+  <span class="c1">/// the attribute is the assertion type.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AssertionConditionAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AssertionConditionAttribute</span><span class="p">(</span><span class="n">AssertionConditionType</span> <span class="n">conditionType</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">ConditionType</span> <span class="p">=</span> <span class="n">conditionType</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">AssertionConditionType</span> <span class="n">ConditionType</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Specifies assertion type. If the assertion method argument satisfies the condition,</span>
+  <span class="c1">/// then the execution continues. Otherwise, execution is assumed to be halted.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="k">public</span> <span class="k">enum</span> <span class="n">AssertionConditionType</span>
+  <span class="p">{</span>
+    <span class="c1">/// &lt;summary&gt;Marked parameter should be evaluated to true.&lt;/summary&gt;</span>
+    <span class="n">IS_TRUE</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Marked parameter should be evaluated to false.&lt;/summary&gt;</span>
+    <span class="n">IS_FALSE</span> <span class="p">=</span> <span class="m">1</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Marked parameter should be evaluated to null value.&lt;/summary&gt;</span>
+    <span class="n">IS_NULL</span> <span class="p">=</span> <span class="m">2</span><span class="p">,</span>
+    <span class="c1">/// &lt;summary&gt;Marked parameter should be evaluated to not null value.&lt;/summary&gt;</span>
+    <span class="n">IS_NOT_NULL</span> <span class="p">=</span> <span class="m">3</span><span class="p">,</span>
+  <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that the marked method unconditionally terminates control flow execution.</span>
+  <span class="c1">/// For example, it could unconditionally throw exception.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">Obsolete</span><span class="p">(</span><span class="s">"Use [ContractAnnotation('=&gt; halt')] instead"</span><span class="p">)]</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">TerminatesProgramAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that method is pure LINQ method, with postponed enumeration (like Enumerable.Select,</span>
+  <span class="c1">/// .Where). This annotation allows inference of [InstantHandle] annotation for parameters</span>
+  <span class="c1">/// of delegate type by analyzing LINQ method chains.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">LinqTunnelAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that IEnumerable, passed as parameter, is not enumerated.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">NoEnumerationAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Indicates that parameter is regular expression pattern.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RegexPatternAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// Prevents the Member Reordering feature from tossing members of the marked class.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;remarks&gt;</span>
+  <span class="c1">/// The attribute must be mentioned in your member reordering patterns</span>
+  <span class="c1">/// &lt;/remarks&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span>
+    <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Interface</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Struct</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Enum</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">NoReorderAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// XAML attribute. Indicates the type that has &lt;c&gt;ItemsSource&lt;/c&gt; property and should be treated</span>
+  <span class="c1">/// as &lt;c&gt;ItemsControl&lt;/c&gt;-derived type, to enable inner items &lt;c&gt;DataContext&lt;/c&gt; type resolve.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">XamlItemsControlAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="c1">/// &lt;summary&gt;</span>
+  <span class="c1">/// XAML attribute. Indicates the property of some &lt;c&gt;BindingBase&lt;/c&gt;-derived type, that</span>
+  <span class="c1">/// is used to bind some item of &lt;c&gt;ItemsControl&lt;/c&gt;-derived type. This annotation will</span>
+  <span class="c1">/// enable the &lt;c&gt;DataContext&lt;/c&gt; type resolve for XAML bindings for such properties.</span>
+  <span class="c1">/// &lt;/summary&gt;</span>
+  <span class="c1">/// &lt;remarks&gt;</span>
+  <span class="c1">/// Property should have the tree ancestor of the &lt;c&gt;ItemsControl&lt;/c&gt; type or</span>
+  <span class="c1">/// marked with the &lt;see cref="XamlItemsControlAttribute"/&gt; attribute.</span>
+  <span class="c1">/// &lt;/remarks&gt;</span>
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">XamlItemBindingOfItemsControlAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspChildControlTypeAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspChildControlTypeAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">tagName</span><span class="p">,</span> <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="n">Type</span> <span class="n">controlType</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">TagName</span> <span class="p">=</span> <span class="n">tagName</span><span class="p">;</span>
+      <span class="n">ControlType</span> <span class="p">=</span> <span class="n">controlType</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">TagName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="n">Type</span> <span class="n">ControlType</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspDataFieldAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span> <span class="p">|</span> <span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspDataFieldsAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspMethodPropertyAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspRequiredAttributeAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">AspRequiredAttributeAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">attribute</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Attribute</span> <span class="p">=</span> <span class="n">attribute</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">AspTypePropertyAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="kt">bool</span> <span class="n">CreateConstructorReferences</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="k">public</span> <span class="nf">AspTypePropertyAttribute</span><span class="p">(</span><span class="kt">bool</span> <span class="n">createConstructorReferences</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">CreateConstructorReferences</span> <span class="p">=</span> <span class="n">createConstructorReferences</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorImportNamespaceAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">RazorImportNamespaceAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">name</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Name</span> <span class="p">=</span> <span class="n">name</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorInjectionAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">RazorInjectionAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">type</span><span class="p">,</span> <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">fieldName</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Type</span> <span class="p">=</span> <span class="n">type</span><span class="p">;</span>
+      <span class="n">FieldName</span> <span class="p">=</span> <span class="n">fieldName</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Type</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">FieldName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Assembly</span><span class="p">,</span> <span class="n">AllowMultiple</span> <span class="p">=</span> <span class="k">true</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorDirectiveAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">RazorDirectiveAttribute</span><span class="p">([</span><span class="n">NotNull</span><span class="p">]</span> <span class="kt">string</span> <span class="n">directive</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Directive</span> <span class="p">=</span> <span class="n">directive</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">NotNull</span><span class="p">]</span> <span class="k">public</span> <span class="kt">string</span> <span class="n">Directive</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorHelperCommonAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Property</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorLayoutAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorWriteLiteralMethodAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Method</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorWriteMethodAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+
+  <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Parameter</span><span class="p">)]</span>
+  <span class="k">public</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">RazorWriteMethodParameterAttribute</span> <span class="p">:</span> <span class="n">Attribute</span> <span class="p">{</span> <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>就可以在类使用 NotNull ，可以用在 参数、类等使用传入不能使用 Null</p>
+
+<p>还有一个简单方法，在一个类使用 INotifyPropertyChanged ，然后用自带实现 INotifyPropertyChanged 就会自动创建 NotNull 使用。</p>
+
+:ET

@@ -1,0 +1,33 @@
+[
+  {
+    "text": "首页",
+    "url": "/index",
+    "icon": "fa-book",
+    "layout": "post"
+  },
+  {
+    "text": "导师介绍",
+    "url": "/teacher",
+    "icon": "fa-commenting"
+  },
+  {
+    "text": "成员介绍",
+    "url": "/members",
+    "icon": "fa-group"
+  },
+  {
+    "text": "科研展示",
+    "url": "/research",
+    "icon": "fa-github"
+  },
+  {
+    "text": "实验室剪影",
+    "url": "/photo",
+    "icon": "fa-info"
+  },
+  {
+    "text": "联系我们",
+    "url": "/contact",
+    "icon": "fa-feed",
+  }
+]

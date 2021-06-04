@@ -1,0 +1,60 @@
+I"0	<p>本文推荐一张程序员壁纸</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/2 12:57:38 -->
+
+<!-- csdn -->
+
+<p><img src="http://image.acmx.xyz/MersereHeahiSuta.png" alt="" /></p>
+
+<p>这是我用 VisualStudio 和 PS 做的</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20187496559467.jpg" alt="" /></p>
+
+<p>截图代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">MerpirNulonalFoyeadu</span><span class="p">()</span>
+        <span class="p">{</span>
+
+            <span class="c1">// Talking is cheap, show me the code!</span>
+
+
+            <span class="k">while</span> <span class="p">(</span><span class="n">alive</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">Eat</span><span class="p">();</span>
+                <span class="nf">Code</span><span class="p">();</span>
+                <span class="nf">Sleep</span><span class="p">();</span>
+            <span class="p">}</span>
+
+
+
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Sleep</span><span class="p">()</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Code</span><span class="p">()</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Eat</span><span class="p">()</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">bool</span> <span class="nf">GetGebesiGepawhearpe</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">NotImplementedException</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">alive</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

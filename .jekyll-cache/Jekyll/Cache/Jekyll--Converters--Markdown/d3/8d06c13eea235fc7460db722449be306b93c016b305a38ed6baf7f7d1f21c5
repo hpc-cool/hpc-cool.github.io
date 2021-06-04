@@ -1,0 +1,47 @@
+I"�<p>本文告诉大家如何解决这个问题，在 WPF 的软件，弹出一个模态窗口。使用另一个窗口在模态窗口前面。从任务栏打开模态窗口。关闭模态窗口。这时发现，主窗口会在刚才使用的另一个窗口下面。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/6/23 11:48:38 -->
+
+<p>这是 Windows 的bug ，不过从上面的描述，也许大家还不知道这个问题是什么。不过我把他放在 github ，所以大家可以看到这个问题具体是什么。</p>
+
+<p>可以运行代码：<a href="https://github.com/dotnet-campus/wpf-issues/tree/master/ChildWindows">wpf-issues/ChildWindows </a></p>
+
+<p>在上面的网站有详细的视频告诉大家是如何做的就可以看到这个问题。</p>
+
+<p>因为模态窗口会在关闭的时候，让主窗口不在最前，所以团队不敢使用模态窗口。</p>
+
+<p>但是这个问题在看了 Windows 历史之后，才发现这个问题是 Windows 的问题。在窗口关闭的时候，Windows 会找一个在这个窗口下方的第一个可用的窗口，激活他。因为弹出模态窗口的主窗口是被禁用的。所以在模态窗口关闭的时候，就忽略了主窗口可以激活，于是找到主窗口下方的一个可以被激活的窗口，这时激活他，于是这个被找到的窗口就在主窗口的上面。</p>
+
+<p>那么这个问题可以如何解决？实际上只需要在模态窗口关闭之前，激活主窗口就可以。请看下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="k">private</span> <span class="k">void</span> <span class="nf">ButtonBase_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">w</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Window</span>
+            <span class="p">{</span>
+                <span class="n">Title</span> <span class="p">=</span> <span class="s">"ChildWindow"</span><span class="p">,</span>
+                <span class="n">Owner</span> <span class="p">=</span> <span class="k">this</span><span class="p">,</span>
+                <span class="n">Width</span> <span class="p">=</span> <span class="m">600</span><span class="p">,</span>
+                <span class="n">Height</span> <span class="p">=</span> <span class="m">500</span><span class="p">,</span>
+                <span class="n">Content</span> <span class="p">=</span> <span class="s">"Step 1: Move a window of another appliation to over the MainWindow\r\n"</span> <span class="p">+</span>
+                          <span class="s">"Step 2: Active this window from the Windows taskbar\r\n"</span> <span class="p">+</span>
+                          <span class="s">"Step 3: Close this window (ChildWindow)\r\n"</span> <span class="p">+</span>
+                          <span class="s">"\r\nNow you can see that the MainWindow drops down and coverd by another window.\r\n"</span> <span class="p">+</span>
+                          <span class="s">"If you don't understand the description above, please refer to the video demo in this project."</span>
+            <span class="p">};</span>
+            <span class="n">w</span><span class="p">.</span><span class="n">Closing</span> <span class="p">+=</span> <span class="n">W_Closed</span><span class="p">;</span>
+            <span class="n">w</span><span class="p">.</span><span class="nf">Show</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">W_Closed</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CancelEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">Activate</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>解决的项目我传到 <a href="http://download.csdn.net/download/lindexi_gd/10243218">CSDN</a>，可以直接运行。</p>
+
+<p>参见 <a href="https://walterlv.gitee.io/post/fix-owner-window-dropping-down-when-close-a-modal-child-window.html">关闭模态窗口后，父窗口居然跑到了其他窗口的后面</a></p>
+
+:ET

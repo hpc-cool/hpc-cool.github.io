@@ -1,0 +1,187 @@
+I"�S<p>本文只是告诉大家如何计算缩放之后的宽度和高度，不包含实际的图片缩放方法</p>
+
+<!--more-->
+
+<!-- CreateTime:5/7/2020 10:25:58 AM -->
+
+<p>如下图，我要将图片的大小进行等比缩放，此时我要求图片的宽度和高度大于最小尺寸，但是要求宽度和高度都不大于最大尺寸，如果这两个规则冲突，优先满足不大于最大尺寸</p>
+
+<!-- ![](image/dotnet C# 图片等比限制最大和最小大小缩放算法/dotnet C# 图片等比限制最大和最小大小缩放算法0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202057102917354.jpg" alt="" /></p>
+
+<p>按照规则可以看到，如下图，图片的宽度等于最大宽度了，此时虽然图片的高度小于最小高度，但是也不应该对图片进行缩放</p>
+
+<!-- ![](image/dotnet C# 图片等比限制最大和最小大小缩放算法/dotnet C# 图片等比限制最大和最小大小缩放算法1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020571030194266.jpg" alt="" /></p>
+
+<p>为什么需要有最大限制？原因是等比缩放对于长图计算不友好，如果我有一张图片的宽度和高度比例是 1:1000 那么此时如果没有限制最大高度，那么将宽度缩放到最小宽度需要缩放10倍，此时的高度就太大了</p>
+
+<p>下面就是计算方法</p>
+
+<p>先定义大小这个类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Size</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">Size</span><span class="p">(</span><span class="kt">double</span> <span class="n">width</span><span class="p">,</span> <span class="kt">double</span> <span class="n">height</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Width</span> <span class="p">=</span> <span class="n">width</span><span class="p">;</span>
+            <span class="n">Height</span> <span class="p">=</span> <span class="n">height</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Width</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Height</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="kt">string</span> <span class="nf">ToString</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="s">$"Width=</span><span class="p">{</span><span class="n">Width</span><span class="p">:</span><span class="m">0.00</span><span class="p">}</span><span class="s"> Height=</span><span class="p">{</span><span class="n">Height</span><span class="p">:</span><span class="m">0.00</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>计算的方法需要传入当前图片的宽度和高度，最小的宽度和高度和最大的宽度和高度，返回的值是计算的宽度和高度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="n">Size</span> <span class="nf">OptimizationSize</span><span class="p">(</span><span class="n">Size</span> <span class="n">currentSize</span><span class="p">,</span> <span class="n">Size</span> <span class="n">minSize</span><span class="p">,</span> <span class="n">Size</span> <span class="n">maxSize</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>计算的方法就是先获取宽度和高度的缩放到最小大小的缩放值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">height</span> <span class="p">=</span> <span class="n">currentSize</span><span class="p">.</span><span class="n">Height</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">width</span> <span class="p">=</span> <span class="n">currentSize</span><span class="p">.</span><span class="n">Width</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">widthScale</span> <span class="p">=</span> <span class="n">minSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">/</span> <span class="n">width</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">heightScale</span> <span class="p">=</span> <span class="n">minSize</span><span class="p">.</span><span class="n">Height</span> <span class="p">/</span> <span class="n">height</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>如果此时的图片本来就大于最小宽度和高度，就不能让图片的缩放比原来小，除非大于最大宽度或高度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">minScale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Max</span><span class="p">(</span><span class="n">widthScale</span><span class="p">,</span> <span class="n">heightScale</span><span class="p">);</span>
+            <span class="n">minScale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Max</span><span class="p">(</span><span class="n">minScale</span><span class="p">,</span> <span class="m">1.0</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>计算图片和最大宽度和高度的缩放，同时拿到最大缩放里面的最小的一个，这样缩放完成之后就不会大于最大的宽度和高度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">maxWidthScale</span> <span class="p">=</span> <span class="n">maxSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">/</span> <span class="n">width</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">maxHeightScale</span> <span class="p">=</span> <span class="n">maxSize</span><span class="p">.</span><span class="n">Height</span> <span class="p">/</span> <span class="n">height</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">maxScale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="n">maxWidthScale</span><span class="p">,</span> <span class="n">maxHeightScale</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>现在获取了 minScale 和 maxScale 需要根据这两个缩放计算最小的缩放</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">scale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="n">minScale</span><span class="p">,</span> <span class="n">maxScale</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>为了让图片显示更锐利，这里让缩放是整数，使用整数可能略大于最大的宽度和高度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">scale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Ceiling</span><span class="p">(</span><span class="n">scale</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>所有代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 宽度和高度不小于最小大小，但是不大于最大大小，缩放使用等比缩放</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 规则：</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// - 如果有一边小于最小大小，那么缩放到这一边大于等于最小大小</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// - 如果一边缩放之后大于最大的大小，那么限制不能超过最大的大小</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// - 尽可能让大小接近最小大小，但是保证宽度和高度都不大于最大大小</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="currentSize"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="minSize"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="maxSize"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">static</span> <span class="n">Size</span> <span class="nf">OptimizationSize</span><span class="p">(</span><span class="n">Size</span> <span class="n">currentSize</span><span class="p">,</span> <span class="n">Size</span> <span class="n">minSize</span><span class="p">,</span> <span class="n">Size</span> <span class="n">maxSize</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">currentSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">&gt;</span> <span class="n">minSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">&amp;&amp;</span> <span class="n">currentSize</span><span class="p">.</span><span class="n">Height</span> <span class="p">&gt;</span> <span class="n">minSize</span><span class="p">.</span><span class="n">Height</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">currentSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">&lt;=</span> <span class="n">maxSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">&amp;&amp;</span> <span class="n">currentSize</span><span class="p">.</span><span class="n">Height</span> <span class="p">&lt;=</span> <span class="n">maxSize</span><span class="p">.</span><span class="n">Height</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="n">currentSize</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">height</span> <span class="p">=</span> <span class="n">currentSize</span><span class="p">.</span><span class="n">Height</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">width</span> <span class="p">=</span> <span class="n">currentSize</span><span class="p">.</span><span class="n">Width</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">widthScale</span> <span class="p">=</span> <span class="n">minSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">/</span> <span class="n">width</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">heightScale</span> <span class="p">=</span> <span class="n">minSize</span><span class="p">.</span><span class="n">Height</span> <span class="p">/</span> <span class="n">height</span><span class="p">;</span>
+
+            <span class="c1">// 如果超过最大的大小</span>
+            <span class="kt">var</span> <span class="n">maxWidthScale</span> <span class="p">=</span> <span class="n">maxSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">/</span> <span class="n">width</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">maxHeightScale</span> <span class="p">=</span> <span class="n">maxSize</span><span class="p">.</span><span class="n">Height</span> <span class="p">/</span> <span class="n">height</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">maxScale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="n">maxWidthScale</span><span class="p">,</span> <span class="n">maxHeightScale</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">minScale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Max</span><span class="p">(</span><span class="n">widthScale</span><span class="p">,</span> <span class="n">heightScale</span><span class="p">);</span>
+            <span class="n">minScale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Max</span><span class="p">(</span><span class="n">minScale</span><span class="p">,</span> <span class="m">1.0</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">scale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="n">minScale</span><span class="p">,</span> <span class="n">maxScale</span><span class="p">);</span>
+            <span class="c1">// 尽可能使用整数</span>
+            <span class="n">scale</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Ceiling</span><span class="p">(</span><span class="n">scale</span><span class="p">);</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">width</span> <span class="p">*</span> <span class="n">scale</span><span class="p">,</span> <span class="n">height</span> <span class="p">*</span> <span class="n">scale</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 WPF 中可以通过设置 Image 控件的宽度和高度，此时因为尺寸是使用相同的值缩放，所以刚好图片使用 Fill 就能贴上去</p>
+
+<p>但是无论用什么的算法，只要图片和原始尺寸不相同，那么一定会糊。无论是图片进行放大或缩小，都会模糊，这是基础的知识，想了解原理请自行百度</p>
+
+<p>另一个算法是按照填充像素数量计算的，限制填充像素数量限制大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">static</span> <span class="n">Size</span> <span class="nf">GetImageOptimizationSize</span><span class="p">(</span><span class="n">Size</span> <span class="n">originSize</span><span class="p">,</span> <span class="kt">int</span> <span class="n">maxPixel</span><span class="p">,</span> <span class="kt">int</span> <span class="n">requestedPixel</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>传入图片的大小，以及限制的最大像素和期望的像素大小。如果图片大小大于期望的像素，小于最大的像素大小，那么返回图片原始大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="n">Size</span> <span class="nf">GetImageOptimizationSize</span><span class="p">(</span><span class="n">Size</span> <span class="n">originSize</span><span class="p">,</span> <span class="kt">int</span> <span class="n">maxPixel</span><span class="p">,</span> <span class="kt">int</span> <span class="n">requestedPixel</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">imagePixel</span> <span class="p">=</span> <span class="n">originSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">*</span> <span class="n">originSize</span><span class="p">.</span><span class="n">Height</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">imagePixel</span> <span class="p">&lt;=</span> <span class="n">maxPixel</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 是不是太小了，需要缩放</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">imagePixel</span> <span class="p">&lt;</span> <span class="n">requestedPixel</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="nf">GetOptimizationSize</span><span class="p">(</span><span class="n">originSize</span><span class="p">,</span> <span class="n">requestedPixel</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nf">GetOptimizationSize</span><span class="p">(</span><span class="n">originSize</span><span class="p">,</span> <span class="n">maxPixel</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">originSize</span><span class="p">;</span>
+
+            <span class="k">static</span> <span class="n">Size</span> <span class="nf">GetOptimizationSize</span><span class="p">(</span><span class="n">Size</span> <span class="n">originSize</span><span class="p">,</span> <span class="kt">double</span> <span class="n">requestedPixel</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 定义 Ow 是 originSize.Width</span>
+                <span class="c1">// 定义 Oh 是 originSize.Height</span>
+                <span class="c1">// 返回值为 requestedSize 根据 requestedPixel 计算</span>
+                <span class="c1">// 定义 Rw 是 requestedSize.Width</span>
+                <span class="c1">// 定义 Rh 是 requestedSize.Height</span>
+                <span class="c1">// 假定比例不变，于是有</span>
+                <span class="c1">// Ow / Oh = Rw / Rh </span>
+                <span class="c1">// 也就是前后的宽度高度比例不变</span>
+                <span class="c1">// 上面表达式交换可以等于</span>
+                <span class="c1">// Ow * Rh = Rw * Oh</span>
+                <span class="c1">// 而 requestedPixel = requestedSize.Width * requestedSize.Height</span>
+                <span class="c1">// 定义 P 是 requestedPixel</span>
+                <span class="c1">// 于是有 Rw = P / Rh</span>
+                <span class="c1">// 因此 Ow * Rh = Rw * Oh = P / Rh * Oh</span>
+                <span class="c1">// Ow * Rh = P / Rh * Oh</span>
+                <span class="c1">// Rh * Rh = P * Oh / Ow</span>
+                <span class="c1">// 因此 Rh = Math.Sqrt(P * Oh / Ow)</span>
+                <span class="c1">// 相同方式可以计算 Rw 的值</span>
+
+                <span class="kt">var</span> <span class="n">requestedWidth</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">Math</span><span class="p">.</span><span class="nf">Sqrt</span><span class="p">(</span><span class="n">requestedPixel</span> <span class="p">*</span> <span class="n">originSize</span><span class="p">.</span><span class="n">Width</span> <span class="p">/</span> <span class="n">originSize</span><span class="p">.</span><span class="n">Height</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">requestedHeight</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">Math</span><span class="p">.</span><span class="nf">Sqrt</span><span class="p">(</span><span class="n">requestedPixel</span> <span class="p">*</span> <span class="n">originSize</span><span class="p">.</span><span class="n">Height</span> <span class="p">/</span> <span class="n">originSize</span><span class="p">.</span><span class="n">Width</span><span class="p">);</span>
+
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">Size</span><span class="p">(</span><span class="n">requestedWidth</span><span class="p">,</span> <span class="n">requestedHeight</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的方法更简单，但是我添加了很多注释用来告诉大家这是如何计算的</p>
+
+:ET

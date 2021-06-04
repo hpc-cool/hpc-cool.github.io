@@ -1,0 +1,107 @@
+I"�,<p>本文记录在 WPF 开启 Pointer 消息的坑</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/12/24 14:33:41 -->
+
+<h2 id="屏幕键盘">屏幕键盘</h2>
+
+<p>启用了Pointer之后，调用Textbox.Focus()，起不来屏幕键盘，必须点在它之上才行，触摸在它之上才行</p>
+
+<h2 id="使用屏幕绝对坐标而不是窗口坐标">使用屏幕绝对坐标而不是窗口坐标</h2>
+
+<p>默认 Pointer 消息是使用屏幕绝对坐标而不是窗口坐标</p>
+
+<p>可能存在获取 Stylus 事件时触摸点不准，此时可以通过获取 Touch 代替，详细请看 <a href="https://github.com/dotnet/wpf/issues/3360">WPF will have a touch offset after trun on the WM_Pointer message · Issue #3360 · dotnet/wpf</a> 此问题应该在 <a href="https://github.com/dotnet/wpf/pull/2891">Fix raw stylus data to support per-monitor DPI by rladuca · Pull Request #2891 · dotnet/wpf</a> 修复</p>
+
+<h2 id="开启-pointer-消息之后无法隐藏触摸反馈点">开启 Pointer 消息之后无法隐藏触摸反馈点</h2>
+
+<p>开启 Pointer 消息之后，调用 <code class="language-plaintext highlighter-rouge">Stylus.IsPressAndHoldEnabled="False"</code> 无效</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2FWPF%2520can%2520not%2520work%2520well%2520with%2520set%2520IsPressAndHoldEnabled%2520to%2520false%2520when%2520enable%2520pointer%2520message.gif" alt="" /></p>
+
+<p>在没有开启 Pointer 消息，将会在 System.Windows.Interop.HwndSource 的 Initialize 方法通过判断是否开启 Pointer 消息执行 HwndStylusInputProvider 逻辑</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">if</span> <span class="p">(</span><span class="n">StylusLogic</span><span class="p">.</span><span class="n">IsStylusAndTouchSupportEnabled</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// Choose between Wisp and Pointer stacks</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">StylusLogic</span><span class="p">.</span><span class="n">IsPointerStackEnabled</span><span class="p">)</span>
+                <span class="p">{</span>
+                	<span class="c1">// 开启 Pointer 的逻辑</span>
+                    <span class="n">_stylus</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SecurityCriticalDataClass</span><span class="p">&lt;</span><span class="n">IStylusInputProvider</span><span class="p">&gt;(</span><span class="k">new</span> <span class="nf">HwndPointerInputProvider</span><span class="p">(</span><span class="k">this</span><span class="p">));</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="n">_stylus</span> <span class="p">=</span> <span class="k">new</span> <span class="n">SecurityCriticalDataClass</span><span class="p">&lt;</span><span class="n">IStylusInputProvider</span><span class="p">&gt;(</span><span class="k">new</span> <span class="nf">HwndStylusInputProvider</span><span class="p">(</span><span class="k">this</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 HwndStylusInputProvider 将会读取 IsPressAndHoldEnabledProperty 属性，然后使用 WM_TABLET_QUERYSYSTEMGESTURESTATUS 返回 1 的方式告诉系统不显示触摸反馈点。也就是 WPF 隐藏触摸反馈点是通过 <a href="https://devblogs.microsoft.com/oldnewthing/20170227-00/?p=95585">How do I disable the press-and-hold gesture for my window</a> 的方法</p>
+
+<p>如果不设置 <code class="language-plaintext highlighter-rouge">Stylus.IsPressAndHoldEnabled="False"</code> 也可以自己手动监听消息，在消息 WM_TABLET_QUERYSYSTEMGESTURESTATUS 里面返回 1 就可以告诉系统不显示触摸反馈点</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">private</span> <span class="n">IntPtr</span> <span class="nf">Hook</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wparam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lparam</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">bool</span> <span class="n">handled</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">WM_TABLET_DEFBASE</span> <span class="p">=</span><span class="m">0x02C0</span><span class="p">;</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">WM_TABLET_QUERYSYSTEMGESTURESTATUS</span> <span class="p">=</span> <span class="n">WM_TABLET_DEFBASE</span> <span class="p">+</span> <span class="m">12</span><span class="p">;</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">WM_TABLET_FLICK</span> <span class="p">=</span> <span class="n">WM_TABLET_DEFBASE</span> <span class="p">+</span> <span class="m">11</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="p">==</span> <span class="n">WM_TABLET_QUERYSYSTEMGESTURESTATUS</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">uint</span> <span class="n">flags</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+
+                <span class="n">flags</span> <span class="p">|=</span> <span class="n">TABLET_PRESSANDHOLD_DISABLED</span><span class="p">;</span>
+                <span class="n">flags</span> <span class="p">|=</span> <span class="n">TABLET_TAPFEEDBACK_DISABLED</span><span class="p">;</span>
+                <span class="n">flags</span> <span class="p">|=</span> <span class="n">TABLET_TOUCHUI_FORCEON</span><span class="p">;</span>
+                <span class="n">flags</span> <span class="p">|=</span> <span class="n">TABLET_TOUCHUI_FORCEOFF</span><span class="p">;</span>
+                <span class="n">flags</span> <span class="p">|=</span> <span class="n">TABLET_FLICKS_DISABLED</span><span class="p">;</span>
+
+                <span class="n">handled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">IntPtr</span><span class="p">(</span><span class="n">flags</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">msg</span> <span class="p">==</span> <span class="n">WM_TABLET_FLICK</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">handled</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">IntPtr</span><span class="p">(</span><span class="m">1</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">uint</span> <span class="n">TABLET_PRESSANDHOLD_DISABLED</span> <span class="p">=</span> <span class="m">0x00000001</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">uint</span> <span class="n">TABLET_TAPFEEDBACK_DISABLED</span> <span class="p">=</span> <span class="m">0x00000008</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">uint</span> <span class="n">TABLET_TOUCHUI_FORCEON</span> <span class="p">=</span> <span class="m">0x00000100</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">uint</span> <span class="n">TABLET_TOUCHUI_FORCEOFF</span> <span class="p">=</span> <span class="m">0x00000200</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">uint</span> <span class="n">TABLET_FLICKS_DISABLED</span> <span class="p">=</span> <span class="m">0x00010000</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>但如果开启了 Pointer 消息，那么这个机制将会无效，即使依然是手动监听消息，如 <a href="https://github.com/lindexi/lindexi_gd/tree/81b2a63a/KemjawyecawDurbahelal">https://github.com/lindexi/lindexi_gd/tree/81b2a63a/KemjawyecawDurbahelal</a> 的代码，也是无效的</p>
+
+<p>问题报告给了 WPF 官方，请看 <a href="https://github.com/dotnet/wpf/issues/3379">WPF can not work well with set IsPressAndHoldEnabled to false when enable pointer message · Issue #3379 · dotnet/wpf</a> 但预计不会在 WPF 中修复，原因是这是 Windows 的 WM_Pointer 机制的坑，和 WPF 其实没有关系</p>
+
+<p>另一个解决方法是在关闭系统全局触摸反馈点，关闭方法请看 <a href="https://www.top-password.com/blog/enable-or-disable-touch-feedback-in-windows-10/">3 Ways to Enable or Disable Touch Feedback in Windows 10</a></p>
+
+<p>更多请看</p>
+
+<p><a href="https://github.com/dotnet/wpf/issues/3379">WPF can not work well with set IsPressAndHoldEnabled to false when enable pointer message · Issue #3379 · dotnet/wpf</a></p>
+
+<p><a href="https://devblogs.microsoft.com/oldnewthing/20170227-00/?p=95585">How do I disable the press-and-hold gesture for my window</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/wm-tablet-querysystemgesturestatus-message">WM_TABLET_QUERYSYSTEMGESTURESTATUS message (Tpcshrd.h)</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/wm-tablet-flick-message">WM_TABLET_FLICK message (Tpcshrd.h)</a></p>
+
+<p><a href="https://stackoverflow.com/questions/53274234/calling-setgestureconfig-method-affects-onmousemove-override-of-control">c# - Calling SetGestureConfig method affects onmousemove override of control - Stack Overflow</a></p>
+
+<p><a href="https://blog.csdn.net/Augusdi/article/details/8885396">SetGestureConfig 函数-中文整理_Augusdi的专栏-CSDN博客</a></p>
+
+<h2 id="更多阅读">更多阅读</h2>
+
+<p><a href="https://blog.lindexi.com/post/WPF-%E5%A6%82%E4%BD%95%E7%A1%AE%E5%AE%9A%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E5%BC%80%E5%90%AF%E4%BA%86-Pointer-%E8%A7%A6%E6%91%B8%E6%B6%88%E6%81%AF%E7%9A%84%E6%94%AF%E6%8C%81.html">WPF 如何确定应用程序开启了 Pointer 触摸消息的支持</a></p>
+
+<p><a href="https://blog.lindexi.com/post/win10-%E6%94%AF%E6%8C%81%E9%BB%98%E8%AE%A4%E6%8A%8A%E8%A7%A6%E6%91%B8%E6%8F%90%E5%8D%87-Pointer-%E6%B6%88%E6%81%AF.html">win10 支持默认把触摸提升 Pointer 消息</a></p>
+
+<p><a href="https://blog.lindexi.com/post/WPF-dotnet-core-%E5%A6%82%E4%BD%95%E5%BC%80%E5%90%AF-Pointer-%E6%B6%88%E6%81%AF%E7%9A%84%E6%94%AF%E6%8C%81.html">WPF dotnet core 如何开启 Pointer 消息的支持</a></p>
+
+:ET

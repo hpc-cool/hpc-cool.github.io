@@ -1,0 +1,162 @@
+I"�J<p>本文告诉大家如何使用绑定做省市县3级联动，代码从网上找的。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<!-- csdn -->
+
+<p>首先定义显示的类，包括 id 和 名称</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">CodeView</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后定义省市县的数据</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Province</span><span class="p">:</span> <span class="n">CodeView</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">City</span><span class="p">&gt;</span> <span class="n">Child</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">City</span><span class="p">:</span> <span class="n">CodeView</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">County</span><span class="p">&gt;</span> <span class="n">Child</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">County</span><span class="p">:</span><span class="n">CodeView</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为可以通过 xaml 绑定 选择的元素，所以可以绑定选择的列</p>
+
+<p>请看前台代码，最重要的是通过省选择的元素来作为下一级的数据，于是选择第一个修改时，就会自动联动</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Name</span><span class="p">=</span><span class="s">"Content"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Style</span> <span class="n">TargetType</span><span class="p">=</span><span class="s">"ComboBox"</span> <span class="n">BasedOn</span><span class="p">=</span><span class="s">"{StaticResource {x:Type ComboBox}}"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"Margin"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"0 0 10 0"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Setter</span> <span class="n">Property</span><span class="p">=</span><span class="s">"MinWidth"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"60"</span><span class="p">&gt;&lt;/</span><span class="n">Setter</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Style</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ComboBox</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{Binding Path=Provinces}"</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ComboBoxProvince"</span> 
+                  <span class="n">DisplayMemberPath</span><span class="p">=</span><span class="s">"Name"</span> <span class="n">SelectedValuePath</span><span class="p">=</span><span class="s">"Id"</span> <span class="n">SelectedValue</span><span class="p">=</span><span class="s">"{Binding Path=Province,Mode=TwoWay}"</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ComboBox</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ComboBox</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ComboBoxCity"</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{Binding Path=SelectedItem.Child,ElementName=ComboBoxProvince}"</span> 
+                  <span class="n">DisplayMemberPath</span><span class="p">=</span><span class="s">"Name"</span> <span class="n">SelectedValuePath</span><span class="p">=</span><span class="s">"Id"</span> <span class="n">SelectedValue</span><span class="p">=</span><span class="s">"{Binding Path=City,Mode=TwoWay}"</span> <span class="p">&gt;&lt;/</span><span class="n">ComboBox</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ComboBox</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ComboBoxCounty"</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{Binding Path=SelectedItem.Child,ElementName=ComboBoxCity}"</span>
+                  <span class="n">DisplayMemberPath</span><span class="p">=</span><span class="s">"Name"</span> <span class="n">SelectedValuePath</span><span class="p">=</span><span class="s">"Id"</span> <span class="n">SelectedValue</span><span class="p">=</span><span class="s">"{Binding Path=County,Mode=TwoWay}"</span><span class="p">&gt;&lt;/</span><span class="n">ComboBox</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到<code class="language-plaintext highlighter-rouge">ItemsSource="{Binding Path=SelectedItem.Child,ElementName=ComboBoxProvince}"</code>绑定了上一级选择的元素，所以就可以联动。</p>
+
+<p>DisplayMemberPath 就是显示的值，所以就可以显示列表是城市的名称。</p>
+
+<p>后台代码需要定义几个属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">AreaSelect</span> <span class="p">:</span> <span class="n">UserControl</span><span class="p">,</span> <span class="n">INotifyPropertyChanged</span>
+    <span class="p">{</span>
+
+        <span class="k">private</span> <span class="n">IList</span><span class="p">&lt;</span><span class="n">Province</span><span class="p">&gt;</span> <span class="n">_provinces</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Province</span><span class="p">&gt;();</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ProvinceProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="s">"Province"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">AreaSelect</span><span class="p">),</span> <span class="k">new</span> <span class="nf">FrameworkPropertyMetadata</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">));</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">CityProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="s">"City"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">AreaSelect</span><span class="p">),</span> <span class="k">new</span> <span class="nf">FrameworkPropertyMetadata</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">));</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">CountyProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="s">"County"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">AreaSelect</span><span class="p">),</span> <span class="k">new</span> <span class="nf">FrameworkPropertyMetadata</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">));</span>
+
+
+        <span class="k">public</span> <span class="n">IList</span><span class="p">&lt;</span><span class="n">Province</span><span class="p">&gt;</span> <span class="n">Provinces</span>
+        <span class="p">{</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">_provinces</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_provinces</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">foreach</span> <span class="p">(</span><span class="n">Province</span> <span class="n">province</span> <span class="k">in</span> <span class="k">value</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">_provinces</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">province</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="k">public</span> <span class="nf">AreaSelect</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">DataContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">PropertyChanged</span> <span class="p">+=</span> <span class="n">SelectedArea_PropertyChanged</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">SelectedArea_PropertyChanged</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">Province</span> <span class="p">+</span> <span class="s">" "</span> <span class="p">+</span> <span class="n">City</span> <span class="p">+</span> <span class="s">" "</span> <span class="p">+</span> <span class="n">County</span><span class="p">);</span>
+        <span class="p">}</span>
+
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">_province</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">_city</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">_county</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Province</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_province</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_province</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="n">_city</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">PropertyChanged</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">PropertyChanged</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PropertyChangedEventArgs</span><span class="p">(</span><span class="s">"Province"</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">City</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_city</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_city</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="n">_county</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">PropertyChanged</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">PropertyChanged</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PropertyChangedEventArgs</span><span class="p">(</span><span class="s">"City"</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">County</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="n">_county</span><span class="p">;</span> <span class="p">}</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_county</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">PropertyChanged</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">PropertyChanged</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PropertyChangedEventArgs</span><span class="p">(</span><span class="s">"County"</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>数据：<a href="http://image.acmx.xyz/%E7%9C%81%E5%B8%82%E5%8C%BA.7z">省市区</a></p>
+
+<p>感谢 Baolaitong 提供代码</p>
+
+:ET

@@ -1,0 +1,34 @@
+I"<p>本文告诉大家如何在 VisualStudio 下安装 Python 安装 Pip</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/3/5 19:04:04 -->
+
+<!-- csdn -->
+
+<!-- 标签：软件，pip，python -->
+
+<p>首先用VisualStudio安装Python然后使用下面的代码可以获得安装的 Python 的路径</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&gt;&gt;&gt;</span> <span class="n">import</span> <span class="n">sys</span>
+<span class="p">&gt;&gt;&gt;</span> <span class="n">path</span> <span class="p">=</span> <span class="n">sys</span><span class="p">.</span><span class="n">executable</span>
+<span class="p">&gt;&gt;&gt;</span> <span class="nf">print</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>打开 powershell 然后输入 py ，然后输入上面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Python</span> <span class="m">3.6</span><span class="p">.</span><span class="m">3</span> <span class="p">(</span><span class="n">v3</span><span class="p">.</span><span class="m">6.3</span><span class="p">:</span><span class="m">2</span><span class="n">c5fed8</span><span class="p">,</span> <span class="n">Oct</span>  <span class="m">3</span> <span class="m">2017</span><span class="p">,</span> <span class="m">18</span><span class="p">:</span><span class="m">11</span><span class="p">:</span><span class="m">49</span><span class="p">)</span> <span class="p">[</span><span class="n">MSC</span> <span class="n">v</span><span class="p">.</span><span class="m">1900</span> <span class="m">64</span> <span class="nf">bit</span> <span class="p">(</span><span class="n">AMD64</span><span class="p">)]</span> <span class="k">on</span> <span class="n">win32</span>
+<span class="n">Type</span> <span class="s">"help"</span><span class="p">,</span> <span class="s">"copyright"</span><span class="p">,</span> <span class="s">"credits"</span> <span class="n">or</span> <span class="s">"license"</span> <span class="k">for</span> <span class="n">more</span> <span class="n">information</span><span class="p">.</span>
+<span class="p">&gt;&gt;&gt;</span> <span class="n">import</span> <span class="n">sys</span>
+<span class="p">&gt;&gt;&gt;</span> <span class="n">path</span> <span class="p">=</span> <span class="n">sys</span><span class="p">.</span><span class="n">executable</span>
+<span class="p">&gt;&gt;&gt;</span> <span class="nf">print</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Program</span> <span class="nf">Files</span> <span class="p">(</span><span class="n">x86</span><span class="p">)</span><span class="err">\</span><span class="n">Microsoft</span> <span class="n">Visual</span> <span class="n">Studio</span><span class="err">\</span><span class="n">Shared</span><span class="err">\</span><span class="n">Python36_64</span><span class="err">\</span><span class="n">python</span><span class="p">.</span><span class="n">exe</span>
+</code></pre></div></div>
+
+<p>可以看到python在哪，然后下载<a href="https://bootstrap.pypa.io/get-pip.py">get-pip.py</a></p>
+
+<p>使用 Powershell 打开 get-pip.py 所在的路径然后输入 <code class="language-plaintext highlighter-rouge">py get-pip.py</code>就可以</p>
+
+<p>安装完成打开 python 安装下的 Scripts 就可以看到 pip 这时复制路径，打开环境变量，设置path就可以使用</p>
+
+:ET

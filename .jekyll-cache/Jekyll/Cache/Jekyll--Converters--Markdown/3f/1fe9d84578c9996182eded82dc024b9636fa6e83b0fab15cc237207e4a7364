@@ -1,0 +1,154 @@
+I"�J<p>有一些设计师喜欢改改改，界面的整体布局总是变更，如给 Grid 加一列删一行等，每次这样的更改的时候，都需要小心修改 Grid 里面的元素设置的行列序号。我认为在 Grid 简单的时候，当然大多数时候都应该让 Grid 不那么复杂，那么序号的可读性不错。如果 Grid 行列数量比较多，那么此时行列的序号的可读性将会降低，本文来告诉大家一个简单的方法，可以给 Grid 的行列添加名称绑定，让元素绑定到行列可以不使用序号，而是使用名称</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/4/10 8:46:49 -->
+
+<!-- 发布 -->
+
+<p>在开始之前让大家看一下效果，我有一个 Grid 的定义如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Grid&gt;</span>
+    <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+      <span class="nt">&lt;RowDefinition</span> <span class="na">local:GridExtensions.Name=</span><span class="s">"R0"</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;RowDefinition</span> <span class="na">local:GridExtensions.Name=</span><span class="s">"R1"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+    <span class="nt">&lt;Grid.ColumnDefinitions&gt;</span>
+      <span class="nt">&lt;ColumnDefinition</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;ColumnDefinition</span> <span class="nt">/&gt;</span>
+      <span class="nt">&lt;ColumnDefinition</span> <span class="na">local:GridExtensions.Name=</span><span class="s">"C1"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Grid.ColumnDefinitions&gt;</span>
+  <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到我在 Grid 上都附加了属性 GridExtensions.Name 属性，这就是本文的核心，通过附加属性实现让 Grid 的行列名称绑定。给 Grid 的行列一个命名，就可以让元素绑定命名而不是序号</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;TextBlock</span> <span class="na">local:GridExtensions.RowName=</span><span class="s">"R1"</span> <span class="na">local:GridExtensions.ColumnName=</span><span class="s">"C1"</span> <span class="na">Text=</span><span class="s">"12"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>添加一个 TextBlock 绑定行名为 <code class="language-plaintext highlighter-rouge">R1</code> 的行布局，绑定列是 <code class="language-plaintext highlighter-rouge">C1</code> 上，在 VisualStudio 设计器上可以看到效果如下</p>
+
+<!-- ![](image/WPF 给 Grid 的辅助方法 添加行列名称绑定/WPF 给 Grid 的辅助方法 添加行列名称绑定0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2021410850544762.jpg" alt="" /></p>
+
+<p>通过此方法就可以在给 Grid 加行列或删除行列的时候，减少修改一些元素的行列布局。因为元素绑定的是行列的名而不是序号，因此顺序修改的时候不会影响</p>
+
+<p>这个附加属性的实现也非常简单，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">GridExtensions</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">NameProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">RegisterAttached</span><span class="p">(</span>
+            <span class="s">"Name"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">GridExtensions</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">string</span><span class="p">)));</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetName</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">,</span> <span class="kt">string</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">NameProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetName</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="n">element</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">NameProperty</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">RowNameProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">RegisterAttached</span><span class="p">(</span>
+            <span class="s">"RowName"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">GridExtensions</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="n">RowName_PropertyChanged</span><span class="p">));</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">RowName_PropertyChanged</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">d</span><span class="p">,</span> <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="k">is</span> <span class="n">FrameworkElement</span> <span class="n">frameworkElement</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">NewValue</span> <span class="k">is</span> <span class="kt">string</span> <span class="n">rowName</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">rowName</span><span class="p">))</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">if</span> <span class="p">(</span><span class="n">frameworkElement</span><span class="p">.</span><span class="n">Parent</span> <span class="k">is</span> <span class="n">Grid</span> <span class="n">grid</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                        <span class="p">{</span>
+                            <span class="kt">var</span> <span class="n">gridRowDefinition</span> <span class="p">=</span> <span class="n">grid</span><span class="p">.</span><span class="n">RowDefinitions</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+                            <span class="kt">var</span> <span class="n">gridRowName</span> <span class="p">=</span> <span class="nf">GetName</span><span class="p">(</span><span class="n">gridRowDefinition</span><span class="p">);</span>
+                            <span class="k">if</span> <span class="p">(!</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">gridRowName</span><span class="p">)</span> <span class="p">&amp;&amp;</span>
+                                <span class="n">gridRowName</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">rowName</span><span class="p">,</span> <span class="n">StringComparison</span><span class="p">.</span><span class="n">Ordinal</span><span class="p">))</span>
+                            <span class="p">{</span>
+                                <span class="n">Grid</span><span class="p">.</span><span class="nf">SetRow</span><span class="p">(</span><span class="n">frameworkElement</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+                                <span class="k">return</span><span class="p">;</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                    <span class="k">else</span>
+                    <span class="p">{</span>
+                        <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">(</span><span class="s">"只有在Grid容器内才能设置 RowName 附加属性"</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetRowName</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">,</span> <span class="kt">string</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">RowNameProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetRowName</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="n">element</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">RowNameProperty</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ColumnNameProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">RegisterAttached</span><span class="p">(</span>
+            <span class="s">"ColumnName"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">GridExtensions</span><span class="p">),</span>
+            <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">string</span><span class="p">),</span> <span class="n">ColumnName_PropertyChanged</span><span class="p">));</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ColumnName_PropertyChanged</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">d</span><span class="p">,</span> <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">d</span> <span class="k">is</span> <span class="n">FrameworkElement</span> <span class="n">frameworkElement</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">NewValue</span> <span class="k">is</span> <span class="kt">string</span> <span class="n">columnName</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">columnName</span><span class="p">))</span>
+                    <span class="p">{</span>
+                        <span class="k">return</span><span class="p">;</span>
+                    <span class="p">}</span>
+
+                    <span class="k">if</span> <span class="p">(</span><span class="n">frameworkElement</span><span class="p">.</span><span class="n">Parent</span> <span class="k">is</span> <span class="n">Grid</span> <span class="n">grid</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                        <span class="p">{</span>
+                            <span class="kt">var</span> <span class="n">gridColumnDefinition</span> <span class="p">=</span> <span class="n">grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+                            <span class="kt">var</span> <span class="n">gridColumnName</span> <span class="p">=</span> <span class="nf">GetName</span><span class="p">(</span><span class="n">gridColumnDefinition</span><span class="p">);</span>
+                            <span class="k">if</span> <span class="p">(!</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">gridColumnName</span><span class="p">)</span> <span class="p">&amp;&amp;</span>
+                                <span class="n">gridColumnName</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">columnName</span><span class="p">,</span> <span class="n">StringComparison</span><span class="p">.</span><span class="n">Ordinal</span><span class="p">))</span>
+                            <span class="p">{</span>
+                                <span class="n">Grid</span><span class="p">.</span><span class="nf">SetColumn</span><span class="p">(</span><span class="n">frameworkElement</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+                                <span class="k">return</span><span class="p">;</span>
+                            <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                    <span class="k">else</span>
+                    <span class="p">{</span>
+                        <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">(</span><span class="s">"只有在Grid容器内才能设置 ColumnName 附加属性"</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">SetColumnName</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">,</span> <span class="kt">string</span> <span class="k">value</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">element</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">ColumnNameProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">GetColumnName</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="n">element</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">ColumnNameProperty</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/00e0d126/JurgekebowhawiNofeerileji">github</a> 和 <a href="https://gitee.com/lindexi/lindexi_gd/tree/00e0d126/JurgekebowhawiNofeerileji">gitee</a> 欢迎小伙伴访问</p>
+
+<p>更多请看 <a href="https://github.com/dotnet/wpf/issues/2844">Alias for Grid‘s RowDefinition and ColumnDefinition · Issue #2844 · dotnet/wpf</a></p>
+
+:ET

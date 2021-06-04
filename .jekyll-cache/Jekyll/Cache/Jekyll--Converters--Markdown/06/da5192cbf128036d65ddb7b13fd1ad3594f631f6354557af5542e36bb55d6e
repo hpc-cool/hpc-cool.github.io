@@ -1,0 +1,165 @@
+I"�R<p>本文告诉大家如何在 UWP 通过修改图片的质量减少图片大小，这个方法只支持输出 jpg 文件</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/3/21 15:29:20 -->
+
+<!-- csdn -->
+
+<p>通过创建 BitmapEncoder 的时候指定 BitmapPropertySet 可以设置图片的质量，只有对 JPG 格式才能设置图片质量</p>
+
+<p>图片质量的值是从 0 到 1 其中 1 表示质量最好</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">propertySet</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapPropertySet</span><span class="p">();</span>
+    <span class="c1">// 图片质量，值范围是 0到1 其中 1 的质量最好</span>
+    <span class="kt">var</span> <span class="n">qualityValue</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapTypedValue</span><span class="p">(</span><span class="n">imageQuality</span><span class="p">,</span>
+        <span class="n">Windows</span><span class="p">.</span><span class="n">Foundation</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">.</span><span class="n">Single</span><span class="p">);</span>
+    <span class="n">propertySet</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"ImageQuality"</span><span class="p">,</span> <span class="n">qualityValue</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">encoder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">BitmapEncoder</span><span class="p">.</span><span class="nf">CreateAsync</span><span class="p">(</span><span class="n">BitmapEncoder</span><span class="p">.</span><span class="n">JpegEncoderId</span><span class="p">,</span> <span class="n">imageWriteAbleStream</span><span class="p">,</span>
+        <span class="n">propertySet</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这里的 imageQuality 就是图片质量，这个需要传入</p>
+
+<p>从一个图片文件压缩图片大小的方法可以这样写，创建一个方法传入原图文件，和需要输出的文件，和图片质量</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">StorageFile</span><span class="p">&gt;</span> <span class="nf">ConvertImageToJpegAsync</span><span class="p">(</span><span class="n">StorageFile</span> <span class="n">sourceFile</span><span class="p">,</span> <span class="n">StorageFile</span> <span class="n">outputFile</span><span class="p">,</span>
+            <span class="kt">double</span> <span class="n">imageQuality</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>先获取图片大小，这样可以知道压缩了多少，对比原图的文件大小和压缩之后的图片大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">sourceFileProperties</span> <span class="p">=</span> <span class="k">await</span> <span class="n">sourceFile</span><span class="p">.</span><span class="nf">GetBasicPropertiesAsync</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">fileSize</span> <span class="p">=</span> <span class="n">sourceFileProperties</span><span class="p">.</span><span class="n">Size</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>获取文件大小更简单的方法是通过 WinRTXamlToolkit 的 StorageItemExtensions.GetSizeAsync 拿到文件大小</p>
+
+<p>读取原图文件，需要先解码原图，然后通过编码的时候修改图片质量</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">imageStream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">sourceFile</span><span class="p">.</span><span class="nf">OpenReadAsync</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>解码的方法是不需要知道图片的格式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">decoder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">BitmapDecoder</span><span class="p">.</span><span class="nf">CreateAsync</span><span class="p">(</span><span class="n">imageStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">pixelData</span> <span class="p">=</span> <span class="k">await</span> <span class="n">decoder</span><span class="p">.</span><span class="nf">GetPixelDataAsync</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">detachedPixelData</span> <span class="p">=</span> <span class="n">pixelData</span><span class="p">.</span><span class="nf">DetachPixelData</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>打开输出文件，进行编码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">imageWriteAbleStream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">outputFile</span><span class="p">.</span><span class="nf">OpenAsync</span><span class="p">(</span><span class="n">FileAccessMode</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>在创建编码的时候设置图片质量</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">propertySet</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapPropertySet</span><span class="p">();</span>
+    <span class="c1">// 图片质量，值范围是 0到1 其中 1 的质量最好</span>
+    <span class="kt">var</span> <span class="n">qualityValue</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapTypedValue</span><span class="p">(</span><span class="n">imageQuality</span><span class="p">,</span>
+        <span class="n">Windows</span><span class="p">.</span><span class="n">Foundation</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">.</span><span class="n">Single</span><span class="p">);</span>
+    <span class="n">propertySet</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"ImageQuality"</span><span class="p">,</span> <span class="n">qualityValue</span><span class="p">);</span>
+    <span class="kt">var</span> <span class="n">encoder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">BitmapEncoder</span><span class="p">.</span><span class="nf">CreateAsync</span><span class="p">(</span><span class="n">BitmapEncoder</span><span class="p">.</span><span class="n">JpegEncoderId</span><span class="p">,</span> <span class="n">imageWriteAbleStream</span><span class="p">,</span>
+        <span class="n">propertySet</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>将编码写入到文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">encoder</span><span class="p">.</span><span class="nf">SetPixelData</span><span class="p">(</span><span class="n">decoder</span><span class="p">.</span><span class="n">BitmapPixelFormat</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">BitmapAlphaMode</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">OrientedPixelWidth</span><span class="p">,</span>
+        <span class="n">decoder</span><span class="p">.</span><span class="n">OrientedPixelHeight</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">DpiX</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">DpiY</span><span class="p">,</span> <span class="n">detachedPixelData</span><span class="p">);</span>
+    <span class="k">await</span> <span class="n">encoder</span><span class="p">.</span><span class="nf">FlushAsync</span><span class="p">();</span>
+    <span class="k">await</span> <span class="n">imageWriteAbleStream</span><span class="p">.</span><span class="nf">FlushAsync</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>拿到压缩只有的文件的大小，对比一下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">jpegImageSize</span> <span class="p">=</span> <span class="n">imageWriteAbleStream</span><span class="p">.</span><span class="n">Size</span><span class="p">;</span>
+    <span class="c1">// 欢迎访问我博客 https://blog.lindexi.com/ 里面有大量 UWP WPF 博客</span>
+    <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"压缩之后比压缩前的文件小</span><span class="p">{</span><span class="n">fileSize</span> <span class="p">-</span> <span class="n">jpegImageSize</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这个压缩图片的方法的代码虽然看起来很多，但是看起来还是很简单先打开原来的图片文件对原图进行解密然后输出到新的文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 将原来的图片转换图片质量和压缩质量</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="sourceFile"&gt;原来的图片&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="outputFile"&gt;输出的文件&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="imageQuality"&gt;图片质量，取值范围是 0 到 1 其中 1 的质量最好，这个值设置只对 jpg 图片有效&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">private</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">StorageFile</span><span class="p">&gt;</span> <span class="nf">ConvertImageToJpegAsync</span><span class="p">(</span><span class="n">StorageFile</span> <span class="n">sourceFile</span><span class="p">,</span> <span class="n">StorageFile</span> <span class="n">outputFile</span><span class="p">,</span>
+            <span class="kt">double</span> <span class="n">imageQuality</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">sourceFileProperties</span> <span class="p">=</span> <span class="k">await</span> <span class="n">sourceFile</span><span class="p">.</span><span class="nf">GetBasicPropertiesAsync</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">fileSize</span> <span class="p">=</span> <span class="n">sourceFileProperties</span><span class="p">.</span><span class="n">Size</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">imageStream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">sourceFile</span><span class="p">.</span><span class="nf">OpenReadAsync</span><span class="p">();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="n">imageStream</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">decoder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">BitmapDecoder</span><span class="p">.</span><span class="nf">CreateAsync</span><span class="p">(</span><span class="n">imageStream</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">pixelData</span> <span class="p">=</span> <span class="k">await</span> <span class="n">decoder</span><span class="p">.</span><span class="nf">GetPixelDataAsync</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">detachedPixelData</span> <span class="p">=</span> <span class="n">pixelData</span><span class="p">.</span><span class="nf">DetachPixelData</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">imageWriteAbleStream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">outputFile</span><span class="p">.</span><span class="nf">OpenAsync</span><span class="p">(</span><span class="n">FileAccessMode</span><span class="p">.</span><span class="n">ReadWrite</span><span class="p">);</span>
+                <span class="k">using</span> <span class="p">(</span><span class="n">imageWriteAbleStream</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">propertySet</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapPropertySet</span><span class="p">();</span>
+                    <span class="c1">// 图片质量，值范围是 0到1 其中 1 的质量最好</span>
+                    <span class="kt">var</span> <span class="n">qualityValue</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapTypedValue</span><span class="p">(</span><span class="n">imageQuality</span><span class="p">,</span>
+                        <span class="n">Windows</span><span class="p">.</span><span class="n">Foundation</span><span class="p">.</span><span class="n">PropertyType</span><span class="p">.</span><span class="n">Single</span><span class="p">);</span>
+                    <span class="n">propertySet</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"ImageQuality"</span><span class="p">,</span> <span class="n">qualityValue</span><span class="p">);</span>
+                    <span class="kt">var</span> <span class="n">encoder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">BitmapEncoder</span><span class="p">.</span><span class="nf">CreateAsync</span><span class="p">(</span><span class="n">BitmapEncoder</span><span class="p">.</span><span class="n">JpegEncoderId</span><span class="p">,</span> <span class="n">imageWriteAbleStream</span><span class="p">,</span>
+                        <span class="n">propertySet</span><span class="p">);</span>
+                    <span class="c1">//key thing here is to use decoder.OrientedPixelWidth and decoder.OrientedPixelHeight otherwise you will get garbled image on devices on some photos with orientation in metadata</span>
+                    <span class="n">encoder</span><span class="p">.</span><span class="nf">SetPixelData</span><span class="p">(</span><span class="n">decoder</span><span class="p">.</span><span class="n">BitmapPixelFormat</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">BitmapAlphaMode</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">OrientedPixelWidth</span><span class="p">,</span>
+                        <span class="n">decoder</span><span class="p">.</span><span class="n">OrientedPixelHeight</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">DpiX</span><span class="p">,</span> <span class="n">decoder</span><span class="p">.</span><span class="n">DpiY</span><span class="p">,</span> <span class="n">detachedPixelData</span><span class="p">);</span>
+                    <span class="k">await</span> <span class="n">encoder</span><span class="p">.</span><span class="nf">FlushAsync</span><span class="p">();</span>
+                    <span class="k">await</span> <span class="n">imageWriteAbleStream</span><span class="p">.</span><span class="nf">FlushAsync</span><span class="p">();</span>
+                    <span class="kt">var</span> <span class="n">jpegImageSize</span> <span class="p">=</span> <span class="n">imageWriteAbleStream</span><span class="p">.</span><span class="n">Size</span><span class="p">;</span>
+                    <span class="c1">// 欢迎访问我博客 https://blog.lindexi.com/ 里面有大量 UWP WPF 博客</span>
+                    <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"压缩之后比压缩前的文件小</span><span class="p">{</span><span class="n">fileSize</span> <span class="p">-</span> <span class="n">jpegImageSize</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">outputFile</span><span class="p">;</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>于是下面写一个测试的程序</p>
+
+<p>在界面创建一个按钮</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"压缩图片"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span> <span class="p">/&gt;</span>
+
+</code></pre></div></div>
+
+<p>在按钮拿到一个文件，然后在自己的临时文件夹里面创建输出文件，如果真的需要用这个程序压缩图片那么请让用户再选一个文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">pick</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileOpenPicker</span><span class="p">();</span>
+            <span class="n">pick</span><span class="p">.</span><span class="n">FileTypeFilter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">".jpg"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">await</span> <span class="n">pick</span><span class="p">.</span><span class="nf">PickSingleFileAsync</span><span class="p">();</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">file</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">await</span> <span class="nf">ConvertImageToJpegAsync</span><span class="p">(</span><span class="n">file</span><span class="p">,</span>
+                    <span class="k">await</span> <span class="n">ApplicationData</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">TemporaryFolder</span><span class="p">.</span><span class="nf">CreateFileAsync</span><span class="p">(</span><span class="s">"lindexi"</span><span class="p">),</span>
+                    <span class="m">0.75</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在尝试运行代码，点击界面的按钮，就可以看到点击按钮选择</p>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/b396890a0a6d88b41e16f6cff288ba8de09881e0/CetursearhebirLefelembemki">github</a></p>
+
+<p>这个代码参考了<a href="https://github.com/alexsorokoletov">Alex Sorokoletov</a>的代码</p>
+
+<p><a href="https://gist.github.com/alexsorokoletov/71431e403c0fa55f1b4c942845a3c850">How to convert image to JPEG and specify quality parameter in UWP C# XAML</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/bitmapencoder-options-reference">BitmapEncoder options reference - Windows UWP applications</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/uwp/audio-video-camera/imaging">Create, edit, and save bitmap images - Windows UWP applications</a></p>
+
+:ET

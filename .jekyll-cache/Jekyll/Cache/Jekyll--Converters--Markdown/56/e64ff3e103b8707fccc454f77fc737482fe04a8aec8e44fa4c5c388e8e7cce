@@ -1,0 +1,135 @@
+I"9#<p>本文告诉大家如何使用 Roslyn 分析代码。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/29 9:10:19 -->
+
+<!-- 标签：Roslyn,MSBuild,编译器 -->
+
+<p>首先创建一个项目，项目使用.net Framework 4.6.2 ，控制台项目。然后需要安装一些需要的库</p>
+
+<h2 id="nuget-安装">Nuget 安装</h2>
+
+<p>打开 Nuget 安装下面两个库</p>
+
+<ul>
+  <li>
+    <p>Microsoft.CodeAnalysis.CSharp</p>
+  </li>
+  <li>
+    <p>Microsoft.CodeAnalysis.CSharp.Workspaces</p>
+  </li>
+  <li>
+    <p>Newtonsoft.Json</p>
+  </li>
+</ul>
+
+<h2 id="使用">使用</h2>
+
+<p>下面来写简单的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Linq</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Text</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">TrrluujHlcdyqa</span>
+<span class="p">{</span>
+    <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"hellow"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">KiqHns</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>对上面的代码分析</p>
+
+<p>首先需要把上面的代码放在字符串</p>
+
+<p>然后创建分析代码，读取代码。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">class</span> <span class="nc">ModelCollector</span> <span class="p">:</span> <span class="n">CSharpSyntaxWalker</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">readonly</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;&gt;</span> <span class="n">Models</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;&gt;();</span>
+        <span class="k">public</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">VisitPropertyDeclaration</span><span class="p">(</span><span class="n">PropertyDeclarationSyntax</span> <span class="n">node</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">classnode</span> <span class="p">=</span> <span class="n">node</span><span class="p">.</span><span class="n">Parent</span> <span class="k">as</span> <span class="n">ClassDeclarationSyntax</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">classnode</span> <span class="p">!=</span> <span class="k">null</span> <span class="p">&amp;&amp;</span> <span class="p">!</span><span class="n">Models</span><span class="p">.</span><span class="nf">ContainsKey</span><span class="p">(</span><span class="n">classnode</span><span class="p">.</span><span class="n">Identifier</span><span class="p">.</span><span class="n">ValueText</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Models</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">classnode</span><span class="p">.</span><span class="n">Identifier</span><span class="p">.</span><span class="n">ValueText</span><span class="p">,</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;());</span>
+            <span class="p">}</span>
+
+            <span class="n">Models</span><span class="p">[</span><span class="n">classnode</span><span class="p">.</span><span class="n">Identifier</span><span class="p">.</span><span class="n">ValueText</span><span class="p">].</span><span class="nf">Add</span><span class="p">(</span><span class="n">node</span><span class="p">.</span><span class="n">Identifier</span><span class="p">.</span><span class="n">ValueText</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">@"
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace TrrluujHlcdyqa
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine(""hellow"");
+        }
+    }
+
+    class Foo
+    {
+        public string KiqHns { get; set; }
+    }
+}"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">tree</span> <span class="p">=</span> <span class="n">CSharpSyntaxTree</span><span class="p">.</span><span class="nf">ParseText</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">root</span> <span class="p">=</span> <span class="p">(</span><span class="n">CompilationUnitSyntax</span><span class="p">)</span><span class="n">tree</span><span class="p">.</span><span class="nf">GetRoot</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">modelCollector</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ModelCollector</span><span class="p">();</span>
+            <span class="n">modelCollector</span><span class="p">.</span><span class="nf">Visit</span><span class="p">(</span><span class="n">root</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">JsonConvert</span><span class="p">.</span><span class="nf">SerializeObject</span><span class="p">(</span><span class="n">modelCollector</span><span class="p">.</span><span class="n">Models</span><span class="p">));</span>
+
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时输出<code class="language-plaintext highlighter-rouge">{"Foo":["KiqHns"]}</code></p>
+
+<p>上面的代码从 https://stackoverflow.com/a/22881532/6116637 学的</p>
+
+<p>更多关于 Roslyn 请看 <a href="https://lindexi.oschina.io/lindexi/post/roslyn.html">手把手教你写 Roslyn 修改编译</a></p>
+
+<p>参见：</p>
+
+<p><a href="http://www.cnblogs.com/TianFang/p/6939723.html">通过Roslyn构建自己的C#脚本（更新版） - 天方 - 博客园</a></p>
+
+<p><a href="https://blog.csdn.net/lindexi_gd/category_7945110.html">专栏：Roslyn 入门 - CSDN博客</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/visualstudio/extensibility/getting-started-with-roslyn-analyzers">Getting Started with Roslyn Analyzers </a></p>
+
+<p><a href="https://msdn.microsoft.com/zh-cn/magazine/mt573715.aspx">代码分析 - 借助与 NuGet 集成的 Roslyn 代码分析来生成和部署库</a></p>
+
+<p><a href="https://github.com/dotnet/roslyn-analyzers/blob/master/src/MetaCompilation.Analyzers/Core/ReadMe.md">roslyn-analyzers/ReadMe.md at master · dotnet/roslyn-analyzers</a></p>
+
+<p><a href="https://josephwoodward.co.uk/2016/12/in-memory-c-sharp-compilation-using-roslyn">In-memory C# compilation and .dll generation using Roslyn </a></p>
+
+:ET

@@ -1,0 +1,105 @@
+I"�5<p>在写 msbuild 脚本的时候，或修改项目文件的时候，将会使用到很多的微软提供的 Task 命令。在需要复杂的编译的时候，可以通过自己定义一个任务用来定义编译</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/7/2 10:43:28 -->
+
+<!-- csdn -->
+
+<p>如何入门开发请看 <a href="https://blog.walterlv.com/post/create-a-cross-platform-msbuild-task-based-nuget-tool.html">如何创建一个基于 MSBuild Task 的跨平台的 NuGet 工具包 - walterlv</a> 本文只会补充一些开发的过程会遇到的坑</p>
+
+<h2 id="版本选择">版本选择</h2>
+
+<p>开发的 Task 需要引用以下两个库</p>
+
+<ul>
+  <li>Microsoft.Build.Framework</li>
+  <li>Microsoft.Build.Utilities.Core</li>
+</ul>
+
+<p>这也就默认要求使用 .NET Framework 4.7.2 和 .NET Standard 2.0 以上</p>
+
+<h2 id="判断当前编译器平台">判断当前编译器平台</h2>
+
+<p>在跨平台的开发可能用户使用的是 dotnet core 版本，于是需要一个 dotnet core 版本的 Task 让他进行编译</p>
+
+<p>使用下面代码可以判断当前点编译器是运行在哪个平台</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>'$(MSBuildRuntimeType)' == 'Core'
+</code></pre></div></div>
+
+<p>如果上面代码返回 true 那么编译器是 dotnet core 平台</p>
+
+<p>以上面代码判断可以写出对使用 dotnet core 和 .NET Framework 两个平台的不同的程序集文件</p>
+
+<h2 id="调用方法">调用方法</h2>
+
+<p>假定在程序集 UsingMSBuildCopyOutputFileToFastDebug.dll 里面包含 UsingMSBuildCopyOutputFileToFastDebug.SafeOutputFileCopyTask 类，这个类继承 Task 类</p>
+
+<p>而 UsingMSBuildCopyOutputFileToFastDebug.dll 存放在 NuGet 包的 AssemblyFile 属性下，这个属性的定义请看代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;PropertyGroup&gt;</span>
+        <span class="c">&lt;!-- 我们使用 $(MSBuildRuntimeType) 来判断编译器是 .NET Core 的还是 .NET Framework 的。
+         然后选用对应的文件夹。--&gt;</span>
+        <span class="nt">&lt;NuGetUsingMSBuildCopyOutputFileToFastDebugTaskFolder</span> <span class="na">Condition=</span><span class="s">" '$(MSBuildRuntimeType)' == 'Core'"</span><span class="nt">&gt;</span>$(MSBuildThisFileDirectory)..\tools\netcoreapp2.2\<span class="nt">&lt;/NuGetUsingMSBuildCopyOutputFileToFastDebugTaskFolder&gt;</span>
+        <span class="nt">&lt;NuGetUsingMSBuildCopyOutputFileToFastDebugTaskFolder</span> <span class="na">Condition=</span><span class="s">" '$(MSBuildRuntimeType)' != 'Core'"</span><span class="nt">&gt;</span>$(MSBuildThisFileDirectory)..\tools\net48\<span class="nt">&lt;/NuGetUsingMSBuildCopyOutputFileToFastDebugTaskFolder&gt;</span>
+        <span class="nt">&lt;AssemblyFile&gt;</span>$(NuGetUsingMSBuildCopyOutputFileToFastDebugTaskFolder)\UsingMSBuildCopyOutputFileToFastDebug.dll<span class="nt">&lt;/AssemblyFile&gt;</span>
+    <span class="nt">&lt;/PropertyGroup&gt;</span>
+</code></pre></div></div>
+
+<p>在调用之前需要先引用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="p">&lt;</span><span class="n">UsingTask</span> <span class="n">TaskName</span><span class="p">=</span><span class="s">"UsingMSBuildCopyOutputFileToFastDebug.SafeOutputFileCopyTask"</span> 
+               <span class="n">AssemblyFile</span><span class="p">=</span><span class="s">"$(AssemblyFile)"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>之后可以在 Target 里面使用 SafeOutputFileCopyTask 类名</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Target</span> <span class="n">Name</span><span class="p">=</span><span class="s">"CopyOutputLibToFastDebug"</span> <span class="n">AfterTargets</span><span class="p">=</span><span class="s">"AfterBuild"</span>
+            <span class="n">Condition</span><span class="p">=</span><span class="s">"$(MainProjectPath)!=''"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">OutputFileToCopy</span> <span class="n">Include</span><span class="p">=</span><span class="s">"$(OutputPath)$(AssemblyName).dll"</span><span class="p">&gt;&lt;/</span><span class="n">OutputFileToCopy</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">OutputFileToCopy</span> <span class="n">Include</span><span class="p">=</span><span class="s">"$(OutputPath)$(AssemblyName).pdb"</span><span class="p">&gt;&lt;/</span><span class="n">OutputFileToCopy</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">SafeOutputFileCopyTask</span> <span class="n">SourceFiles</span><span class="p">=</span><span class="s">"@(OutputFileToCopy)"</span> <span class="n">DestinationFolder</span><span class="p">=</span><span class="s">"$(MainProjectPath)"</span><span class="p">&gt;&lt;/</span><span class="n">SafeOutputFileCopyTask</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Target</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<h2 id="如何添加属性">如何添加属性</h2>
+
+<p>在继承 Microsoft.Build.Utilities.Task 的类里面添加属性就可以在直接使用，如我添加了 DestinationFolder 和 SourceFiles 属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">SafeOutputFileCopyTask</span> <span class="p">:</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">Build</span><span class="p">.</span><span class="n">Utilities</span><span class="p">.</span><span class="n">Task</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span><span class="p">[]</span> <span class="n">SourceFiles</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">DestinationFolder</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">override</span> <span class="kt">bool</span> <span class="nf">Execute</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>从上面代码可以看到，在 Task 里面添加列表数组的方法使用的是数组，如果使用的是列表那么在编译时将会提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">lindexi</span><span class="p">.</span><span class="n">github</span><span class="p">.</span><span class="n">io</span><span class="err">\</span><span class="p">.</span><span class="n">nuget</span><span class="err">\</span><span class="n">packages</span><span class="err">\</span><span class="n">dotnetcampus</span><span class="p">.</span><span class="n">usingmsbuildcopyoutputfiletofastdebug</span><span class="err">\</span><span class="m">1.1</span><span class="p">.</span><span class="m">352</span><span class="err">\</span><span class="n">Build</span><span class="err">\</span><span class="n">dotnetCampus</span><span class="p">.</span><span class="n">UsingMSBuildCopyOutputFileToFastDebug</span><span class="p">.</span><span class="nf">targets</span><span class="p">(</span><span class="m">18</span><span class="p">,</span><span class="m">33</span><span class="p">):</span> <span class="n">error</span> <span class="n">MSB4069</span><span class="p">:</span> <span class="n">MSBuild</span> <span class="err">不支持“</span><span class="n">SafeOutputFileCopyTask</span><span class="err">”任务的“</span><span class="n">SourceFiles</span><span class="err">”参数的“</span><span class="n">System</span><span class="p">.</span><span class="n">Collections</span><span class="p">.</span><span class="n">Generic</span><span class="p">.</span><span class="n">List</span><span class="err">`</span><span class="m">1</span><span class="p">[[</span><span class="n">System</span><span class="p">.</span><span class="n">String</span><span class="p">,</span> <span class="n">System</span><span class="p">.</span><span class="n">Private</span><span class="p">.</span><span class="n">CoreLib</span><span class="p">,</span> <span class="n">Version</span><span class="p">=</span><span class="m">4.0</span><span class="p">.</span><span class="m">0.0</span><span class="p">,</span> <span class="n">Culture</span><span class="p">=</span><span class="n">neutral</span><span class="p">,</span> <span class="n">PublicKeyToken</span><span class="p">=</span><span class="m">7</span><span class="n">cec85d7bea7798e</span><span class="p">]]</span><span class="err">”类型。</span>
+         <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">lindexi</span><span class="p">.</span><span class="n">github</span><span class="p">.</span><span class="n">io</span><span class="err">\</span><span class="p">.</span><span class="n">nuget</span><span class="err">\</span><span class="n">packages</span><span class="err">\</span><span class="n">dotnetcampus</span><span class="p">.</span><span class="n">usingmsbuildcopyoutputfiletofastdebug</span><span class="err">\</span><span class="m">1.1</span><span class="p">.</span><span class="m">352</span><span class="err">\</span><span class="n">Build</span><span class="err">\</span><span class="n">dotnetCampus</span><span class="p">.</span><span class="n">UsingMSBuildCopyOutputFileToFastDebug</span><span class="p">.</span><span class="nf">targets</span><span class="p">(</span><span class="m">18</span><span class="p">,</span><span class="m">33</span><span class="p">):</span> <span class="n">error</span> <span class="n">MSB4026</span><span class="p">:</span> <span class="err">“</span><span class="n">SafeOutputFileCopyTask</span><span class="err">”任务的“</span><span class="n">SourceFiles</span><span class="p">=</span><span class="err">@</span><span class="p">(</span><span class="n">OutputFileToCopy</span><span class="p">)</span><span class="err">”参数无效。</span> <span class="p">[</span><span class="n">f</span><span class="p">:</span><span class="err">\</span><span class="n">temp</span><span class="err">\</span><span class="n">HogalcageBeganeqeale</span><span class="err">\</span><span class="n">HogalcageBeganeqeale</span><span class="p">.</span><span class="n">csproj</span><span class="p">]</span>
+         <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">lindexi</span><span class="p">.</span><span class="n">github</span><span class="p">.</span><span class="n">io</span><span class="err">\</span><span class="p">.</span><span class="n">nuget</span><span class="err">\</span><span class="n">packages</span><span class="err">\</span><span class="n">dotnetcampus</span><span class="p">.</span><span class="n">usingmsbuildcopyoutputfiletofastdebug</span><span class="err">\</span><span class="m">1.1</span><span class="p">.</span><span class="m">352</span><span class="err">\</span><span class="n">Build</span><span class="err">\</span><span class="n">dotnetCampus</span><span class="p">.</span><span class="n">UsingMSBuildCopyOutputFileToFastDebug</span><span class="p">.</span><span class="nf">targets</span><span class="p">(</span><span class="m">18</span><span class="p">,</span><span class="m">9</span><span class="p">):</span> <span class="n">error</span> <span class="n">MSB4063</span><span class="p">:</span> <span class="err">未能使用“</span><span class="n">SafeOutputFileCopyTask</span><span class="err">”任务的输入参数初始化该任务。</span>
+</code></pre></div></div>
+
+<h2 id="输出消息">输出消息</h2>
+
+<p>输出消息请使用 Console.WriteLine 就可以输出</p>
+
+<p>输出警告和错误也使用 Console.WriteLine 方法，只是需要添加前缀 <code class="language-plaintext highlighter-rouge">warning</code> 如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"warning: 用户没有传入需要复制的文件"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>更多请看 <a href="https://blog.walterlv.com/post/standard-error-warning-format.html">如何在 MSBuild Target（Exec）中报告编译错误和编译警告 - walterlv</a></p>
+
+<p>本文用到的代码开源在 Github 欢迎关注 <a href="https://github.com/dotnet-campus/UsingMSBuildCopyOutputFileToFastDebug">UsingMSBuildCopyOutputFileToFastDebug</a> 如有问题欢迎讨论</p>
+
+:ET

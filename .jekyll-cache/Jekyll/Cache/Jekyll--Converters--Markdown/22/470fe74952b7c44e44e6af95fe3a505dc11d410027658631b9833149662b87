@@ -1,0 +1,184 @@
+I"�K<p>本文告诉大家如何在 WPF 使用多线程的 UI 的方法
+在很多的时候都是使用单线程的 UI 但是有时候需要做到一个线程完全处理一个耗时的界面就需要将这个线程作为另一个 UI 线程</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/10/18 10:25:28 -->
+
+<!-- csdn -->
+
+<p>在 WPF 可以使用 VisualTarget 做到多个 UI 线程的绘制，注意这里的 WPF 的渲染线程只有一个，多个 UI 线程无法让渲染的速度加快。如果一个界面有很多的 Visual 那么渲染速度也不会因为添加 UI 线程用的时间比原来少</p>
+
+<p>在 WPF 的 VisualTarget 可以用来连接多个不同的线程的 UI 元素，在使用的时候只需要创建，然后在另一个 UI 线程将创建的元素添加到 RootVisual 就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">_visualTarget</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualTarget</span><span class="p">(</span><span class="n">xx</span><span class="p">);</span>
+
+                <span class="n">_visualTarget</span><span class="p">.</span><span class="n">RootVisual</span> <span class="p">=</span> <span class="err">创建的</span> <span class="n">Visual</span><span class="p">;</span>
+            <span class="p">});</span>
+</code></pre></div></div>
+
+<p>创建一个 VisualTarget 需要用到 HostVisual 通过 HostVisual 可以在多个线程连到视觉树，所以创建 HostVisual 需要在主线程</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+<span class="p">{</span>
+	<span class="nf">InitializeComponent</span><span class="p">();</span>
+
+    <span class="kt">var</span> <span class="n">hostVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HostVisual</span><span class="p">();</span>
+          
+            <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">_visualTarget</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualTarget</span><span class="p">(</span><span class="n">hostVisual</span><span class="p">);</span>
+                
+
+                <span class="n">_visualTarget</span><span class="p">.</span><span class="n">RootVisual</span> <span class="p">=</span> <span class="err">创建的</span> <span class="n">Visual</span><span class="p">;</span>
+            <span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时还需要将 hostVisual 加入视觉树，因为 HostVisual 也是 Visual 最简单将 Visual 加入视觉树的方法是创建一个类继承 UIElement 的方法，请看下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">DispatcherContainer</span> <span class="p">:</span> <span class="n">UIElement</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="n">Visual</span> <span class="nf">GetVisualChild</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_hostVisual</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="kt">int</span> <span class="n">VisualChildrenCount</span> <span class="p">=&gt;</span> <span class="m">1</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="n">HostVisual</span> <span class="n">_hostVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HostVisual</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后在构造函数添加一个线程用来创建另一个 UI 线程，创建一个 UI 线程的最简单方法是运行 <code class="language-plaintext highlighter-rouge">Dispatcher.Run()</code> 和设置线程 STA 才可以，注意这里的 <code class="language-plaintext highlighter-rouge">Dispatcher</code> 是静态类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+
+                <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Threading</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Run</span><span class="p">();</span>
+            <span class="p">});</span>
+
+            <span class="n">thread</span><span class="p">.</span><span class="nf">SetApartmentState</span><span class="p">(</span><span class="n">ApartmentState</span><span class="p">.</span><span class="n">STA</span><span class="p">);</span>
+            <span class="n">thread</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>在这个线程里添加 VisualTarget 请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">_visualTarget</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualTarget</span><span class="p">(</span><span class="n">_hostVisual</span><span class="p">);</span>
+
+                <span class="n">_visualTarget</span><span class="p">.</span><span class="n">RootVisual</span> <span class="p">=</span> <span class="err">创建的元素</span><span class="p">;</span>
+
+                <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Threading</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Run</span><span class="p">();</span>
+            <span class="p">});</span>
+
+            <span class="n">thread</span><span class="p">.</span><span class="nf">SetApartmentState</span><span class="p">(</span><span class="n">ApartmentState</span><span class="p">.</span><span class="n">STA</span><span class="p">);</span>
+            <span class="n">thread</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>下面创建一个简单的元素在另一个线程</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">_visualTarget</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualTarget</span><span class="p">(</span><span class="n">_hostVisual</span><span class="p">);</span>
+                <span class="n">DrawingVisual</span> <span class="n">drawingVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DrawingVisual</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">drawing</span> <span class="p">=</span> <span class="n">drawingVisual</span><span class="p">.</span><span class="nf">RenderOpen</span><span class="p">();</span>
+                <span class="k">using</span> <span class="p">(</span><span class="n">drawing</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">text</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FormattedText</span><span class="p">(</span><span class="s">"欢迎访问我博客 http://lindexi.gitee.io 里面有大量 UWP WPF 博客"</span><span class="p">,</span>
+                        <span class="n">CultureInfo</span><span class="p">.</span><span class="n">CurrentCulture</span><span class="p">,</span> <span class="n">FlowDirection</span><span class="p">.</span><span class="n">LeftToRight</span><span class="p">,</span>
+                        <span class="k">new</span> <span class="nf">Typeface</span><span class="p">(</span><span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="s">"微软雅黑"</span><span class="p">),</span> <span class="k">new</span> <span class="nf">FontStyle</span><span class="p">(),</span> <span class="n">FontWeight</span><span class="p">.</span><span class="nf">FromOpenTypeWeight</span><span class="p">(</span><span class="m">1</span><span class="p">),</span>
+                            <span class="n">FontStretch</span><span class="p">.</span><span class="nf">FromOpenTypeStretch</span><span class="p">(</span><span class="m">1</span><span class="p">)),</span> <span class="m">20</span><span class="p">,</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">DarkSlateBlue</span><span class="p">);</span>
+
+                    <span class="n">drawing</span><span class="p">.</span><span class="nf">DrawText</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>
+                <span class="p">}</span>
+
+                <span class="kt">var</span> <span class="n">containerVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ContainerVisual</span><span class="p">();</span>
+
+                <span class="n">containerVisual</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">drawingVisual</span><span class="p">);</span>
+
+                <span class="n">_visualTarget</span><span class="p">.</span><span class="n">RootVisual</span> <span class="p">=</span> <span class="n">containerVisual</span><span class="p">;</span>
+
+                <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Threading</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Run</span><span class="p">();</span>
+            <span class="p">});</span>
+
+            <span class="n">thread</span><span class="p">.</span><span class="nf">SetApartmentState</span><span class="p">(</span><span class="n">ApartmentState</span><span class="p">.</span><span class="n">STA</span><span class="p">);</span>
+            <span class="n">thread</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<p>这时的 DispatcherContainer 类看起来是这样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">DispatcherContainer</span> <span class="p">:</span> <span class="n">UIElement</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">DispatcherContainer</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">thread</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">_visualTarget</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualTarget</span><span class="p">(</span><span class="n">_hostVisual</span><span class="p">);</span>
+                <span class="n">DrawingVisual</span> <span class="n">drawingVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DrawingVisual</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">drawing</span> <span class="p">=</span> <span class="n">drawingVisual</span><span class="p">.</span><span class="nf">RenderOpen</span><span class="p">();</span>
+                <span class="k">using</span> <span class="p">(</span><span class="n">drawing</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">text</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FormattedText</span><span class="p">(</span><span class="s">"欢迎访问我博客 http://lindexi.gitee.io 里面有大量 UWP WPF 博客"</span><span class="p">,</span>
+                        <span class="n">CultureInfo</span><span class="p">.</span><span class="n">CurrentCulture</span><span class="p">,</span> <span class="n">FlowDirection</span><span class="p">.</span><span class="n">LeftToRight</span><span class="p">,</span>
+                        <span class="k">new</span> <span class="nf">Typeface</span><span class="p">(</span><span class="k">new</span> <span class="nf">FontFamily</span><span class="p">(</span><span class="s">"微软雅黑"</span><span class="p">),</span> <span class="k">new</span> <span class="nf">FontStyle</span><span class="p">(),</span> <span class="n">FontWeight</span><span class="p">.</span><span class="nf">FromOpenTypeWeight</span><span class="p">(</span><span class="m">1</span><span class="p">),</span>
+                            <span class="n">FontStretch</span><span class="p">.</span><span class="nf">FromOpenTypeStretch</span><span class="p">(</span><span class="m">1</span><span class="p">)),</span> <span class="m">20</span><span class="p">,</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">DarkSlateBlue</span><span class="p">);</span>
+
+                    <span class="n">drawing</span><span class="p">.</span><span class="nf">DrawText</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">));</span>
+                <span class="p">}</span>
+
+                <span class="kt">var</span> <span class="n">containerVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ContainerVisual</span><span class="p">();</span>
+
+                <span class="n">containerVisual</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">drawingVisual</span><span class="p">);</span>
+
+                <span class="n">_visualTarget</span><span class="p">.</span><span class="n">RootVisual</span> <span class="p">=</span> <span class="n">containerVisual</span><span class="p">;</span>
+
+                <span class="n">System</span><span class="p">.</span><span class="n">Windows</span><span class="p">.</span><span class="n">Threading</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Run</span><span class="p">();</span>
+            <span class="p">});</span>
+
+            <span class="n">thread</span><span class="p">.</span><span class="nf">SetApartmentState</span><span class="p">(</span><span class="n">ApartmentState</span><span class="p">.</span><span class="n">STA</span><span class="p">);</span>
+            <span class="n">thread</span><span class="p">.</span><span class="nf">Start</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="n">Visual</span> <span class="nf">GetVisualChild</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">_hostVisual</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="kt">int</span> <span class="n">VisualChildrenCount</span> <span class="p">=&gt;</span> <span class="m">1</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="n">HostVisual</span> <span class="n">_hostVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HostVisual</span><span class="p">();</span>
+        <span class="k">private</span> <span class="n">VisualTarget</span> <span class="n">_visualTarget</span><span class="p">;</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>为了显示元素，需要添加到界面，打开界面添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">DispatcherContainer</span><span class="p">&gt;&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">DispatcherContainer</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>运行可以看到下面界面，这里的文字是在另一个线程绘制，但是也是和主界面在相同的线程渲染</p>
+
+<!-- ![](image/WPF 跨线程 UI 的方法/WPF 跨线程 UI 的方法0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101893923600" alt="" /></p>
+
+<p>代码请看 https://github.com/lindexi/UWP/tree/master/wpf/CaitrairSodeyatarFowfurur</p>
+
+<p>更多博客请看 <a href="https://blog.walterlv.com/post/multi-thread-ui-using-visualtarget-in-wpf.html">WPF 同一窗口内的多线程 UI（VisualTarget） - walterlv</a></p>
+
+<p><a href="https://huchengv5.gitee.io/post/WPF-%E6%89%8B%E6%8A%8A%E6%89%8B%E6%95%99%E4%BD%A0%E5%86%99%E8%B7%A8%E7%BA%BF%E7%A8%8BUI%E6%8E%A7%E4%BB%B6.html">WPF 手把手教你写跨线程UI控件</a></p>
+
+:ET

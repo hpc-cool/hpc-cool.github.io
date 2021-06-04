@@ -1,0 +1,25 @@
+I"�<p>在 Blazor 获取当前页面所在的 URL 链接可以通过 NavigationManager 类辅助获取，也可以通过此方法获取当前域名等信息</p>
+
+<!--more-->
+
+<!-- CreateTime:6/28/2020 8:40:39 AM -->
+
+<p>首先在页面添加依赖注入，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">@inject</span> <span class="n">NavigationManager</span> <span class="n">NavigationManager</span>
+</code></pre></div></div>
+
+<p>此时就注入了 <code class="language-plaintext highlighter-rouge">NavigationManager</code> 属性，获取当前页面所在链接的方法或域名可以采用 Uri 或 BaseUri 两个属性</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p&gt;</span>
+	NavigationManager.Uri = @NavigationManager.Uri
+<span class="nt">&lt;/p&gt;</span>
+
+<span class="nt">&lt;p&gt;</span>
+	NavigationManager.BaseUri = @NavigationManager.BaseUri
+<span class="nt">&lt;/p&gt;</span>
+</code></pre></div></div>
+
+<p>详细请看 <a href="https://docs.microsoft.com/zh-cn/aspnet/core/blazor/fundamentals/routing?view=aspnetcore-3.1">ASP.NET Core Blazor 路由</a></p>
+
+:ET

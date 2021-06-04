@@ -1,0 +1,120 @@
+I"e0<p>在 WPF 开发中，可以使用 Behavior 库辅助，监听某个动态资源变更的事件，从而了解到是在哪个模块变更了动态资源，或者根据动态资源的变更而进行界面修改</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/4/12 19:35:48 -->
+
+<!-- 发布 -->
+
+<p>在 WPF 的动态资源机制里面，如果某个依赖属性给定了动态资源，那么在动态资源变更的时候，将会重新给属性赋值。通过这个机制，就可以在业务逻辑上，通过添加一个依赖属性，绑定到需要监听变更的动态资源上，那么这个依赖属性将会收到变更通知</p>
+
+<p>在我的应用里面，有很复杂的资源逻辑，我需要调试是哪个模块在修改资源，可以使用本文下面提供的方法</p>
+
+<p>在开始之前，请先安装 Behavior 库，请通过 NuGet 安装 Microsoft.Xaml.Behaviors.Wpf 库。如果是 SDK 风格的 csproj 可以添加如下代码安装</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"Microsoft.Xaml.Behaviors.Wpf"</span> <span class="na">Version=</span><span class="s">"1.1.31"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>接下来编写 ResourceChangeEventBehavior 类用来监听动态资源变更</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">ResourceChangeEventBehavior</span> <span class="p">:</span> <span class="n">Behavior</span><span class="p">&lt;</span><span class="n">FrameworkElement</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ResourceProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Resource"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">object</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">ResourceChangeEventBehavior</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">object</span><span class="p">),</span> <span class="n">ResourceChangedCallback</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">EventHandler</span><span class="p">&lt;</span><span class="n">ResourceChangedEventArgs</span><span class="p">&gt;</span> <span class="n">ResourceChanged</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="kt">object</span> <span class="n">Resource</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">ResourceProperty</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">ResourceProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ResourceChangedCallback</span><span class="p">(</span><span class="n">DependencyObject</span> <span class="n">dependencyObject</span><span class="p">,</span> <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">dependencyObject</span> <span class="k">is</span> <span class="n">ResourceChangeEventBehavior</span> <span class="n">resourceChangeNotifier</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">resourceChangeNotifier</span><span class="p">.</span><span class="nf">OnResourceChanged</span><span class="p">(</span><span class="k">new</span> <span class="nf">ResourceChangedEventArgs</span><span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">OldValue</span><span class="p">,</span> <span class="n">args</span><span class="p">.</span><span class="n">NewValue</span><span class="p">));</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnResourceChanged</span><span class="p">(</span><span class="n">ResourceChangedEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ResourceChanged</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">args</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">ResourceChangedEventArgs</span> <span class="p">:</span> <span class="n">EventArgs</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">ResourceChangedEventArgs</span><span class="p">(</span><span class="kt">object</span> <span class="n">oldValue</span><span class="p">,</span> <span class="kt">object</span> <span class="n">newValue</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">OldValue</span> <span class="p">=</span> <span class="n">oldValue</span><span class="p">;</span>
+            <span class="n">NewValue</span> <span class="p">=</span> <span class="n">newValue</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">object</span> <span class="n">OldValue</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">object</span> <span class="n">NewValue</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到实际使用的逻辑就是在 Resource 这个依赖属性变更的时候，触发 ResourceChanged 事件</p>
+
+<p>以上就是所有的框架代码，使用方法如下，如下面代码将要监听 	VariableFontSize 这个动态资源的变更</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;i:Interaction.Behaviors&gt;</span>
+      <span class="nt">&lt;resourceChangeEvent:ResourceChangeEventBehavior</span>
+        <span class="na">Resource=</span><span class="s">"{DynamicResource VariableFontSize}"</span>
+        <span class="na">ResourceChanged=</span><span class="s">"OnResourceChanged_VariableFontSize"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/i:Interaction.Behaviors&gt;</span>
+</code></pre></div></div>
+
+<p>全部的 XAML 代码如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Window</span> <span class="na">x:Class=</span><span class="s">"JeyaijikeneeWhejoniwairbu.MainWindow"</span>
+        <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+        <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+        <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+        <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+        <span class="na">xmlns:resourceChangeEvent=</span><span class="s">"clr-namespace:JeyaijikeneeWhejoniwairbu"</span>
+        <span class="na">xmlns:i=</span><span class="s">"http://schemas.microsoft.com/xaml/behaviors"</span>
+        <span class="na">xmlns:system=</span><span class="s">"clr-namespace:System;assembly=System.Runtime"</span>
+        <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+        <span class="na">Title=</span><span class="s">"MainWindow"</span> <span class="na">Height=</span><span class="s">"450"</span> <span class="na">Width=</span><span class="s">"800"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;Window.Resources&gt;</span>
+    <span class="nt">&lt;system:Double</span> <span class="na">x:Key=</span><span class="s">"VariableFontSize"</span><span class="nt">&gt;</span>5<span class="nt">&lt;/system:Double&gt;</span>
+  <span class="nt">&lt;/Window.Resources&gt;</span>
+  <span class="nt">&lt;Grid&gt;</span>
+    <span class="nt">&lt;i:Interaction.Behaviors&gt;</span>
+      <span class="nt">&lt;resourceChangeEvent:ResourceChangeEventBehavior</span>
+        <span class="na">Resource=</span><span class="s">"{DynamicResource VariableFontSize}"</span>
+        <span class="na">ResourceChanged=</span><span class="s">"OnResourceChanged_VariableFontSize"</span> <span class="nt">/&gt;</span>
+    <span class="nt">&lt;/i:Interaction.Behaviors&gt;</span>
+    <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Left"</span> <span class="na">VerticalAlignment=</span><span class="s">"Top"</span> <span class="na">Content=</span><span class="s">"Change Resource"</span> <span class="na">Click=</span><span class="s">"Button_OnClick"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Window&gt;</span>
+</code></pre></div></div>
+
+<p>在点击按钮变更动态资源</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnResourceChanged_VariableFontSize</span><span class="p">(</span><span class="kt">object</span><span class="p">?</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ResourceChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Resources</span><span class="p">[</span><span class="s">"VariableFontSize"</span><span class="p">]</span> <span class="p">=</span> <span class="m">10d</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/fe0c808b/JeyaijikeneeWhejoniwairbu">github</a> 和 <a href="https://gitee.com/lindexi/lindexi_gd/tree/fe0c808b/JeyaijikeneeWhejoniwairbu">gitee</a> 欢迎下载执行，可以看到在点击按钮的时候进入 OnResourceChanged_VariableFontSize 方法</p>
+
+<p>使用这个方法可以快速调试是在哪个模块变更了动态资源，也可以通过本文的方法在某个动态资源变更的时候执行其他逻辑，如动画</p>
+
+<p>其实不使用 Behavior 库，使用附加属性也能实现相同的效果，但是使用 Behavior 库可以绑定到其他逻辑</p>
+
+<p>特别感谢 <a href="https://github.com/jeromerg">jeromerg</a> 大佬提供的方法，详细请看 <a href="https://github.com/jeromerg/WpfResourceChangeEvent">https://github.com/jeromerg/WpfResourceChangeEvent</a> 本文大部分代码都从这个仓库抄</p>
+
+:ET

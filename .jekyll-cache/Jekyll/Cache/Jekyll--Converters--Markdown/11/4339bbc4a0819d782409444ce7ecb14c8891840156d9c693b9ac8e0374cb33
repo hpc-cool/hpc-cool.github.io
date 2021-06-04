@@ -1,0 +1,48 @@
+I"<p>小伙伴是否了解在 UWP 和 WPF 触摸的滑动的顺滑是不相同的，一个原因是 UWP 使用了 Direct Manipulation 这个科技。这个科技需要采用 Pointer 消息的支持，本文告诉大家如何使用</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/1 8:32:34 -->
+
+<p>本文的代码都是从 <a href="http://blog.neteril.org/blog/2019/03/30/using-directmanipulation-with-wpf/">Using DirectManipulation with WPF</a> 这篇博客抄的</p>
+
+<p>可以运行的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/c628f0ba18094c2cfdc4d9dcfa8193107ee6de70/WileegowaqereLinallechaka">github</a> 欢迎小伙伴访问</p>
+
+<p>顶层的用法效果如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">readonly</span> <span class="n">PointerBasedManipulationHandler</span> <span class="n">_manipulationHandler</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">PointerBasedManipulationHandler</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>这里的 PointerBasedManipulationHandler 将是从 Pointer 消息拿到 Manipulation 的辅助方法，想要让这个方法跑起来需要在构造函数添加以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">PresentationSource</span><span class="p">.</span><span class="nf">AddSourceChangedHandler</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">OnSourceChanged</span><span class="p">);</span>
+
+            <span class="n">_manipulationHandler</span><span class="p">.</span><span class="n">ScaleUpdated</span> <span class="p">+=</span> <span class="n">ManipulationHandler_ScaleUpdated</span><span class="p">;</span>
+
+            <span class="n">SizeChanged</span> <span class="p">+=</span> <span class="n">MainWindow_SizeChanged</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 SizeChanged 初始化</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_SizeChanged</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">SizeChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_manipulationHandler</span><span class="p">.</span><span class="nf">InitializeDirectManipulation</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">NewSize</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以通过 ScaleUpdated 拿到缩放的参数，此时就完成了从 Pointer 拿到 Manipulation 进行缩放。而滑动效果我还没学会</p>
+
+<p>关于 PointerBasedManipulationHandler 的逻辑，看起来比较复杂，我就没有放在博客里面，请小伙伴在 <a href="https://github.com/lindexi/lindexi_gd/tree/c628f0ba18094c2cfdc4d9dcfa8193107ee6de70/WileegowaqereLinallechaka">github</a> 访问</p>
+
+<p>滑动的使用方法可以一个测试的程序让大家看到，实际上是需要小伙伴自己去玩一下，对比一下才能感知到这个技术的强大</p>
+
+<p>现在这个技术我还没在 .NET Core 3.1 下跑过，在 .NET Core 3.1 下运行将会抛出 UnauthorizedAccessException 运行失败</p>
+
+<p>这个技术需要开启 Pointer 消息，开启方法请看 <a href="https://blog.lindexi.com/post/win10-%E6%94%AF%E6%8C%81%E9%BB%98%E8%AE%A4%E6%8A%8A%E8%A7%A6%E6%91%B8%E6%8F%90%E5%8D%87-Pointer-%E6%B6%88%E6%81%AF.html">win10 支持默认把触摸提升 Pointer 消息</a></p>
+
+:ET

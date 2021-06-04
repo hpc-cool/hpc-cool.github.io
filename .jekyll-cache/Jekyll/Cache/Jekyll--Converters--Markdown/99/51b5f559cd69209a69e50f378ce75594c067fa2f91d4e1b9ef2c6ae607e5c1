@@ -1,0 +1,130 @@
+I"	8<p>本文告诉大家如何通过 DrawingContext 绘制图片，同时指定绘制图片在画布的某个区域和绘制出来的图片大小，如何裁剪图片</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/26 16:13:14 -->
+
+<!-- csdn -->
+
+<p>在 WPF 中可以使用 DrawingVisual 进行底层的绘制，底层的绘制的效率是比较高的，但是因为 WPF 的界面需要的是 UIElement 如果想要添加 DrawingVisual 还需要写一个帮助类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Element</span> <span class="p">:</span> <span class="n">UIElement</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">Element</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">ContainerVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ContainerVisual</span><span class="p">();</span>
+            <span class="nf">AddVisualChild</span><span class="p">(</span><span class="n">ContainerVisual</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="n">Visual</span> <span class="nf">GetVisualChild</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">ContainerVisual</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">ContainerVisual</span> <span class="n">ContainerVisual</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="kt">int</span> <span class="n">VisualChildrenCount</span> <span class="p">=&gt;</span> <span class="m">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>将这个 Element 加入到界面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">Element</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Element"</span><span class="p">&gt;&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">Element</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>然后在构造函数添加一张图片，这时需要拖动一张图片进入解决方案</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"pack://application:,,,/1.jpg"</span><span class="p">));</span>
+            <span class="kt">var</span> <span class="n">drawingVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DrawingVisual</span><span class="p">();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="n">DrawingContext</span> <span class="n">dc</span> <span class="p">=</span> <span class="n">drawingVisual</span><span class="p">.</span><span class="nf">RenderOpen</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">dc</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="n">Element</span><span class="p">.</span><span class="n">ContainerVisual</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">drawingVisual</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在可以看到图片在 100,100 的坐标画出，此时图片为被缩放到 50x50 也就是缩放画图片到指定的 Rect 上</p>
+
+<h2 id="裁剪图片">裁剪图片</h2>
+
+<p>如果只是需要画出被裁剪的图片，可以使用 CroppedBitmap 进行裁剪</p>
+
+<p>在 CroppedBitmap 的构造可以传入需要裁剪的图片和如何裁剪，裁剪是进行矩形的裁剪</p>
+
+<p>如下面代码是裁剪矩形从图片的左上角 50x50 范围</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">croppedBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CroppedBitmap</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">));</span>
+
+</code></pre></div></div>
+
+<p>将两个图片同时画出来</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"pack://application:,,,/1.jpg"</span><span class="p">));</span>
+            <span class="kt">var</span> <span class="n">drawingVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DrawingVisual</span><span class="p">();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="n">DrawingContext</span> <span class="n">dc</span> <span class="p">=</span> <span class="n">drawingVisual</span><span class="p">.</span><span class="nf">RenderOpen</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="c1">// 裁剪图片的 50x50 部分</span>
+                <span class="kt">var</span> <span class="n">croppedBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CroppedBitmap</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">));</span>
+                <span class="n">dc</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">croppedBitmap</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">));</span>
+                <span class="n">dc</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">500</span><span class="p">,</span> <span class="m">500</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="n">Element</span><span class="p">.</span><span class="n">ContainerVisual</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">drawingVisual</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 通过 DrawingContext DrawImage 绘制图片/WPF 通过 DrawingContext DrawImage 绘制图片0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018112616324815" alt="" /></p>
+
+<p>需要需要裁剪圆形，可以依靠 PushClip 裁剪</p>
+
+<p>下面代码裁剪一个圆形的范围，从圆心 30x30 开始裁剪半径为 20 的范围</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">dc</span><span class="p">.</span><span class="nf">PushClip</span><span class="p">(</span><span class="k">new</span> <span class="nf">EllipseGeometry</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">30</span><span class="p">,</span> <span class="m">30</span><span class="p">),</span> <span class="m">20</span><span class="p">,</span> <span class="m">20</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>使用裁剪之后的图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">bitmapImage</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BitmapImage</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"pack://application:,,,/1.jpg"</span><span class="p">));</span>
+            <span class="kt">var</span> <span class="n">drawingVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DrawingVisual</span><span class="p">();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="n">DrawingContext</span> <span class="n">dc</span> <span class="p">=</span> <span class="n">drawingVisual</span><span class="p">.</span><span class="nf">RenderOpen</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="n">dc</span><span class="p">.</span><span class="nf">PushClip</span><span class="p">(</span><span class="k">new</span> <span class="nf">EllipseGeometry</span><span class="p">(</span><span class="k">new</span> <span class="nf">Point</span><span class="p">(</span><span class="m">30</span><span class="p">,</span> <span class="m">30</span><span class="p">),</span> <span class="m">20</span><span class="p">,</span> <span class="m">20</span><span class="p">));</span>
+                <span class="c1">// 裁剪图片的 50x50 部分</span>
+                <span class="kt">var</span> <span class="n">croppedBitmap</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CroppedBitmap</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">));</span>
+                <span class="n">dc</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">croppedBitmap</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="m">10</span><span class="p">,</span> <span class="m">50</span><span class="p">,</span> <span class="m">50</span><span class="p">));</span>
+                <span class="n">dc</span><span class="p">.</span><span class="nf">Pop</span><span class="p">();</span>
+
+                <span class="n">dc</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">bitmapImage</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">100</span><span class="p">,</span> <span class="m">100</span><span class="p">,</span> <span class="m">500</span><span class="p">,</span> <span class="m">500</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="n">Element</span><span class="p">.</span><span class="n">ContainerVisual</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">drawingVisual</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 通过 DrawingContext DrawImage 绘制图片/WPF 通过 DrawingContext DrawImage 绘制图片1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018112616108315" alt="" /></p>
+
+:ET

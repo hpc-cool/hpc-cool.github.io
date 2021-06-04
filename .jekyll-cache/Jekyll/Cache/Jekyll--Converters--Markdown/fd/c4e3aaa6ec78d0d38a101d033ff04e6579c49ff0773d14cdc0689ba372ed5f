@@ -1,0 +1,147 @@
+I"�1<p>在手机打字总不是方便，于是就有了 Qpush 这个工具，通过这个工具可以快速从电脑到手机推送文字。
+但是这个工具没有找到客户端，于是我就给他写了一个库，通过这个库可以快速进行开发</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:58:57 -->
+
+<!-- 标签：csharp,wpf,dotnetcore,uwp,源代码 -->
+
+<p>先介绍<a href="https://qpush.me/zh_cn/">QPush 快推</a>这个从电脑到手机最方便的文字推送工具，可以在网页进行输入，在手机自动复制到剪贴板，相当于在手机使用电脑的输入法</p>
+
+<p>在使用之前需要手机安装客户端</p>
+
+<p>IOS ： https://itunes.apple.com/cn/app/qpush-kuai-tui-cong-dian-nao/id776837597</p>
+
+<p>安卓： 各个应用商店下载</p>
+
+<p>然后打开网页<a href="https://qpush.me/zh_cn/push/">网页推送</a>输入推名和推码然后输入内容就可以发送到手机</p>
+
+<!-- ![](image/dotnet 使用 Qpush 快速从电脑到手机推送文字/dotnet 使用 Qpush 快速从电脑到手机推送文字0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201911491643124" alt="" /></p>
+
+<p>但是这个工具有一个缺点就是没有 Windows 客户端，于是我就先做了一个轮子</p>
+
+<p><a href="https://www.nuget.org/packages/lindexi.src.Qpush/"><img src="https://img.shields.io/nuget/v/lindexi.src.Qpush.svg" alt="" /></a></p>
+
+<p>通过抓包知道了浏览器是如何发送，然后创建了一个 nuget 库，只需要通过下面的使用方法就可以使用这个工具</p>
+
+<p>创建一个空白项目，通过 Nuget 安装 lindexi.src.Qpush 注意项目需要使用 dotnet framework 4.5 以上和 dotnet core 2.1 以上</p>
+
+<!-- ![](image/dotnet 使用 Qpush 快速从电脑到手机推送文字/dotnet 使用 Qpush 快速从电脑到手机推送文字1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201911492418362" alt="" /></p>
+
+<p>安装之后就可以通过下面代码从电脑输入内容</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="k">using</span> <span class="nn">lindexi.src</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">qpush</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Qpush</span><span class="p">(</span><span class="s">"lindexi"</span><span class="p">,</span> <span class="m">221675.</span><span class="nf">ToString</span><span class="p">());</span>
+
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="k">await</span> <span class="n">qpush</span><span class="p">.</span><span class="nf">PushMessageAsync</span><span class="p">(</span><span class="s">"欢迎访问我博客 http://lindexi.gitee.io 里面有大量 UWP WPF 博客"</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">HttpRequestException</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 请自己处理网络异常</span>
+            <span class="p">}</span>
+        
+</code></pre></div></div>
+
+<p>现在调用这个代码，尝试在前台放一个按钮，在按钮点击的时候调用上面代码</p>
+
+<p>注意 请将上面的推名和推码修改为你自己的推名和推码</p>
+
+<!-- ![](image/dotnet 使用 Qpush 快速从电脑到手机推送文字/dotnet 使用 Qpush 快速从电脑到手机推送文字2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191149398892" alt="" /></p>
+
+<p>此时就可以看到手机收到信息</p>
+
+<!-- ![](image/dotnet 使用 Qpush 快速从电脑到手机推送文字/dotnet 使用 Qpush 快速从电脑到手机推送文字3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191149401883" alt="" /></p>
+
+<p>这个工具做起来难度很低，但是我做出了一个 dll 库，虽然这个库里面就只有一个类</p>
+
+<p>于是根据这个库做出了一个 UWP 的应用，可以在应用商店搜 Qpush 下载，或者<a href="https://www.microsoft.com/store/productId/9MTV8FSB7HX9">点击</a>下载</p>
+
+<!-- ![](image/dotnet 使用 Qpush 快速从电脑到手机推送文字/dotnet 使用 Qpush 快速从电脑到手机推送文字4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201912916184731" alt="" /></p>
+
+<p>如果想要看 UWP 的源代码，请到 <a href="https://github.com/lindexi/UWP/tree/fc9a10c6db9ec3f4f9396134ff4e4246c6cccab9/uwp/src/CipuPursur">github</a> 如果发现代码有哪里不清真，欢迎联系</p>
+
+<p>如果觉得直接引用这个库会输出一个 dll 希望放在自己的程序里面，不需要手动去复制下面的源代码，只需要修改 Nuget 包为 <a href="https://www.nuget.org/packages/lindexi.src.Qpush.Source">lindexi.src.Qpush.Source</a> 就可以。</p>
+
+<p>这里的 <a href="https://www.nuget.org/packages/lindexi.src.Qpush.Source">lindexi.src.Qpush.Source</a> 是一个源代码包，使用 <a href="https://github.com/dotnet-campus/SourceYard">SourceYard</a> 做的源代码，安装这个库和复制下面的源代码到自己的项目里面差不多。但是要安装 lindexi.src.Qpush.Source 需要使用 <a href="https://blog.lindexi.com/post/%E4%BB%8E%E4%BB%A5%E5%89%8D%E7%9A%84%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F%E8%BF%81%E7%A7%BB%E5%88%B0-VS2017-%E6%96%B0%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F.html">VS2017 新项目格式</a>才可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Net.Http</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Text</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Threading.Tasks</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">lindexi.src</span>
+<span class="p">{</span>
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// QPush 快推 从电脑到手机最方便的文字推送工具</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Qpush</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">Qpush</span><span class="p">(</span><span class="kt">string</span> <span class="n">name</span><span class="p">,</span> <span class="kt">string</span> <span class="n">code</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">name</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">name</span><span class="p">));</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">code</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">code</span><span class="p">));</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="s">"name 不能为空"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">code</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="s">"code 不能为空"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">Name</span> <span class="p">=</span> <span class="n">name</span><span class="p">;</span>
+            <span class="n">Code</span> <span class="p">=</span> <span class="n">code</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 推名</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 推码</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Code</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 推送信息</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="nf">PushMessageAsync</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">string</span> <span class="n">url</span> <span class="p">=</span> <span class="s">"https://qpush.me/pusher/push_site/"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">httpClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+
+            <span class="n">httpClient</span><span class="p">.</span><span class="n">DefaultRequestHeaders</span><span class="p">.</span><span class="n">UserAgent</span><span class="p">.</span><span class="nf">ParseAdd</span><span class="p">(</span>
+                <span class="s">"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"</span><span class="p">);</span>
+
+            <span class="n">HttpContent</span> <span class="n">content</span> <span class="p">=</span>
+                <span class="k">new</span> <span class="nf">StringContent</span><span class="p">(</span>
+                    <span class="s">$"name=</span><span class="p">{</span><span class="n">Uri</span><span class="p">.</span><span class="nf">EscapeUriString</span><span class="p">(</span><span class="n">Name</span><span class="p">)}</span><span class="s">&amp;code=</span><span class="p">{</span><span class="n">Uri</span><span class="p">.</span><span class="nf">EscapeUriString</span><span class="p">(</span><span class="n">Code</span><span class="p">)}</span><span class="s">&amp;sig=&amp;cache=false&amp;msg%5Btext%5D=</span><span class="p">{</span><span class="n">Uri</span><span class="p">.</span><span class="nf">EscapeUriString</span><span class="p">(</span><span class="n">str</span><span class="p">)}</span><span class="s">"</span><span class="p">,</span>
+                    <span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">,</span> <span class="s">"application/x-www-form-urlencoded"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">code</span> <span class="p">=</span> <span class="k">await</span> <span class="p">(</span><span class="k">await</span> <span class="n">httpClient</span><span class="p">.</span><span class="nf">PostAsync</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">)).</span><span class="n">Content</span><span class="p">.</span><span class="nf">ReadAsStringAsync</span><span class="p">();</span>
+
+            <span class="k">return</span> <span class="n">code</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+:ET

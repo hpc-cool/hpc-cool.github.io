@@ -1,0 +1,139 @@
+I"�C<p>【】
+本来在我一个白天晚上按钮，使用图片，图片不清晰
+<img src="http://img.blog.csdn.net/20160729180053912" alt="这里写图片描述" />
+这些图片在http://www.zcool.com.cn/，不知道是不是不能直接用
+我们需要一个看起来不会模糊，因为矢量图，所以我们就使用svg，其实png也是，但是他播放模糊。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/2 12:57:38 -->
+
+<div id="toc"></div>
+<!-- csdn -->
+
+<p>lindexi</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="utf-8"?&gt;</span>
+<span class="c">&lt;!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0) --&gt;</span>
+<span class="cp">&lt;!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd"&gt;</span>
+<span class="nt">&lt;svg</span> <span class="na">version=</span><span class="s">"1.1"</span> <span class="na">id=</span><span class="s">"Layer_1"</span> <span class="na">xmlns=</span><span class="s">"http://www.w3.org/2000/svg"</span> <span class="na">xmlns:xlink=</span><span class="s">"http://www.w3.org/1999/xlink"</span> <span class="na">x=</span><span class="s">"0px"</span> <span class="na">y=</span><span class="s">"0px"</span>
+ <span class="na">width=</span><span class="s">"64px"</span> <span class="na">height=</span><span class="s">"64px"</span> <span class="na">viewBox=</span><span class="s">"0 0 64 64"</span> <span class="na">enable-background=</span><span class="s">"new 0 0 64 64"</span> <span class="na">xml:space=</span><span class="s">"preserve"</span><span class="nt">&gt;</span>
+<span class="nt">&lt;g&gt;</span>
+ <span class="nt">&lt;circle</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">cx=</span><span class="s">"32"</span> <span class="na">cy=</span><span class="s">"32"</span> <span class="na">r=</span><span class="s">"16"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"32"</span> <span class="na">y1=</span><span class="s">"10"</span> <span class="na">x2=</span><span class="s">"32"</span> <span class="na">y2=</span><span class="s">"0"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"32"</span> <span class="na">y1=</span><span class="s">"64"</span> <span class="na">x2=</span><span class="s">"32"</span> <span class="na">y2=</span><span class="s">"54"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"54"</span> <span class="na">y1=</span><span class="s">"32"</span> <span class="na">x2=</span><span class="s">"64"</span> <span class="na">y2=</span><span class="s">"32"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"0"</span> <span class="na">y1=</span><span class="s">"32"</span> <span class="na">x2=</span><span class="s">"10"</span> <span class="na">y2=</span><span class="s">"32"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"48"</span> <span class="na">y1=</span><span class="s">"16"</span> <span class="na">x2=</span><span class="s">"53"</span> <span class="na">y2=</span><span class="s">"11"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"11"</span> <span class="na">y1=</span><span class="s">"53"</span> <span class="na">x2=</span><span class="s">"16"</span> <span class="na">y2=</span><span class="s">"48"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"48"</span> <span class="na">y1=</span><span class="s">"48"</span> <span class="na">x2=</span><span class="s">"53"</span> <span class="na">y2=</span><span class="s">"53"</span><span class="nt">/&gt;</span>
+ <span class="nt">&lt;line</span> <span class="na">fill=</span><span class="s">"none"</span> <span class="na">stroke=</span><span class="s">"#000000"</span> <span class="na">stroke-width=</span><span class="s">"2"</span> <span class="na">stroke-miterlimit=</span><span class="s">"10"</span> <span class="na">x1=</span><span class="s">"11"</span> <span class="na">y1=</span><span class="s">"11"</span> <span class="na">x2=</span><span class="s">"16"</span> <span class="na">y2=</span><span class="s">"16"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/g&gt;</span>
+<span class="nt">&lt;/svg&gt;</span>
+
+</code></pre></div></div>
+
+<p>我们开始使用Image，但是没有显示</p>
+
+<p>于是网上有一个库Mntone.SvgForXaml，https://github.com/mntone/SvgForXaml，我们用Nuget</p>
+
+<p><img src="http://img.blog.csdn.net/20160729185702468" alt="这里写图片描述" /></p>
+
+<p>安装Mntone.SvgForXaml，安装win2d 1.11.0</p>
+
+<p>我们上面那个代码就是svg，我们使用ViewModel绑定，绑定内容是<code class="language-plaintext highlighter-rouge">SvgDocument</code></p>
+
+<p>自然我们需要写一个字符串去转换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">private</span> <span class="k">void</span> <span class="nf">Svgimage</span><span class="p">()</span>
+ <span class="p">{</span>
+ <span class="kt">string</span> <span class="n">str</span> <span class="p">=</span> <span class="s">@"&lt;?xml version=""1.0"" encoding=""utf-8""?&gt;
+&lt;!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0) --&gt;
+&lt;!DOCTYPE svg PUBLIC ""-//W3C//DTD SVG 1.1//EN"" ""http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd""&gt;
+&lt;svg version=""1.1"" id=""Layer_1"" xmlns=""http://www.w3.org/2000/svg"" xmlns:xlink=""http://www.w3.org/1999/xlink"" x=""0px"" y=""0px""
+ width=""64px"" height=""64px"" viewBox=""0 0 64 64"" enable-background=""new 0 0 64 64"" xml:space=""preserve""&gt;
+&lt;g&gt;
+ &lt;circle fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" cx=""32"" cy=""32"" r=""16""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""32"" y1=""10"" x2=""32"" y2=""0""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""32"" y1=""64"" x2=""32"" y2=""54""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""54"" y1=""32"" x2=""64"" y2=""32""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""0"" y1=""32"" x2=""10"" y2=""32""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""48"" y1=""16"" x2=""53"" y2=""11""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""11"" y1=""53"" x2=""16"" y2=""48""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""48"" y1=""48"" x2=""53"" y2=""53""/&gt;
+ &lt;line fill=""none"" stroke=""#000000"" stroke-width=""2"" stroke-miterlimit=""10"" x1=""11"" y1=""11"" x2=""16"" y2=""16""/&gt;
+&lt;/g&gt;
+&lt;/svg&gt;
+"</span><span class="p">;</span>
+ <span class="n">Svg</span><span class="p">=</span><span class="n">SvgDocument</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后我们在我们的界面</p>
+
+<p>先使用命名<code class="language-plaintext highlighter-rouge">Mntone.SvgForXaml.UI.Xaml</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xmlns</span><span class="p">:</span><span class="n">svg</span><span class="p">=</span><span class="s">"using:Mntone.SvgForXaml.UI.Xaml"</span>
+</code></pre></div></div>
+
+<p>然后绑定</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nt">&lt;Grid&gt;</span>
+ <span class="nt">&lt;svg:SvgImage</span> <span class="na">x:Name=</span><span class="s">"Svg"</span> <span class="na">Content=</span><span class="s">"{x:Bind View.Svg,Mode=OneWay}"</span><span class="nt">&gt;&lt;/svg:SvgImage&gt;</span>
+ <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>当然我们也可以放在我们的解决方案，假如我们的图片 Assets/weather_sun.svg</p>
+
+<p>那么我们可以给我们的svgImage一个<code class="language-plaintext highlighter-rouge">x:Name="Svg"</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">file</span> <span class="p">=</span> <span class="k">await</span> <span class="n">StorageFile</span><span class="p">.</span><span class="nf">GetFileFromApplicationUriAsync</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="s">"ms-appx:///Assets/weather_sun.svg"</span><span class="p">));</span>
+
+<span class="k">await</span> <span class="n">Svg</span><span class="p">.</span><span class="nf">LoadFileAsync</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>原文：因为他会占用内存，我们需要手动把它释放</p>
+
+<p>我们写在我们页面关掉，其实这个并不是关掉，只是我们的页面不显示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnNavigatingFrom</span><span class="p">(</span><span class="n">NavigatingCancelEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">Svg</span><span class="p">.</span><span class="nf">SafeUnload</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们可以简单把svg转换为我们之前的图片，JPG，png</p>
+
+<p>先让用户选择保存的文件，然后选择.jpg或.png</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">picker</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileSavePicker</span><span class="p">();</span>
+ <span class="n">picker</span><span class="p">.</span><span class="n">SuggestedStartLocation</span> <span class="p">=</span> <span class="n">PickerLocationId</span><span class="p">.</span><span class="n">PicturesLibrary</span><span class="p">;</span>
+ <span class="n">picker</span><span class="p">.</span><span class="n">DefaultFileExtension</span> <span class="p">=</span> <span class="s">".png"</span><span class="p">;</span>
+ <span class="n">picker</span><span class="p">.</span><span class="n">FileTypeChoices</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">IList</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;&gt;(</span><span class="s">"Bitmap image"</span><span class="p">,</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="s">".bmp"</span> <span class="p">}.</span><span class="nf">ToList</span><span class="p">()));</span>
+ <span class="n">picker</span><span class="p">.</span><span class="n">FileTypeChoices</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">IList</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;&gt;(</span><span class="s">"Png image"</span><span class="p">,</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="s">".png"</span> <span class="p">}.</span><span class="nf">ToList</span><span class="p">()));</span>
+ <span class="n">picker</span><span class="p">.</span><span class="n">FileTypeChoices</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">IList</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;&gt;(</span><span class="s">"Jpeg image"</span><span class="p">,</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="s">".jpg"</span><span class="p">,</span> <span class="s">".jpe"</span><span class="p">,</span> <span class="s">".jpeg"</span> <span class="p">}.</span><span class="nf">ToList</span><span class="p">()));</span>
+ <span class="n">picker</span><span class="p">.</span><span class="n">FileTypeChoices</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="n">KeyValuePair</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span> <span class="n">IList</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;&gt;(</span><span class="s">"Gif image"</span><span class="p">,</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span> <span class="s">".gif"</span> <span class="p">}.</span><span class="nf">ToList</span><span class="p">()));</span>
+
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">SvgImageRendererFileFormat format;</code>可以<code class="language-plaintext highlighter-rouge">SvgImageRendererFileFormat.Bitmap</code>或者什么自己选</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">await</span> <span class="n">SvgImageRenderer</span><span class="p">.</span><span class="nf">RendererImageAsync</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="k">new</span> <span class="nf">SvgImageRendererSettings</span><span class="p">()</span>
+<span class="p">{</span>
+ <span class="n">Document</span> <span class="p">=</span> <span class="n">content</span><span class="p">,</span>
+ <span class="n">Format</span> <span class="p">=</span> <span class="n">format</span><span class="p">,</span>
+ <span class="n">Scaling</span> <span class="p">=</span> <span class="m">0.1f</span><span class="p">,</span>
+ <span class="n">Quality</span> <span class="p">=</span> <span class="m">0.95f</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160731160141698" alt="这里写图片描述" /></p>
+
+<p>参见：http://igrali.com/2015/12/24/how-to-render-svg-in-xaml-windows-10-uwp/</p>
+
+<p>代码：https://github.com/lindexi/UWP/tree/master/uwp/src/ScalableVectorGraphic</p>
+
+<p>因为已经有人写了，和我一样，驸马说他用过Svg to Xaml 做，我求请教了驸马大神，在github找到库，好像简单。</p>
+
+:ET

@@ -1,0 +1,52 @@
+I"�<p>在 WPF 没有提供默认的判断 LinearGradientBrush 相等的方法，本文给大家一个可以直接在项目使用的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/7/22 21:26:22 -->
+
+<!-- csdn -->
+
+<p>可以使用下面代码判断两个 LinearGradientBrush 是否相等</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">AreEquals</span><span class="p">(</span><span class="n">LinearGradientBrush</span> <span class="n">linearGradientBrush1</span><span class="p">,</span>
+            <span class="n">LinearGradientBrush</span> <span class="n">linearGradientBrush2</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">ColorInterpolationMode</span> <span class="p">!=</span>
+                <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">ColorInterpolationMode</span>
+                <span class="p">||</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">EndPoint</span> <span class="p">!=</span>
+                <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">EndPoint</span>
+                <span class="p">||</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">MappingMode</span> <span class="p">!=</span>
+                <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">MappingMode</span>
+                <span class="c1">// ReSharper disable once CompareOfFloatsByEqualityOperator</span>
+                <span class="p">||</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">Opacity</span> <span class="p">!=</span>
+                <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">Opacity</span>
+                <span class="p">||</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">StartPoint</span> <span class="p">!=</span>
+                <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">StartPoint</span>
+                <span class="p">||</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">SpreadMethod</span> <span class="p">!=</span>
+                <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">SpreadMethod</span>
+                <span class="p">||</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">GradientStops</span><span class="p">.</span><span class="n">Count</span> <span class="p">!=</span>
+                <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">GradientStops</span><span class="p">.</span><span class="n">Count</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">GradientStops</span><span class="p">.</span><span class="n">Count</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">GradientStops</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Color</span> <span class="p">!=</span>
+                    <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">GradientStops</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Color</span>
+                    <span class="c1">// ReSharper disable once CompareOfFloatsByEqualityOperator</span>
+                    <span class="p">||</span> <span class="n">linearGradientBrush1</span><span class="p">.</span><span class="n">GradientStops</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Offset</span> <span class="p">!=</span>
+                    <span class="n">linearGradientBrush2</span><span class="p">.</span><span class="n">GradientStops</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">Offset</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>上面代码可以在项目使用</p>
+
+:ET

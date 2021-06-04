@@ -1,0 +1,54 @@
+I"�<p>在 WPF 中可以通过 DataTemplate 给任意的类型重写这个类型在界面显示的数据模版，我想要让小伙伴的界面都有相同的样式，此时我就尝试重写字符串的数据模版，但是我就踩到了一个坑</p>
+
+<!--more-->
+
+<!-- CreateTime:4/10/2020 8:27:42 AM -->
+
+<p>重写默认样式的时候需要小心，我更多是建议小伙伴写样式，然后通过 Style 获取静态资源，而不是重写默认样式。补充一下细节，什么是默认样式？在 WPF 中，如果没有给对应的资源一个 Key 的值，那么将会做到某个指定类型的默认样式</p>
+
+<p>将重写默认样式替换为重写默认数据模版也是相同的</p>
+
+<p>对比下面两句代码就知道什么是默认数据模版</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">&lt;!-- 下面是默认数据模版，对所有的字符串类型生效 --&gt;</span>
+<span class="nt">&lt;DataTemplate</span> <span class="na">DataType=</span><span class="s">"{x:Type system:String}"</span><span class="nt">&gt;&lt;Grid/&gt;&lt;/DataTemplate&gt;</span>
+
+<span class="c">&lt;!-- 下面是数据模版静态资源，需要通过 key 获取 --&gt;</span>
+<span class="nt">&lt;DataTemplate</span> <span class="na">x:Key=</span><span class="s">"DataTemplate"</span> <span class="na">DataType=</span><span class="s">"{x:Type system:String}"</span><span class="nt">&gt;&lt;Grid/&gt;&lt;/DataTemplate&gt;</span>
+</code></pre></div></div>
+
+<p>为什么说不要重写默认的字符串类型的数据模版？因为存在以下的坑，尝试添加下面的代码，运行代码就能看到下图效果</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;StackPanel&gt;</span>
+            <span class="nt">&lt;StackPanel.Resources&gt;</span>
+                <span class="nt">&lt;ResourceDictionary&gt;</span>
+                    <span class="nt">&lt;DataTemplate</span> <span class="na">DataType=</span><span class="s">"{x:Type system:String}"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding}"</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/DataTemplate&gt;</span>
+                <span class="nt">&lt;/ResourceDictionary&gt;</span>
+            <span class="nt">&lt;/StackPanel.Resources&gt;</span>
+            <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">FontWeight=</span><span class="s">"Bold"</span> <span class="na">Text=</span><span class="s">"重写模版"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;Label&gt;</span>Normal Text<span class="nt">&lt;/Label&gt;</span>
+            <span class="nt">&lt;Label&gt;</span>Access _Text<span class="nt">&lt;/Label&gt;</span>
+            <span class="nt">&lt;Label</span> <span class="na">ContentStringFormat=</span><span class="s">"Formatted {0}"</span><span class="nt">&gt;</span>Text<span class="nt">&lt;/Label&gt;</span>
+            <span class="nt">&lt;Label</span> <span class="na">ContentStringFormat=</span><span class="s">"Formatted Access {0}"</span><span class="nt">&gt;</span>_Text<span class="nt">&lt;/Label&gt;</span>
+        <span class="nt">&lt;/StackPanel&gt;</span>
+</code></pre></div></div>
+
+<p>我在<a href="https://github.com/lindexi/lindexi_gd/tree/cd40375e63911a052d33a4d5160b4fbd4e103b85/BallkowhejallColalljaygairwair">代码</a>中实际上是写了对比的两列，其中一列使用了默认数据模版，另一列没有，运行效果如下</p>
+
+<!-- ![](image/WPF 为何不要重写默认 string 字符串的 DataTemplate 数据模版/WPF 为何不要重写默认 string 字符串的 DataTemplate 数据模版0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020410834164208.jpg" alt="" /></p>
+
+<p>上面代码通过 <code class="language-plaintext highlighter-rouge">&lt;DataTemplate DataType="{x:Type system:String}"&gt;</code> 的代码重写了默认的字符串样式，注意 <code class="language-plaintext highlighter-rouge">system:String</code> 在使用之前需要引用命名空间 <code class="language-plaintext highlighter-rouge">xmlns:system="clr-namespace:System;assembly=mscorlib"</code> 在 WPF 的资源定义里面，将会影响这个容器里面的所有元素。也就是这个容器里面的所有元素的默认的字符串的数据模版就是资源定义的内容，而这个定义会挖以下的坑</p>
+
+<p>这个重写的数据模版将不会转换下划线的快捷键定义，在 WPF 中，在 Button 和 Label 等控件里面，如果在某个字符前面添加下划线，那么表示按下 alt 键的时候，对应的快捷键出发的元素，这是 Windows 的通用菜单快捷键定义。而重写的数据模版里面没有处理下划线转换快捷键，所以这个功能就没有了</p>
+
+<p>在阅读 WPF 的开源的<a href="https://github.com/dotnet/wpf/blob/f033d043f3783d01b200456cadefc2d590eb5afc/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Controls/ContentPresenter.cs#L886">代码</a> 可以知道，在 WPF 中的 <a href="https://github.com/dotnet/wpf/blob/f033d043f3783d01b200456cadefc2d590eb5afc/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Controls/ContentPresenter.cs#L886">ContentPresenter.cs</a> 使用了 <a href="https://github.com/dotnet/wpf/blob/f033d043f3783d01b200456cadefc2d590eb5afc/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Controls/ContentPresenter.cs#L559">AccessTextContentTemplate</a> 和 <a href="https://github.com/dotnet/wpf/blob/f033d043f3783d01b200456cadefc2d590eb5afc/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Controls/ContentPresenter.cs#L564">StringContentTemplate</a> 和 <a href="https://github.com/dotnet/wpf/blob/f033d043f3783d01b200456cadefc2d590eb5afc/src/Microsoft.DotNet.Wpf/src/PresentationFramework/System/Windows/Controls/ContentPresenter.cs#L727">FormattingStringContentTemplate</a> 等值用来处理不同的数据，重写数据模版将会干掉上面的功能</p>
+
+<p>这也就是 ContentStringFormat 在重写字符串数据模版被干掉的原因</p>
+
+<p>上面代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/cd40375e63911a052d33a4d5160b4fbd4e103b85/BallkowhejallColalljaygairwair">github</a> 欢迎小伙伴访问</p>
+
+:ET

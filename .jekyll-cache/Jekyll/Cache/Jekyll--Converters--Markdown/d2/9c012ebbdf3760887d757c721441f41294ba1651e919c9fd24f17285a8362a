@@ -1,0 +1,609 @@
+I"s�<p>Windows的XAML UI框架提供了很多控件，支持用户界面开发库。其中一些有可视化，一些布局。
+一些控件例子：<a href="https://github.com/Microsoft/Windows-universal-samples/tree/master/Samples/XamlUIBasics">https://github.com/Microsoft/Windows-universal-samples/tree/master/Samples/XamlUIBasics</a></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:52 -->
+
+<div id="toc"></div>
+
+<p>我现在学了一下，给微软做一个中文版的，基本代码都是从微软那里复制，除了注释。</p>
+
+<p>我们先学微软做一个简单的 frame ，新建 Page ，
+里面放title和跳转页</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">page</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">page</span><span class="p">()</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 跳转页</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">Type</span> <span class="n">navigate</span>
+        <span class="p">{</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_navigate</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">_navigate</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 页面名</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">title</span>
+        <span class="p">{</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="n">_title</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">_title</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">Type</span> <span class="n">_navigate</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">_title</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们需要把所有页放到一个类，本来这个类可以不弄，直接放 Page 使用索引，但是最后我还是想给宝资通打广告，于是弄了一个类，本来应该叫 page 管理器，我叫 baozitong ，他只有输入 title 返回 type ，因为导航只能使用 type 不能给对象</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">public</span> <span class="k">static</span> <span class="n">Type</span> <span class="nf">page</span><span class="p">(</span><span class="kt">string</span> <span class="n">title</span><span class="p">)</span>
+       <span class="p">{</span>
+           <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">_page</span><span class="p">)</span>
+           <span class="p">{</span>
+               <span class="k">if</span> <span class="p">(</span><span class="n">temp</span><span class="p">.</span><span class="n">title</span> <span class="p">==</span> <span class="n">title</span><span class="p">)</span>
+               <span class="p">{</span>
+                   <span class="k">return</span> <span class="n">temp</span><span class="p">.</span><span class="n">navigate</span><span class="p">;</span>
+               <span class="p">}</span>
+           <span class="p">}</span>
+           <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+       <span class="p">}</span>
+       <span class="k">public</span> <span class="k">static</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">page</span><span class="p">&gt;</span> <span class="n">_page</span>
+       <span class="p">{</span>
+           <span class="k">set</span><span class="p">;</span>
+           <span class="k">get</span><span class="p">;</span>
+       <span class="p">}=</span><span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">page</span><span class="p">&gt;()</span>
+       <span class="p">{</span>
+           <span class="k">new</span> <span class="nf">page</span><span class="p">()</span>
+           <span class="p">{</span>
+               <span class="n">title</span> <span class="p">=</span> <span class="s">"appbar"</span><span class="p">,</span>
+               <span class="n">navigate</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">appbar</span><span class="p">)</span>
+           <span class="p">}</span>
+       <span class="p">};</span>
+</code></pre></div></div>
+
+<p>每次添加<code class="language-plaintext highlighter-rouge">page</code>可以在<code class="language-plaintext highlighter-rouge">baozitong._page</code> 写添加的页面</p>
+
+<p>接着请看界面 splitview</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ToggleButton</span> <span class="na">Grid.Row=</span><span class="s">"0"</span> <span class="na">IsChecked=</span><span class="s">"{Binding ElementName=split,Path=IsPaneOpen,Mode=TwoWay}"</span> <span class="na">FontFamily=</span><span class="s">"Segoe MDL2 Assets"</span> <span class="na">Content=</span><span class="s">"&amp;#xE700;"</span><span class="nt">&gt;&lt;/ToggleButton&gt;</span>
+        <span class="nt">&lt;SplitView</span> <span class="na">x:Name=</span><span class="s">"split"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">IsPaneOpen=</span><span class="s">"True"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;SplitView.Pane&gt;</span>
+                <span class="nt">&lt;ListView</span> <span class="na">ItemsSource=</span><span class="s">"{x:Bind _page}"</span> <span class="na">SelectionChanged=</span><span class="s">"nagivate"</span><span class="nt">&gt;</span>
+                   <span class="nt">&lt;ListView.ItemTemplate&gt;</span>
+                       <span class="nt">&lt;DataTemplate&gt;</span>
+                           <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding title}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                       <span class="nt">&lt;/DataTemplate&gt;</span>
+                   <span class="nt">&lt;/ListView.ItemTemplate&gt;</span>
+                <span class="nt">&lt;/ListView&gt;</span>
+            <span class="nt">&lt;/SplitView.Pane&gt;</span>
+                <span class="nt">&lt;Frame</span> <span class="na">x:Name=</span><span class="s">"frame"</span> <span class="nt">&gt;&lt;/Frame&gt;</span>
+        <span class="nt">&lt;/SplitView&gt;</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">nagivate</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">SelectionChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//跳转navigate</span>
+            <span class="n">frame</span><span class="p">.</span><span class="nf">Navigate</span><span class="p">(((</span><span class="n">sender</span> <span class="k">as</span> <span class="n">ListView</span><span class="p">).</span><span class="n">SelectedItem</span> <span class="k">as</span> <span class="n">page</span><span class="p">).</span><span class="n">navigate</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="appbars-and-commands">Appbars and commands</h2>
+<h3 id="app-bar">App bar</h3>
+<p>用于显示应用程序特定命令的工具栏。</p>
+<h3 id="app-bar-button">App bar button</h3>
+
+<p>使用app bar风格按钮，下面来写一个简单的按钮</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;AppBarButton</span> <span class="na">Label=</span><span class="s">"按钮"</span> <span class="na">HorizontalContentAlignment=</span><span class="s">"Center"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/16-3-28/82963283.jpg" alt="" /></p>
+
+<p>我们可以加上内容，这里不可以添加 Content 但是可以添加图标</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;AppBarButton</span> <span class="na">Label=</span><span class="s">"按钮"</span> <span class="na">HorizontalContentAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;Grid</span> <span class="na">Width=</span><span class="s">"48"</span> <span class="na">Height=</span><span class="s">"48"</span> <span class="na">Margin=</span><span class="s">"0,-8,0,-4"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;SymbolIcon</span> <span class="na">Symbol=</span><span class="s">"Memo"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"内容"</span> <span class="na">Margin=</span><span class="s">"0,2,0,0"</span> <span class="na">Style=</span><span class="s">"{StaticResource CaptionTextBlockStyle}"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;/Grid&gt;</span>
+            <span class="nt">&lt;/AppBarButton&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/16-3-28/51594850.jpg" alt="" /></p>
+
+<p>我们可以在按钮加浮出，请看代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;AppBarButton</span> <span class="na">Icon=</span><span class="s">"OpenWith"</span> <span class="na">Label=</span><span class="s">"浮出"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;AppBarButton.Flyout&gt;</span>
+                    <span class="nt">&lt;MenuFlyout&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"林德熙"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"csdn"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutSeparator&gt;&lt;/MenuFlyoutSeparator&gt;</span>
+                    <span class="nt">&lt;/MenuFlyout&gt;</span>
+                <span class="nt">&lt;/AppBarButton.Flyout&gt;</span>
+            <span class="nt">&lt;/AppBarButton&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/16-3-28/93606598.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/16-3-28/29257708.jpg" alt="" /></p>
+
+<h3 id="app-bar-separator">App bar separator</h3>
+
+<p>命令栏中的命令组。</p>
+
+<p>如果我们有很多按钮，我们可以使用下面的代码把按钮分开</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;AppBarButton</span> <span class="na">Content=</span><span class="s">"林德熙"</span><span class="nt">&gt;&lt;/AppBarButton&gt;</span>
+            <span class="nt">&lt;AppBarSeparator&gt;&lt;/AppBarSeparator&gt;</span>
+            <span class="nt">&lt;AppBarButton</span> <span class="na">Content=</span><span class="s">"csdn"</span><span class="nt">&gt;&lt;/AppBarButton&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/16-3-28/87280713.jpg" alt="" /></p>
+
+<h3 id="app-bar-toggle-button">App bar toggle button</h3>
+
+<p>开关命名命令栏</p>
+
+<h3 id="command-bar">Command bar</h3>
+
+<p>一种专门处理命令按钮栏按钮</p>
+
+<p>我们把刚才的按钮放在<code class="language-plaintext highlighter-rouge">&lt;CommandBar&gt;</code></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;CommandBar&gt;</span>
+            <span class="nt">&lt;AppBarButton</span> <span class="na">Label=</span><span class="s">"按钮"</span> <span class="na">HorizontalContentAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;Grid</span> <span class="na">Width=</span><span class="s">"48"</span> <span class="na">Height=</span><span class="s">"48"</span> <span class="na">Margin=</span><span class="s">"0,-8,0,-4"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;SymbolIcon</span> <span class="na">Symbol=</span><span class="s">"Memo"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"内容"</span> <span class="na">Margin=</span><span class="s">"0,2,0,0"</span> <span class="na">Style=</span><span class="s">"{StaticResource CaptionTextBlockStyle}"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;/Grid&gt;</span>
+            <span class="nt">&lt;/AppBarButton&gt;</span>
+            
+            <span class="nt">&lt;AppBarButton</span> <span class="na">Icon=</span><span class="s">"OpenWith"</span> <span class="na">Label=</span><span class="s">"浮出"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;AppBarButton.Flyout&gt;</span>
+                    <span class="nt">&lt;MenuFlyout&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"林德熙"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"csdn"</span><span class="nt">/&gt;</span><span class="c">&lt;!--博客没有授权红黑转载--&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutSeparator&gt;&lt;/MenuFlyoutSeparator&gt;</span>
+                    <span class="nt">&lt;/MenuFlyout&gt;</span>
+                <span class="nt">&lt;/AppBarButton.Flyout&gt;</span>
+            <span class="nt">&lt;/AppBarButton&gt;</span>
+        <span class="nt">&lt;/CommandBar&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/16-3-28/32449489.jpg" alt="" /></p>
+
+<p>我们也看到最后的按钮，那些用户不是很容易就需要使用的，但是还是有用的按钮就可以放在这里，请看下面</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;CommandBar.SecondaryCommands&gt;</span>
+                <span class="nt">&lt;AppBarButton</span> <span class="na">Label=</span><span class="s">"没有授权"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;AppBarButton</span> <span class="na">Label=</span><span class="s">"红黑转载"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;/CommandBar.SecondaryCommands&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/16-3-28/15333552.jpg" alt="" /></p>
+
+<h2 id="buttons">Buttons</h2>
+
+<h3 id="button">Button</h3>
+
+<p>响应用户输入和点击事件。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"72,163,0,0"</span> <span class="na">Content=</span><span class="s">"请勿转载"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/16-3-28/84807449.jpg" alt="" /></p>
+
+<p>按钮点击可以使用<code class="language-plaintext highlighter-rouge">X:Bind</code>，而不是使用命令，这个方法可以绑定 ViewModel 的方法，方法可以添加参数，也可以不添加。</p>
+
+<h3 id="hyperlink">Hyperlink</h3>
+
+<p>超链接</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;TextBlock</span> <span class="na">HorizontalAlignment=</span><span class="s">"Left"</span> <span class="na">Margin=</span><span class="s">"72,163,0,0"</span> <span class="na">TextWrapping=</span><span class="s">"Wrap"</span>  <span class="na">VerticalAlignment=</span><span class="s">"Top"</span><span class="nt">&gt;</span>
+           <span class="nt">&lt;Hyperlink</span> <span class="na">NavigateUri=</span><span class="s">"http://blog.csdn.net/lindexi_gd"</span><span class="nt">&gt;</span> 博客发在csdn <span class="nt">&lt;/Hyperlink&gt;</span>，没有授权红黑转载，没有授权推酷转载
+        <span class="nt">&lt;/TextBlock&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328093500345" alt="这里写图片描述" /></p>
+
+<h3 id="repeat-button">Repeat button</h3>
+
+<p>用户点击不停响应。</p>
+
+<h2 id="collectiondata-controls">Collection/data controls</h2>
+
+<h3 id="flip-view">Flip view</h3>
+
+<p>幻灯片播放</p>
+
+<p>现在这个类不是很好，暂时也没有发现比较好的做法，因为他无法在播放所有的页之后，回到第一页。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="nt">&lt;FlipView&gt;</span>
+            <span class="nt">&lt;Image</span> <span class="na">Source=</span><span class="s">"Assets/QQ截图20160328094421.png"</span><span class="nt">&gt;&lt;/Image&gt;</span>
+            <span class="nt">&lt;Image</span> <span class="na">Source=</span><span class="s">"Assets/QQ截图20160328094435.png"</span><span class="nt">&gt;&lt;/Image&gt;</span>
+      <span class="nt">&lt;/FlipView&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328094747930" alt="这里写图片描述" /></p>
+
+<p><a href="http://www.cnblogs.com/Damai-Pang/p/5201206.html">http://www.cnblogs.com/Damai-Pang/p/5201206.html</a></p>
+
+<h3 id="grid-view">Grid view</h3>
+
+<p>行列布局，可以水平滚动控件。</p>
+
+<h3 id="items-control">Items control</h3>
+
+<p>提供UI指定数据模板</p>
+
+<h3 id="list-view">List view</h3>
+
+<p>在一个列表上的项目的集合,可以垂直滚动控件</p>
+
+<p>我们做一个viewmodel，添加列表，这时可以用于绑定，其他关于这个控件，请看 <a href="https://lindexi.github.io/lindexi/post/win10-UWP-ListView.html">win10 UWP ListView </a></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">viewmodel</span> <span class="p">:</span> <span class="n">notify_property</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">viewmodel</span><span class="p">()</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">lindexi</span>
+        <span class="p">{</span>
+            <span class="k">set</span><span class="p">;</span>
+            <span class="k">get</span><span class="p">;</span>
+        <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;()</span>
+        <span class="p">{</span>
+            <span class="s">"林德熙"</span><span class="p">,</span>
+            <span class="s">"csdn"</span>
+        <span class="p">};</span>
+</code></pre></div></div>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ListView</span> <span class="na">ItemsSource=</span><span class="s">"{x:Bind view.lindexi}"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;ListView.ItemTemplate&gt;</span>
+                <span class="nt">&lt;DataTemplate&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{x:Bind }"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;/DataTemplate&gt;</span>
+            <span class="nt">&lt;/ListView.ItemTemplate&gt;</span>
+        <span class="nt">&lt;/ListView&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328095934262" alt="这里写图片描述" /></p>
+
+<h2 id="date-and-time-controls">Date and time controls</h2>
+<h3 id="calendar-date-picker">Calendar date picker</h3>
+
+<p>日历日期选择器</p>
+
+<p><img src="https://msdn.microsoft.com/en-us/windows/uwp/controls-and-patterns/images/controls/calendar-date-picker-open.png" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160328100448795" alt="这里写图片描述" /></p>
+
+<h3 id="calendar-view">Calendar view</h3>
+<p>日程表，让用户选择日期</p>
+
+<p><img src="http://img.blog.csdn.net/20160328100619968" alt="这里写图片描述" /></p>
+
+<h3 id="time-picker">Time picker</h3>
+<p>用户选择一个时间</p>
+
+<p><img src="http://img.blog.csdn.net/20160328100844891" alt="这里写图片描述" /></p>
+
+<h2 id="flyouts">Flyouts</h2>
+<h3 id="flyout">Flyout</h3>
+
+<p>显示一条消息</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;Button</span> <span class="na">Margin=</span><span class="s">"200,153,0,0"</span> <span class="na">Content=</span><span class="s">"请勿转载"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Button.Flyout&gt;</span>
+                <span class="nt">&lt;Flyout&gt;</span>
+                    <span class="nt">&lt;StackPanel&gt;</span>
+                        <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"http://blog.csdn.net/lindexi_gd"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/StackPanel&gt;</span>
+                <span class="nt">&lt;/Flyout&gt;</span>
+            <span class="nt">&lt;/Button.Flyout&gt;</span>
+        <span class="nt">&lt;/Button&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328101517643" alt="这里写图片描述" /></p>
+
+<h3 id="menu-flyout">Menu flyout</h3>
+
+<p>暂时显示命令或列出选项给用户选择</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;AppBarButton</span> <span class="na">Icon=</span><span class="s">"OpenWith"</span> <span class="na">Label=</span><span class="s">"浮出"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;AppBarButton.Flyout&gt;</span>
+                    <span class="nt">&lt;MenuFlyout&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"林德熙"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"csdn"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutSeparator&gt;&lt;/MenuFlyoutSeparator&gt;</span>
+                    <span class="nt">&lt;/MenuFlyout&gt;</span>
+                <span class="nt">&lt;/AppBarButton.Flyout&gt;</span>
+            <span class="nt">&lt;/AppBarButton&gt;</span>
+</code></pre></div></div>
+
+<h3 id="popup-menu">Popup menu</h3>
+
+<p>弹出自己写的菜单</p>
+
+<h3 id="tooltip">Tooltip</h3>
+
+<p>提示</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"Button"</span> <span class="na">Click=</span><span class="s">"请勿转载"</span> 
+        <span class="na">ToolTipService.ToolTip=</span><span class="s">"没有授权红黑转"</span> <span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<h2 id="images">Images</h2>
+<h3 id="image">Image</h3>
+
+<p>图片</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Image</span> <span class="na">Source=</span><span class="s">"Assets/QQ截图20160328094421.png"</span><span class="nt">&gt;&lt;/Image&gt;</span>
+</code></pre></div></div>
+<p><img src="http://img.blog.csdn.net/20160328102111052" alt="这里写图片描述" /></p>
+
+<p>如果需要gif，请使用 10586 以上或<a href="http://www.songsong.org/post/2015/10/11/ImageLib.html">http://www.songsong.org/post/2015/10/11/ImageLib.html</a></p>
+
+<h2 id="graphics-and-ink">Graphics and ink</h2>
+<h3 id="inkcanvas">InkCanvas</h3>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;InkCanvas&gt;&lt;/InkCanvas&gt;</span>
+</code></pre></div></div>
+
+<p>手写</p>
+
+<p><img src="http://img.blog.csdn.net/20160328104717281" alt="这里写图片描述" /></p>
+
+<p>保存文件可以去 <a href="http://edi.wang/">edi.wang</a> 大神的博客，或我的<a href="https://lindexi.oschina.io/lindexi/post/win10-uwp-%E4%BD%BF%E7%94%A8%E6%B2%B9%E5%A2%A8%E8%BE%93%E5%85%A5.html">win10 uwp 使用油墨输入 </a>、老周的<a href="http://www.cnblogs.com/tcjiaan/p/8010845.html">将墨迹保存到图像</a></p>
+
+<h3 id="shapes">Shapes</h3>
+<p>椭圆,矩形、线、贝塞尔曲线路径</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;Ellipse</span> <span class="na">Fill=</span><span class="s">"Black"</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Height=</span><span class="s">"200"</span><span class="nt">&gt;&lt;/Ellipse&gt;</span>
+
+</code></pre></div></div>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;Rectangle</span> <span class="na">Fill=</span><span class="s">"Black"</span> <span class="na">Width=</span><span class="s">"10"</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;&lt;/Rectangle&gt;</span>
+
+</code></pre></div></div>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="nt">&lt;Path</span> <span class="na">Stroke=</span><span class="s">"Black"</span> <span class="na">StrokeThickness=</span><span class="s">"10"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;Path.Data&gt;</span>
+                    <span class="nt">&lt;PathGeometry&gt;</span>
+                        <span class="nt">&lt;PathGeometry.Figures&gt;</span>
+                            <span class="nt">&lt;PathFigure</span> <span class="na">StartPoint=</span><span class="s">"10,100"</span><span class="nt">&gt;</span>
+                                <span class="nt">&lt;PathFigure.Segments&gt;</span>
+                                    <span class="nt">&lt;BezierSegment</span> <span class="na">Point1=</span><span class="s">"100,50"</span> <span class="na">Point2=</span><span class="s">"150,200"</span> <span class="na">Point3=</span><span class="s">"200,100"</span><span class="nt">&gt;&lt;/BezierSegment&gt;</span>
+                                <span class="nt">&lt;/PathFigure.Segments&gt;</span>
+                            <span class="nt">&lt;/PathFigure&gt;</span>
+                        <span class="nt">&lt;/PathGeometry.Figures&gt;</span>
+                    <span class="nt">&lt;/PathGeometry&gt;</span>
+                <span class="nt">&lt;/Path.Data&gt;</span>
+            <span class="nt">&lt;/Path&gt;</span>
+</code></pre></div></div>
+<p><img src="http://img.blog.csdn.net/20160328104402311" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160328104416904" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160328104446701" alt="这里写图片描述" /></p>
+
+<h2 id="layout-controls">Layout controls</h2>
+<h3 id="border">Border</h3>
+<p>边框</p>
+<h3 id="canvas">Canvas</h3>
+<p>画板</p>
+<h3 id="grid">Grid</h3>
+<p>网格布局</p>
+<h3 id="stackpanel">StackPanel</h3>
+<p>堆放布局</p>
+<h3 id="scroll-viewer">Scroll viewer</h3>
+<p>滚动视图</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;ScrollViewer</span> <span class="na">Height=</span><span class="s">"20"</span> <span class="na">VerticalScrollBarVisibility=</span><span class="s">"Visible"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;StackPanel</span> <span class="na">Orientation=</span><span class="s">"Vertical"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">" 林德熙"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"脑残粉"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;/StackPanel&gt;</span>
+            <span class="nt">&lt;/ScrollViewer&gt;</span>
+</code></pre></div></div>
+
+<h3 id="viewbox">Viewbox</h3>
+<p>可以改变内容的长宽</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="nt">&lt;Viewbox</span> <span class="na">Width=</span><span class="s">"100"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Text=</span><span class="s">"林德熙"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;/Viewbox&gt;</span>
+                <span class="nt">&lt;Viewbox</span> <span class="na">Width=</span><span class="s">"200"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Text=</span><span class="s">"林德熙"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;/Viewbox&gt;</span>
+                <span class="nt">&lt;Viewbox</span> <span class="na">Width=</span><span class="s">"300"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Text=</span><span class="s">"林德熙"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;/Viewbox&gt;</span>
+</code></pre></div></div>
+<p><img src="http://img.blog.csdn.net/20160328105901874" alt="这里写图片描述" /></p>
+
+<h2 id="media-controls">Media controls</h2>
+<h3 id="media-element">Media element</h3>
+<p>播放视频
+其实我之前用它播放音频https://github.com/lindexi/Markdown
+<img src="http://img.blog.csdn.net/20160229103657266" alt="" /></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">speech</span><span class="p">(</span><span class="kt">string</span> <span class="n">str</span><span class="p">,</span> <span class="n">MediaElement</span> <span class="n">media_element</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">SpeechSynthesizer</span> <span class="n">synthesizer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SpeechSynthesizer</span><span class="p">();</span>
+            <span class="n">SpeechSynthesisStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">await</span> <span class="n">synthesizer</span><span class="p">.</span><span class="nf">SynthesizeTextToStreamAsync</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+            <span class="n">media_element</span><span class="p">.</span><span class="nf">SetSource</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">stream</span><span class="p">.</span><span class="n">ContentType</span><span class="p">);</span>
+            <span class="c1">//http://blog.csdn.net/lindexi_gd</span>
+            <span class="n">media_element</span><span class="p">.</span><span class="nf">Play</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>还有没写好，全屏出问题，可以来我博客http://blog.csdn.net/lindexi_gd之后找到解决将会写一个，可能是预览版，在真机就出错</p>
+
+<h3 id="mediatransportcontrols">MediaTransportControls</h3>
+<p>控制播放</p>
+
+<h2 id="navigation">Navigation</h2>
+<h3 id="hub">Hub</h3>
+<p>全景视图控件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;Hub&gt;</span>
+                <span class="nt">&lt;HubSection</span> <span class="na">Header=</span><span class="s">"林德熙"</span><span class="nt">&gt;</span> 
+                    <span class="nt">&lt;DataTemplate&gt;</span>
+                        <span class="nt">&lt;Image</span> <span class="na">Source=</span><span class="s">"Assets/QQ截图20160328094421.png"</span><span class="nt">&gt;&lt;/Image&gt;</span>
+                    <span class="nt">&lt;/DataTemplate&gt;</span>
+                <span class="nt">&lt;/HubSection&gt;</span>
+                <span class="nt">&lt;HubSection</span> <span class="na">Header=</span><span class="s">"http://blog.csdn.net/lindexi_gd"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;DataTemplate&gt;</span>
+                        <span class="nt">&lt;Image</span> <span class="na">Source=</span><span class="s">"Assets/QQ截图20160328094435.png"</span><span class="nt">&gt;&lt;/Image&gt;</span>
+                    <span class="nt">&lt;/DataTemplate&gt;</span>
+                <span class="nt">&lt;/HubSection&gt;</span>
+                <span class="nt">&lt;HubSection</span> <span class="na">Header=</span><span class="s">"sharp"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;DataTemplate&gt;</span>
+                        <span class="nt">&lt;StackPanel</span> <span class="na">Orientation=</span><span class="s">"Horizontal"</span><span class="nt">&gt;</span>
+                            <span class="nt">&lt;Ellipse</span> <span class="na">Fill=</span><span class="s">"Black"</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Height=</span><span class="s">"200"</span><span class="nt">&gt;&lt;/Ellipse&gt;</span>
+                            <span class="nt">&lt;Rectangle</span> <span class="na">Fill=</span><span class="s">"Black"</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;&lt;/Rectangle&gt;</span>
+                            <span class="nt">&lt;Path</span> <span class="na">Stroke=</span><span class="s">"Black"</span> <span class="na">StrokeThickness=</span><span class="s">"10"</span><span class="nt">&gt;</span>
+                                <span class="nt">&lt;Path.Data&gt;</span>
+                                    <span class="nt">&lt;PathGeometry&gt;</span>
+                                        <span class="nt">&lt;PathGeometry.Figures&gt;</span>
+                                            <span class="nt">&lt;PathFigure</span> <span class="na">StartPoint=</span><span class="s">"10,100"</span><span class="nt">&gt;</span>
+                                                <span class="nt">&lt;PathFigure.Segments&gt;</span>
+                                                    <span class="nt">&lt;BezierSegment</span> <span class="na">Point1=</span><span class="s">"100,50"</span> <span class="na">Point2=</span><span class="s">"150,200"</span> <span class="na">Point3=</span><span class="s">"200,100"</span><span class="nt">&gt;&lt;/BezierSegment&gt;</span>
+                                                <span class="nt">&lt;/PathFigure.Segments&gt;</span>
+                                            <span class="nt">&lt;/PathFigure&gt;</span>
+                                        <span class="nt">&lt;/PathGeometry.Figures&gt;</span>
+                                    <span class="nt">&lt;/PathGeometry&gt;</span>
+                                <span class="nt">&lt;/Path.Data&gt;</span>
+                            <span class="nt">&lt;/Path&gt;</span>
+                        <span class="nt">&lt;/StackPanel&gt;</span>
+                    <span class="nt">&lt;/DataTemplate&gt;</span>
+                <span class="nt">&lt;/HubSection&gt;</span>
+            <span class="nt">&lt;/Hub&gt;</span>
+</code></pre></div></div>
+<p><img src="http://img.blog.csdn.net/20160328154021083" alt="这里写图片描述" /></p>
+
+<h2 id="progress-controls">Progress controls</h2>
+<h3 id="progress-bar">Progress bar</h3>
+<p>进度条</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nt">&lt;ProgressBar</span> <span class="na">Value=</span><span class="s">"10"</span> <span class="na">Height=</span><span class="s">"100"</span><span class="nt">&gt;&lt;/ProgressBar&gt;</span>
+</code></pre></div></div>
+<p><img src="http://img.blog.csdn.net/20160328154251243" alt="这里写图片描述" /></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ProgressBar</span> <span class="na">Value=</span><span class="s">"10"</span> <span class="na">IsIndeterminate=</span><span class="s">"True"</span> <span class="na">Height=</span><span class="s">"100"</span><span class="nt">&gt;&lt;/ProgressBar&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328154439319" alt="这里写图片描述" /></p>
+
+<h3 id="progress-ring">Progress ring</h3>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ProgressRing</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">IsActive=</span><span class="s">"True"</span><span class="nt">&gt;&lt;/ProgressRing&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328154621201" alt="这里写图片描述" /></p>
+<h2 id="text-controls">Text controls</h2>
+<h3 id="auto-suggest-box">Auto suggest box</h3>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="nt">&lt;AutoSuggestBox</span> <span class="na">PlaceholderText=</span><span class="s">"输入林德熙"</span> <span class="na">QueryIcon=</span><span class="s">"Find"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">TextChanged=</span><span class="s">"query"</span> <span class="na">DisplayMemberPath=</span><span class="s">"name"</span> <span class="nt">&gt;&lt;/AutoSuggestBox&gt;</span>
+
+
+</code></pre></div></div>
+<p>需要在后台https://github.com/Microsoft/Windows-universal-samples/tree/master/Samples/XamlAutoSuggestBox</p>
+
+<p><img src="http://img.blog.csdn.net/20160328161238579" alt="这里写图片描述" /></p>
+<h3 id="password-box">Password box</h3>
+<p>密码输入</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;PasswordBox</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Height=</span><span class="s">"10"</span> <span class="na">PlaceholderText=</span><span class="s">"输入中文密码"</span> <span class="na">IsPasswordRevealButtonEnabled=</span><span class="s">"True"</span><span class="nt">&gt;&lt;/PasswordBox&gt;</span>
+
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328162337609" alt="这里写图片描述" /></p>
+
+<h3 id="rich-edit-box">Rich edit box</h3>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;RichEditBox</span> <span class="na">Name=</span><span class="s">"redit"</span> <span class="na">Grid.Row=</span><span class="s">"3"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">ContextMenuOpening=</span><span class="s">"OnContextMenuOpening"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;FlyoutBase.AttachedFlyout&gt;</span>
+                <span class="nt">&lt;MenuFlyout&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"复制"</span> <span class="na">Click=</span><span class="s">"OnCopy"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"剪切"</span> <span class="na">Click=</span><span class="s">"OnCut"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"粘贴"</span> <span class="na">Click=</span><span class="s">"OnPaste"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutSeparator/&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutSubItem</span> <span class="na">Text=</span><span class="s">"字号"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"16"</span> <span class="na">Tag=</span><span class="s">"16"</span> <span class="na">Click=</span><span class="s">"OnFontSize"</span> <span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"20"</span> <span class="na">Tag=</span><span class="s">"20"</span> <span class="na">Click=</span><span class="s">"OnFontSize"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"24"</span> <span class="na">Tag=</span><span class="s">"24"</span> <span class="na">Click=</span><span class="s">"OnFontSize"</span> <span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"36"</span> <span class="na">Tag=</span><span class="s">"36"</span> <span class="na">Click=</span><span class="s">"OnFontSize"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"48"</span> <span class="na">Tag=</span><span class="s">"48"</span> <span class="na">Click=</span><span class="s">"OnFontSize"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/MenuFlyoutSubItem&gt;</span>
+                    <span class="c">&lt;!--分割--&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutSeparator/&gt;</span>
+                    <span class="nt">&lt;ToggleMenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"加粗"</span> <span class="na">Click=</span><span class="s">"OnBold"</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutSeparator/&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutSubItem</span> <span class="na">Text=</span><span class="s">"下划线"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"无"</span> <span class="na">Tag=</span><span class="s">"-1"</span> <span class="na">Click=</span><span class="s">"OnUnderline"</span> <span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"单实线"</span> <span class="na">Tag=</span><span class="s">"0"</span> <span class="na">Click=</span><span class="s">"OnUnderline"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"双实线"</span> <span class="na">Tag=</span><span class="s">"1"</span> <span class="na">Click=</span><span class="s">"OnUnderline"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"虚线"</span> <span class="na">Tag=</span><span class="s">"2"</span> <span class="na">Click=</span><span class="s">"OnUnderline"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/MenuFlyoutSubItem&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutSeparator/&gt;</span>
+                    <span class="nt">&lt;MenuFlyoutSubItem</span> <span class="na">Text=</span><span class="s">"颜色"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"黑色"</span> <span class="na">Tag=</span><span class="s">"黑色"</span> <span class="na">Click=</span><span class="s">"OnTinct"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"蓝色"</span> <span class="na">Tag=</span><span class="s">"蓝色"</span> <span class="na">Click=</span><span class="s">"OnTinct"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;MenuFlyoutItem</span> <span class="na">Text=</span><span class="s">"白色"</span> <span class="na">Tag=</span><span class="s">"白色"</span> <span class="na">Click=</span><span class="s">"OnTinct"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;/MenuFlyoutSubItem&gt;</span>
+                <span class="nt">&lt;/MenuFlyout&gt;</span>
+            <span class="nt">&lt;/FlyoutBase.AttachedFlyout&gt;</span>
+        <span class="nt">&lt;/RichEditBox&gt;</span>
+</code></pre></div></div>
+
+<h3 id="text-block">Text block</h3>
+<p>简单输出文本</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;TextBlock</span> <span class="na">HorizontalAlignment=</span><span class="s">"Left"</span> <span class="na">Margin=</span><span class="s">"72,163,0,0"</span> <span class="na">Text=</span><span class="s">"博客发在csdn ，没有授权红黑转载，没有授权推酷转载"</span> <span class="na">TextWrapping=</span><span class="s">"Wrap"</span>  <span class="na">VerticalAlignment=</span><span class="s">"Top"</span> <span class="nt">&gt;&lt;/TextBlock&gt;</span>
+
+</code></pre></div></div>
+<p><img src="http://img.blog.csdn.net/20160328162542065" alt="这里写图片描述" /></p>
+
+<h3 id="text-box">Text box</h3>
+<p>用户输入文本</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;TextBox</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Height=</span><span class="s">"10"</span><span class="nt">&gt;&lt;/TextBox&gt;</span>
+
+</code></pre></div></div>
+
+<p><img src="http://img.blog.csdn.net/20160328162825523" alt="这里写图片描述" /></p>
+
+<p>博客：http://blog.csdn.net/lindexi_gd</p>
+
+<p>现在委托csdn维权，没有授权的网站不要转载</p>
+
+<p>原文https://msdn.microsoft.com/en-us/windows/uwp/controls-and-patterns/controls-by-function</p>
+
+:ET

@@ -1,0 +1,72 @@
+I"�/<p>本文告诉大家如何通过 WMI 获取系统安装的软件</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<!-- 标签：PowerShell,WMI -->
+
+<p>通过 Win32_Product 可以获取系统安装的软件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="n">Win32_Product</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">Caption</span><span class="p">,</span><span class="n">Description</span><span class="p">,</span><span class="n">IdentifyingNumber</span><span class="p">,</span><span class="n">InstallDate</span><span class="p">,</span><span class="n">InstallLocation</span><span class="p">,</span><span class="n">HelpLink</span><span class="p">,</span><span class="n">HelpTelephone</span><span class="p">,</span><span class="n">InstallSource</span><span class="p">,</span><span class="n">Language</span><span class="p">,</span><span class="n">LocalPackage</span><span class="p">,</span><span class="n">Name</span><span class="p">,</span><span class="n">PackageCache</span><span class="p">,</span><span class="n">PackageCode</span><span class="p">,</span><span class="n">PackageName</span><span class="p">,</span><span class="n">ProductID</span><span class="p">,</span><span class="n">RegOwner</span><span class="p">,</span><span class="n">RegCompany</span><span class="p">,</span><span class="n">SKUNumber</span><span class="p">,</span><span class="n">Transforms</span><span class="p">,</span><span class="n">URLInfoAbout</span><span class="p">,</span><span class="n">URLUpdateInfo</span><span class="p">,</span><span class="n">Vendor</span><span class="p">,</span><span class="n">WordCount</span><span class="p">,</span><span class="n">Version</span>
+</code></pre></div></div>
+
+<p>运行代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Caption</span>           <span class="p">:</span> <span class="err">坚果云</span>
+<span class="n">Description</span>       <span class="p">:</span> <span class="err">坚果云</span>
+<span class="n">IdentifyingNumber</span> <span class="p">:</span> <span class="p">{</span><span class="n">FEA8B01C</span><span class="p">-</span><span class="m">3F43</span><span class="p">-</span><span class="m">470</span><span class="n">A</span><span class="p">-</span><span class="n">BB28</span><span class="p">-</span><span class="m">679</span><span class="n">B1AEEC6E8</span><span class="p">}</span>
+<span class="n">InstallDate</span>       <span class="p">:</span> <span class="m">20180305</span>
+<span class="n">InstallLocation</span>   <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Program</span> <span class="n">Files</span><span class="err">\</span><span class="n">Nutstore</span><span class="err">\</span>
+<span class="n">HelpLink</span>          <span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="c1">//help.jianguoyun.com</span>
+<span class="n">HelpTelephone</span>     <span class="p">:</span>
+<span class="n">InstallSource</span>     <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">linde</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Roaming</span><span class="err">\</span><span class="n">NutstoreClient</span><span class="err">\</span><span class="n">install</span><span class="err">\</span><span class="n">AEEC6E8</span><span class="err">\</span>
+<span class="n">Language</span>          <span class="p">:</span> <span class="m">2052</span>
+<span class="n">LocalPackage</span>      <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">WINDOWS</span><span class="err">\</span><span class="n">Installer</span><span class="err">\</span><span class="m">4</span><span class="n">acb3a9</span><span class="p">.</span><span class="n">msi</span>
+<span class="n">Name</span>              <span class="p">:</span> <span class="err">坚果云</span>
+<span class="n">PackageCache</span>      <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">WINDOWS</span><span class="err">\</span><span class="n">Installer</span><span class="err">\</span><span class="m">4</span><span class="n">acb3a9</span><span class="p">.</span><span class="n">msi</span>
+<span class="n">PackageCode</span>       <span class="p">:</span> <span class="p">{</span><span class="m">3802</span><span class="n">EFD2</span><span class="p">-</span><span class="m">0953</span><span class="p">-</span><span class="m">4527</span><span class="p">-</span><span class="m">835</span><span class="n">E</span><span class="p">-</span><span class="n">E4C459062CD5</span><span class="p">}</span>
+<span class="n">PackageName</span>       <span class="p">:</span> <span class="n">Nutstore</span><span class="p">.</span><span class="n">x64</span><span class="p">.</span><span class="n">msi</span>
+<span class="n">ProductID</span>         <span class="p">:</span>
+<span class="n">RegOwner</span>          <span class="p">:</span>
+<span class="n">RegCompany</span>        <span class="p">:</span>
+<span class="n">SKUNumber</span>         <span class="p">:</span>
+<span class="n">Transforms</span>        <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">WINDOWS</span><span class="err">\</span><span class="n">Installer</span><span class="err">\</span><span class="p">{</span><span class="n">FEA8B01C</span><span class="p">-</span><span class="m">3F43</span><span class="p">-</span><span class="m">470</span><span class="n">A</span><span class="p">-</span><span class="n">BB28</span><span class="p">-</span><span class="m">679</span><span class="n">B1AEEC6E8</span><span class="p">}</span><span class="err">\</span><span class="n">Nutstore</span><span class="p">.</span><span class="n">mst</span>
+<span class="n">URLInfoAbout</span>      <span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="c1">//www.jianguoyun.com/</span>
+<span class="n">URLUpdateInfo</span>     <span class="p">:</span>
+<span class="n">Vendor</span>            <span class="p">:</span> <span class="err">上海亦存网络科技有限公司</span>
+<span class="n">WordCount</span>         <span class="p">:</span> <span class="m">0</span>
+<span class="n">Version</span>           <span class="p">:</span> <span class="m">4.0</span><span class="p">.</span><span class="m">8</span>
+
+
+<span class="n">Caption</span>           <span class="p">:</span> <span class="n">Apple</span> <span class="err">应用程序支持</span> <span class="p">(</span><span class="m">32</span> <span class="err">位</span><span class="p">)</span>
+<span class="n">Description</span>       <span class="p">:</span> <span class="n">Apple</span> <span class="err">应用程序支持</span> <span class="p">(</span><span class="m">32</span> <span class="err">位</span><span class="p">)</span>
+<span class="n">IdentifyingNumber</span> <span class="p">:</span> <span class="p">{</span><span class="m">5</span><span class="n">A659BE5</span><span class="p">-</span><span class="m">849</span><span class="n">B</span><span class="p">-</span><span class="m">484</span><span class="n">E</span><span class="p">-</span><span class="n">A83B</span><span class="p">-</span><span class="n">DCB78407F3A4</span><span class="p">}</span>
+<span class="n">InstallDate</span>       <span class="p">:</span> <span class="m">20190221</span>
+<span class="n">InstallLocation</span>   <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Program</span> <span class="nf">Files</span> <span class="p">(</span><span class="n">x86</span><span class="p">)</span><span class="err">\</span><span class="n">Common</span> <span class="n">Files</span><span class="err">\</span><span class="n">Apple</span><span class="err">\</span><span class="n">Apple</span> <span class="n">Application</span> <span class="n">Support</span>
+<span class="n">HelpLink</span>          <span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="c1">//www.apple.com/cn/support/</span>
+<span class="n">HelpTelephone</span>     <span class="p">:</span> <span class="p">(</span><span class="m">86</span><span class="p">)</span> <span class="m">800</span> <span class="m">810</span> <span class="m">2323</span>
+<span class="n">InstallSource</span>     <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">linde</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Local</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">IXP246</span><span class="p">.</span><span class="n">TMP</span><span class="err">\</span>
+<span class="n">Language</span>          <span class="p">:</span> <span class="m">2052</span>
+<span class="n">LocalPackage</span>      <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">WINDOWS</span><span class="err">\</span><span class="n">Installer</span><span class="err">\</span><span class="m">1</span><span class="n">a1ef7b</span><span class="p">.</span><span class="n">msi</span>
+<span class="n">Name</span>              <span class="p">:</span> <span class="n">Apple</span> <span class="err">应用程序支持</span> <span class="p">(</span><span class="m">32</span> <span class="err">位</span><span class="p">)</span>
+<span class="n">PackageCache</span>      <span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">WINDOWS</span><span class="err">\</span><span class="n">Installer</span><span class="err">\</span><span class="m">1</span><span class="n">a1ef7b</span><span class="p">.</span><span class="n">msi</span>
+<span class="n">PackageCode</span>       <span class="p">:</span> <span class="p">{</span><span class="n">F3D0B996</span><span class="p">-</span><span class="n">B6DB</span><span class="p">-</span><span class="m">4283</span><span class="p">-</span><span class="m">9565</span><span class="p">-</span><span class="m">004518</span><span class="n">A6610B</span><span class="p">}</span>
+<span class="n">PackageName</span>       <span class="p">:</span> <span class="n">AppleApplicationSupport</span><span class="p">.</span><span class="n">msi</span>
+<span class="n">ProductID</span>         <span class="p">:</span>
+<span class="n">RegOwner</span>          <span class="p">:</span>
+<span class="n">RegCompany</span>        <span class="p">:</span>
+<span class="n">SKUNumber</span>         <span class="p">:</span>
+<span class="n">Transforms</span>        <span class="p">:</span>
+<span class="n">URLInfoAbout</span>      <span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="c1">//www.apple.com/cn/</span>
+<span class="n">URLUpdateInfo</span>     <span class="p">:</span> <span class="n">http</span><span class="p">:</span><span class="c1">//www.apple.com/cn/</span>
+<span class="n">Vendor</span>            <span class="p">:</span> <span class="n">Apple</span> <span class="n">Inc</span><span class="p">.</span>
+<span class="n">WordCount</span>         <span class="p">:</span> <span class="m">0</span>
+<span class="n">Version</span>           <span class="p">:</span> <span class="m">7.3</span>
+</code></pre></div></div>
+
+<p><a href="https://msdn.microsoft.com/en-us/library/aa394378(v=vs.85).aspx">Win32_Product class (Windows)</a></p>
+
+<p><a href="https://sdmsoftware.com/group-policy-blog/wmi/why-win32_product-is-bad-news/">Why Win32_Product is Bad News - Group Policy Software - SDM Software</a></p>
+
+:ET

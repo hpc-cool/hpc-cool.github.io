@@ -1,0 +1,77 @@
+I"�<p>因为 SublimeText 有很多插件都是使用 Py 写的，而我想使用 dotnet core 给 SublimeText 写一个编译插件，也就是在我使用 Markdown 的时候可以点击编译，将 Markdown 转 doc 或者做其他的。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/29 8:53:47 -->
+
+<!-- 标签：dotnetcore,sublimetext -->
+
+<p>在 SublimeText 有一个功能就是使用 Tools 的 <code class="language-plaintext highlighter-rouge">Build System</code> 添加新的 <code class="language-plaintext highlighter-rouge">Build</code> 通过点击<code class="language-plaintext highlighter-rouge">new Build System</code> 就可以新建一个用 <code class="language-plaintext highlighter-rouge">sublime-build</code> 结束的文件</p>
+
+<p>将会这个文件保存到 SublimeText 所在的文件夹，在<code class="language-plaintext highlighter-rouge">C:\Users\用户名\AppData\Roaming\Sublime Text 3\Packages\User</code> 就可以添加编译</p>
+
+<p>先来创建一个 dotnet core 项目，这个项目先给一个随意的名字</p>
+
+<p>这个项目只是用来输出拿到的参数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">args</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">temp</span> <span class="p">+</span> <span class="s">"\r\n"</span><span class="p">);</span>
+
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">File</span><span class="p">.</span><span class="nf">WriteAllText</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">GetDirectoryName</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetExecutingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">),</span> <span class="s">"KeameaMouhalis"</span><span class="p">),</span> <span class="n">str</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>代码很简单，上面用<code class="language-plaintext highlighter-rouge">Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)</code>因为想写文件到运行的文件夹</p>
+
+<p>例如这个项目编译出的路径是 <code class="language-plaintext highlighter-rouge">D:\lindexi\github\PisairtekaDrallhairlo\PisairtekaDrallhairlo\bin\Debug\netcoreapp2.0\PisairtekaDrallhairlo.dll</code> 在刚才打开的  <code class="language-plaintext highlighter-rouge">sublime-build</code> 可以添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span>
+	<span class="s">"file_patterns"</span><span class="p">:[</span><span class="s">"*.md"</span><span class="p">],</span>
+	<span class="s">"cmd"</span><span class="p">:</span> <span class="p">[</span><span class="s">"dotnet"</span> <span class="p">,</span> <span class="s">"D:\\lindexi\\github\\PisairtekaDrallhairlo\\PisairtekaDrallhairlo\\bin\\Debug\\netcoreapp2.0\\PisairtekaDrallhairlo.dll"</span><span class="p">,</span><span class="s">"$file"</span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的 <code class="language-plaintext highlighter-rouge">file_patterns</code> 就是表示在什么的文件可以使用这个编译，第二个就是调用 cmd 运行命令</p>
+
+<p>可以传入的参数很多，这里的 <code class="language-plaintext highlighter-rouge">$file</code> 表示当前进行编译文件，可以选的参数请看下面</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">$file_path</code>	当前文件所在路径，比如 <code class="language-plaintext highlighter-rouge">C:\Files</code></li>
+  <li><code class="language-plaintext highlighter-rouge">$file</code>	当前文件的完整路径，比如 <code class="language-plaintext highlighter-rouge">C:\Files\Chapter1.txt</code></li>
+  <li><code class="language-plaintext highlighter-rouge">$file_name</code>	当前文件的文件名，比如 <code class="language-plaintext highlighter-rouge">Chapter1.txt</code></li>
+  <li><code class="language-plaintext highlighter-rouge">$file_extension</code>	当前文件的扩展名，比如 txt</li>
+  <li><code class="language-plaintext highlighter-rouge">$file_base_name</code>	当前文件仅包含文件名的部分，比如 Document</li>
+  <li><code class="language-plaintext highlighter-rouge">$packages</code>	Packages 文件夹的完整路径</li>
+  <li><code class="language-plaintext highlighter-rouge">$project</code>	当前项目文件的完整路径</li>
+  <li><code class="language-plaintext highlighter-rouge">$project_path</code>	当前项目文件的路径</li>
+  <li><code class="language-plaintext highlighter-rouge">$project_name</code>	当前项目文件的名称</li>
+  <li><code class="language-plaintext highlighter-rouge">$project_extension</code>	当前项目文件的扩展部分</li>
+  <li><code class="language-plaintext highlighter-rouge">$project_base_name</code>	当前项目仅包括名的部分</li>
+</ul>
+
+<p>现在将 <code class="language-plaintext highlighter-rouge">sublime-build</code> 文件存放到 SublimeText 所在的文件夹，注意给一个名字，然后就可以在 Build 里看到，现在选择 Build System 的对应的方式进行编译，点击 Build 就可以看到输出编译</p>
+
+<p>在刚才的项目写文件是因为在 SublimeText 的控制台看到的是如下界面</p>
+
+<!-- ![](image/dotnet core 添加 SublimeText 编译插件/dotnet core 添加 SublimeText 编译插件0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201882985320829" alt="" /></p>
+
+<p>对于所有的中文都没有显示，所以写入文件就可以从文件里看，可以看到传入的文件是不会和 SublieText 显示一样</p>
+
+<p>现在有了需要编译的文件的路径，就请发挥想想开发自己的编译插件</p>
+
+<p>参见：<a href="https://www.sublimetext.com/docs/3/build_systems.html">Build Systems – Sublime Text 3 Documentation</a></p>
+
+<p><a href="https://www.jianshu.com/p/3cb5c6f2421c">如何优雅地使用Sublime Text3 - 简书</a></p>
+
+<p><a href="http://sublime-text.readthedocs.io/en/latest/reference/build_systems.html">Build Systems — Sublime Text非官方文档（中文翻译版）</a></p>
+
+:ET

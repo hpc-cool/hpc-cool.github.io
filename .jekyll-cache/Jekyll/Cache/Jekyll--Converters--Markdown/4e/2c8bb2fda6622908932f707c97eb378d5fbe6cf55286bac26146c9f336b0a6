@@ -1,0 +1,50 @@
+I"J<p>本文告诉大家在 Frame 的 DataContext 不能被 Page 继承如何解决。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/6/11 10:48:24 -->
+
+<!-- csdn -->
+
+<p>如果大家有研究 Frame 会发现一个诡异的现象。</p>
+
+<p>假设 page 是在 Frame 里面的 Page ，通过下面的代码是可以拿到 DataContext ，而且假设 Frame 的 DataContext 就是一个定义的类 Foo</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">frame</span> <span class="p">=</span> <span class="n">page</span><span class="p">.</span><span class="n">Parent</span> <span class="k">as</span> <span class="n">Frame</span><span class="p">;</span>
+<span class="c1">// frame.DataContext == foo</span>
+</code></pre></div></div>
+
+<p>但是如何直接拿 page 的 DataContext ，返回空。</p>
+
+<p>原因是 Frame 是做了 Frame 里面的元素的 UI 隔离，也就是 DataContext 不能继承。</p>
+
+<p>解决的方法是在 Frame 的 LoadCompleted 添加让里面元素知道 DataContext ，需要后台代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Frame</span> <span class="n">Name</span><span class="p">=</span><span class="s">"frame"</span>
+       <span class="n">LoadCompleted</span><span class="p">=</span><span class="s">"Frame_LoadCompleted"</span>
+       <span class="n">DataContextChanged</span><span class="p">=</span><span class="s">"Frame_DataContextChanged"</span><span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="k">void</span> <span class="nf">Frame_DataContextChanged</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">DependencyPropertyChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nf">UpdateFrameDataContext</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">private</span> <span class="k">void</span> <span class="nf">Frame_LoadCompleted</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nf">UpdateFrameDataContext</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">private</span> <span class="k">void</span> <span class="nf">UpdateFrameDataContext</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">content</span> <span class="p">=</span> <span class="n">frame</span><span class="p">.</span><span class="n">Content</span> <span class="k">as</span> <span class="n">FrameworkElement</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">content</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="n">content</span><span class="p">.</span><span class="n">DataContext</span> <span class="p">=</span> <span class="n">frame</span><span class="p">.</span><span class="n">DataContext</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>参见：<a href="https://stackoverflow.com/questions/3621424/page-datacontext-not-inherited-from-parent-frame">c# - page.DataContext not inherited from parent Frame? - Stack Overflow</a></p>
+
+:ET

@@ -1,0 +1,273 @@
+I"��<p>本文是我在读 WPF 源代码做的笔记。在 WPF 中的启动界面，为了能让 WPF 的启动界面显示足够快，需要在应用的 WPF 主机还没有启动完成之前就显示出启动图，此时的启动图需要自己解析图片同时也需要自己创建显示窗口</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/12/21 9:04:51 -->
+
+<!-- 标签：WPF，WPF源代码 -->
+<!-- 发布 -->
+
+<p>从 WPF 的 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\WindowsBase\System\Windows\SplashScreen.cs</code> 文件可以看到 WPF 的 SplashScreen 的核心逻辑</p>
+
+<p>在 SplashScreen 的构造函数会传入资源名，也就是启动图的资源名，或者加上指定程序集和图片资源名</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">SplashScreen</span><span class="p">(</span><span class="kt">string</span> <span class="n">resourceName</span><span class="p">)</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetEntryAssembly</span><span class="p">(),</span> <span class="n">resourceName</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="nf">SplashScreen</span><span class="p">(</span><span class="n">Assembly</span> <span class="n">resourceAssembly</span><span class="p">,</span> <span class="kt">string</span> <span class="n">resourceName</span><span class="p">)</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>当然了，这个设计扩展性不够好哈，不支持指定任意的图片。如果想要指定本地路径的任意图片作为启动图的，可以使用 lsj 提供的 <a href="https://github.com/kkwpsv/SplashImage">kkwpsv/SplashImage: Fast splash Image with GDI+ in C#</a> 库，当然了，这个库代码量特别少，我推荐大家可以抄抄代码。这个库提供的是高性能的版本，可以在另一个线程中执行，换句话说，就是使用 <a href="https://github.com/kkwpsv/SplashImage">kkwpsv/SplashImage</a> 作为欢迎界面，是可以做到不占用 WPF 主线程时间的，性能比 WPF 提供的好</p>
+
+<p>在 WPF 的 SplashScreen 的 Show 方法，就是启动图的核心逻辑</p>
+
+<p>先调用 GetResourceStream 从自己的程序集里面读取图片资源的原始 Stream 对象，通过此方式的读取性能特别强，因此不是真的读取到内存里面，而是获取一个指针而已。但是有趣的是在这个方法上面有注释说比 Assembly.GetManifestResourceStream 慢 200-300 毫秒，也许是当年的设备才需要这么长的时间</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">// This is 200-300 ms slower than Assembly.GetManifestResourceStream() but works with localization.</span>
+        <span class="k">private</span> <span class="n">UnmanagedMemoryStream</span> <span class="nf">GetResourceStream</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>在获取到启动图片的 UnmanagedMemoryStream 之后，将使用下面代码转换为指针，用于后续传入给 WIC 层</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">IntPtr</span> <span class="n">pImageSrcBuffer</span><span class="p">;</span>
+<span class="k">unsafe</span>
+<span class="p">{</span>
+    <span class="n">pImageSrcBuffer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IntPtr</span><span class="p">(</span><span class="n">umemStream</span><span class="p">.</span><span class="n">PositionPointer</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>接下来就是调用 CreateLayeredWindowFromImgBuffer 创建一个窗口然后这个窗口显示图片内容</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="nf">CreateLayeredWindowFromImgBuffer</span><span class="p">(</span><span class="n">pImageSrcBuffer</span><span class="p">,</span> <span class="n">umemStream</span><span class="p">.</span><span class="n">Length</span><span class="p">,</span> <span class="n">topMost</span><span class="p">)</span> <span class="p">&amp;&amp;</span> <span class="n">autoClose</span> <span class="p">==</span> <span class="k">true</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">Dispatcher</span><span class="p">.</span><span class="n">CurrentDispatcher</span><span class="p">.</span><span class="nf">BeginInvoke</span><span class="p">(</span>
+        <span class="n">DispatcherPriority</span><span class="p">.</span><span class="n">Loaded</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">DispatcherOperationCallback</span><span class="p">)</span><span class="n">ShowCallback</span><span class="p">,</span>
+        <span class="k">this</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到在调用 CreateLayeredWindowFromImgBuffer 方法成功之后，就会调用 Dispatcher 插入 ShowCallback 函数，在 ShowCallback 里面用来自动关闭启动界面，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="kt">object</span> <span class="nf">ShowCallback</span><span class="p">(</span><span class="kt">object</span> <span class="n">arg</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">SplashScreen</span> <span class="n">splashScreen</span> <span class="p">=</span> <span class="p">(</span><span class="n">SplashScreen</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+            <span class="n">splashScreen</span><span class="p">.</span><span class="nf">Close</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">0.3</span><span class="p">));</span>
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从上面代码可以看到，在 WPF 中默认的启动图界面将会在 Loaded 完成之后延迟 0.3 秒执行，而具体是什么 Loaded 就不需要关注了。因为通过 BeginInvoke 插入的优先级是 DispatcherPriority.Loaded 优先级，也就是启动过程如果再没有什么比 DispatcherPriority.Loaded 更高的优先级，那就是启动完成了</p>
+
+<p>在 WPF 里面的 SplashScreen 的核心逻辑里面包含以下三步</p>
+
+<p>第一步是通过 WIC 层解码咱传入的图片，这样就支持不做任何优化的图片都能作为启动图</p>
+
+<p>第二步就是将解码之后的图片编码为 BGRA 图片格式传给 GDI 图片对象，这样就能将咱的图片作为 GDI 图片对象能使用的资源</p>
+
+<p>第三步是创建窗口显示这张 GDI 图片</p>
+
+<p>回到创建窗口的核心方法 CreateLayeredWindowFromImgBuffer 上，这个方法里面大量调用 WIC 层的逻辑，用来处理图片的渲染，过程代码大概如下，下面代码为了方便说明，和 WPF 源代码有些不相同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">bool</span> <span class="nf">CreateLayeredWindowFromImgBuffer</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">pImgBuffer</span><span class="p">,</span> <span class="kt">long</span> <span class="n">cImgBufferLen</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">topMost</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">bool</span> <span class="n">bSuccess</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+            <span class="n">IntPtr</span> <span class="n">pImagingFactory</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">IntPtr</span> <span class="n">pDecoder</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">IntPtr</span> <span class="n">pIStream</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">IntPtr</span> <span class="n">pDecodedFrame</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">IntPtr</span> <span class="n">pBitmapSourceFormatConverter</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">IntPtr</span> <span class="n">pBitmapFlipRotator</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+
+            <span class="c1">// 创建图片工厂，也就是获得 pImagingFactory 对象</span>
+            <span class="c1">// 在 WPF 里面使用的 WINCODEC_SDK_VERSION 是 0x0236 一个比较古老的版本，在下文有告诉大家有哪些更新</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">CreateImagingFactory</span><span class="p">(</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="n">WINCODEC_SDK_VERSION</span><span class="p">,</span>
+                <span class="k">out</span> <span class="n">pImagingFactory</span><span class="p">);</span>
+
+            <span class="c1">// 使用 pImagingFactory 图片工厂创建出一个空的 Stream 返回指针给到 pIStream 变量</span>
+            <span class="c1">// Use the WIC stream class to wrap the unmanaged pointer</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">CreateStream</span><span class="p">(</span><span class="n">pImagingFactory</span><span class="p">,</span> <span class="k">out</span> <span class="n">pIStream</span><span class="p">);</span>
+
+            <span class="c1">// 使用传进来的图片指针和长度，初始化图片工厂创建出来的 pIStream 对象</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">InitializeStreamFromMemory</span><span class="p">(</span><span class="n">pIStream</span><span class="p">,</span> <span class="n">pImgBuffer</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">cImgBufferLen</span><span class="p">);</span>
+
+            <span class="c1">// Create an object that will decode the encoded image</span>
+            <span class="n">Guid</span> <span class="n">vendor</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+            <span class="c1">// 拿到编解码器</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">CreateDecoderFromStream</span><span class="p">(</span><span class="n">pImagingFactory</span><span class="p">,</span> <span class="n">pIStream</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">vendor</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="k">out</span> <span class="n">pDecoder</span><span class="p">);</span>
+
+            <span class="c1">// Get the frame from the decoder. Most image formats have only a single frame, in the case</span>
+            <span class="c1">// of animated gifs we are ok with only displaying the first frame of the animation.</span>
+            <span class="c1">// 从图片解码里面获取图片的第一帧，如果是 Gif 图片也只是显示第一帧</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">GetFrame</span><span class="p">(</span><span class="n">pDecoder</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="k">out</span> <span class="n">pDecodedFrame</span><span class="p">);</span>
+
+            <span class="c1">// 获取格式转换器</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">CreateFormatConverter</span><span class="p">(</span><span class="n">pImagingFactory</span><span class="p">,</span> <span class="k">out</span> <span class="n">pBitmapSourceFormatConverter</span><span class="p">);</span>
+
+            <span class="c1">// 定义了 32 位的 BGRA 图片格式，转换为此格式方便创建窗口使用 GDI 渲染</span>
+            <span class="c1">// Convert the image from whatever format it is in to 32bpp premultiplied alpha BGRA</span>
+            <span class="n">Guid</span> <span class="n">pixelFormat</span> <span class="p">=</span> <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="n">WICPixelFormat32bppPBGRA</span><span class="p">;</span>
+
+            <span class="c1">// 初始化转换器</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">InitializeFormatConverter</span><span class="p">(</span><span class="n">pBitmapSourceFormatConverter</span><span class="p">,</span> <span class="n">pDecodedFrame</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">pixelFormat</span><span class="p">,</span> <span class="m">0</span> <span class="cm">/*DitherTypeNone*/</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span>
+                <span class="m">0</span><span class="p">,</span> <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="n">WICPaletteType</span><span class="p">.</span><span class="n">WICPaletteTypeCustom</span><span class="p">);</span>
+            <span class="c1">// Reorient the image</span>
+            <span class="c1">// 获取图片的裁剪和旋转</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">CreateBitmapFlipRotator</span><span class="p">(</span><span class="n">pImagingFactory</span><span class="p">,</span> <span class="k">out</span> <span class="n">pBitmapFlipRotator</span><span class="p">);</span>
+
+            <span class="c1">// 初始化图片的裁剪和旋转特效，此时的 pBitmapFlipRotator 就是最终叠加了特效的图片</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">InitializeBitmapFlipRotator</span><span class="p">(</span><span class="n">pBitmapFlipRotator</span><span class="p">,</span> <span class="n">pBitmapSourceFormatConverter</span><span class="p">,</span>
+                <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="n">WICBitmapTransformOptions</span><span class="p">.</span><span class="n">WICBitmapTransformFlipVertical</span><span class="p">);</span>
+
+            <span class="c1">// 获取图片的大小，用来在下面创建像素数组</span>
+            <span class="n">Int32</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">;</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">GetBitmapSize</span><span class="p">(</span><span class="n">pBitmapFlipRotator</span><span class="p">,</span> <span class="k">out</span> <span class="n">width</span><span class="p">,</span> <span class="k">out</span> <span class="n">height</span><span class="p">);</span>
+
+            <span class="c1">// 因为一个像素由 BGRA 格式定义</span>
+            <span class="n">Int32</span> <span class="n">stride</span> <span class="p">=</span> <span class="n">width</span> <span class="p">*</span> <span class="m">4</span><span class="p">;</span>
+
+            <span class="c1">// 创建一个 GDI 对象，对象的大小通过上面的逻辑拿到</span>
+            <span class="c1">// initialize the bitmap header</span>
+            <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">BITMAPINFO</span> <span class="n">bmInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="nf">BITMAPINFO</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="m">32</span> <span class="cm">/*bpp*/</span><span class="p">);</span>
+            <span class="n">bmInfo</span><span class="p">.</span><span class="n">bmiHeader_biCompression</span> <span class="p">=</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">BI_RGB</span><span class="p">;</span>
+            <span class="n">bmInfo</span><span class="p">.</span><span class="n">bmiHeader_biSizeImage</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="n">stride</span> <span class="p">*</span> <span class="n">height</span><span class="p">);</span>
+
+            <span class="c1">// 创建 GDI 图片对象的内存填充</span>
+            <span class="c1">// Create a 32bpp DIB.  This DIB must have an alpha channel for UpdateLayeredWindow to succeed.</span>
+            <span class="n">IntPtr</span> <span class="n">pBitmapBits</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">_hBitmap</span> <span class="p">=</span> <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">CreateDIBSection</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(),</span> <span class="k">ref</span> <span class="n">bmInfo</span><span class="p">,</span> <span class="m">0</span> <span class="cm">/* DIB_RGB_COLORS*/</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">pBitmapBits</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+
+            <span class="c1">// 从 WIC 解码器里面拷贝像素内容到 GDI 图片里面</span>
+            <span class="c1">// Copy the decoded image to the new buffer which backs the HBITMAP</span>
+            <span class="n">Int32Rect</span> <span class="n">rect</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Int32Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">WIC</span><span class="p">.</span><span class="nf">CopyPixels</span><span class="p">(</span><span class="n">pBitmapFlipRotator</span><span class="p">,</span> <span class="k">ref</span> <span class="n">rect</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">stride</span> <span class="p">*</span> <span class="n">height</span><span class="p">,</span> <span class="n">pBitmapBits</span><span class="p">);</span>
+
+            <span class="c1">// 使用 GDI 图片 _hBitmap 去创建一个窗口</span>
+            <span class="n">_hwnd</span> <span class="p">=</span> <span class="nf">CreateWindow</span><span class="p">(</span><span class="n">_hBitmap</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">topMost</span><span class="p">);</span>
+
+            <span class="n">bSuccess</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="c1">// 忽略一些清理资源的代码</span>
+            <span class="k">return</span> <span class="n">bSuccess</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码中的 UnsafeNativeMethods.WIC 就是调用 WIC 层的逻辑，在 WPF 中的 WIC 层逻辑和其他 Win32 应用一样，通过 WindowsCodecs.dll 提供，只是在 <code class="language-plaintext highlighter-rouge">UnsafeNativeMethods.WIC.CreateImagingFactory(UnsafeNativeMethods.WIC.WINCODEC_SDK_VERSION, out pImagingFactory);</code> 可以看到 WPF 使用的版本是 0x236 比较古老</p>
+
+<p>通过对比 6.2.9200.21830-Windows_7.0 和 6.3.9600.17415-Windows_8.1 版本的 windowscodecs.dll 可以看到有做了如下的更改</p>
+
+<div class="language-diff highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="gd">- #define WINCODEC_SDK_VERSION 0x0236
+</span><span class="gi">+ #define WINCODEC_SDK_VERSION1 0x0236
++ #define WINCODEC_SDK_VERSION2 0x0237
+</span><span class="gd">- DEFINE_GUID(CLSID_WICImagingFactory, 0xcacaf262, 0x9370, 0x4615, 0xa1, 0x3b, 0x9f, 0x55, 0x39, 0xda, 0x4c, 0xa);
+</span><span class="gi">+ DEFINE_GUID(CLSID_WICImagingFactory, 0xcacaf262, 0x9370, 0x4615, 0xa1, 0x3b, 0x9f, 0x55, 0x39, 0xda, 0x4c, 0xa);
++ DEFINE_GUID(CLSID_WICImagingFactory1, 0xcacaf262, 0x9370, 0x4615, 0xa1, 0x3b, 0x9f, 0x55, 0x39, 0xda, 0x4c, 0xa);
++ DEFINE_GUID(CLSID_WICImagingFactory2, 0x317d06e8, 0x5f24, 0x433d, 0xbd, 0xf7, 0x79, 0xce, 0x68, 0xd8, 0xab, 0xc2);
++ #if(_WIN32_WINNT &gt;= _WIN32_WINNT_WIN8) || defined(_WIN7_PLATFORM_UPDATE)
++    #define WINCODEC_SDK_VERSION WINCODEC_SDK_VERSION2
++    #define CLSID_WICImagingFactory CLSID_WICImagingFactory2
++ #else
++    #define WINCODEC_SDK_VERSION WINCODEC_SDK_VERSION1
++ #endif
+</span></code></pre></div></div>
+
+<p>新版本的 WindowsCodecs.dll 更新请看 <a href="https://docs.microsoft.com/zh-cn/windows/win32/wic/what-s-new-in-wic-for-windows-8-1">What’s New in WIC - Win32 apps</a></p>
+
+<p>在调用到使用 GDI 图片创建窗口的逻辑就十分简单了，都是一些 Win32 的接口调用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">IntPtr</span> <span class="nf">CreateWindow</span><span class="p">(</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">BitmapHandle</span> <span class="n">hBitmap</span><span class="p">,</span> <span class="kt">int</span> <span class="n">width</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">topMost</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_defWndProc</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">_defWndProc</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="nf">WndProc</span><span class="p">(</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">DefWindowProc</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 基本的 Win32 窗口创建方法，没啥特别的</span>
+            <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">WNDCLASSEX_D</span> <span class="n">wndClass</span> <span class="p">=</span> <span class="k">new</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="nf">WNDCLASSEX_D</span><span class="p">();</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">cbSize</span> <span class="p">=</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">SizeOf</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">WNDCLASSEX_D</span><span class="p">));</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">style</span> <span class="p">=</span> <span class="m">3</span><span class="p">;</span> <span class="cm">/* CS_HREDRAW | CS_VREDRAW */</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">lpfnWndProc</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">hInstance</span> <span class="p">=</span> <span class="n">_hInstance</span><span class="p">;</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">hCursor</span> <span class="p">=</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">lpszClassName</span> <span class="p">=</span> <span class="n">CLASSNAME</span><span class="p">;</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">lpszMenuName</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="n">Empty</span><span class="p">;</span>
+            <span class="c1">// 加上消息循环，不然会提示应用停止响应</span>
+            <span class="n">wndClass</span><span class="p">.</span><span class="n">lpfnWndProc</span> <span class="p">=</span> <span class="n">_defWndProc</span><span class="p">;</span>
+
+            <span class="c1">// We chose to ignore re-registration errors in RegisterClassEx on the off chance that the user</span>
+            <span class="c1">// wants to open multiple splash screens.</span>
+            <span class="n">_wndClass</span> <span class="p">=</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">IntRegisterClassEx</span><span class="p">(</span><span class="n">wndClass</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_wndClass</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+            	<span class="c1">// 下面代码不太合理，于是我就提了一个更改 https://github.com/dotnet/wpf/pull/3923</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">Marshal</span><span class="p">.</span><span class="nf">GetLastWin32Error</span><span class="p">()</span> <span class="p">!=</span> <span class="m">0x582</span><span class="p">)</span> <span class="cm">/* class already registered */</span>
+                    <span class="k">throw</span> <span class="k">new</span> <span class="nf">Win32Exception</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="c1">// 决定启动窗口显示到哪</span>
+            <span class="kt">int</span> <span class="n">screenWidth</span> <span class="p">=</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">GetSystemMetrics</span><span class="p">(</span><span class="n">SM</span><span class="p">.</span><span class="n">CXSCREEN</span><span class="p">);</span>
+            <span class="kt">int</span> <span class="n">screenHeight</span> <span class="p">=</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">GetSystemMetrics</span><span class="p">(</span><span class="n">SM</span><span class="p">.</span><span class="n">CYSCREEN</span><span class="p">);</span>
+            <span class="kt">int</span> <span class="n">x</span> <span class="p">=</span> <span class="p">(</span><span class="n">screenWidth</span> <span class="p">-</span> <span class="n">width</span><span class="p">)</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">y</span> <span class="p">=</span> <span class="p">(</span><span class="n">screenHeight</span> <span class="p">-</span> <span class="n">height</span><span class="p">)</span> <span class="p">/</span> <span class="m">2</span><span class="p">;</span>
+
+            <span class="c1">// 窗口的样式，核心的就是 WS_EX_LAYERED 和 WS_EX_TOOLWINDOW 样式</span>
+            <span class="n">HandleRef</span> <span class="n">nullHandle</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">);</span>
+            <span class="kt">int</span> <span class="n">windowCreateFlags</span> <span class="p">=</span>
+                <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_EX_WINDOWEDGE</span> <span class="p">|</span>
+                      <span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_EX_TOOLWINDOW</span> <span class="p">|</span>
+                      <span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_EX_LAYERED</span> <span class="p">|</span>
+                      <span class="c1">// 是否显示到最前</span>
+                      <span class="p">(</span><span class="n">topMost</span> <span class="p">?</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_EX_TOPMOST</span> <span class="p">:</span> <span class="m">0</span><span class="p">);</span>
+
+            <span class="c1">// 创建窗口</span>
+            <span class="c1">// CreateWindowEx will either succeed or throw</span>
+            <span class="n">IntPtr</span> <span class="n">hWnd</span> <span class="p">=</span>  <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">CreateWindowEx</span><span class="p">(</span>
+                <span class="n">windowCreateFlags</span><span class="p">,</span>
+                <span class="n">CLASSNAME</span><span class="p">,</span> <span class="n">SR</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="n">SRID</span><span class="p">.</span><span class="n">SplashScreenIsLoading</span><span class="p">),</span>
+                <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_POPUP</span> <span class="p">|</span> <span class="n">MS</span><span class="p">.</span><span class="n">Win32</span><span class="p">.</span><span class="n">NativeMethods</span><span class="p">.</span><span class="n">WS_VISIBLE</span><span class="p">,</span>
+                <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span>
+                <span class="n">nullHandle</span><span class="p">,</span> <span class="n">nullHandle</span><span class="p">,</span> <span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">_hInstance</span><span class="p">),</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">);</span>
+
+            <span class="c1">// 将图片在窗口上显示出来</span>
+            <span class="c1">// Display the image on the window</span>
+            <span class="n">IntPtr</span> <span class="n">hScreenDC</span> <span class="p">=</span> <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">GetDC</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">());</span>
+            <span class="n">IntPtr</span> <span class="n">memDC</span> <span class="p">=</span> <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">CreateCompatibleDC</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">hScreenDC</span><span class="p">));</span>
+            <span class="n">IntPtr</span> <span class="n">hOldBitmap</span> <span class="p">=</span> <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">SelectObject</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">memDC</span><span class="p">),</span> <span class="n">hBitmap</span><span class="p">.</span><span class="nf">MakeHandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">).</span><span class="n">Handle</span><span class="p">);</span>
+
+            <span class="n">NativeMethods</span><span class="p">.</span><span class="n">POINT</span> <span class="n">newSize</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="nf">POINT</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+            <span class="n">NativeMethods</span><span class="p">.</span><span class="n">POINT</span> <span class="n">newLocation</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="nf">POINT</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+            <span class="n">NativeMethods</span><span class="p">.</span><span class="n">POINT</span> <span class="n">sourceLocation</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="nf">POINT</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+            <span class="n">_blendFunc</span> <span class="p">=</span> <span class="k">new</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="nf">BLENDFUNCTION</span><span class="p">();</span>
+            <span class="n">_blendFunc</span><span class="p">.</span><span class="n">BlendOp</span> <span class="p">=</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">AC_SRC_OVER</span><span class="p">;</span>
+            <span class="n">_blendFunc</span><span class="p">.</span><span class="n">BlendFlags</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="n">_blendFunc</span><span class="p">.</span><span class="n">SourceConstantAlpha</span> <span class="p">=</span> <span class="m">255</span><span class="p">;</span>
+            <span class="n">_blendFunc</span><span class="p">.</span><span class="n">AlphaFormat</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="cm">/*AC_SRC_ALPHA*/</span>
+
+            <span class="kt">bool</span> <span class="n">result</span> <span class="p">=</span> <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">UpdateLayeredWindow</span><span class="p">(</span><span class="n">hWnd</span><span class="p">,</span> <span class="n">hScreenDC</span><span class="p">,</span> <span class="n">newLocation</span><span class="p">,</span> <span class="n">newSize</span><span class="p">,</span>
+                <span class="n">memDC</span><span class="p">,</span> <span class="n">sourceLocation</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="k">ref</span> <span class="n">_blendFunc</span><span class="p">,</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">ULW_ALPHA</span><span class="p">);</span>
+
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">SelectObject</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">memDC</span><span class="p">),</span> <span class="n">hOldBitmap</span><span class="p">);</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">ReleaseDC</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(),</span> <span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">memDC</span><span class="p">));</span>
+            <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">ReleaseDC</span><span class="p">(</span><span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(),</span> <span class="k">new</span> <span class="nf">HandleRef</span><span class="p">(</span><span class="k">null</span><span class="p">,</span> <span class="n">hScreenDC</span><span class="p">));</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="p">==</span> <span class="k">false</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="n">HRESULT</span><span class="p">.</span><span class="nf">Check</span><span class="p">(</span><span class="n">Marshal</span><span class="p">.</span><span class="nf">GetHRForLastWin32Error</span><span class="p">());</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">hWnd</span><span class="p">;</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>当然了，在 WPF 里面再快的启动图显示速度都不如 UWP 快，因此 UWP 是系统给的优化，通过 AppFrameHost 显示的，基本上点击应用立刻打开</p>
+
+<p>当前的 WPF 在 <a href="https://github.com/dotnet/wpf">https://github.com/dotnet/wpf</a> 完全开源，使用友好的 MIT 协议，意味着允许任何人任何组织和企业任意处置，包括使用，复制，修改，合并，发表，分发，再授权，或者销售。在仓库里面包含了完全的构建逻辑，只需要本地的网络足够好（因为需要下载一堆构建工具），即可进行本地构建</p>
+
+:ET

@@ -1,0 +1,58 @@
+I"<p>本文告诉大家，在获得数组第一个元素时，使用哪个方法性能更高。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<p>需要知道，两个方法都是 Linq 的方法，使用之前需要引用 Linq 。对于 List 等都是继承可枚举<code class="language-plaintext highlighter-rouge">Enumerable</code>这时获取第一个元素可以使用<code class="language-plaintext highlighter-rouge">FirstOrDefault</code>。如果使用<code class="language-plaintext highlighter-rouge">Find</code>那么需要数组的类型是<code class="language-plaintext highlighter-rouge">IList</code>。</p>
+
+<p>下面写一个简单的例子</p>
+
+<p>反编译 Find 可以看到下面代码，下面的代码删了一些代码，让大家比较容易看到 Find 使用的是 for 然后使用判断</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="n">T</span><span class="p">[]</span> <span class="n">_items</span><span class="p">;</span>
+
+<span class="k">public</span> <span class="n">T</span> <span class="nf">Find</span><span class="p">(</span><span class="n">Predicate</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="n">match</span><span class="p">)</span>
+<span class="p">{</span>
+
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">index</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">index</span> <span class="p">&lt;</span> <span class="k">this</span><span class="p">.</span><span class="n">_size</span><span class="p">;</span> <span class="p">++</span><span class="n">index</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nf">match</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">]))</span>
+      <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="n">_items</span><span class="p">[</span><span class="n">index</span><span class="p">];</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="k">default</span> <span class="p">(</span><span class="n">T</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>而 FirstOrDefault 的代码存在 foreach ，这会调用列表的 GetEnumerator 方法，而且还会在结束的时候调用 Dispose 。这样 FirstOrDefault 的性能就比 Find 稍微差一些。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">static</span> <span class="n">TSource</span> <span class="n">FirstOrDefault</span><span class="p">&lt;</span><span class="n">TSource</span><span class="p">&gt;(</span><span class="k">this</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">TSource</span><span class="p">&gt;</span> <span class="n">source</span><span class="p">,</span> <span class="n">Func</span><span class="p">&lt;</span><span class="n">TSource</span><span class="p">,</span> <span class="kt">bool</span><span class="p">&gt;</span> <span class="n">predicate</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">foreach</span> <span class="p">(</span><span class="n">TSource</span> <span class="n">source1</span> <span class="k">in</span> <span class="n">source</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nf">predicate</span><span class="p">(</span><span class="n">source1</span><span class="p">))</span>
+      <span class="k">return</span> <span class="n">source1</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="k">default</span> <span class="p">(</span><span class="n">TSource</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>所以在对于 <code class="language-plaintext highlighter-rouge">List</code> 类型的获得第一个或默认请使用 Find ，其他的请使用<code class="language-plaintext highlighter-rouge">FirstOrDefault</code></p>
+
+<ul>
+  <li>
+    <p>对于 List ，使用 for 的速度是 foreach 的两倍</p>
+  </li>
+  <li>
+    <p>遍历 array 的速度是遍历 List 的两倍</p>
+  </li>
+  <li>
+    <p>使用 for 遍历 array 的速度是使用 foreach 遍历 List 的5倍</p>
+  </li>
+</ul>
+
+<p>参见：https://stackoverflow.com/a/365658/6116637</p>
+
+<p><a href="https://walterlv.github.io/post/for-vs-foreach.html">真的要比较 for 和 foreach 的性能吗？（内附性能比较的实测数据） - walterlv</a></p>
+
+:ET

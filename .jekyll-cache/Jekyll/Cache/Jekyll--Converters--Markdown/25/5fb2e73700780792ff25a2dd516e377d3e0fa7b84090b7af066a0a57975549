@@ -1,0 +1,91 @@
+I"$<p>我在堆栈网看到有人问 如何拖动一个TextBlock的文字到另一个TextBlock 于是看到一个大神给出的方法，下面我就来和大家说下如何拖动</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>一开始我们需要一个界面，就放两个TextBlock 一个是源，一个目标。我们拖动源到目标。</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="nt">&lt;Page</span>
+    <span class="na">x:Class=</span><span class="s">"Textvt.MainPage"</span>
+    <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="na">xmlns:local=</span><span class="s">"using:Textvt"</span>
+    <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="na">mc:Ignorable=</span><span class="s">"d"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;Grid</span> <span class="na">Background=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;StackPanel</span> <span class="na">Background=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span> <span class="na">Padding=</span><span class="s">"30"</span><span class="nt">&gt;</span>
+
+            <span class="nt">&lt;Border</span> <span class="na">BorderBrush=</span><span class="s">"Azure"</span> <span class="na">BorderThickness=</span><span class="s">"2"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;TextBlock</span> <span class="na">x:Name=</span><span class="s">"TextSource"</span> 
+                           <span class="na">Text=</span><span class="s">"我是源"</span> 
+                           <span class="na">CanDrag=</span><span class="s">"True"</span> 
+                           <span class="na">DragStarting=</span><span class="s">"Txtsource_OnDragStarting"</span>  <span class="nt">/&gt;</span>
+            <span class="nt">&lt;/Border&gt;</span>
+            <span class="nt">&lt;Border</span> <span class="na">Margin=</span><span class="s">"20"</span> <span class="na">BorderBrush=</span><span class="s">"Azure"</span> <span class="na">BorderThickness=</span><span class="s">"2"</span>
+                    <span class="na">AllowDrop=</span><span class="s">"True"</span> <span class="nt">&gt;</span>
+                <span class="nt">&lt;TextBlock</span> <span class="na">x:Name=</span><span class="s">"TextTarget"</span> <span class="na">Text=</span><span class="s">"目标TextBlock"</span> 
+                           <span class="na">Drop=</span><span class="s">"Txttarget_OnDrop"</span>
+                           <span class="na">Height=</span><span class="s">"50"</span> <span class="na">Width=</span><span class="s">"400"</span>  
+                           <span class="na">AllowDrop=</span><span class="s">"True"</span> 
+                           <span class="na">DragEnter=</span><span class="s">"Txttarget_OnDragEnter"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;/Border&gt;</span>
+        <span class="nt">&lt;/StackPanel&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Page&gt;</span>
+
+  
+</code></pre></div></div>
+
+<p>在xaml.cs 需要3个事件，开始拖放，拖放，拖放进入。</p>
+
+<p>其中拖放进入是设置鼠标显示的字和其他的东西，可以不要这个函数，不会影响功能。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Txtsource_OnDragStarting</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">sender</span><span class="p">,</span> <span class="n">DragStartingEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//开始拖放</span>
+            <span class="c1">//设置拖放文字，文字是我们点击的TextBlock</span>
+            <span class="n">args</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="nf">SetText</span><span class="p">(</span><span class="n">TextSource</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">Txttarget_OnDrop</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">DragEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//如果有文字，那么就是把他放在要拖放的TextBlock</span>
+            <span class="kt">bool</span> <span class="n">hasText</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">DataView</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="n">StandardDataFormats</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+            <span class="c1">//显示复制还是没有</span>
+            <span class="c1">//拖动显示可以去我之前写的 http://blog.csdn.net/lindexi_gd/article/details/49757187?locationNum=2&amp;fps=1</span>
+            <span class="n">e</span><span class="p">.</span><span class="n">AcceptedOperation</span> <span class="p">=</span> <span class="n">hasText</span> <span class="p">?</span> <span class="n">DataPackageOperation</span><span class="p">.</span><span class="n">Copy</span> <span class="p">:</span> <span class="n">DataPackageOperation</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">hasText</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">text</span> <span class="p">=</span> <span class="k">await</span> <span class="n">e</span><span class="p">.</span><span class="n">DataView</span><span class="p">.</span><span class="nf">GetTextAsync</span><span class="p">();</span>
+                <span class="n">TextTarget</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span> <span class="s">"\n"</span> <span class="p">+</span> <span class="n">text</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Txttarget_OnDragEnter</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">DragEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            
+            <span class="kt">bool</span> <span class="n">hasText</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">DataView</span><span class="p">.</span><span class="nf">Contains</span><span class="p">(</span><span class="n">StandardDataFormats</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+            <span class="n">e</span><span class="p">.</span><span class="n">AcceptedOperation</span> <span class="p">=</span> <span class="n">hasText</span> <span class="p">?</span> <span class="n">DataPackageOperation</span><span class="p">.</span><span class="n">Copy</span> <span class="p">:</span> <span class="n">DataPackageOperation</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">hasText</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">DragUIOverride</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">e</span><span class="p">.</span><span class="n">DragUIOverride</span><span class="p">.</span><span class="n">Caption</span> <span class="p">=</span> <span class="s">"Drop here to insert text"</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>代码：<a href="http://download.csdn.net/detail/lindexi_gd/9739764">http://download.csdn.net/detail/lindexi_gd/9739764</a> 可以的话给点积分。</p>
+
+<p>问题原文：</p>
+
+<p>https://stackoverflow.com/questions/41662650/how-to-move-text-from-one-textblock-to-another-textblock-using-drag-and-drop-in</p>
+
+:ET

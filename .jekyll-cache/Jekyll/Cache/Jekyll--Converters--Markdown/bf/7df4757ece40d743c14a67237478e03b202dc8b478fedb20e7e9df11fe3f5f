@@ -1,0 +1,42 @@
+I"<p>本文仅仅是提供测试使用的代码</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/1 10:04:52 -->
+
+<p>提供文件下载只需要返回 PhysicalFile 方法，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="n">HttpGet</span><span class="p">]</span>
+        <span class="k">public</span> <span class="n">IActionResult</span> <span class="nf">Get</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">folder</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetDirectoryName</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetExecutingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="s">"big file"</span><span class="p">);</span>
+            <span class="k">const</span> <span class="kt">string</span> <span class="n">mime</span> <span class="p">=</span> <span class="s">"application/octet-stream"</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="nf">PhysicalFile</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">mime</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文的 big file 是程序运行创建的垃圾文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">WriteBigFile</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">folder</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetDirectoryName</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetExecutingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">folder</span><span class="p">,</span> <span class="s">"big file"</span><span class="p">);</span>
+
+            <span class="k">if</span> <span class="p">(!</span><span class="n">File</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">file</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Create</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">100000000</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                    <span class="p">{</span>
+                        <span class="n">stream</span><span class="p">.</span><span class="nf">WriteByte</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>测试代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/e237082b643c86cd15124f201c82f46955b9ab84/Gaaweeealjrdwrebiny">github</a> 欢迎小伙伴访问</p>
+
+:ET

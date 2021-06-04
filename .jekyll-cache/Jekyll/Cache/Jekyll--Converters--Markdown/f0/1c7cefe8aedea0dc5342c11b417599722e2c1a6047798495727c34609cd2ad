@@ -1,0 +1,500 @@
+I"��<p>本文告诉大家一个封装好的库，使用这个库可以快速搭建多进程相互使用。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/2/16 9:40:26 -->
+
+<!-- csdn -->
+<div id="toc"></div>
+<!-- 标签：WPF，dotnetremoting，rpc， -->
+
+<p>在 <a href="https://lindexi.gitee.io/post/WPF-%E4%BD%BF%E7%94%A8RPC%E8%B0%83%E7%94%A8%E5%85%B6%E4%BB%96%E8%BF%9B%E7%A8%8B.html">WPF 使用RPC调用其他进程</a> 已经告诉大家调用的原理，但是大家可以看到，如果自己写一个框架是比较难的。</p>
+
+<p>因为我经常调用 C++ 代码，如果C++出现异常，软件会直接退出，所以我就想把 C++ 代码放在其他进程，这样C++运行出现异常了，软件也不会直接退出。</p>
+
+<p>但是如果每次都需要自己写相同的代码，我是不同意的，因为很容易写错。</p>
+
+<p>因为我的代码放在了公司代码使用，所以我不会把源代码放出来，但是大家可以通过复制本文的类来创建框架。</p>
+
+<h2 id="创建端口">创建端口</h2>
+
+<p>创建端口包含一个接口和一个类，因为我需要在一个设备运行，所以为了性能，我不使用 http 连接，这时的端口可以使用一个字符串</p>
+
+<p>为了区分两个程序，我把程序分为两个，一个是 WPF 程序，一个是C++程序。因为另一个程序主要是运行 C++ 代码。</p>
+
+<p>为了让两个程序能联系，就需要约定端口，因为这是框架，可能需要使用 http 通信，所以就需要写一个接口，如果需要使用 http 修改端口就继承，这样框架才可以在很多地方使用。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">///     创建端口</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IPortGenerator</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获得端口</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="kt">string</span> <span class="nf">GetPort</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为我需要在一个系统运行两个程序，所以我的端口是这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">///     创建端口</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">PortGenerator</span> <span class="p">:</span> <span class="n">IPortGenerator</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获得一个随机端口</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">GetPort</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">maxPort</span> <span class="p">=</span> <span class="m">65535</span><span class="p">;</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">minPort</span> <span class="p">=</span> <span class="m">49152</span><span class="p">;</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">Process</span><span class="p">.</span><span class="nf">GetCurrentProcess</span><span class="p">().</span><span class="n">Id</span> <span class="p">%</span> <span class="p">(</span><span class="n">maxPort</span> <span class="p">-</span> <span class="n">minPort</span><span class="p">)</span> <span class="p">+</span> <span class="n">minPort</span><span class="p">).</span><span class="nf">ToString</span><span class="p">();</span> <span class="c1">//获得进程ID作为端口号</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="调用软件">调用软件</h2>
+
+<p>从 WPF 程序调用 C++ 程序需要告诉他参数，参数就是刚才的端口</p>
+
+<p>这时 C++ 程序使用命令行解析，请看<a href="https://walterlv.github.io/post/mcmaster-extensions-commandlineutils.html">安利一款非常好用的命令行参数库：McMaster.Extensions.CommandLineUtils - walterlv</a></p>
+
+<p>创建一个类用来解析</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Options</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">Option</span><span class="p">(</span><span class="sc">'p'</span><span class="p">,</span> <span class="s">"port"</span><span class="p">,</span> <span class="n">Required</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span> <span class="n">HelpText</span> <span class="p">=</span> <span class="s">"远程开启的端口"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Port</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>解析只需要使用主函数传入的 args 就可以拿到端口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Parser</span><span class="p">.</span><span class="n">Default</span><span class="p">.</span><span class="n">ParseArguments</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;(</span><span class="n">args</span><span class="p">).</span><span class="nf">MapResult</span><span class="p">(</span><span class="n">options</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"端口号"</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Port</span><span class="p">);</span>
+                <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"启动库"</span><span class="p">);</span>
+                    <span class="nf">Run</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">Port</span><span class="p">,</span> <span class="n">assembly</span><span class="p">);</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"启动完成"</span><span class="p">);</span>
+                <span class="p">}).</span><span class="nf">Start</span><span class="p">();</span>
+                <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+            <span class="p">},</span> <span class="n">_</span> <span class="p">=&gt;</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这里启动一个新的线程因为C++程序需要使用另一个线程去计算，主函数的线程会如果没有使用 <code class="language-plaintext highlighter-rouge">Console.Read()</code> 会退出。</p>
+
+<p>现在 WPF 可以开始调用 C++ 程序，使用下面的代码进行管理</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">///     管理其他进程</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">RemoteProcessManager</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     管理其他进程</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="processName"&gt;进程名，用于启动进程&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="nf">RemoteProcessManager</span><span class="p">(</span><span class="kt">string</span> <span class="n">processName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ProcessName</span> <span class="p">=</span> <span class="n">processName</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获取管理的进程</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ProcessName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     获取是否连接</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="n">IsConnected</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     创建端口</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">IPortGenerator</span> <span class="n">PortGenerator</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     远程应用退出时，建议监听后使用异常</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">event</span> <span class="n">EventHandler</span> <span class="n">RemoteExited</span><span class="p">;</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     连接</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Connect</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">IsConnected</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">"禁止多次连接"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">IsConnected</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">PortGenerator</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">PortGenerator</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">PortGenerator</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="n">Port</span> <span class="p">=</span> <span class="n">PortGenerator</span><span class="p">.</span><span class="nf">GetPort</span><span class="p">();</span>
+
+            <span class="c1">//启动远程进程</span>
+            <span class="kt">var</span> <span class="n">st</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ProcessStartInfo</span><span class="p">(</span><span class="n">ProcessName</span><span class="p">,</span> <span class="s">"-p "</span> <span class="p">+</span> <span class="n">Port</span><span class="p">);</span>
+
+<span class="cp">#if !DEBUG
+</span>            <span class="n">st</span><span class="p">.</span><span class="n">CreateNoWindow</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="n">st</span><span class="p">.</span><span class="n">WindowStyle</span> <span class="p">=</span> <span class="n">ProcessWindowStyle</span><span class="p">.</span><span class="n">Hidden</span><span class="p">;</span>
+<span class="cp">#endif
+</span>            <span class="kt">var</span> <span class="n">remoteGuardian</span> <span class="p">=</span> <span class="n">Process</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="n">st</span><span class="p">);</span> <span class="c1">//监控远程应用</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">remoteGuardian</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">RemoteProcessStartException</span><span class="p">(</span><span class="s">"启动时出现返回值为空"</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Data</span> <span class="p">=</span> 
+                    <span class="p">{</span>
+                        <span class="p">{</span><span class="s">"ProcessStartInfo"</span><span class="p">,</span> <span class="n">st</span><span class="p">}</span>
+                    <span class="p">}</span>
+                <span class="p">};</span>
+            <span class="p">}</span>
+
+            <span class="n">ProcessId</span> <span class="p">=</span> <span class="n">remoteGuardian</span><span class="p">.</span><span class="n">Id</span><span class="p">;</span>
+            <span class="n">remoteGuardian</span><span class="p">.</span><span class="n">EnableRaisingEvents</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="n">remoteGuardian</span><span class="p">.</span><span class="n">Exited</span> <span class="p">+=</span> <span class="n">RemoteGuardian_OnExited</span><span class="p">;</span>
+
+            <span class="nf">CleanRegister</span><span class="p">();</span>
+
+            <span class="n">_channel</span> <span class="p">=</span> <span class="n">Terminal</span><span class="p">.</span><span class="nf">CreatChannel</span><span class="p">();</span> <span class="c1">//客户端</span>
+
+            <span class="n">ChannelServices</span><span class="p">.</span><span class="nf">RegisterChannel</span><span class="p">(</span><span class="n">_channel</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     从远程获得实例</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;typeparam name="T"&gt;&lt;/typeparam&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="n">T</span> <span class="n">GetObject</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;()</span>
+        <span class="p">{</span>
+            <span class="nf">CheckProcess</span><span class="p">();</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="n">Activator</span><span class="p">.</span><span class="nf">GetObject</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">),</span>
+                <span class="s">"Ipc://"</span> <span class="p">+</span> <span class="n">Port</span> <span class="p">+</span> <span class="s">"/"</span> <span class="p">+</span> <span class="k">typeof</span><span class="p">(</span><span class="n">T</span><span class="p">).</span><span class="n">Name</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     结束远程进程</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">ExitProcess</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">_isManualExit</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">remoteProcessBrake</span> <span class="p">=</span> <span class="n">GetObject</span><span class="p">&lt;</span><span class="n">RemoteProcessBrake</span><span class="p">&gt;();</span>
+<span class="cp">#pragma warning disable 618
+</span>            <span class="n">remoteProcessBrake</span><span class="p">.</span><span class="nf">OnExit</span><span class="p">();</span>
+<span class="cp">#pragma warning restore 618
+</span>        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">IChannel</span> <span class="n">_channel</span><span class="p">;</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     是否手动退出远程应用</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">_isManualExit</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">RemoteGuardian_OnExited</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">IsConnected</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+            <span class="n">ProcessId</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
+
+            <span class="c1">//手动退出就不需要事件</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_isManualExit</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="c1">//防止360等垃圾软件觉得这个应用可以退出</span>
+            <span class="n">RemoteExited</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+
+            <span class="c1">//即使被你退出了，我还是要启动，但是可能存在一些地方使用的变量放在本地，所以拿到的值就是之前的应用，还是需要用户重启</span>
+            <span class="nf">Connect</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     清理注册，因为一个信道只能注册</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">CleanRegister</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_channel</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">ChannelServices</span><span class="p">.</span><span class="nf">UnregisterChannel</span><span class="p">(</span><span class="n">_channel</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+
+        <span class="k">private</span> <span class="kt">int</span> <span class="n">ProcessId</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">Port</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">CheckProcess</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(!</span><span class="n">IsConnected</span> <span class="p">||</span> <span class="n">ProcessId</span> <span class="p">==</span> <span class="p">-</span><span class="m">1</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">NativeProcessException</span><span class="p">(</span><span class="s">"远程应用已经意外结束或没有启动"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">processes</span> <span class="p">=</span> <span class="n">Process</span><span class="p">.</span><span class="nf">GetProcesses</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ProcessId</span> <span class="p">!=</span> <span class="p">-</span><span class="m">1</span> <span class="p">&amp;&amp;</span> <span class="n">processes</span><span class="p">.</span><span class="nf">All</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span><span class="p">.</span><span class="n">Id</span> <span class="p">!=</span> <span class="n">ProcessId</span><span class="p">))</span>
+            <span class="p">{</span>
+<span class="cp">#if DEBUG
+</span>                <span class="k">throw</span> <span class="k">new</span> <span class="nf">NativeProcessException</span><span class="p">();</span>
+<span class="cp">#else
+</span>                <span class="n">IsConnected</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span>
+                <span class="nf">Connect</span><span class="p">();</span>
+<span class="cp">#endif
+</span>            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>注意现在的代码存在很多类没有引用</p>
+
+<p>从上面代码可以看到，这里使用的连接是 IPC ，因为调用其他进程是在同一个电脑，所以这时使用 IPC 的效率会比 http 和 tcp 高。原因是 IPC 是进程间通信，效率和内存共享差不多。而使用 http 或 tcp 需要把信息发送给本地巡回，然后再返回。而且使用 http 需要做额外的过程，需要走 http 的协议。使用 tcp 需要使用握手，性能都比 IPC 差。</p>
+
+<h2 id="运行的类">运行的类</h2>
+
+<p>所有需要在 C++ 程序运行的类都需要注册，因为C++程序需要找到程序集所有符合的类，所以需要这些类标记</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// 放在远程的实例</span>
+    <span class="c1">/// &lt;remarks&gt;请不要在代码保存实例&lt;/remarks&gt;</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">interface</span> <span class="nc">IRemote</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">///  共享使用的类，这个类会在远程进程创建</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="p">[</span><span class="nf">AttributeUsage</span><span class="p">(</span><span class="n">AttributeTargets</span><span class="p">.</span><span class="n">Class</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">RemoteAttribute</span> <span class="p">:</span> <span class="n">Attribute</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>例如有一个类需要在 C++ 程序运行，在 WPF 程序使用，那么就需要这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">Remote</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">BaltrartularLouronay</span> <span class="p">:</span> <span class="n">MarshalByRefObject</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">TerecaLesi</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"调用"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>继承 MarshalByRefObject 标记 Remote 就可以了</p>
+
+<h2 id="运行c程序">运行C++程序</h2>
+
+<p>运行需要获得程序所有类，需要在C++程序使用的类，实现它。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// 远程本机进程</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">RemoteNative</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///  加载程序集</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="args"&gt;传入参数&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="assembly"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Run</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">,</span> <span class="n">Assembly</span> <span class="n">assembly</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Parser</span><span class="p">.</span><span class="n">Default</span><span class="p">.</span><span class="n">ParseArguments</span><span class="p">&lt;</span><span class="n">Options</span><span class="p">&gt;(</span><span class="n">args</span><span class="p">).</span><span class="nf">MapResult</span><span class="p">(</span><span class="n">options</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"端口号"</span> <span class="p">+</span> <span class="n">options</span><span class="p">.</span><span class="n">Port</span><span class="p">);</span>
+                <span class="k">new</span> <span class="nf">Thread</span><span class="p">(()</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"启动库"</span><span class="p">);</span>
+                    <span class="nf">Run</span><span class="p">(</span><span class="n">options</span><span class="p">.</span><span class="n">Port</span><span class="p">,</span> <span class="n">assembly</span><span class="p">);</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"启动完成"</span><span class="p">);</span>
+                <span class="p">}).</span><span class="nf">Start</span><span class="p">();</span>
+                <span class="k">return</span> <span class="m">0</span><span class="p">;</span>
+            <span class="p">},</span> <span class="n">_</span> <span class="p">=&gt;</span> <span class="p">-</span><span class="m">1</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///  加载程序集</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="port"&gt;端口&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="assembly"&gt;程序集&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Run</span><span class="p">(</span><span class="kt">string</span> <span class="n">port</span><span class="p">,</span> <span class="n">Assembly</span> <span class="n">assembly</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_channel</span> <span class="p">=</span> <span class="n">Terminal</span><span class="p">.</span><span class="nf">CreatChannel</span><span class="p">(</span><span class="n">port</span><span class="p">);</span>
+
+            <span class="n">ChannelServices</span><span class="p">.</span><span class="nf">RegisterChannel</span><span class="p">(</span><span class="n">_channel</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+
+            <span class="c1">//设置租用管理器的初始租用时间为无限 http://www.cnblogs.com/wayfarer/archive/2004/08/05/30437.html</span>
+            <span class="n">LifetimeServices</span><span class="p">.</span><span class="n">LeaseTime</span> <span class="p">=</span> <span class="n">TimeSpan</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+
+            <span class="c1">//注册实例</span>
+            <span class="kt">var</span> <span class="n">remoteProcessBrake</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RemoteProcessBrake</span><span class="p">();</span>
+
+            <span class="n">remoteProcessBrake</span><span class="p">.</span><span class="n">Exit</span> <span class="p">+=</span> <span class="n">RemoteProcessBrake_Exit</span><span class="p">;</span>
+
+            <span class="c1">// 防止对象回收</span>
+            <span class="c1">// 如果不使用 var objRef = x 那么在运行就发现 System.Runtime.Remoting.RemotingException:“找不到请求的服务”</span>
+            <span class="kt">var</span> <span class="n">objRef</span> <span class="p">=</span> <span class="n">RemotingServices</span><span class="p">.</span><span class="nf">Marshal</span><span class="p">(</span><span class="n">remoteProcessBrake</span><span class="p">,</span> <span class="n">remoteProcessBrake</span><span class="p">.</span><span class="nf">GetType</span><span class="p">().</span><span class="n">Name</span><span class="p">);</span>
+
+            <span class="n">_objRefList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">objRef</span><span class="p">);</span>
+
+            <span class="nf">Init</span><span class="p">(</span><span class="n">assembly</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">RemoteProcessBrake_Exit</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Environment</span><span class="p">.</span><span class="nf">Exit</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Init</span><span class="p">(</span><span class="n">Assembly</span> <span class="n">assembly</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">assembly</span><span class="p">.</span><span class="nf">GetTypes</span><span class="p">().</span><span class="nf">Where</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="n">temp</span><span class="p">.</span><span class="n">GetCustomAttribute</span><span class="p">&lt;</span><span class="n">RemoteAttribute</span><span class="p">&gt;()</span> <span class="p">!=</span> <span class="k">null</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">obj</span> <span class="p">=</span> <span class="nf">CreateInstance</span><span class="p">(</span><span class="n">temp</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">obj</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="c1">// 防止对象回收</span>
+                    <span class="kt">var</span> <span class="n">objRef</span> <span class="p">=</span> <span class="n">RemotingServices</span><span class="p">.</span><span class="nf">Marshal</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">temp</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
+                    <span class="n">_objRefList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">objRef</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">MarshalByRefObject</span> <span class="nf">CreateInstance</span><span class="p">(</span><span class="n">Type</span> <span class="n">type</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ConstructorInfo</span> <span class="n">constructor</span> <span class="p">=</span> <span class="n">type</span><span class="p">.</span><span class="nf">GetConstructor</span><span class="p">(</span><span class="n">Type</span><span class="p">.</span><span class="n">EmptyTypes</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">constructor</span> <span class="p">==</span> <span class="k">null</span> <span class="p">?</span> <span class="k">null</span> <span class="p">:</span> <span class="n">Activator</span><span class="p">.</span><span class="nf">CreateInstance</span><span class="p">(</span><span class="n">type</span><span class="p">)</span> <span class="k">as</span> <span class="n">MarshalByRefObject</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 防止对象回收</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">private</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">ObjRef</span><span class="p">&gt;</span> <span class="n">_objRefList</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">ObjRef</span><span class="p">&gt;();</span>
+
+        <span class="k">private</span> <span class="n">IChannel</span> <span class="n">_channel</span><span class="p">;</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<h2 id="通道">通道</h2>
+
+<p>如果需要两个程序连接，需要创建通道</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// 通道</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Terminal</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 创建连接</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="port"&gt;对于服务端需要一个标示符，对于客户端请使用空&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">IChannel</span> <span class="nf">CreatChannel</span><span class="p">(</span><span class="kt">string</span> <span class="n">port</span> <span class="p">=</span> <span class="s">""</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">port</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">port</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">NewGuid</span><span class="p">().</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"N"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">serverProvider</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryServerFormatterSinkProvider</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">clientProvider</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryClientFormatterSinkProvider</span><span class="p">();</span>
+            <span class="n">serverProvider</span><span class="p">.</span><span class="n">TypeFilterLevel</span> <span class="p">=</span> <span class="n">TypeFilterLevel</span><span class="p">.</span><span class="n">Full</span><span class="p">;</span>
+            <span class="n">IDictionary</span> <span class="n">props</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Hashtable</span><span class="p">();</span>
+            <span class="n">props</span><span class="p">[</span><span class="s">"portName"</span><span class="p">]</span> <span class="p">=</span> <span class="n">port</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">IpcChannel</span><span class="p">(</span><span class="n">props</span><span class="p">,</span> <span class="n">clientProvider</span><span class="p">,</span> <span class="n">serverProvider</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>对于 WPF 程序只需要创建随机的端口，对于 C++ 程序需要创建 WPF 程序告诉他的端口，这样 WPF 程序才可以发送数据到 C++ 程序</p>
+
+<h2 id="使用">使用</h2>
+
+<p>尝试把上面的类复制到自己的一个项目，然后创建两个项目，一个是 WPF 程序，一个是C++程序，让两个程序都引用这个项目。</p>
+
+<p>注意创建的项目需要引用 System.Runtime.Remoting</p>
+
+<p>例如创建 MairzearPowhel 程序做 WPF 程序用来调用 SedreaSudome 程序。在 MairzearPowhel 需要引用 SedreaSudome 可以获得里面的类而且用来启动 SedreaSudome 。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">/// MainWindow.xaml 的交互逻辑</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainWindow</span> <span class="p">:</span> <span class="n">Window</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">SouhaiNosoja</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 启动C++程序</span>
+            <span class="kt">var</span> <span class="n">remoteProcessManager</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RemoteProcessManager</span><span class="p">(</span><span class="s">"SedreaSudome.exe"</span><span class="p">);</span>
+
+            <span class="c1">// 连接</span>
+            <span class="n">remoteProcessManager</span><span class="p">.</span><span class="nf">Connect</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">baltrartularLouronay</span> <span class="p">=</span> <span class="n">remoteProcessManager</span><span class="p">.</span><span class="n">GetObject</span><span class="p">&lt;</span><span class="n">BaltrartularLouronay</span><span class="p">&gt;();</span>
+
+            <span class="c1">// 执行里面方法</span>
+            <span class="n">baltrartularLouronay</span><span class="p">.</span><span class="nf">TerecaLesi</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">ButtonBase_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="nf">SouhaiNosoja</span><span class="p">();</span>
+
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>对于 C++ 程序只需要几个代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Debugger</span><span class="p">.</span><span class="nf">Launch</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">remoteNative</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RemoteNative</span><span class="p">();</span>
+            <span class="n">remoteNative</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Program</span><span class="p">).</span><span class="n">Assembly</span><span class="p">);</span>
+
+            <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">Read</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果发现无法使用，请联系我</p>
+
+<p><img src="https://i.loli.net/2018/06/24/5b2f3c70dd5e9.jpg" alt="" /></p>
+
+<p>感谢 <a href="https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=69353928">洪三水</a>提供图片</p>
+
+:ET

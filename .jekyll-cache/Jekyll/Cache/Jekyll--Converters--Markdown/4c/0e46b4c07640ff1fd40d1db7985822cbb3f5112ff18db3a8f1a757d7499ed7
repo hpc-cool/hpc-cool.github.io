@@ -1,0 +1,36 @@
+I"�<!--more-->
+
+<!-- CreateTime:2019/6/23 11:54:04 -->
+
+<p>调用 SerialDevice.FromIdAsync 可能返回空，因为没有设置 package.appmanifest 可以使用端口</p>
+
+<p>打开 package.appmanifest 文件添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Capabilities</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="n">DeviceCapability</span> <span class="n">Name</span><span class="p">=</span><span class="s">"serialcommunication"</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Device</span> <span class="n">Id</span><span class="p">=</span><span class="s">"any"</span><span class="p">&gt;</span>
+       <span class="p">&lt;</span><span class="n">Function</span> <span class="n">Type</span><span class="p">=</span><span class="s">"name:serialPort"</span> <span class="p">/&gt;</span>
+      <span class="p">&lt;/</span><span class="n">Device</span><span class="p">&gt;</span>
+     <span class="p">&lt;/</span><span class="n">DeviceCapability</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Capabilities</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>尝试使用特定的端口访问</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">string</span> <span class="n">aqs</span> <span class="p">=</span> <span class="n">SerialDevice</span><span class="p">.</span><span class="nf">GetDeviceSelector</span><span class="p">(</span><span class="s">"COM3"</span><span class="p">);</span>
+<span class="n">DeviceInformationCollection</span> <span class="n">dlist</span> <span class="p">=</span> <span class="k">await</span> <span class="n">DeviceInformation</span><span class="p">.</span><span class="nf">FindAllAsync</span><span class="p">(</span><span class="n">aqs</span><span class="p">);</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">dlist</span><span class="p">.</span><span class="nf">Any</span><span class="p">())</span>
+<span class="p">{</span>
+    <span class="n">deviceId</span> <span class="p">=</span> <span class="n">dlist</span><span class="p">.</span><span class="nf">First</span><span class="p">().</span><span class="n">Id</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">using</span> <span class="p">(</span><span class="n">SerialDevice</span> <span class="n">serialPort</span> <span class="p">=</span> <span class="k">await</span> <span class="n">SerialDevice</span><span class="p">.</span><span class="nf">FromIdAsync</span><span class="p">(</span><span class="n">deviceId</span><span class="p">))</span>
+<span class="p">{</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/q/37505107/6116637">https://stackoverflow.com/q/37505107/6116637</a></p>
+
+:ET

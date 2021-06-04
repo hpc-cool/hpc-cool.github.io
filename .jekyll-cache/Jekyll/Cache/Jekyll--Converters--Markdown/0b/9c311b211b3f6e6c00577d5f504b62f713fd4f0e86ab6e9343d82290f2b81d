@@ -1,0 +1,46 @@
+I"�<p>本文告诉大家如何在 UWP 标题栏添加后退按钮</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/9/14 20:22:08 -->
+
+<div id="toc"></div>
+
+<p>设置里，标题栏有后退按钮，请看下图</p>
+
+<!-- ![这里写图片描述](http://img.blog.csdn.net/20160201125801185) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20189142075776" alt="" /></p>
+
+<!-- ![](image/win10_uwp_biao_ti_lan_hou_tui/win10_uwp_biao_ti_lan_hou_tui0.png) -->
+
+<p>在win平板，可以有后退键，手机也有，但是手机的是物理的，平板的和 PC 的后退是在标题栏做的</p>
+
+<p>如果需要在标题栏显示后退按钮，需要使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">SystemNavigationManager</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">().</span><span class="n">AppViewBackButtonVisibility</span> <span class="p">=</span> <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">AppViewBackButtonVisibility</span><span class="p">.</span><span class="n">Visible</span><span class="p">;</span>
+</code></pre></div></div>
+
+<!-- ![](image/win10_uwp_biao_ti_lan_hou_tui/win10_uwp_biao_ti_lan_hou_tui1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20189142092410" alt="" /></p>
+
+<p>在用户点击标题栏的后退按钮的时候，可以通过下面代码拿到事件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	     <span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Core</span><span class="p">.</span><span class="n">SystemNavigationManager</span><span class="p">.</span><span class="nf">GetForCurrentView</span><span class="p">().</span><span class="n">BackRequested</span> <span class="p">+=</span> <span class="n">BackRequested</span><span class="p">;</span> 
+</code></pre></div></div>
+
+<p>注意 BackRequested 是自己写的函数。</p>
+
+<p>可以通过 BackRequested 的参数 handle 阻止在手机按下后退键让应用隐藏。</p>
+
+<p>BackRequested 后退方法，如何获得参见：<a href="c-设计模式-责任链.md">c# 设计模式 责任链.md</a> 注意不要在每个页面的构造都使用添加事件，如果这样子，那么就会出现按一下后退出现你想不到的异常。好的做法是在 Load 添加，Unload 去掉。如果这句代码添加在 ViewModel 需要自己在 ViewModel 关闭去掉添加事件。</p>
+
+<p>如果是手机可以通过引用手机的 sdk 使用下面的代码拿到硬件按钮的返回</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Windows</span><span class="p">.</span><span class="n">Phone</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Input</span><span class="p">.</span><span class="n">HardwareButtons</span><span class="p">.</span><span class="n">BackPressed</span>
+</code></pre></div></div>
+
+<p>具体代码请看 <a href="https://github.com/Microsoft/Windows-universal-samples/tree/master/Samples/BackButton">Windows-universal-samples/Samples/BackButton at master · Microsoft/Windows-universal-samples</a></p>
+
+:ET

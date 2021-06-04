@@ -1,0 +1,202 @@
+I" W<p>本文主要是来安利大家基于 Azure 的认知服务，主要是文本认知服务，可以做到分析输入文本的情绪，以及判断当前输入文本所属语言等功能</p>
+
+<!--more-->
+
+<!-- CreateTime:5/18/2020 9:45:27 AM -->
+
+<p>本文分为两个部分 ，一个就是在 Azure 上的配置，另一个就是 WPF 端的使用</p>
+
+<p>在 Azure 上我用的是 世纪互联 的一块钱订阅，可以用一块钱订阅一个月的试用，这就是为什么我这几天都会写 Azure 相关博客的原因</p>
+
+<p>登录 Azure 控制台，新建一个 认知服务 新建方法基本上看界面就会了，而微软的界面会改来改去，我就不放详细的步骤了</p>
+
+<p>这个服务属于新建完成就完成 Azure 端的部署</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20205181011295712.jpg" alt="" /></p>
+
+<p>在开始之前还请小伙伴看一下定价层是否是免费的哈，点击资源管理，点击定价层，选择免费，点击下方的选择按钮</p>
+
+<p>接下来还需要点击 密钥和终结点 复制粘贴密钥和访问地址</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020518101444481.jpg" alt="" /></p>
+
+<p>在上面的图片可以看到有两个密钥，其实这两个密钥可以在代码里面使用任意一个，在这里放两个只是为了在一个失效之后可以备用另一个</p>
+
+<p>新建一个 WPF 项目，在项目里面通过 NuGet 安装 Microsoft.Azure.CognitiveServices.Language.TextAnalytics 库，这个是 2.1 版本的，最新版本是 3.0 预览版。不过 3.0 预览版需要 Azure 服务器的支持，暂时中国微软的版本是不支持的，如果使用 3.0 的预览版将会提示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="n">code</span><span class="p">:</span> <span class="s">"404"</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="s">"Resource not found"</span><span class="p">}</span>
+</code></pre></div></div>
+
+<p>使用 3.0 预览版需要安装 Azure.AI.TextAnalytics 库</p>
+
+<p>安装 NuGet 库可以通过修改 csproj 的方法</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="c">&lt;!--&lt;PackageReference Include="Azure.AI.TextAnalytics" Version="1.0.0-preview.4" /&gt;--&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"Microsoft.Azure.CognitiveServices.Language.TextAnalytics"</span> <span class="na">Version=</span><span class="s">"4.0.0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>被注释掉的库就是 3.0 预览版的，现在是 2020.5 这个库还是预览版</p>
+
+<p>在 WPF 中添加一个简单的界面</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020518102062057.jpg" alt="" /></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+            <span class="nt">&lt;RowDefinition&gt;&lt;/RowDefinition&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"Auto"</span><span class="nt">&gt;&lt;/RowDefinition&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;Grid&gt;</span>
+            <span class="nt">&lt;TextBox</span> <span class="na">x:Name=</span><span class="s">"Text"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">TextWrapping=</span><span class="s">"Wrap"</span> <span class="na">AcceptsReturn=</span><span class="s">"True"</span><span class="nt">&gt;&lt;/TextBox&gt;</span>
+        <span class="nt">&lt;/Grid&gt;</span>
+        <span class="nt">&lt;Grid</span> <span class="na">Grid.Row=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;TextBox</span> <span class="na">x:Name=</span><span class="s">"ShowText"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">IsReadOnly=</span><span class="s">"True"</span> <span class="na">TextWrapping=</span><span class="s">"Wrap"</span><span class="nt">&gt;&lt;/TextBox&gt;</span>
+        <span class="nt">&lt;/Grid&gt;</span>
+        <span class="nt">&lt;StackPanel</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Grid.Row=</span><span class="s">"2"</span> <span class="na">Orientation=</span><span class="s">"Horizontal"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;StackPanel.Resources&gt;</span>
+                <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Margin"</span> <span class="na">Value=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;&lt;/Setter&gt;</span>
+                <span class="nt">&lt;/Style&gt;</span>
+            <span class="nt">&lt;/StackPanel.Resources&gt;</span>
+            <span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"情绪分析"</span> <span class="na">Click=</span><span class="s">"SentimentAnalysis_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+            <span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"语言检测"</span> <span class="na">Click=</span><span class="s">"LanguageDetection_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+            <span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"命名实体识别 (NER)"</span> <span class="na">Click=</span><span class="s">"RecognizeEntities_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+            <span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"关键短语提取"</span> <span class="na">Click=</span><span class="s">"KeyPhraseExtraction_OnClick"</span><span class="nt">&gt;&lt;/Button&gt;</span>
+        <span class="nt">&lt;/StackPanel&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>在使用之前需要创建客户端模型，需要传入刚才复制的 key 和终结点 也就是访问地址</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">TextAnalyticsClient</span> <span class="nf">GetAnalyticsClient</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">key</span> <span class="p">=</span> <span class="s">"d131f725093f460c99a09580beba34ed"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">endpoint</span> <span class="p">=</span> <span class="s">"https://lindexi.cognitiveservices.azure.cn/"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">credentials</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">ApiKeyServiceClientCredentials</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+            <span class="n">TextAnalyticsClient</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">TextAnalyticsClient</span><span class="p">(</span><span class="n">credentials</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Endpoint</span> <span class="p">=</span> <span class="n">endpoint</span>
+            <span class="p">};</span>
+
+            <span class="k">return</span> <span class="n">client</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>请将上面的 key 和 endpoint 替换为你自己 Azure 的</p>
+
+<p>上面的 ApiKeyServiceClientCredentials 是自己实现的类，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">ApiKeyServiceClientCredentials</span> <span class="p">:</span> <span class="n">ServiceClientCredentials</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">ApiKeyServiceClientCredentials</span><span class="p">(</span><span class="kt">string</span> <span class="n">apiKey</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_apiKey</span> <span class="p">=</span> <span class="n">apiKey</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">override</span> <span class="n">Task</span> <span class="nf">ProcessHttpRequestAsync</span><span class="p">(</span><span class="n">HttpRequestMessage</span> <span class="n">request</span><span class="p">,</span> <span class="n">CancellationToken</span> <span class="n">cancellationToken</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">request</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">request</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="n">request</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"Ocp-Apim-Subscription-Key"</span><span class="p">,</span> <span class="n">_apiKey</span><span class="p">);</span>
+            <span class="k">return</span> <span class="k">base</span><span class="p">.</span><span class="nf">ProcessHttpRequestAsync</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">cancellationToken</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="kt">string</span> <span class="n">_apiKey</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在拿到 TextAnalyticsClient 类就可以调用很多有趣的方法了，本文的例子用的是同步的方法，但是推荐在实际项目中使用异步的方法。使用同步的方法会让界面卡顿</p>
+
+<p>下面是界面的各个方法实现</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="k">private</span> <span class="k">void</span> <span class="nf">SentimentAnalysis_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="nf">GetAnalyticsClient</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">sentiment</span> <span class="p">=</span> <span class="n">client</span><span class="p">.</span><span class="nf">Sentiment</span><span class="p">(</span><span class="n">Text</span><span class="p">.</span><span class="n">Text</span><span class="p">,</span> <span class="s">"zh"</span><span class="p">);</span>
+            <span class="n">ShowText</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">$"分数:</span><span class="p">{</span><span class="n">sentiment</span><span class="p">.</span><span class="n">Score</span><span class="p">:</span><span class="m">0.00</span><span class="p">}</span><span class="s"> \r\n 评分接近 0 表示消极情绪，评分接近 1 表示积极情绪"</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">LanguageDetection_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="nf">GetAnalyticsClient</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">detectLanguage</span> <span class="p">=</span> <span class="n">client</span><span class="p">.</span><span class="nf">DetectLanguage</span><span class="p">(</span><span class="n">Text</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+            <span class="n">ShowText</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span>
+                <span class="s">$"判断出可能的语言有 </span><span class="p">{</span><span class="n">detectLanguage</span><span class="p">.</span><span class="n">DetectedLanguages</span><span class="p">.</span><span class="n">Count</span><span class="p">}</span><span class="s"> 个 \r\n </span><span class="p">{</span><span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">"\r\n"</span><span class="p">,</span> <span class="n">detectLanguage</span><span class="p">.</span><span class="n">DetectedLanguages</span><span class="p">.</span><span class="nf">Select</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="s">$"语言 </span><span class="p">{</span><span class="n">temp</span><span class="p">.</span><span class="n">Name</span><span class="p">}</span><span class="s"> 分数 </span><span class="p">{</span><span class="n">temp</span><span class="p">.</span><span class="n">Score</span><span class="p">:</span><span class="m">0.00</span><span class="p">}</span><span class="s">"</span><span class="p">))}</span><span class="s">"</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">RecognizeEntities_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="nf">GetAnalyticsClient</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">client</span><span class="p">.</span><span class="nf">Entities</span><span class="p">(</span><span class="n">Text</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+            <span class="n">ShowText</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">""</span><span class="p">;</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">entity</span> <span class="k">in</span> <span class="n">result</span><span class="p">.</span><span class="n">Entities</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">ShowText</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span>
+                    <span class="s">$"Name: </span><span class="p">{</span><span class="n">entity</span><span class="p">.</span><span class="n">Name</span><span class="p">}</span><span class="s">,\tType: </span><span class="p">{</span><span class="n">entity</span><span class="p">.</span><span class="n">Type</span> <span class="p">??</span> <span class="s">"N/A"</span><span class="p">}</span><span class="s">,\tSub-Type: </span><span class="p">{</span><span class="n">entity</span><span class="p">.</span><span class="n">SubType</span> <span class="p">??</span> <span class="s">"N/A"</span><span class="p">}</span><span class="s"> \r\n"</span><span class="p">;</span>
+                <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">match</span> <span class="k">in</span> <span class="n">entity</span><span class="p">.</span><span class="n">Matches</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">ShowText</span><span class="p">.</span><span class="n">Text</span> <span class="p">+=</span>
+                        <span class="s">$"\tOffset: </span><span class="p">{</span><span class="n">match</span><span class="p">.</span><span class="n">Offset</span><span class="p">}</span><span class="s">,\tLength: </span><span class="p">{</span><span class="n">match</span><span class="p">.</span><span class="n">Length</span><span class="p">}</span><span class="s">,\tScore: </span><span class="p">{</span><span class="n">match</span><span class="p">.</span><span class="n">EntityTypeScore</span><span class="p">:</span><span class="n">F3</span><span class="p">}</span><span class="s">\r\n"</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">KeyPhraseExtraction_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">client</span> <span class="p">=</span> <span class="nf">GetAnalyticsClient</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">result</span> <span class="p">=</span> <span class="n">client</span><span class="p">.</span><span class="nf">KeyPhrases</span><span class="p">(</span><span class="n">Text</span><span class="p">.</span><span class="n">Text</span><span class="p">);</span>
+            <span class="n">ShowText</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="s">$"关键词： </span><span class="p">{</span><span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">";"</span><span class="p">,</span> <span class="n">result</span><span class="p">.</span><span class="n">KeyPhrases</span><span class="p">)}</span><span class="s">"</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>大概运行效果如下</p>
+
+<p>情绪分析可以分析出一句话是积极的还是消极的，使用分数表示，评分接近 0 表示消极情绪，评分接近 1 表示积极情绪</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020518102062057.jpg" alt="" /></p>
+
+<p>语言检测主要用来分析当前输入文本属于哪个语言</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取3.png) -->
+<p><img src="http://image.acmx.xyz/lindexi%2F20205181035441445.jpg" alt="" /></p>
+
+<p>如输入英文就会判断当前是英文</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取4.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20205181037545709.jpg" alt="" /></p>
+
+<p>命名实体用来分析文本里面的某些单词是属于什么，例如某些单词是人的名字，某些单词是时间等</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取5.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20205181039192320.jpg" alt="" /></p>
+
+<p>关键短语提取可以用来提取一句话中的关键词</p>
+
+<!-- ![](image/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取/WPF 基于 Azure 的认知服务 情绪分析 语言检测 关键短语提取6.png) -->
+<p><img src="http://image.acmx.xyz/lindexi%2F20205181039582509.jpg" alt="" /></p>
+
+<p>整体功能还是很爽的，特别是开发特别简单。而服务本文是中国微软速度也特别快，本文用的是同步的代码，但实际上界面也不卡</p>
+
+<p><a href="https://docs.microsoft.com/zh-cn/azure/cognitive-services/text-analytics/quickstarts/text-analytics-sdk?tabs=version-2&amp;pivots=programming-language-csharp">快速入门：文本分析客户端库 v3 - Azure Cognitive Services</a></p>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/d95081959f54ba5e50cd90cff566f8b85fba34a0/HalujakenifawFarlurjibellerwa">github</a> 欢迎小伙伴访问</p>
+
+:ET

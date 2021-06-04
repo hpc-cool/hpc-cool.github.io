@@ -1,0 +1,15 @@
+I"a<p>如果将自己的应用放的路径比较深，那么构建安卓的时候可能因为路径超过长度失败</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/29 18:55:44 -->
+<!-- 标签：Xamarin -->
+
+<p>如果在你构建 Xamarin 安卓的时候看到如以下提示，那么请你确定以下你的应用程序路径是不是超过 250 个字符了</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="m">90</span><span class="err">\</span><span class="n">android</span><span class="err">\</span><span class="n">src</span><span class="err">\</span><span class="n">mono</span><span class="err">\</span><span class="n">android</span><span class="err">\</span><span class="n">support</span><span class="err">\</span><span class="n">v4</span><span class="err">\</span><span class="n">view</span><span class="err">\</span><span class="n">accessibility</span><span class="err">\</span><span class="n">AccessibilityManagerCompat_AccessibilityStateChangeListenerImplementor</span><span class="p">.</span><span class="n">java</span>
+</code></pre></div></div>
+
+<p>解决方法是减少项目名的长度，移动到距离根文件夹比较近的文件夹，也就是让上面这个文件的总路径不要太长</p>
+
+:ET

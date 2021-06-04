@@ -1,0 +1,111 @@
+I"�!<p>在 dotnet core 3.0 支持将库导出为COM组件，本文告诉大家如何将代码导出为 COM 组件</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/22 20:25:38 -->
+
+<!-- csdn -->
+
+<p>在导出 COM 组件的库，需要一个 GUID 声明这个 COM 接口</p>
+
+<p>例如创建一个项目，在这个项目添加一个接口，通过以下方法标记为 COM 组件</p>
+
+<p>这里的 Guid 是我自己设置的，可以在 VisualStudio 工具里面找到 GUID 创建选项，创建一个随机的 GUID 字符串</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">ComVisible</span><span class="p">(</span><span class="k">true</span><span class="p">)]</span>
+    <span class="p">[</span><span class="nf">Guid</span><span class="p">(</span><span class="s">"5742D257-CCCC-4F7A-8191-6362609C458D"</span><span class="p">)]</span>
+    <span class="p">[</span><span class="nf">InterfaceType</span><span class="p">(</span><span class="n">ComInterfaceType</span><span class="p">.</span><span class="n">InterfaceIsIUnknown</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IFoo</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 有趣方法</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="kt">string</span> <span class="nf">Foo</span><span class="p">();</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>上面代码就定义了一个接口，在相同的项目还需要写一个类实现这个接口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">ComVisible</span><span class="p">(</span><span class="k">true</span><span class="p">)]</span>
+    <span class="p">[</span><span class="nf">Guid</span><span class="p">(</span><span class="s">"5742D257-CCCC-4F7A-8191-6362609C458D"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span> <span class="p">:</span> <span class="n">IFoo</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="kt">string</span> <span class="n">IFoo</span><span class="p">.</span><span class="nf">Foo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="s">"林德熙是逗比"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>编辑这个项目的 csproj 添加属性 EnableComHosting 这样编译的时候才会生成可以导出为COM的文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">EnableComHosting</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">EnableComHosting</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在看起来的项目文件如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Project</span> <span class="n">Sdk</span><span class="p">=</span><span class="s">"Microsoft.NET.Sdk"</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">OutputType</span><span class="p">&gt;</span><span class="n">Library</span><span class="p">&lt;/</span><span class="n">OutputType</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">TargetFramework</span><span class="p">&gt;</span><span class="n">netcoreapp3</span><span class="p">.</span><span class="m">0</span><span class="p">&lt;/</span><span class="n">TargetFramework</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">EnableComHosting</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">EnableComHosting</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Project</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在尝试编译这个项目，可以在输出路径里面找到 项目名.comhost.dll 文件，如创建的项目是 BearqalkeawaiKaleenemcemfo 那么在输出文件夹可以找到这个文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">BearqalkeawaiKaleenemcemfo</span><span class="p">.</span><span class="n">comhost</span><span class="p">.</span><span class="n">dll</span>
+</code></pre></div></div>
+
+<p>使用管理员运行命令行，输入下面代码注册 COM 文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">regsvr32</span> <span class="err">项目名</span><span class="p">.</span><span class="n">comhost</span><span class="p">.</span><span class="n">dll</span>
+</code></pre></div></div>
+
+<p>尝试创建一个新项目引用这个COM组件，使用的方法是定义一个接口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="n">ComImport</span><span class="p">]</span>
+    <span class="p">[</span><span class="nf">CoClass</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Foo</span><span class="p">))]</span>
+    <span class="p">[</span><span class="nf">Guid</span><span class="p">(</span><span class="s">"5742D257-CCCC-4F7A-8191-6362609C458D"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IFoo</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 有趣方法</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="kt">string</span> <span class="nf">Foo</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="n">ComImport</span><span class="p">]</span>
+    <span class="p">[</span><span class="nf">Guid</span><span class="p">(</span><span class="s">"5742D257-CCCC-4F7A-8191-6362609C458D"</span><span class="p">)]</span>
+    <span class="k">internal</span> <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里定义的方法和其他使用COM的方法相同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IFoo</span><span class="p">();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">foo</span><span class="p">.</span><span class="nf">Foo</span><span class="p">());</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>创建接口就可以使用方法</p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/core/native-interop/expose-components-to-com">Exposing .NET Core Components to COM</a></p>
+
+<p>源代码请看 <a href="https://github.com/lindexi/lindexi_gd/tree/de3c493051f15be07c4327e797d081c6869c6f93/BearqalkeawaiKaleenemcemfo">github</a> 和 <a href="https://github.com/dotnet/samples/tree/master/core/extensions/COMServerDemo">官方源代码</a></p>
+
+:ET

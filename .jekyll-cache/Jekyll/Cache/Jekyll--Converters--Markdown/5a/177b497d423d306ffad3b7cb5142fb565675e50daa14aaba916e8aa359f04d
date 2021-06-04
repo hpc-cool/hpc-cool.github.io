@@ -1,0 +1,34 @@
+I"0<p>著名的 HandyControl 已经支持给任意控件通过按下移动抬起事件，封装点击事件</p>
+
+<!--more-->
+
+<!-- CreateTime:6/23/2020 10:14:02 AM -->
+
+<p>在 <a href="https://github.com/HandyOrg/HandyControl/pull/414">HandyControl</a> 的这个 <a href="https://github.com/HandyOrg/HandyControl/pull/414">PR</a> 添加了 InputClickHelper 类，这个类提供了使用控件的按下移动抬起事件封装为点击事件</p>
+
+<p>使用方法：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Install</span><span class="p">-</span><span class="n">Package</span> <span class="n">HandyControl</span>
+</code></pre></div></div>
+
+<p>给任意控件 element 附加按下移动抬起封装点击事件，下面代码的 uiElement 是一个 UIElement 控件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">HandyControl</span><span class="p">.</span><span class="n">Tools</span><span class="p">.</span><span class="n">InputClickHelper</span><span class="p">.</span><span class="nf">AttachMouseDownMoveUpToClick</span><span class="p">(</span><span class="n">uiElement</span><span class="p">,</span> <span class="n">UIElement_OnClicked</span><span class="p">);</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">UIElement_OnClicked</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此外，在 AttachMouseDownMoveUpToClick 方法还提供了按下过程中，用户移动鼠标或触摸触发的点击事件打断作为拖拽事件。使用方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">HandyControl</span><span class="p">.</span><span class="n">Tools</span><span class="p">.</span><span class="n">InputClickHelper</span><span class="p">.</span><span class="nf">AttachMouseDownMoveUpToClick</span><span class="p">(</span><span class="n">uiElement</span><span class="p">,</span> <span class="n">UIElement_OnClicked</span><span class="p">,</span> <span class="n">UIElement_OnDragStarted</span><span class="p">);</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">UIElement_OnDragStarted</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

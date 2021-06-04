@@ -1,0 +1,194 @@
+I"!d<p>在使用新的项目格式，可以使用 Target 添加项目，但是有一些项目需要在合适的时候添加，如果添加早了，那么会让用户看到这些文件，如果添加的时间是在引用编译之后，那么文件将无法进行编译。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:58:53 -->
+
+<!-- csdn -->
+<!-- 标签：Roslyn，MSBuild,编译器,xaml,打包 -->
+
+<p>本文是更多请看<a href="https://lindexi.oschina.io/lindexi/post/roslyn.html">手把手教你写 Roslyn 修改编译</a> 的一个文章，在开始本文之前，假设大家已经了解 Roslyn 相关。</p>
+
+<p>本文主要是我自己探索 VisualStudio 编译的过程，所以有一点乱，主要的过程就是遇到了将 xaml 写在了 Traget 里，编译的时候因为找不到 xaml 编译，所以无法编译通过。</p>
+
+<p>于是我就不断在早一个 Target 在这个 Target 之前添加编译 xaml 就可以让 VisualStudio 编译通过</p>
+
+<p>先来说结论</p>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">BeforeTargets="GenerateBindingRedirects"</code> 里添加 xaml 文件就可以让 VisualStudio 编译的时候编译添加 xaml 编译。</p>
+
+<p>但一个准确的时机是 <code class="language-plaintext highlighter-rouge">BeforeTargets="MarkupCompilePass1"</code> 里面添加 xaml 文件，详细请看 <a href="https://blog.walterlv.com/post/how-wpf-assemblies-are-compiled.html">WPF 程序的编译过程</a></p>
+
+<p>本文以下的内容只是记录我做过的测试</p>
+
+<p>也就是通过下面代码添加的 MainPage.xaml 可以被编译</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;Target Name="MoqakermirLaqouLurter" BeforeTargets="GenerateBindingRedirects"&gt;
+    &lt;ItemGroup&gt;
+      &lt;Page Include="MainWindow.xaml" SubType="Designer" Generator="MSBuild:Compile"&gt;&lt;/Page&gt;
+    &lt;/ItemGroup&gt;
+  &lt;/Target&gt;
+</code></pre></div></div>
+
+<p>下面是记录过程，如果只是想要知道结论，那么下面的文章就不需要看了。</p>
+
+<p>首先来创建一个空白的 WPF 程序，使用<a href="https://blog.lindexi.com/post/%E4%BB%8E%E4%BB%A5%E5%89%8D%E7%9A%84%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F%E8%BF%81%E7%A7%BB%E5%88%B0-VS2017-%E6%96%B0%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F.html">从以前的项目格式迁移到 VS2017 新项目格式</a>的方法修改 WPF 程序为新项目格式，然后开始来修改 xaml 的加入时间。</p>
+
+<p>一个空白的 WPF 程序会包含这些内容</p>
+
+<p>compile 编译的文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+<span class="n">App</span><span class="p">.</span><span class="n">xaml</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">MainWindow</span><span class="p">.</span><span class="n">xaml</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">Program</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">Properties</span><span class="err">\</span><span class="n">AssemblyInfo</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">Properties</span><span class="err">\</span><span class="n">Resources</span><span class="p">.</span><span class="n">Designer</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">Properties</span><span class="err">\</span><span class="n">Settings</span><span class="p">.</span><span class="n">Designer</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Local</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="p">.</span><span class="n">NETFramework</span><span class="p">,</span><span class="n">Version</span><span class="p">=</span><span class="n">v4</span><span class="p">.</span><span class="m">5.</span><span class="n">AssemblyAttributes</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="n">net45</span><span class="err">\</span><span class="n">TemporaryGeneratedFile_E7A71F73</span><span class="p">-</span><span class="m">0F8D</span><span class="p">-</span><span class="m">4</span><span class="n">B9B</span><span class="p">-</span><span class="n">B56E</span><span class="p">-</span><span class="m">8</span><span class="n">E70B10BC5D3</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="n">net45</span><span class="err">\</span><span class="n">TemporaryGeneratedFile_036C0B5B</span><span class="p">-</span><span class="m">1481</span><span class="p">-</span><span class="m">4323</span><span class="p">-</span><span class="m">8D20</span><span class="p">-</span><span class="m">8F5</span><span class="n">ADCB23D92</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="n">net45</span><span class="err">\</span><span class="n">TemporaryGeneratedFile_5937a670</span><span class="p">-</span><span class="m">0</span><span class="n">e60</span><span class="p">-</span><span class="m">4077</span><span class="p">-</span><span class="m">877</span><span class="n">b</span><span class="p">-</span><span class="n">f7221da3dda1</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">D</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">github</span><span class="err">\</span><span class="n">BemateRaimarhas</span><span class="err">\</span><span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="n">net45</span><span class="err">\</span><span class="n">App</span><span class="p">.</span><span class="n">g</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">D</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">github</span><span class="err">\</span><span class="n">BemateRaimarhas</span><span class="err">\</span><span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="n">net45</span><span class="err">\</span><span class="n">MainWindow</span><span class="p">.</span><span class="n">g</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">D</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">github</span><span class="err">\</span><span class="n">BemateRaimarhas</span><span class="err">\</span><span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="n">net45</span><span class="err">\</span><span class="n">BemateRaimarhas_Content</span><span class="p">.</span><span class="n">g</span><span class="p">.</span><span class="n">cs</span>
+<span class="n">obj</span><span class="err">\</span><span class="n">Debug</span><span class="err">\</span><span class="n">net45</span><span class="err">\</span><span class="n">BemateRaimarhas</span><span class="p">.</span><span class="n">AssemblyInfo</span><span class="p">.</span><span class="n">cs</span>
+
+</code></pre></div></div>
+
+<p>EmbeddedResource 嵌入资源</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Properties</span><span class="err">\</span><span class="n">Resources</span><span class="p">.</span><span class="n">resx</span>
+</code></pre></div></div>
+
+<p>None 无编译文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">App</span><span class="p">.</span><span class="n">config</span>
+<span class="n">App</span><span class="p">.</span><span class="n">xaml</span>
+<span class="n">MainWindow</span><span class="p">.</span><span class="n">xaml</span>
+<span class="n">Properties</span><span class="err">\</span><span class="n">Settings</span><span class="p">.</span><span class="n">settings</span>
+</code></pre></div></div>
+
+<p>Page 页面文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">App</span><span class="p">.</span><span class="n">xaml</span>
+<span class="n">MainWindow</span><span class="p">.</span><span class="n">xaml</span>
+
+</code></pre></div></div>
+
+<p>默认没有包含内容和资源文件</p>
+
+<p>注意，默认空白的项目在页面文件和无编译文件存在 <code class="language-plaintext highlighter-rouge">MainWindow.xaml</code> 等文件。这些文件是重复的，可以使用下面代码去掉无编译的 <code class="language-plaintext highlighter-rouge">MainWindow.xaml</code> 文件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;None</span> <span class="na">Remove=</span><span class="s">"**\*.xaml"</span><span class="nt">&gt;&lt;/None&gt;</span>
+</code></pre></div></div>
+
+<p>如果尝试去掉下面的代码，也就是所有的 xaml 文件都没有添加编译</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Page</span> <span class="na">Include=</span><span class="s">"**\*.xaml"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;SubType&gt;</span>Designer<span class="nt">&lt;/SubType&gt;</span>
+      <span class="nt">&lt;Generator&gt;</span>MSBuild:Compile<span class="nt">&lt;/Generator&gt;</span>
+    <span class="nt">&lt;/Page&gt;</span>
+</code></pre></div></div>
+
+<p>这时会出现编译不通过</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">MainWindow</span><span class="p">.</span><span class="n">xaml</span><span class="p">.</span><span class="nf">cs</span><span class="p">(</span><span class="m">25</span><span class="p">,</span><span class="m">13</span><span class="p">):</span> <span class="n">Error</span> <span class="n">CS0103</span><span class="p">:</span> <span class="err">当前上下文中不存在名称“</span><span class="n">InitializeComponent</span><span class="err">”</span>
+<span class="n">Program</span><span class="p">.</span><span class="nf">cs</span><span class="p">(</span><span class="m">15</span><span class="p">,</span><span class="m">17</span><span class="p">):</span> <span class="n">Error</span> <span class="n">CS1061</span><span class="p">:</span> <span class="err">“</span><span class="n">App</span><span class="err">”未包含“</span><span class="n">InitializeComponent</span><span class="err">”的定义，并且找不到可接受第一个“</span><span class="n">App</span><span class="err">”类型参数的可访问扩展方法“</span><span class="n">InitializeComponent</span><span class="err">”</span><span class="p">(</span><span class="err">是否缺少</span> <span class="k">using</span> <span class="err">指令或程序集引用?)</span>
+</code></pre></div></div>
+
+<!-- ![](image/Roslyn 如何在 Target 引用 xaml 防止文件没有编译/Roslyn 如何在 Target 引用 xaml 防止文件没有编译0.png) -->
+
+<p><img src="https://i.loli.net/2018/09/04/5b8ddb077050f.jpg" alt="" /></p>
+
+<p>那么现在尝试使用 Target 来添加这两个文件，为什么需要使用 Target 而不是直接写 ItemGroup 是因为我需要在用户的 VisualStudio 看不到这些文件。很多时候可以使用 <code class="language-plaintext highlighter-rouge">Visible="False"</code> 隐藏文件，但是如果这个文件刚好放在一个文件夹里面，那么这个文件夹将会被用户看到。也就是用户可以删除这个文件夹，一旦这个文件夹删了，那么文件夹里面的文件也就是无法编译通过，这时小伙伴就会过来打我</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"App.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"MainWindow.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>一开始我就知道将文件放在 Target 里可以设置让用户看不到引用的文件，写一个 Target 需要包含一个 Name 所以我就写出下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Target</span> <span class="n">Name</span><span class="p">=</span><span class="s">"MoqakermirLaqouLurter"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"App.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"MainWindow.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Target</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>当然，上面的 Page 是不会被添加的，原因是 MSBuild 不知道什么时候运行上面的代码。为了让 MSBuild 运行上面的 Target 我就需要给 <code class="language-plaintext highlighter-rouge">BeforeTargets</code> 在一开始我就尝试用的比较多的 CoreCompile 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Target</span> <span class="n">Name</span><span class="p">=</span><span class="s">"MoqakermirLaqouLurter"</span> <span class="n">BeforeTargets</span><span class="p">=</span><span class="s">"CoreCompile"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"App.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"MainWindow.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Target</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>上面的代码会在 <code class="language-plaintext highlighter-rouge">BeforeTargets="CoreCompile"</code> 运行，但是还是无法编译通过</p>
+
+<p>于是就找到了 <code class="language-plaintext highlighter-rouge">XamlPreCompile</code> 替换 CoreCompile 请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Target</span> <span class="n">Name</span><span class="p">=</span><span class="s">"MoqakermirLaqouLurter"</span> <span class="n">BeforeTargets</span><span class="p">=</span><span class="s">"XamlPreCompile"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"App.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"MainWindow.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Target</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>但是在 MSBuild 是没有运行 XamlPreCompile 的，所以上面的代码没有运行，也是编译不通过</p>
+
+<p>尝试使用 <code class="language-plaintext highlighter-rouge">GenerateBindingRedirects</code> 替换 <code class="language-plaintext highlighter-rouge">XamlPreCompile</code> 请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Target</span> <span class="n">Name</span><span class="p">=</span><span class="s">"MoqakermirLaqouLurter"</span> <span class="n">BeforeTargets</span><span class="p">=</span><span class="s">"GenerateBindingRedirects"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"App.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"MainWindow.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Target</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>现在就可以编译通过了，而且在用户的代码也看不到 xaml 文件，我就是通过这个方法开发。也就是经过了 CoreCompil XamlPreCompile 找到了  GenerateBindingRedirects 可以解决文件引用。</p>
+
+<p>那么相比写在 ItemGroup 而不经过 Target 有什么好处？</p>
+
+<p>如果这时将会 <code class="language-plaintext highlighter-rouge">MainWindow.xaml</code> 放在了一个文件夹 View 只要有引用这个文件，无论有没设置是否隐藏，开发者都可以看到 View 文件夹，而且可以删除这个文件夹，如果删除了这个文件夹，那么就无法编译</p>
+
+<p>如使用下面的代码，即使设置 MainWindow.xaml 不可见，但是用户还是可以在 VisualStudio 看到一个空文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"App.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"View\MainWindow.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span> <span class="n">Visible</span><span class="p">=</span><span class="s">"False"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/Roslyn 如何在 Target 引用 xaml 防止文件没有编译/Roslyn 如何在 Target 引用 xaml 防止文件没有编译1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018949362284" alt="" /></p>
+
+<p>但是如果放在 Target 里就无法看到引用的文件夹，也就无法删除文件夹，通过这个方法可以让我使用源代码打包</p>
+
+<p>如使用下面的代码，即使没有设置 <code class="language-plaintext highlighter-rouge">MainWindow</code> 不可见，用户也是看不见这个文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="p">&lt;</span><span class="n">Target</span> <span class="n">Name</span><span class="p">=</span><span class="s">"MoqakermirLaqouLurter"</span> <span class="n">BeforeTargets</span><span class="p">=</span><span class="s">"GenerateBindingRedirects"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"App.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+      <span class="p">&lt;</span><span class="n">Page</span> <span class="n">Include</span><span class="p">=</span><span class="s">"View\MainWindow.xaml"</span> <span class="n">SubType</span><span class="p">=</span><span class="s">"Designer"</span> <span class="n">Generator</span><span class="p">=</span><span class="s">"MSBuild:Compile"</span><span class="p">&gt;&lt;/</span><span class="n">Page</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">ItemGroup</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">Target</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/Roslyn 如何在 Target 引用 xaml 防止文件没有编译/Roslyn 如何在 Target 引用 xaml 防止文件没有编译2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201894935986" alt="" /></p>
+
+<p>源代码打包项目是为了解决很小的代码，都需要做出一个 nuget 包，这个 nuget 包是 dll 也就是软件会引用太多的 dll ，大家都知道如果引用的 dll 多了，软件启动速度也就是变慢了。所以我就使用打包 nuget 包但是引用的是源代码的方式，这样开发者在安装 nuget 之后可以快速调试安装的库的源代码。</p>
+
+<p>项目请看： <a href="https://github.com/dotnet-campus/SourceYard">dotnet-campus/SourceYard: Add a NuGet package only for dll reference? By using dotnetCampus.SourceYard, you can pack a NuGet package with source code. By installing the new source code package, all source codes behaviors just like it is in your project.</a></p>
+
+<p>参见：<a href="https://lindexi.oschina.io/lindexi/post/roslyn.html">手把手教你写 Roslyn 修改编译</a></p>
+
+:ET

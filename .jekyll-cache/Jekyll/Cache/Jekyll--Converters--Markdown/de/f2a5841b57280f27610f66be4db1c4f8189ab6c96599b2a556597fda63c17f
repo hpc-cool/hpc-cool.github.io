@@ -1,0 +1,110 @@
+I"
+)<p>本文告诉大家如何移动 nuget 缓存文件夹。
+因为 nuget 文件夹一般比较大，现在我的 nuget 文件夹有 10 G，默认的 nuget 文件夹是在C盘，所以需要移动他。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<!-- 标签：nuget -->
+<div id="toc"></div>
+
+<p>可以使用下面的代码查看 nuget 全局缓存文件所在的文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">nuget</span> <span class="n">locals</span> <span class="n">all</span> <span class="p">-</span><span class="n">list</span>
+</code></pre></div></div>
+
+<p>可以看到下面的输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">http</span><span class="p">-</span><span class="n">cache</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">user</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Local</span><span class="err">\</span><span class="n">NuGet</span><span class="err">\</span><span class="n">v3</span><span class="p">-</span><span class="n">cache</span>   <span class="err">#</span><span class="n">NuGet</span> <span class="m">3.</span><span class="n">x</span><span class="p">+</span> <span class="n">cache</span>
+<span class="n">packages</span><span class="p">-</span><span class="n">cache</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">user</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Local</span><span class="err">\</span><span class="n">NuGet</span><span class="err">\</span><span class="n">Cache</span>  <span class="err">#</span><span class="n">NuGet</span> <span class="m">2.</span><span class="n">x</span> <span class="n">cache</span>
+<span class="k">global</span><span class="p">-</span><span class="n">packages</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">user</span><span class="err">\</span><span class="p">.</span><span class="n">nuget</span><span class="err">\</span><span class="n">packages</span><span class="err">\</span>          <span class="err">#</span><span class="n">Global</span> <span class="n">packages</span> <span class="n">folder</span>
+<span class="n">temp</span><span class="p">:</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">user</span><span class="err">\</span><span class="n">AppData</span><span class="err">\</span><span class="n">Local</span><span class="err">\</span><span class="n">Temp</span><span class="err">\</span><span class="n">NuGetScratch</span>      <span class="err">#</span><span class="n">Temp</span> <span class="n">folder</span>
+</code></pre></div></div>
+
+<p>这样可以看到，所在的全局缓存文件夹是放在 C 盘，那么我提供两个方法可以修改</p>
+
+<h2 id="修改链接">修改链接</h2>
+
+<p>可以使用管理员权限运行 PowerShell 来进行文件夹链接，首先复制 nuget 的 package 文件夹到 另外的地方，我移动到<code class="language-plaintext highlighter-rouge">D:\lindexi\packages</code>，所以就可以使用下面代码把 nuget 文件夹移动到另一个文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">mklink</span> <span class="p">/</span><span class="n">d</span> <span class="n">C</span><span class="p">:</span><span class="err">\</span><span class="n">Users</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="p">.</span><span class="n">nuget</span><span class="err">\</span><span class="n">packages</span> <span class="n">D</span><span class="p">:</span><span class="err">\</span><span class="n">lindexi</span><span class="err">\</span><span class="n">packages</span>
+</code></pre></div></div>
+
+<p>在使用这个代码之前，需要删除 <code class="language-plaintext highlighter-rouge">C:\Users\lindexi\.nuget\packages</code> 请把这个字符串修改为自己的 nuget 文件夹</p>
+
+<h2 id="配置">配置</h2>
+
+<p>除了上面的方法，还可以通过修改配置，修改全局文件夹</p>
+
+<p>打开 %AppData%\NuGet\NuGet.Config ，在这个文件夹添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">configuration</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">config</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"globalPackagesFolder"</span> <span class="k">value</span><span class="p">=</span><span class="s">"D:\lindexi\packages"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">config</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">configuration</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>请把移动的nuget 文件夹修改为你自己的文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;?</span><span class="n">xml</span> <span class="n">version</span><span class="p">=</span><span class="s">"1.0"</span> <span class="n">encoding</span><span class="p">=</span><span class="s">"utf-8"</span><span class="p">?&gt;</span>
+<span class="p">&lt;</span><span class="n">configuration</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">packageSources</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"nuget.org"</span> <span class="k">value</span><span class="p">=</span><span class="s">"https://api.nuget.org/v3/index.json"</span> <span class="n">protocolVersion</span><span class="p">=</span><span class="s">"3"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"cnblog"</span> <span class="k">value</span><span class="p">=</span><span class="s">"https://nuget.cnblogs.com/v3/index.json"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">packageSources</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">packageRestore</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"enabled"</span> <span class="k">value</span><span class="p">=</span><span class="s">"True"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"automatic"</span> <span class="k">value</span><span class="p">=</span><span class="s">"True"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">packageRestore</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">bindingRedirects</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"skip"</span> <span class="k">value</span><span class="p">=</span><span class="s">"False"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">bindingRedirects</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">packageManagement</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"format"</span> <span class="k">value</span><span class="p">=</span><span class="s">"0"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"disabled"</span> <span class="k">value</span><span class="p">=</span><span class="s">"False"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">packageManagement</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">disabledPackageSources</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"Microsoft Visual Studio Offline Packages"</span> <span class="k">value</span><span class="p">=</span><span class="s">"true"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">disabledPackageSources</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="n">config</span><span class="p">&gt;</span>
+     <span class="p">&lt;</span><span class="k">add</span> <span class="n">key</span><span class="p">=</span><span class="s">"globalPackagesFolder"</span> <span class="k">value</span><span class="p">=</span><span class="s">"D:\Users\linde\.nuget\packages"</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="n">config</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">configuration</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<h2 id="nuget-cache">NuGet Cache</h2>
+
+<h3 id="mac">Mac</h3>
+
+<ul>
+  <li>~/.local/share/NuGet/Cache</li>
+  <li>~/.nuget/packages</li>
+</ul>
+
+<h3 id="windows">Windows</h3>
+
+<ul>
+  <li>%LocalAppData%\NuGet\Cache</li>
+  <li>%UserProfile%\.nuget\packages</li>
+</ul>
+
+<h3 id="linux">Linux</h3>
+
+<p>~/.local/share/NuGet/Cache
+~/.nuget/packages</p>
+
+<h2 id="nuget-configuration">NuGet Configuration</h2>
+
+<p>Mac ~/.config/NuGet/NuGet.Config</p>
+
+<p>Windows %AppData%\NuGet\NuGet.Config</p>
+
+<p>Linux ~/.config/NuGet/NuGet.Config</p>
+
+<p>参见：<a href="http://lastexitcode.com/projects/NuGet/FileLocations/">NuGet File Locations - Matt Ward</a></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201822814119.jpg" alt="" /></p>
+
+:ET

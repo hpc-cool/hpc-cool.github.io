@@ -1,0 +1,154 @@
+I"�=<p>我们的项目中会包含有很多文件，但是可能我们没有注意到的，我们的文件的编码不一定是 UTF-8 编码，这就可能让构建出来的应用程序在别人电脑运行时出现乱码，或者别人拉下来代码，却发现代码里面的中文都是乱码。为了解决文件编码的问题，咱需要一个编码规范工具，本文将告诉大家在 GitHub 上仓库，可以利用 GitHub 的 Action 部署自动代码文件编码规范的机器人，这个机器人可以自动协助咱规范文件的编码规范。可以设置为每次上传代码的时候，自动帮忙设置文件编码为 UTF-8 编码。或者在每次代码合并到主分支之后，机器人将会尝试修复文件的编码，如存在文件需要修复的，那机器人将会创建一个代码审查</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/10/19 8:22:54 -->
+
+<p>只想配置机器人，而不想看原理？没关系，给你一个快餐，复制 <a href="https://github.com/dotnet-campus/AsyncWorkerCollection/blob/37960b9f99811a22130967122f5772866e3e3314/.github/workflows/dotnet-format.yml">dotnet-format.yml</a> 文件到你的 GitHub 仓库的 <code class="language-plaintext highlighter-rouge">.github\workflows</code> 文件夹里面即可。效果如何，你试试就知道了，或者在等待 GitHub 的 Action 过程中阅读一下本文</p>
+
+<p>此方法不单适合于 dotnet 系的语言，也适合于其他任何使用文本记录代码的语言。因为本文使用的工具准确来说是针对于文本文件的编码的</p>
+
+<p>本文的修复文件编码规范的工具是利用了在 GitHub 上完全开源的 <a href="https://github.com/dotnet-campus/EncodingNormalior">dotnet-campus/EncodingNormalior</a> 项目的工具，这个项目链接是 <a href="https://github.com/dotnet-campus/EncodingNormalior">https://github.com/dotnet-campus/EncodingNormalior</a> 欢迎大家参与开发</p>
+
+<p>修复文件编码的方法是使用 dotnetCampus.EncodingNormalior 这个 dotnet tool 工具完成的，这个工具的使用方法如下</p>
+
+<p>在使用之前先使用命令行安装或更新，请在命令行输入下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dotnet</span> <span class="n">tool</span> <span class="n">install</span> <span class="p">-</span><span class="n">g</span> <span class="n">dotnetCampus</span><span class="p">.</span><span class="n">EncodingNormalior</span>
+</code></pre></div></div>
+
+<p>修复某个文件夹里面的所有文本文件的编码规范可以使用如下命令</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>EncodingNormalior -f E:\lindexi\EncodingNormalior --TryFix true
+</code></pre></div></div>
+
+<p>上面代码的 <code class="language-plaintext highlighter-rouge">E:\lindexi\EncodingNormalior</code> 为需要修复文本文件的编码规范的文件夹</p>
+
+<p>这个 dotnetCampus.EncodingNormalior 工具的修复文本文件的编码规范的原理是先尝试判断出文本文件的编码，如此文件的编码不符合规范，如上面命令要求默认的规范的编码是 UTF-8 编码，那么此工具将会使用判断出来的文件编码去读取此文件，然后重新按照约定的规范编码将读取出来的文本重新写入到文件中</p>
+
+<p>因为当前世界上不存在一个方法可以准确判断出不带BOM编码格式的文件的编码，因此这个工具也许会判断错文件的编码，如果判断错了编码，也许就会在修复之后让文件乱码</p>
+
+<p>有了这个工具的支持，在 GitHub 上的 Action 做自动代码编码规范机器人就简单很多了，参考 <a href="https://blog.lindexi.com/post/dotnet-%E5%9F%BA%E4%BA%8E-dotnet-format-%E7%9A%84-GitHub-Action-%E8%87%AA%E5%8A%A8%E4%BB%A3%E7%A0%81%E6%A0%BC%E5%BC%8F%E5%8C%96%E6%9C%BA%E5%99%A8%E4%BA%BA.html">dotnet 基于 dotnet format 的 GitHub Action 自动代码格式化机器人</a> 的方法，可以在 GitHub 的 Action 中通过 dotnetCampus.EncodingNormalior 工具尝试修复文本文件的编码规范，如果有文件更改，那么提一个代码审查出来，或者直接推送代码到原分支</p>
+
+<p>在 <code class="language-plaintext highlighter-rouge">.github\workflows</code> 文件夹里面创建的所有 <code class="language-plaintext highlighter-rouge">yml</code> 文件都会当成构建脚本，咱来创建一个叫 dotnet-format.yml 的文件。按照 GitHub 的 Action 的规定，每个构建脚本文件都应该给定一个名字，如下面代码</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">name</span><span class="pi">:</span> <span class="s">Code Encoding Check</span>
+</code></pre></div></div>
+
+<p>然后设置构建脚本的触发时机，如下面代码设置了在推送了 master 分支时，触发构建脚本</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">on</span><span class="pi">:</span> 
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span> 
+      <span class="pi">-</span> <span class="s">master</span>
+</code></pre></div></div>
+
+<p>其他触发时机等，还请大家去阅读官方文档</p>
+
+<p>下一步是指定运行在什么设备上，如下面代码</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">dotnet-format</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">windows-latest</span>
+</code></pre></div></div>
+
+<p>接下来就是将代码拉下来了，可以通过如下代码将当前分支的最新代码拉下来</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Checkout repo</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v2</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">ref</span><span class="pi">:</span> <span class="s">$</span>
+</code></pre></div></div>
+
+<p>本文的格式化方法是使用 dotnetCampus.EncodingNormalior 工具格式化的，在使用这个工具之前，需要先安装，请使用如下代码进行安装</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Install dotnet-format</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">dotnet tool install -g dotnetCampus.EncodingNormalior</span>
+</code></pre></div></div>
+
+<p>被微软收购的 GitHub 默认构建环境肯定是包含了整个 dotnet 的，因此大家不需要额外再去安装。但如果大家用的是自己的环境，请使用如下代码安装 dotnet 环境</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Setup .NET Core</span>
+      <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-dotnet@v1</span>
+      <span class="na">with</span><span class="pi">:</span>
+        <span class="na">dotnet-version</span><span class="pi">:</span> <span class="s">3.1.300</span>
+</code></pre></div></div>
+
+<p>下一步是使用编码规范工具尝试修复代码文件夹里面的文本文件的编码</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Fix encoding</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">EncodingNormalior -f . --TryFix </span><span class="no">true</span>
+</code></pre></div></div>
+
+<p>如果有某些特殊文件需要忽略文件的编码的，还请参阅 <a href="https://github.com/dotnet-campus/EncodingNormalior">dotnet-campus/EncodingNormalior</a> 项目的命令行篇的更多用法</p>
+
+<p>如果项目文件夹里面存在文件被更改，那么证明此文件的编码不符合约定的规范。通过 Git 将此更改签入，用于后续的步骤</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Commit files</span>
+        <span class="c1"># 下面将使用机器人的账号，你可以替换为你自己的账号</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">git config --local user.name "github-actions-dotnet-formatter[bot]"</span>
+          <span class="s">git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"</span>
+          <span class="s">git commit -a -m 'Automated dotnet-format update'</span>
+        <span class="na">continue-on-error</span><span class="pi">:</span> <span class="no">true</span>
+</code></pre></div></div>
+
+<p>上面代码中的邮箱地址和用户名都是使用 GitHub 机器人的账号，这里的代码可以自行替换</p>
+
+<p>在上面代码没有判断是否存在文件变化，是因为在 Git 里面，如果没有文件更改，那么执行 git commit 将会失败，也就是啥都不会做。利用这个特性就可以减少一个判断更改的步骤了</p>
+
+<p>而最后一句话 <code class="language-plaintext highlighter-rouge">continue-on-error: true</code> 是因为 git commit 会失败也是预期的，这个步骤可以忽略失败。加上这个命令就可以在这个步骤失败的时候，不会影响其他步骤</p>
+
+<p>在这里可以分为两个不同的方向做，一个方向是将这个更改创建一个代码审查，另一个方向是推送到当前的分支上面去</p>
+
+<p>我比较推荐的做法是创建一个代码审查。尽管使用工具的行为都是预期的，但是根据我这边团队的理念，所有的代码更改都应该被审查。即使是机器人的更改，也是需要审查一下的。这个做法和 dotnet 组织的 WPF 以及 Xamarin 等仓库的做法是相同的</p>
+
+<p>在 GitHub 的 Action 里面创建一个代码审查，可以使用下面代码</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Create Pull Request</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">peter-evans/create-pull-request@v3</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">title</span><span class="pi">:</span> <span class="s1">'</span><span class="s">[Bot]</span><span class="nv"> </span><span class="s">Automated</span><span class="nv"> </span><span class="s">PR</span><span class="nv"> </span><span class="s">to</span><span class="nv"> </span><span class="s">fix</span><span class="nv"> </span><span class="s">formatting</span><span class="nv"> </span><span class="s">errors'</span>
+          <span class="na">body</span><span class="pi">:</span> <span class="pi">|</span>
+            <span class="s">Automated PR to fix formatting errors</span>
+          <span class="na">committer</span><span class="pi">:</span> <span class="s">GitHub &lt;noreply@github.com&gt;</span>
+          <span class="na">author</span><span class="pi">:</span> <span class="s">github-actions[bot] &lt;41898282+github-actions[bot]@users.noreply.github.com&gt;</span>
+          <span class="c1"># 以下是给定代码审查者，需要设置仓库有权限的开发者</span>
+          <span class="na">assignees</span><span class="pi">:</span> <span class="s">lindexi,walterlv</span>
+          <span class="na">reviewers</span><span class="pi">:</span> <span class="s">lindexi,walterlv</span>
+          <span class="c1"># 对应的上传分支</span>
+          <span class="na">branch</span><span class="pi">:</span> <span class="s">t/bot/fix-codeformatting</span>
+</code></pre></div></div>
+
+<p>上面代码中的给定代码审查者，需要设置仓库有权限的开发者。这里利用了创建代码审查的一个功能，如果两个分支的代码没有历史的差异，是不会创建代码审查的。也就是如果文件夹里面没有文件更改，此时 git commit 将啥都不会做，而创建代码审查时，因为上一步 git commit 没有更改历史，因此两个分支的历史依然相同，不会创建代码审查</p>
+
+<p>利用这个功能，就可以减少判断文件更改的逻辑了。如果文件夹里面的文件都符合编码规范，那么将啥都不会做。而如果有文件不符合编码规范，此时将会自动修改文件编码，然后创建一个代码审查</p>
+
+<p>如果小伙伴觉得不需要创建代码审查，因为整个团队就几个开发者在开发，可以将修改编码之后的文件推送到当前的分支上面去，那么请使用下面代码推送。如果文件夹里面的文件都符合编码规范，那么将啥都不会做，因为没有内容可以推送</p>
+
+<div class="language-yml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Push changes</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">ad-m/github-push-action@v0.5.0</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">github_token</span><span class="pi">:</span> <span class="s">$</span>
+          <span class="na">branch</span><span class="pi">:</span> <span class="s">$</span>
+</code></pre></div></div>
+
+<p>但是这个方法也许会让开发者不开森，因为他下一次上传代码的时候需要先拉代码，也许因为格式化给他了额外的改动。另外的，如 Xamarin 仓库的注释，其实代码推送无法用在 fork 的仓库上，也就是说如果这个代码审查是另一个开发者在他 fork 的仓库里面发起的，此时的这个方法将会失效</p>
+
+<p>我现在在 <a href="https://github.com/dotnet-campus/AsyncWorkerCollection">dotnet-campus/AsyncWorkerCollection</a> 仓库就接入这个机器人，用起来还不错</p>
+
+<p>我将 <a href="https://blog.lindexi.com/post/dotnet-%E5%9F%BA%E4%BA%8E-dotnet-format-%E7%9A%84-GitHub-Action-%E8%87%AA%E5%8A%A8%E4%BB%A3%E7%A0%81%E6%A0%BC%E5%BC%8F%E5%8C%96%E6%9C%BA%E5%99%A8%E4%BA%BA.html">自动代码格式化机器人</a> 和本文的自动文件编码规范机器人合并一起接入，欢迎小伙伴到 <a href="https://github.com/dotnet-campus/AsyncWorkerCollection">https://github.com/dotnet-campus/AsyncWorkerCollection</a> 项目参观效果</p>
+
+<p>更多关于这个工具请看下面博客</p>
+
+<ul>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/VisualStudio-%E7%BC%96%E7%A0%81%E8%A7%84%E8%8C%83%E5%B7%A5%E5%85%B7-2.6-%E4%BF%AE%E6%94%B9%E5%BD%93%E5%89%8D%E6%96%87%E4%BB%B6%E7%BC%96%E7%A0%81.html">VisualStudio 编码规范工具 2.6 修改当前文件编码</a></p>
+  </li>
+  <li>
+    <p><a href="https://blog.lindexi.com/post/C-%E5%88%A4%E6%96%AD%E6%96%87%E4%BB%B6%E7%BC%96%E7%A0%81.html">C＃ 判断文件编码</a></p>
+  </li>
+</ul>
+
+:ET

@@ -1,0 +1,74 @@
+I"�<p>在 C# 反射调用私有事件经常会不知道如何写，本文告诉大家如何调用</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:51:13 -->
+
+<!-- 标签：C#，反射 -->
+
+<p>假设有 A 类的代码定义了一个私有的事件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">A</span>
+    <span class="p">{</span>
+        <span class="k">private</span> <span class="k">event</span> <span class="n">EventHandler</span> <span class="n">Fx</span>
+        <span class="p">{</span>
+            <span class="k">add</span> <span class="p">{</span> <span class="p">}</span>
+            <span class="k">remove</span> <span class="p">{</span> <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过反射可以拿到 A 的事件 Fx 但是无法直接添加事件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">eventInfo</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">A</span><span class="p">).</span><span class="nf">GetEvent</span><span class="p">(</span><span class="s">"Fx"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>如果这时直接调用 AddEventHandler 就会出现下面异常</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">eventInfo</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">A</span><span class="p">).</span><span class="nf">GetEvent</span><span class="p">(</span><span class="s">"Fx"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">A</span><span class="p">();</span>
+
+            <span class="n">eventInfo</span><span class="p">.</span><span class="nf">AddEventHandler</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="k">new</span> <span class="nf">EventHandler</span><span class="p">(</span><span class="n">Fx</span><span class="p">));</span>
+
+            <span class="k">void</span> <span class="nf">Fx</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">InvalidOperationException</span><span class="p">:</span><span class="err">“由于不存在此事件的公共添加方法，因此无法添加该事件处理程序。”</span>
+</code></pre></div></div>
+
+<p>解决的方法是调用 GetAddMethod 的方法请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">eventInfo</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">A</span><span class="p">).</span><span class="nf">GetEvent</span><span class="p">(</span><span class="s">"Fx"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">addFx</span> <span class="p">=</span> <span class="n">eventInfo</span><span class="p">.</span><span class="nf">GetAddMethod</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">removeFx</span> <span class="p">=</span> <span class="n">eventInfo</span><span class="p">.</span><span class="nf">GetRemoveMethod</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">a</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">A</span><span class="p">();</span>
+
+            <span class="n">addFx</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="k">new</span> <span class="nf">EventHandler</span><span class="p">(</span><span class="n">Fx</span><span class="p">)});</span>
+            <span class="n">removeFx</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="k">new</span><span class="p">[]</span> <span class="p">{</span><span class="k">new</span> <span class="nf">EventHandler</span><span class="p">(</span><span class="n">Fx</span><span class="p">)});</span>
+
+            <span class="k">void</span> <span class="nf">Fx</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>参见 https://stackoverflow.com/a/6423886/6116637</p>
+
+<p>如果可能遇到类型转换的异常<code class="language-plaintext highlighter-rouge">System.ArgumanetException:'Object of type 'System.EventHandler1[System.EventArgs]' cannot be converted to type 'System.EventHandler'. </code>，请看<a href="https://blog.walterlv.com/post/add-event-handler-using-reflection.html">.NET/C# 使用反射注册事件 - walterlv</a></p>
+
+<p>更多反射请看</p>
+
+<p><a href="https://blog.lindexi.com/post/win10-uwp-%E5%8F%8D%E5%B0%84.html">win10 uwp 反射</a></p>
+
+<p><a href="https://blog.walterlv.com/post/create-delegate-to-improve-reflection-performance.html">.NET Core/Framework 创建委托以大幅度提高反射调用的性能 - walterlv</a></p>
+
+<p><a href="https://blog.walterlv.com/uwp/2017/09/21/reflection-using-dotnet-native-runtime-directive.html">设置 .NET Native 运行时指令以支持反射（尤其适用于 UWP） - walterlv</a></p>
+
+<p><a href="https://blog.walterlv.com/post/handle-ref-or-out-arguments-using-reflection.html">.NET/C# 使用反射调用含 ref 或 out 参数的方法 - walterlv</a></p>
+
+<p><a href="https://blog.walterlv.com/post/design-a-cache-pool.html">.NET/C# 推荐一个我设计的缓存类型（适合缓存反射等耗性能的操作，附用法） - walterlv</a></p>
+
+:ET

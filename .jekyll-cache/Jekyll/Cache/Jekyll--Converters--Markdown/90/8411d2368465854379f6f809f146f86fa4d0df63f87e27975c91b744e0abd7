@@ -1,0 +1,29 @@
+I"�<p>使用 RunAs 可以让程序使用普通用户或管理员权限运行，本文告诉大家如何 传入带空格的路径</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/6 11:52:14 -->
+
+<p>用 runas 可以<a href="https://blog.walterlv.com/post/start-process-in-a-specific-trust-level.html">以指定的权限启动一个进程（非管理员、管理员）</a> 在传入参数如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>runas /trustlevel:0x20000 .\lindexi.exe
+</code></pre></div></div>
+
+<p>如果我的文件是放在带空格文件夹 <code class="language-plaintext highlighter-rouge">E:\带空格 文件夹\lindexi.exe</code> 可以如何运行？ 请加上引号</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>runas /trustlevel:0x20000 "E:\带空格 文件夹\lindexi.exe"
+</code></pre></div></div>
+
+<p>如果我需要传入参数，可以如何写</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>runas /trustlevel:0x20000 "E:\带空格 文件夹\lindexi.exe 参数"
+</code></pre></div></div>
+
+<p>如果我的参数有空格，可以如何写</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>runas /trustlevel:0x20000 "E:\带空格 文件夹\lindexi.exe \"空格 内容\" 第二个参数 "
+</code></pre></div></div>
+
+<p>也就是在 runas 传入运行的文件，存在空格只需要将路径放在引号内。如果要传入参数，那么将传入路径和参数放在相同的引号内。如果参数有空格，将参数放在 <code class="language-plaintext highlighter-rouge">\"</code> 内</p>
+
+:ET

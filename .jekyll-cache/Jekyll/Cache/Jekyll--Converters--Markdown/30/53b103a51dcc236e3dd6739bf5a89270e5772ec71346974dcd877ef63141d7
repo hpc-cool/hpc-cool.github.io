@@ -1,0 +1,65 @@
+I"	$<p>本文告诉大家通过命令行获取 Nuget 的版本号</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/3/1 9:27:06 -->
+
+<!-- 标签：nuget -->
+
+<p>在 Nuget 中没有 <code class="language-plaintext highlighter-rouge">-version</code> 和 <code class="language-plaintext highlighter-rouge">-v</code> 和 <code class="language-plaintext highlighter-rouge">--version</code> 等写法，只需要直接输入 nuget 在第一行就会显示版本号</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">nuget</span>
+<span class="n">NuGet</span> <span class="n">Version</span><span class="p">:</span> <span class="m">4.9</span><span class="p">.</span><span class="m">3.5776</span>
+<span class="n">usage</span><span class="p">:</span> <span class="n">NuGet</span> <span class="p">&lt;</span><span class="n">command</span><span class="p">&gt;</span> <span class="p">[</span><span class="n">args</span><span class="p">]</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span>
+<span class="n">Type</span> <span class="err">'</span><span class="n">NuGet</span> <span class="n">help</span> <span class="p">&lt;</span><span class="n">command</span><span class="p">&gt;</span><span class="err">'</span> <span class="k">for</span> <span class="n">help</span> <span class="k">on</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">command</span><span class="p">.</span>
+
+<span class="n">Available</span> <span class="n">commands</span><span class="p">:</span>
+
+ <span class="k">add</span>         <span class="n">Adds</span> <span class="n">the</span> <span class="n">given</span> <span class="n">package</span> <span class="n">to</span> <span class="n">a</span> <span class="n">hierarchical</span> <span class="n">source</span><span class="p">.</span> <span class="n">http</span> <span class="n">sources</span> <span class="n">are</span> <span class="n">not</span> <span class="n">supported</span><span class="p">.</span> <span class="n">For</span> <span class="n">more</span> <span class="n">info</span><span class="p">,</span> <span class="k">goto</span> <span class="n">https</span>
+             <span class="p">:</span><span class="c1">//docs.nuget.org/consume/command-line-reference#add-command.</span>
+
+ <span class="n">config</span>      <span class="err">获取或设置</span> <span class="n">NuGet</span> <span class="err">配置值。</span>
+
+ <span class="n">delete</span>      <span class="err">从服务器中删除程序包。</span>
+
+ <span class="nf">help</span> <span class="p">(?)</span>    <span class="err">显示一般帮助信息，以及有关其他命令的帮助信息。</span>
+
+ <span class="n">init</span>        <span class="n">Adds</span> <span class="n">all</span> <span class="n">the</span> <span class="n">packages</span> <span class="k">from</span> <span class="n">the</span> <span class="p">&lt;</span><span class="n">srcPackageSourcePath</span><span class="p">&gt;</span> <span class="n">to</span> <span class="n">the</span> <span class="n">hierarchical</span> <span class="p">&lt;</span><span class="n">destPackageSourcePath</span><span class="p">&gt;.</span> <span class="n">http</span> <span class="n">fe</span>
+             <span class="n">eds</span> <span class="n">are</span> <span class="n">not</span> <span class="n">supported</span><span class="p">.</span> <span class="n">For</span> <span class="n">more</span> <span class="n">info</span><span class="p">,</span> <span class="k">goto</span> <span class="n">https</span><span class="p">:</span><span class="c1">//docs.nuget.org/consume/command-line-reference#init-comm</span>
+             <span class="n">and</span><span class="p">.</span>
+
+ <span class="n">install</span>     <span class="err">使用指定的源安装程序包。如果未指定源，则将使用</span> <span class="n">NuGet</span> <span class="err">配置文件中定义的所有源。如果配置文件未指定源，则使用默认的</span> <span class="n">NuGet</span> <span class="err">源。</span>
+
+ <span class="n">list</span>        <span class="err">显示给定源中的程序包列表。如果未指定源，则使用</span> <span class="p">%</span><span class="n">AppData</span><span class="p">%</span><span class="err">\</span><span class="n">NuGet</span><span class="err">\</span><span class="n">NuGet</span><span class="p">.</span><span class="n">config</span> <span class="err">中定义的所有源。如果</span> <span class="n">NuGet</span><span class="p">.</span><span class="n">config</span> <span class="err">未指定源，则使用默认</span> <span class="n">NuGet</span> <span class="err">源。</span>
+
+ <span class="n">locals</span>      <span class="n">Clears</span> <span class="n">or</span> <span class="n">lists</span> <span class="n">local</span> <span class="n">NuGet</span> <span class="n">resources</span> <span class="n">such</span> <span class="k">as</span> <span class="n">http</span> <span class="n">requests</span> <span class="n">cache</span><span class="p">,</span> <span class="n">temp</span> <span class="n">cache</span> <span class="n">or</span> <span class="n">machine</span><span class="p">-</span><span class="n">wide</span> <span class="k">global</span> <span class="n">packa</span>
+             <span class="n">ges</span> <span class="n">folder</span><span class="p">.</span>
+
+ <span class="n">pack</span>        <span class="err">基于指定的</span> <span class="n">nuspec</span> <span class="err">或项目文件创建</span> <span class="n">NuGet</span> <span class="err">程序包。</span>
+
+ <span class="n">push</span>        <span class="err">将程序包推送到服务器并进行发布。</span>
+             <span class="err">通过加载</span> <span class="p">%</span><span class="n">AppData</span><span class="p">%</span><span class="err">\</span><span class="n">NuGet</span><span class="err">\</span><span class="n">NuGet</span><span class="p">.</span><span class="n">config</span><span class="err">，然后加载从驱动器的根目录开始到当前目录为止的任何</span> <span class="n">nuget</span><span class="p">.</span><span class="n">config</span> <span class="err">或</span> <span class="p">.</span><span class="n">nuget</span><span class="err">\</span><span class="n">nuget</span><span class="p">.</span><span class="n">config</span> <span class="err">来获取</span> <span class="n">NuGet</span> <span class="err">的默</span>
+             <span class="err">认配置。</span>
+
+ <span class="n">restore</span>     <span class="err">还原</span> <span class="n">NuGet</span> <span class="err">程序包。</span>
+
+ <span class="n">setApiKey</span>   <span class="err">保存给定服务器</span> <span class="n">URL</span> <span class="err">所对应的</span> <span class="n">API</span> <span class="err">密钥。如果未提供</span> <span class="n">URL</span><span class="err">，则保存</span> <span class="n">NuGet</span> <span class="err">库的</span> <span class="n">API</span> <span class="err">密钥。</span>
+
+ <span class="n">sign</span>        <span class="n">Signs</span> <span class="n">a</span> <span class="n">NuGet</span> <span class="n">package</span> <span class="n">with</span> <span class="n">the</span> <span class="n">specified</span> <span class="n">certificate</span><span class="p">.</span>
+
+ <span class="n">sources</span>     <span class="err">可以管理位于</span> <span class="p">%</span><span class="n">AppData</span><span class="p">%</span><span class="err">\</span><span class="n">NuGet</span><span class="err">\</span><span class="n">NuGet</span><span class="p">.</span><span class="n">config</span> <span class="err">的源列表</span>
+
+ <span class="n">spec</span>        <span class="err">为新程序包生成</span> <span class="n">nuspec</span><span class="err">。如果此命令在项目文件</span><span class="p">(.</span><span class="n">csproj</span><span class="err">、</span><span class="p">.</span><span class="n">vbproj</span><span class="err">、</span><span class="p">.</span><span class="n">fsproj</span><span class="p">)</span><span class="err">所在的文件夹中运行，则它将创建已标记</span> <span class="err">化的</span> <span class="n">nuspec</span> <span class="err">文件。</span>
+
+ <span class="n">update</span>      <span class="err">将程序包更新到最新的可用版本。此命令还更新</span> <span class="n">NuGet</span><span class="p">.</span><span class="n">exe</span> <span class="err">本身。</span>
+
+ <span class="n">verify</span>      <span class="n">Verifies</span> <span class="n">a</span> <span class="n">signed</span> <span class="n">NuGet</span> <span class="n">package</span><span class="p">.</span>
+
+<span class="err">有关详细信息，请访问</span> <span class="n">http</span><span class="p">:</span><span class="c1">//docs.nuget.org/docs/reference/command-line-reference</span>
+</code></pre></div></div>
+
+<p>可以已通过 <code class="language-plaintext highlighter-rouge">nuget update -self</code> 更新 Nuget 自己的版本</p>
+
+<p>也可以从<a href="https://www.nuget.org/downloads">官网</a> 下载最新版本</p>
+
+:ET

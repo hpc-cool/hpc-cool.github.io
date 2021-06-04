@@ -1,0 +1,284 @@
+I"�<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>我们来说下有向图，一般的有向图也是图，图可以分为稠密图，稀疏图，那么从意思上，稠密图就是点的边比较多，稀疏图就是边比较少的图。为什么稠密图放在矩阵比较省空间，因为邻接表在边之间存储需要多余的指针，而矩阵不需要。</p>
+
+<p>下面这张图：http://blog.csdn.net/tham_/article/details/46048063</p>
+
+<p><img src="http://images.cnitblog.com/i/552798/201404/301440099397248.jpg" alt="这里写图片描述" /></p>
+
+<p><img src="http://images.cnitblog.com/i/552798/201404/301440568453610.jpg" alt="这里写图片描述" /></p>
+
+<p>我们只说有向图，我们把有向图存在矩阵</p>
+
+<p>我们先说Warshall，假如我们有一张图</p>
+
+<p><img src="http://img.blog.csdn.net/20160615163653650" alt="这里写图片描述" /></p>
+
+<p>我们把这张图存储在矩阵</p>
+
+<p>首先是a，a可以直接�首先我们先说下图论，一般图存储可以使用邻接矩阵，或邻接表，一般使用邻接矩阵在稠密图比较省空间。</p>
+
+<!--more-->
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>我们来说下有向图，一般的有向图也是图，图可以分为稠密图，稀疏图，那么从意思上，稠密图就是点的边比较多，稀疏图就是边比较少的图。为什么稠密图放在矩阵比较省空间，因为邻接表在边之间存储需要多余的指针，而矩阵不需要。</p>
+
+<p>下面这张图：http://blog.csdn.net/tham_/article/details/46048063</p>
+
+<p><img src="http://images.cnitblog.com/i/552798/201404/301440099397248.jpg" alt="这里写图片描述" /></p>
+
+<p><img src="http://images.cnitblog.com/i/552798/201404/301440568453610.jpg" alt="这里写图片描述" /></p>
+
+<p>我们只说有向图，我们把有向图存在矩阵</p>
+
+<p>我们先说Warshall，假如我们有一张图</p>
+
+<p><img src="http://img.blog.csdn.net/20160615163653650" alt="这里写图片描述" /></p>
+
+<p>我们把这张图存储在矩阵</p>
+
+<p>首先是a，a可以直接到b，那么ab就是1
+接着就是b，b可以直接到c，那么bc就是1</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Warshall</th>
+      <th>a</th>
+      <th>b</th>
+      <th>c</th>
+      <th>d</th>
+      <th>e</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>b</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>c</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>d</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>e</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>那么Warshall怎么做，他需要做个十字形，因为有个定理，</p>
+
+\[R_{ij} = R_{ik} \cup R_{kj}\]
+
+<p>其中ijk都是从0到n，这里n是点个数</p>
+
+<p>那么我们得到的第一个矩阵，叫做\(R^0\)
+那么由第一个矩阵变化出第二个矩阵就叫\(R^1\)
+然后一直到n，这里n是点个数</p>
+
+<p>如何变化，其实很简单，做个十字，这里说的十字是</p>
+
+<p><img src="http://img.blog.csdn.net/20160615163704212" alt="这里写图片描述" /></p>
+
+<p>那么我们第一个公式就可以来</p>
+
+<p>我们选择一个点</p>
+
+<p><img src="http://img.blog.csdn.net/20160615163712765" alt="这里写图片描述" /></p>
+
+<p>如果在十字两个都是1，那么这个点也就改为1，因为图里只有一个点可以修改，所以修改完就是</p>
+
+\[R^1\]
+
+<p>接着我们把十字修改</p>
+
+<p><img src="http://img.blog.csdn.net/20160615163737572" alt="这里写图片描述" /></p>
+
+<p>那么发现有两个点，加粗db是上次修改的</p>
+
+<p>我们可以发现ac和dc都是可以修改</p>
+
+<p><img src="http://img.blog.csdn.net/20160615163750322" alt="这里写图片描述" /></p>
+
+<p>那么继续修改</p>
+
+<p><img src="http://img.blog.csdn.net/20160615163802072" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160615163808603" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160615163817032" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160615163826869" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160615163833782" alt="这里写图片描述" /></p>
+
+<p>修改后</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Warshall</th>
+      <th>a</th>
+      <th>b</th>
+      <th>c</th>
+      <th>d</th>
+      <th>e</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>b</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>c</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>d</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>e</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>因为我们从a到d都是可以到达，所以都为1，因为存在d可以到e，所以所有点都可以到e，因为e本身没有到任何点，所以为0</p>
+
+<p>那么Floyd是什么，其实就是把原先的矩阵1改为数字</p>
+
+<p>Floyd是可以算图中任意两个点的最短路径</p>
+
+<p>那么说道这，我们需要带权有向图</p>
+
+<p>带权就是两个点之间的边有个权，放在矩阵就是可以相连的两个点之间的ij为权</p>
+
+<p>1</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Warshall</th>
+      <th>a</th>
+      <th>b</th>
+      <th>c</th>
+      <th>d</th>
+      <th>e</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>a</td>
+      <td>0</td>
+      <td>5</td>
+      <td>\(\infty\)</td>
+      <td>\(\infty\)</td>
+      <td>\(\infty\)</td>
+    </tr>
+    <tr>
+      <td>b</td>
+      <td>\(\infty\)</td>
+      <td>0</td>
+      <td>2</td>
+      <td>\(\infty\)</td>
+      <td>\(\infty\)</td>
+    </tr>
+    <tr>
+      <td>c</td>
+      <td>\(\infty\)</td>
+      <td>\(\infty\)</td>
+      <td>0</td>
+      <td>1</td>
+      <td>\(\infty\)</td>
+    </tr>
+    <tr>
+      <td>d</td>
+      <td>6</td>
+      <td>15</td>
+      <td>\(\infty\)</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>e</td>
+      <td>\(\infty\)</td>
+      <td>\(\infty\)</td>
+      <td>\(\infty\)</td>
+      <td>\(\infty\)</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>我们和之前Warshall一样做十字，然后判断是得到</p>
+
+\[R_{ij}=min\{R_{ij},R_{ik}+R_{kj}\}\]
+
+<p>那么这样就可以得到任意两点路径</p>
+
+<p>算法复杂\(O(n^3)\)</p>
+
+<p>在Warshall是判断两个都为1，修改，Floyd判断两个加起来的值比当前的小，修改</p>
+
+:ET

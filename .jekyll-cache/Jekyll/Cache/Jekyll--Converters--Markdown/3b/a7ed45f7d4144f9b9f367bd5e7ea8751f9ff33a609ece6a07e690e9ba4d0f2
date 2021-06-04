@@ -1,0 +1,54 @@
+I"�<p>本文告诉大家，如果在 使用 x:Bind 转换器写在资源，而运行出现找不到资源的错误，如果解决。
+在运行的时候，出现<code class="language-plaintext highlighter-rouge">System.Runtime.InteropServices.COMException Cannot find a resource with the given key</code></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:17:19 -->
+
+<!-- csdn -->
+
+<p>这个问题就是资源寻找路径问题，因为 Binding 是性能比较差，他的资源是从他的自己，如果找不到，就到他的上一级，直到找到或没有。但是 <code class="language-plaintext highlighter-rouge">x:bind</code> 的资源寻找和 Bind 不同，他是在元素的最顶级元素和应用资源寻找。假如有一个用户控件 Foo ，那么打开他的代码，可以看到这样的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">global</span><span class="p">::</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">IValueConverter</span> <span class="nf">LookupConverter</span><span class="p">(</span><span class="kt">string</span> <span class="n">key</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">localResources</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">global</span><span class="p">::</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">FrameworkElement</span> <span class="n">rootElement</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">converterLookupRoot</span><span class="p">.</span><span class="nf">TryGetTarget</span><span class="p">(</span><span class="k">out</span> <span class="n">rootElement</span><span class="p">);</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">localResources</span> <span class="p">=</span> <span class="n">rootElement</span><span class="p">.</span><span class="n">Resources</span><span class="p">;</span>
+        <span class="k">this</span><span class="p">.</span><span class="n">converterLookupRoot</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span><span class="k">global</span><span class="p">::</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">IValueConverter</span><span class="p">)</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">localResources</span><span class="p">.</span><span class="nf">ContainsKey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="p">?</span> <span class="k">this</span><span class="p">.</span><span class="n">localResources</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="p">:</span> <span class="k">global</span><span class="p">::</span><span class="n">Windows</span><span class="p">.</span><span class="n">UI</span><span class="p">.</span><span class="n">Xaml</span><span class="p">.</span><span class="n">Application</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Resources</span><span class="p">[</span><span class="n">key</span><span class="p">]);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这就是说，元素资源从根元素找。页面的根元素就是页面本身，用户控件就是他自己本身，可以打开一个 xaml 页面，看到的第一个标签就是根元素。如果无法找到资源，会在应用资源寻找，如果找不到，就报错 System.Runtime.InteropServices.COMException 。应用资源是写在 App.xaml 的资源，所以如果希望使用<code class="language-plaintext highlighter-rouge">x:bind</code>可以获得资源，或者把资源写在根元素，或者写在应用。</p>
+
+<p>假如有元素 <code class="language-plaintext highlighter-rouge">Slider</code> 他需要资源转换器，那么转换器需要在哪定义，请看下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                 <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"{x:Bind xx,Mode=TwoWay,Converter={StaticResource Convert}}"</span> <span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Slider</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">DoubleConvert</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Convert"</span><span class="p">&gt;&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">DoubleConvert</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Slider</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Slider</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>这样写运行会错误，说未指定，因为资源找不到，因为资源寻找不是从元素开始寻找，他是从最顶级元素开始，所以如果让上面的代码可以运行，需要把资源定义在顶级元素。上面的代码可以做修改，让他可以运行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">UserControl</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">DoubleConvert</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Convert"</span><span class="p">&gt;&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">DoubleConvert</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">UserControl</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Value</span><span class="p">=</span><span class="s">"{x:Bind xx,Mode=TwoWay,Converter={StaticResource Convert}}"</span> <span class="p">&gt;</span>
+                     
+         <span class="p">&lt;/</span><span class="n">Slider</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>或者把资源写在 app.xaml 也是可以，但是写在这里的资源不会回收，会一直在内存。如果在这里写很多资源，启动速度会很慢。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017915191724.jpg" alt="" /></p>
+
+<p><a href="https://blog.lindexi.com/post/win10-uwp-%E5%90%8E%E5%8F%B0%E8%8E%B7%E5%8F%96%E8%B5%84%E6%BA%90.html">win10 uwp 后台获取资源</a></p>
+
+<p>参见：https://stackoverflow.com/a/39735867/6116637</p>
+:ET

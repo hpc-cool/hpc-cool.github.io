@@ -1,0 +1,56 @@
+I"<p>本文告诉大家如何获得 WPF 输入法的语言区域</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/6/23 11:51:21 -->
+
+<p>需要使用 user32 的方法，很简单，请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">GetForegroundWindow</span><span class="p">();</span>
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">uint</span> <span class="nf">GetWindowThreadProcessId</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">proccess</span><span class="p">);</span>
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">GetKeyboardLayout</span><span class="p">(</span><span class="kt">uint</span> <span class="n">thread</span><span class="p">);</span>
+
+        <span class="k">public</span> <span class="n">CultureInfo</span> <span class="nf">GetCurrentKeyboardLayout</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="n">IntPtr</span> <span class="n">foregroundWindow</span> <span class="p">=</span> <span class="nf">GetForegroundWindow</span><span class="p">();</span>
+                <span class="kt">uint</span> <span class="n">foregroundProcess</span> <span class="p">=</span> <span class="nf">GetWindowThreadProcessId</span><span class="p">(</span><span class="n">foregroundWindow</span><span class="p">,</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">);</span>
+                <span class="kt">int</span> <span class="n">keyboardLayout</span> <span class="p">=</span> <span class="nf">GetKeyboardLayout</span><span class="p">(</span><span class="n">foregroundProcess</span><span class="p">).</span><span class="nf">ToInt32</span><span class="p">()</span> <span class="p">&amp;</span> <span class="m">0xFFFF</span><span class="p">;</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">CultureInfo</span><span class="p">(</span><span class="n">keyboardLayout</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">CultureInfo</span><span class="p">(</span><span class="m">1033</span><span class="p">);</span> <span class="c1">// Assume English if something went wrong.</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为没有提供语言区域变化的事件，所以需要自己写一个循环来获取</p>
+
+<p>在界面添加一个 TextBlock 请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"CeareamearTreseretal"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>这样可以在后台代码给一个值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">HairjurNalllairmo</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">100</span><span class="p">);</span>
+                <span class="n">CeareamearTreseretal</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="nf">GetCurrentKeyboardLayout</span><span class="p">().</span><span class="n">DisplayName</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时修改语言区域就可以看到变化</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101211845978" alt="" /></p>
+
+<p>参见 <a href="https://yal.cc/csharp-get-current-keyboard-layout/">C#: Get current keyboard layout\input language</a></p>
+
+:ET

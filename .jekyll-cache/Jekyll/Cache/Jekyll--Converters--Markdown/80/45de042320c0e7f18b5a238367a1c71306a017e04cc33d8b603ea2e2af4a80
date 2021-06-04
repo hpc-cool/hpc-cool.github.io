@@ -1,0 +1,87 @@
+I"�<p>现在有很多函数计算服务，通过函数计算服务可以在服务上运行自己的代码，而不需要理会服务器的部署以及运行代码存在的并发问题。这些问题都会在云进行计算。使用阿里的函数计算服务可以使用 dotnet core 2.1 的框架，同时测试使用免费。本文告诉搭建如何在阿里的函数计算服务上运行自己的代码</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/1/4 8:48:02 -->
+
+<p>首先是打开阿里云 <a href="https://cn.aliyun.com">https://cn.aliyun.com</a> 进入<a href="https://www.aliyun.com/product/fc">函数计算</a>服务</p>
+
+<p>点击进入<a href="https://fc.console.aliyun.com/fc/overview/cn-shanghai">函数计算控制台</a>在右边的快速入口点击新建函数</p>
+
+<!-- ![](image/dotnet C# 使用阿里函数计算服务/dotnet C# 使用阿里函数计算服务0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020132153152617.jpg" alt="" /></p>
+
+<p>先创建事件函数，这个函数最简单</p>
+
+<!-- ![](image/dotnet C# 使用阿里函数计算服务/dotnet C# 使用阿里函数计算服务1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202013215343152.jpg" alt="" /></p>
+
+<p>下一步需要选择使用 dotnet core 2.1 服务，然后填写所在服务和函数名称，这里的函数入口的填写将会存在一点坑，可以先使用默认的值，接下来再修改</p>
+
+<!-- ![](image/dotnet C# 使用阿里函数计算服务/dotnet C# 使用阿里函数计算服务2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202013215537561.jpg" alt="" /></p>
+
+<p>先尝试在本地创建一个 dotnet core 2.1 版本的控制台项目，注意创建的框架需要使用 dotnet core 2.1 版本，可以在 csproj 文件里面通过修改 TargetFramework 的值修改版本</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Project</span> <span class="n">Sdk</span><span class="p">=</span><span class="s">"Microsoft.NET.Sdk"</span><span class="p">&gt;</span>
+
+  <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">OutputType</span><span class="p">&gt;</span><span class="n">Exe</span><span class="p">&lt;/</span><span class="n">OutputType</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">TargetFramework</span><span class="p">&gt;</span><span class="n">netcoreapp2</span><span class="p">.</span><span class="m">1</span><span class="p">&lt;/</span><span class="n">TargetFramework</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="n">Project</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>在 Program.cs 文件里面添加一个静态的公开的方法 Foo 用于在阿里服务器上执行，注意将 Program 类修改为公有</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">RaweayerkeJebarkewere</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Hello World!"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">(</span><span class="kt">object</span> <span class="n">o</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Hello World!"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>为什么 Foo 方法需要一个 object 的参数，这是因为在 阿里服务器将会通过反射调用 Foo 方法，要求调用的方法存在一个参数</p>
+
+<p>此时写好代码，通过命令行编译一下，可以上传的代码是 debug 版的，将 <code class="language-plaintext highlighter-rouge">bin\Debug\netcoreapp2.1\</code> 文件夹压缩，此时要求压缩包里面根文件夹就包含了 <code class="language-plaintext highlighter-rouge">*.dll</code> 文件</p>
+
+<p>我创建的控制台项目是 <code class="language-plaintext highlighter-rouge">RaweayerkeJebarkewere</code> 的命令，也就是在 <code class="language-plaintext highlighter-rouge">bin\Debug\netcoreapp2.1\</code> 创建了 <code class="language-plaintext highlighter-rouge">RaweayerkeJebarkewere.dll</code> 文件</p>
+
+<p>返回刚才的阿里的函数计算创建页面，填写函数入口，这里的函数入口写起来有些诡异</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">文件名</span><span class="p">::</span><span class="err">命名空间</span><span class="p">.</span><span class="err">类名</span><span class="p">::</span><span class="err">函数名</span>
+</code></pre></div></div>
+
+<p>我这里的文件是<code class="language-plaintext highlighter-rouge">RaweayerkeJebarkewere.dll</code>也就是文件名是<code class="language-plaintext highlighter-rouge">RaweayerkeJebarkewere</code>而命名空间和类名就不用说了</p>
+
+<p>函数名注意不需要加上括号</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">RaweayerkeJebarkewere</span><span class="p">::</span><span class="n">RaweayerkeJebarkewere</span><span class="p">.</span><span class="n">Program</span><span class="p">::</span><span class="n">Foo</span>
+</code></pre></div></div>
+
+<p>将压缩了 <code class="language-plaintext highlighter-rouge">RaweayerkeJebarkewere.dll</code> 的文件通过点击代码包上传</p>
+
+<p>也就是填写所在服务和函数名称选择使用 dotnet core 2.1 加上函数入口就可以了</p>
+
+<p>在跳转的代码执行页面点击执行就可以看到输出，如果可以输出那么运行就成功了</p>
+
+<p>如果需要修改函数入口，请点击概览页面，然后点击配置就可以修改</p>
+
+:ET

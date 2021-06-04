@@ -1,0 +1,37 @@
+I"�<p>在集成测试中，我采用单个进程开启多个主机，可以理解为一个用例开启一次主机。但是在我使用到 SmartSql 的功能时，我发现在一个主机关闭之后，再开启下一个主机，会因为使用了相同的别名而提示 SmartSql.Alias:[SmartSql] already exist 错误。本文告诉大家如何解决此问题</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/12/28 11:43:02 -->
+
+<!-- 发布 -->
+
+<p>默认的 dotnet 应用在主机销毁的时候，都会销毁自己的资源。而 SmartSql 没有做这个处理，同时使用了静态量，这就意味着两个不同的主机都会访问到相同的对象，在开启第二个主机的时候，会因为存在相同的 Alias 而提示出错，如下面代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>λ:SmartSql.ISqlMapper -&gt; λ:SmartSql.SmartSqlBuilder.
+                      ---&gt; SmartSql.Exceptions.SmartSqlException: SmartSql.Alias:[SmartSql] already exist.
+                        at SmartSql.SmartSqlContainer.Register(SmartSqlBuilder smartSqlBuilder)
+                        at SmartSql.SmartSqlBuilder.Build()
+                        at Microsoft.Extensions.DependencyInjection.SmartSqlDIExtensions.&lt;&gt;c__DisplayClass0_0.&lt;AddSmartSql&gt;b__0(IServiceProvider sp)
+                        at Autofac.Extensions.DependencyInjection.AutofacRegistration.&lt;&gt;c__DisplayClass3_0.&lt;Register&gt;b__0(IComponentContext context, IEnumerable`1 parameters)
+</code></pre></div></div>
+
+<p>因为在应用中使用静态量的逻辑不少，因此集成测试可以采用多进程方法，一个进程跑一个主机，在一个主机里面跑多个用例。这样的优势可以减少静态清理，缺点是集成测试项目要么有很多个，要么需要一个中间的管理，相对复杂</p>
+
+<p>第二个方法是给 SmartSql 一个别名，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="n">services</span><span class="p">.</span><span class="nf">AddSmartSql</span><span class="p">((</span><span class="n">sp</span><span class="p">,</span> <span class="n">builder</span><span class="p">)</span> <span class="p">=&gt;</span>
+      <span class="p">{</span>
+            <span class="n">builder</span><span class="p">.</span><span class="nf">UseAlias</span><span class="p">(</span><span class="s">"随机的命名"</span><span class="p">);</span>
+      <span class="p">});</span>
+</code></pre></div></div>
+
+<p>保持每次的主机都使用不同的 随机的命名 就可以解决此问题</p>
+
+<p>特别感谢 <a href="173592829">小黑兔</a> 的帮助</p>
+
+<p>欢迎加入 SmartSql 官方群 604762592</p>
+
+<p>关于集成测试请看 <a href="https://blog.lindexi.com/post/asp-dotnet-core-%E5%9F%BA%E4%BA%8E-TestServer-%E5%81%9A%E9%9B%86%E6%88%90%E6%B5%8B%E8%AF%95.html">asp dotnet core 基于 TestServer 做集成测试</a></p>
+
+:ET

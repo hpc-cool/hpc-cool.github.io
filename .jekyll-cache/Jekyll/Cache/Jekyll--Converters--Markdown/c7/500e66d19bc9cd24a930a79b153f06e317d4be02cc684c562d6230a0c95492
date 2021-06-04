@@ -1,0 +1,312 @@
+I"X�<p>毛玻璃在UWP很简单，不会和WPF那样伤性能。
+本文告诉大家，如何在 UWP 使用 win2d 做毛玻璃。</p>
+<div id="toc"></div>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:50 -->
+
+<!-- 标签：uwp，win2d -->
+
+<p>毛玻璃可以使用 win2D  方法，也可以使用 Compositor 。</p>
+
+<p>使用 win2d 得到软件内控件毛玻璃，而使用 Compositor 可以获得窗口毛玻璃。</p>
+
+<p>先来说下如何使用 Compositor 做窗口毛玻璃，感觉小伙伴感兴趣的是窗口毛玻璃。</p>
+
+<h2 id="compositor-创建毛玻璃">Compositor 创建毛玻璃</h2>
+
+<p>先写最简单的页面，只有一个 Grid， 给他名称 GlassHost，这个控件用于显示毛玻璃</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"GlassHost"</span><span class="p">&gt;&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>然后在构造函数使用InitializeFrostedGlass，这个函数用于在一个控件显示毛玻璃</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="nf">InitializeFrostedGlass</span><span class="p">(</span><span class="n">GlassHost</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">InitializeFrostedGlass</span><span class="p">(</span><span class="n">UIElement</span> <span class="n">glassHost</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Visual</span> <span class="n">hostVisual</span> <span class="p">=</span> <span class="n">ElementCompositionPreview</span><span class="p">.</span><span class="nf">GetElementVisual</span><span class="p">(</span><span class="n">glassHost</span><span class="p">);</span>
+            <span class="n">Compositor</span> <span class="n">compositor</span> <span class="p">=</span> <span class="n">hostVisual</span><span class="p">.</span><span class="n">Compositor</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">backdropBrush</span> <span class="p">=</span> <span class="n">compositor</span><span class="p">.</span><span class="nf">CreateHostBackdropBrush</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">glassVisual</span> <span class="p">=</span> <span class="n">compositor</span><span class="p">.</span><span class="nf">CreateSpriteVisual</span><span class="p">();</span>
+            <span class="n">glassVisual</span><span class="p">.</span><span class="n">Brush</span> <span class="p">=</span> <span class="n">backdropBrush</span><span class="p">;</span>
+            <span class="n">ElementCompositionPreview</span><span class="p">.</span><span class="nf">SetElementChildVisual</span><span class="p">(</span><span class="n">glassHost</span><span class="p">,</span> <span class="n">glassVisual</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">bindSizeAnimation</span> <span class="p">=</span> <span class="n">compositor</span><span class="p">.</span><span class="nf">CreateExpressionAnimation</span><span class="p">(</span><span class="s">"hostVisual.Size"</span><span class="p">);</span>
+            <span class="n">bindSizeAnimation</span><span class="p">.</span><span class="nf">SetReferenceParameter</span><span class="p">(</span><span class="s">"hostVisual"</span><span class="p">,</span> <span class="n">hostVisual</span><span class="p">);</span>
+            <span class="n">glassVisual</span><span class="p">.</span><span class="nf">StartAnimation</span><span class="p">(</span><span class="s">"Size"</span><span class="p">,</span> <span class="n">bindSizeAnimation</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就可以看到毛玻璃效果</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017531204634.jpg" alt="" /></p>
+
+<p>这个代码是从 http://www.jianshu.com/p/3b49fd3d7edb 复制的</p>
+
+<p>大概解释一下， <code class="language-plaintext highlighter-rouge">compositor.CreateHostBackdropBrush()</code> 获得 创建之前绘制窗口后面视觉效果的区域，然后把他添加到Grid就可以了。</p>
+
+<p>但是模糊的玻璃可以看不到里面控件，于是就把控件放在一个Grid 的最前，这样看起来背景就是毛玻璃</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="p">&lt;</span><span class="n">Grid</span> <span class="p">&gt;</span> <span class="err">最外层的</span> <span class="n">Grid</span> <span class="err">不要设置</span> <span class="n">BackGround</span> 
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"GlassHost"</span><span class="p">&gt;&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span> <span class="err">把他放在最前</span>
+        <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">ItemsSource</span><span class="p">=</span><span class="s">"{x:Bind AvaloniaCol}"</span> <span class="n">IsItemClickEnabled</span><span class="p">=</span><span class="s">"True"</span> <span class="n">ItemClick</span><span class="p">=</span><span class="s">"ListViewBase_OnItemClick"</span> <span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+                   <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"#FFFFFF"</span> <span class="n">PointerPressed</span><span class="p">=</span><span class="s">"UIElement_OnPointerPressed"</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                   <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"添加"</span> <span class="n">Click</span><span class="p">=</span><span class="s">"ButtonBase_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span> <span class="err">可以看到按钮，是清晰的</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>如何去掉标题栏，上面的博客也有说，于是我就不多说啦。</p>
+
+<h2 id="win2d">win2D</h2>
+
+<p>下面介绍使用 win2d 做毛玻璃</p>
+
+<p>使用 win2D 方法，需要使用 Nuget 安装，如果速度太慢，推荐使用博客园的镜像</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201753121840.jpg" alt="" /></p>
+
+<p>这个方法可以获得控件的毛玻璃，但是不可以获得窗口毛玻璃</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F%25E6%25AF%259B%25E7%258E%25BB%25E7%2592%2583.gif" alt="" /></p>
+
+<p>接下来告诉大家如何做上图的效果。</p>
+
+<p>但是可以看到，上面的图做了其他的，如拖动时显示后面的图片。为了显示最短的代码，让大家知道毛玻璃是如何做的，下面先来做效果。</p>
+
+<p>第一步，获得显示的图片</p>
+
+<p>参见：<a href="http://lindexi.oschina.io/lindexi//post/win10-uwp-%E6%88%AA%E5%9B%BE-%E8%8E%B7%E5%8F%96%E5%B1%8F%E5%B9%95%E6%98%BE%E7%A4%BA%E7%95%8C%E9%9D%A2%E4%BF%9D%E5%AD%98%E5%9B%BE%E7%89%87/">win10 uwp 截图 获取屏幕显示界面保存图片</a></p>
+
+<p>于是在界面显示一个图片，界面的左边就是图片，右边就是毛玻璃。之所以需要获得图片的截图是因为毛玻璃需要输入源，于是界面代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"*"</span><span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"*"</span><span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10 10 10 10"</span><span class="p">&gt;</span>
+             <span class="err">必须把图片的路径修改为自己工程的路径，需要在工程存在图片</span>
+            <span class="p">&lt;</span><span class="n">Image</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Image"</span> <span class="n">Source</span><span class="p">=</span><span class="s">"Assets/2017年5月31日 210702.jpg"</span> <span class="n">Stretch</span><span class="p">=</span><span class="s">"UniformToFill"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10 10 10 10"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">xaml</span><span class="p">:</span><span class="n">CanvasControl</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Canvas"</span> <span class="n">CreateResources</span><span class="p">=</span><span class="s">"Canvas_CreateResources"</span> <span class="n">Draw</span><span class="p">=</span><span class="s">"Canvas_Draw"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+<p>毛玻璃效果写在 CanvasControl ，
+需要对显示截图，把图片做效果。然后把得到的效果显示</p>
+
+<p>但是在什么时候截图？也就是什么时候才是截图最好的时候？</p>
+
+<p>我认为可以在 CreateResources 事件进行截图，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="k">void</span> <span class="nf">Canvas_CreateResources</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasCreateResourcesEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">args</span><span class="p">.</span><span class="nf">TrackAsyncAction</span><span class="p">(</span><span class="nf">CreateResourcesAsync</span><span class="p">(</span><span class="n">sender</span><span class="p">).</span><span class="nf">AsAsyncAction</span><span class="p">());</span>
+        <span class="p">}</span>
+
+        <span class="k">async</span> <span class="n">Task</span> <span class="nf">CreateResourcesAsync</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// give it a little bit delay to ensure the image is load, ideally you want to Image.ImageOpened event instead</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">200</span><span class="p">);</span>  <span class="err">这是等待图片加载，因他发生在控件初始之后，而图片加载发生在图片控件初始的时候，但是图片加载需要时间，所以这里等待一下。我觉得这是比较差的方法</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="c1">// get the stream from the background image</span>
+                <span class="kt">var</span> <span class="n">target</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RenderTargetBitmap</span><span class="p">();</span> <span class="err">这就是截图</span>
+                <span class="k">await</span> <span class="n">target</span><span class="p">.</span><span class="nf">RenderAsync</span><span class="p">(</span><span class="n">Image</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">pixelBuffer</span> <span class="p">=</span> <span class="k">await</span> <span class="n">target</span><span class="p">.</span><span class="nf">GetPixelsAsync</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">pixels</span> <span class="p">=</span> <span class="n">pixelBuffer</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">();</span>
+
+                <span class="kt">var</span> <span class="n">encoder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">BitmapEncoder</span><span class="p">.</span><span class="nf">CreateAsync</span><span class="p">(</span><span class="n">BitmapEncoder</span><span class="p">.</span><span class="n">BmpEncoderId</span><span class="p">,</span> <span class="n">stream</span><span class="p">);</span>
+                <span class="n">encoder</span><span class="p">.</span><span class="nf">SetPixelData</span><span class="p">(</span><span class="n">BitmapPixelFormat</span><span class="p">.</span><span class="n">Bgra8</span><span class="p">,</span> <span class="n">BitmapAlphaMode</span><span class="p">.</span><span class="n">Straight</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">target</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">target</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">,</span> <span class="m">96</span> <span class="err">如果</span> <span class="n">dpi</span> <span class="err">不是</span><span class="m">96</span> <span class="err">那么这里需要写实际的，为了简单，我就不写如何获得</span><span class="n">dpi</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="n">pixels</span><span class="p">);</span>
+
+                <span class="k">await</span> <span class="n">encoder</span><span class="p">.</span><span class="nf">FlushAsync</span><span class="p">();</span>
+                <span class="n">stream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+
+                <span class="c1">// load the stream into our bitmap</span>
+                <span class="n">_bitmap</span> <span class="p">=</span> <span class="k">await</span> <span class="n">CanvasBitmap</span><span class="p">.</span><span class="nf">LoadAsync</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">stream</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>第二步就是把图片进行效果，代码很少</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="k">void</span> <span class="nf">Canvas_Draw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">session</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">blur</span> <span class="p">=</span> <span class="k">new</span> <span class="n">GaussianBlurEffect</span>
+                <span class="p">{</span>
+                    <span class="n">BlurAmount</span> <span class="p">=</span> <span class="m">50.0f</span><span class="p">,</span> <span class="c1">// increase this to make it more blurry or vise versa.</span>
+                    <span class="c1">//Optimization = EffectOptimization.Balanced, // default value</span>
+                    <span class="c1">//BorderMode = EffectBorderMode.Soft // default value</span>
+                    <span class="n">Source</span> <span class="p">=</span> <span class="n">_bitmap</span>
+                <span class="p">};</span>
+
+                <span class="n">session</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">blur</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">,</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualHeight</span><span class="p">),</span>
+                    <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">_bitmap</span><span class="p">.</span><span class="n">SizeInPixels</span><span class="p">.</span><span class="n">Width</span><span class="p">,</span> <span class="n">_bitmap</span><span class="p">.</span><span class="n">SizeInPixels</span><span class="p">.</span><span class="n">Height</span><span class="p">),</span> <span class="m">0.9f</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<p>现在看起来就是</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017531212439.jpg" alt="" /></p>
+
+<p>如果需要修改模糊，请把 BlurAmount 修改为你想要的</p>
+
+<p>上面的代码就是主要的，接下来就是做上图的效果</p>
+
+<p>首先xaml代码：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"ImagePanel2"</span> <span class="n">Width</span><span class="p">=</span><span class="s">"356"</span> <span class="n">Height</span><span class="p">=</span><span class="s">"200"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"0,0,0,40"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Bottom"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">Image</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Image2"</span> <span class="n">Source</span><span class="p">=</span><span class="s">"Assets/2017年5月31日 210702.jpg"</span> <span class="n">Stretch</span><span class="p">=</span><span class="s">"UniformToFill"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Overlay"</span> <span class="n">ManipulationMode</span><span class="p">=</span><span class="s">"TranslateX"</span> <span class="n">ManipulationStarted</span><span class="p">=</span><span class="s">"Overlay_ManipulationStarted"</span> <span class="n">ManipulationDelta</span><span class="p">=</span><span class="s">"Overlay_ManipulationDelta"</span> <span class="n">ManipulationCompleted</span><span class="p">=</span><span class="s">"Overlay_ManipulationCompleted"</span> <span class="n">RenderTransformOrigin</span><span class="p">=</span><span class="s">"0.5,0.5"</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">Clip</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">RectangleGeometry</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Clip"</span> <span class="n">Rect</span><span class="p">=</span><span class="s">"0, 0, 356, 200"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">Clip</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">Rectangle</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"WhiteMask"</span> <span class="n">Fill</span><span class="p">=</span><span class="s">"White"</span> <span class="p">/&gt;</span>
+                <span class="p">&lt;</span><span class="n">xaml</span><span class="p">:</span><span class="n">CanvasControl</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Canvas"</span> <span class="n">CreateResources</span><span class="p">=</span><span class="s">"Canvas_CreateResources"</span> <span class="n">Draw</span><span class="p">=</span><span class="s">"Canvas_Draw"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到，这里引用 CanvasControl ，还有很多代码需要写在后面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="k">void</span> <span class="nf">Canvas_CreateResources</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasCreateResourcesEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">args</span><span class="p">.</span><span class="nf">TrackAsyncAction</span><span class="p">(</span><span class="nf">CreateResourcesAsync</span><span class="p">(</span><span class="n">sender</span><span class="p">).</span><span class="nf">AsAsyncAction</span><span class="p">());</span>
+        <span class="p">}</span>
+
+        <span class="k">async</span> <span class="n">Task</span> <span class="nf">CreateResourcesAsync</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// give it a little bit delay to ensure the image is load, ideally you want to Image.ImageOpened event instead</span>
+            <span class="k">await</span> <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="m">200</span><span class="p">);</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">InMemoryRandomAccessStream</span><span class="p">())</span>
+            <span class="p">{</span>
+                <span class="c1">// get the stream from the background image</span>
+                <span class="kt">var</span> <span class="n">target</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RenderTargetBitmap</span><span class="p">();</span>
+                <span class="k">await</span> <span class="n">target</span><span class="p">.</span><span class="nf">RenderAsync</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">Image2</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">pixelBuffer</span> <span class="p">=</span> <span class="k">await</span> <span class="n">target</span><span class="p">.</span><span class="nf">GetPixelsAsync</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">pixels</span> <span class="p">=</span> <span class="n">pixelBuffer</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">();</span>
+
+                <span class="kt">var</span> <span class="n">encoder</span> <span class="p">=</span> <span class="k">await</span> <span class="n">BitmapEncoder</span><span class="p">.</span><span class="nf">CreateAsync</span><span class="p">(</span><span class="n">BitmapEncoder</span><span class="p">.</span><span class="n">BmpEncoderId</span><span class="p">,</span> <span class="n">stream</span><span class="p">);</span>
+                <span class="n">encoder</span><span class="p">.</span><span class="nf">SetPixelData</span><span class="p">(</span><span class="n">BitmapPixelFormat</span><span class="p">.</span><span class="n">Bgra8</span><span class="p">,</span> <span class="n">BitmapAlphaMode</span><span class="p">.</span><span class="n">Straight</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">target</span><span class="p">.</span><span class="n">PixelWidth</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">target</span><span class="p">.</span><span class="n">PixelHeight</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="m">96</span><span class="p">,</span> <span class="n">pixels</span><span class="p">);</span>
+
+                <span class="k">await</span> <span class="n">encoder</span><span class="p">.</span><span class="nf">FlushAsync</span><span class="p">();</span>
+                <span class="n">stream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+
+                <span class="c1">// load the stream into our bitmap</span>
+                <span class="n">_bitmap</span> <span class="p">=</span> <span class="k">await</span> <span class="n">CanvasBitmap</span><span class="p">.</span><span class="nf">LoadAsync</span><span class="p">(</span><span class="n">sender</span><span class="p">,</span> <span class="n">stream</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">void</span> <span class="nf">Canvas_Draw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">session</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">blur</span> <span class="p">=</span> <span class="k">new</span> <span class="n">GaussianBlurEffect</span>
+                <span class="p">{</span>
+                    <span class="n">BlurAmount</span> <span class="p">=</span> <span class="m">50.0f</span><span class="p">,</span> <span class="c1">// increase this to make it more blurry or vise versa.</span>
+                    <span class="c1">//Optimization = EffectOptimization.Balanced, // default value</span>
+                    <span class="c1">//BorderMode = EffectBorderMode.Soft // default value</span>
+                    <span class="n">Source</span> <span class="p">=</span> <span class="n">_bitmap</span>
+                <span class="p">};</span>
+
+                <span class="n">session</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">blur</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">,</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualHeight</span><span class="p">),</span>
+                    <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">_bitmap</span><span class="p">.</span><span class="n">SizeInPixels</span><span class="p">.</span><span class="n">Width</span><span class="p">,</span> <span class="n">_bitmap</span><span class="p">.</span><span class="n">SizeInPixels</span><span class="p">.</span><span class="n">Height</span><span class="p">),</span> <span class="m">0.9f</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">void</span> <span class="nf">Overlay_ManipulationStarted</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ManipulationStartedRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 重新设置 _x</span>
+            <span class="n">_x</span> <span class="p">=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="k">this</span><span class="p">.</span><span class="n">ImagePanel2</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">void</span> <span class="nf">Overlay_ManipulationDelta</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ManipulationDeltaRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//获得当前的x，用于下面计算</span>
+            <span class="n">_x</span> <span class="p">+=</span> <span class="p">(</span><span class="kt">float</span><span class="p">)</span> <span class="n">e</span><span class="p">.</span><span class="n">Delta</span><span class="p">.</span><span class="n">Translation</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+
+            <span class="c1">//如果当前的x超过了，或者已经最小</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_x</span> <span class="p">&gt;</span> <span class="n">ImagePanel2</span><span class="p">.</span><span class="n">ActualWidth</span> <span class="p">||</span> <span class="n">_x</span> <span class="p">&lt;</span> <span class="m">0</span><span class="p">)</span>
+                <span class="k">return</span><span class="p">;</span>
+
+            <span class="c1">//我们剪辑覆盖，用于显示下面的图片</span>
+            <span class="n">Clip</span><span class="p">.</span><span class="n">Rect</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">_x</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">ImagePanel2</span><span class="p">.</span><span class="n">ActualHeight</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">void</span> <span class="nf">Overlay_ManipulationCompleted</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">ManipulationCompletedRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 重置剪辑显示完整的覆盖</span>
+            <span class="n">Clip</span><span class="p">.</span><span class="n">Rect</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">ImagePanel2</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="n">ImagePanel2</span><span class="p">.</span><span class="n">ActualHeight</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码就是获得图片，把图片使用 GaussianBlurEffect 得到毛玻璃</p>
+
+<p>实际代码做的就是 如下面显示，做出毛玻璃效果，其他代码都是为了做刚才的图</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">void</span> <span class="nf">Canvas_Draw</span><span class="p">(</span><span class="n">CanvasControl</span> <span class="n">sender</span><span class="p">,</span> <span class="n">CanvasDrawEventArgs</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">session</span> <span class="p">=</span> <span class="n">args</span><span class="p">.</span><span class="n">DrawingSession</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">blur</span> <span class="p">=</span> <span class="k">new</span> <span class="n">GaussianBlurEffect</span>
+                <span class="p">{</span>
+                    <span class="n">BlurAmount</span> <span class="p">=</span> <span class="m">50.0f</span><span class="p">,</span> <span class="c1">// increase this to make it more blurry or vise versa.</span>
+                    <span class="c1">//Optimization = EffectOptimization.Balanced, // default value</span>
+                    <span class="c1">//BorderMode = EffectBorderMode.Soft // default value</span>
+                    <span class="n">Source</span> <span class="p">=</span> <span class="n">_bitmap</span>
+                <span class="p">};</span>
+
+                <span class="n">session</span><span class="p">.</span><span class="nf">DrawImage</span><span class="p">(</span><span class="n">blur</span><span class="p">,</span> <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualWidth</span><span class="p">,</span> <span class="n">sender</span><span class="p">.</span><span class="n">ActualHeight</span><span class="p">),</span>
+                    <span class="k">new</span> <span class="nf">Rect</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">_bitmap</span><span class="p">.</span><span class="n">SizeInPixels</span><span class="p">.</span><span class="n">Width</span><span class="p">,</span> <span class="n">_bitmap</span><span class="p">.</span><span class="n">SizeInPixels</span><span class="p">.</span><span class="n">Height</span><span class="p">),</span> <span class="m">0.9f</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<p>关于拖动使用裁剪显示后面的图，我就不多说了，实际代码看起来很多，但是不是很难，我就不说拉。</p>
+
+<p>请看下面的效果，这就是不停修改 BlurAmount 得到。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F%25E7%258E%25BB%25E7%2592%25832017%25E5%25B9%25B46%25E6%259C%25881%25E6%2597%25A5%2520205721.gif" alt="" /></p>
+
+<p>代码很简单，所以我就不说。</p>
+
+<h2 id="最简单方法">最简单方法</h2>
+
+<p>当然，还有最简单的代码，只需要一句话，请看文档 
+<a href="https://docs.microsoft.com/en-us/windows/uwp/style/acrylic">Acrylic material</a>
+因为不知道微软是否还更改，所以我就不写了。</p>
+
+<p>为了说明代码的简单，我需要给个例子，上面那么长的代码，现在只需要一行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource SystemControlAcrylicElementBrush}"</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>关于FDS请看<a href="https://lindexi.oschina.io/lindexi/post/win10-uwp-Fluent-Design-System-%E5%AE%9E%E8%B7%B5.html">win10 uwp Fluent Design System 实践</a></p>
+
+<p>参见：https://stackoverflow.com/questions/31987817/how-to-make-frosted-glass-effect-in-windows-10-universal-app</p>
+
+<p>http://microsoft.github.io/Win2D/html/N_Microsoft_Graphics_Canvas_Effects.htm</p>
+
+<p><a href="http://www.jianshu.com/p/3b49fd3d7edb">（UWP）应用窗口实现毛玻璃效果 - 简书</a></p>
+
+:ET

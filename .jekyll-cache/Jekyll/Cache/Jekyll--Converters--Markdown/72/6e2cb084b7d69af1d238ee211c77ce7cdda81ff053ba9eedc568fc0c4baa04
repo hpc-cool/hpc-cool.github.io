@@ -1,0 +1,114 @@
+I"a+<p>是不是代码会占用空间，如果一个程序初始化需要 100M 的代码，那么在他初始化之后，这些代码就没有作用了，他会不会占空间？本文经过测试发现，代码也是会占空间。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:52 -->
+
+<p>我写了2k个垃圾类代码，然后把他放在一个项目 BhgpsWnb，使用另一个项目去引用他。是不是觉得软件在运行的时候就需要很多的内存来放代码？</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171212144236.jpg" alt="" /></p>
+
+<p>引用垃圾程序的项目是 ReKlnma ，先只是在引用添加项目引用，然后在不使用 BhgpsWnb 这个项目的代码，我运行下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>占用 7 M 内存，而如果运行了存在 2k 垃圾代码 BhgpsWnb 程序，就需要 8M 。使用方法是创建一个类，这个类就是垃圾代码里面的一个，这样就需要把dll放在内存。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">ablkekbuuimc</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Ablkekbuuimc</span><span class="p">();</span>
+            <span class="n">ablkekbuuimc</span><span class="p">.</span><span class="nf">Aaxfyerenjmfe</span><span class="p">(</span><span class="m">2</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果觉得因为创建一个类需要的内存太大，那么我使用下面的代码，只是拿到一个类型，但是需要的内存是 8M 因为程序会把另一个程序加载</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Type</span> <span class="n">t</span> <span class="p">=</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Ablkekbuuimc</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>下面来换个方式写，取消对垃圾程序的直接引用。使用 Load 方法去加载，可以看到垃圾程序 BhgpsWnb 有 8M ，一般的库可没有那么大。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017121214470.jpg" alt="" /></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="s">"BhgpsWnb.exe"</span><span class="p">);</span>
+            <span class="n">Assembly</span><span class="p">.</span><span class="nf">LoadFile</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">FullName</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>结果使用内存需要 8M 多，所以代码也是需要内存的，一旦加载了就不会从程序集卸载。</p>
+
+<p>如果是加载程序集，那么加载程序集就需要很多的内存，即使卸载程序也没有用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">app</span> <span class="p">=</span> <span class="nf">Load</span><span class="p">();</span>
+
+            <span class="n">GC</span><span class="p">.</span><span class="nf">Collect</span><span class="p">();</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">WaitForFullGCComplete</span><span class="p">();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+
+            <span class="n">AppDomain</span><span class="p">.</span><span class="nf">Unload</span><span class="p">(</span><span class="n">app</span><span class="p">);</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">Collect</span><span class="p">();</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">WaitForFullGCComplete</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">AppDomain</span> <span class="nf">Load</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="s">"BhgpsWnb.exe"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">otherAssemblyBytes</span> <span class="p">=</span> <span class="n">File</span><span class="p">.</span><span class="nf">ReadAllBytes</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">FullName</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">app</span> <span class="p">=</span> <span class="n">AppDomain</span><span class="p">.</span><span class="nf">CreateDomain</span><span class="p">(</span><span class="s">"BhgpsWnb"</span><span class="p">);</span>
+
+            <span class="n">app</span><span class="p">.</span><span class="nf">Load</span><span class="p">(</span><span class="n">otherAssemblyBytes</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="n">app</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面的代码使用了 Load 就需要 20M的内存，在后面使用 Unload 之后实际上内存也没有减少，所以建议不要使用程序集加载方式，这个方式使用很多内存。</p>
+
+<p>可以通过指定名称加载，可以看到下面的代码需要使用内存比较小，需要 9M ，但是 Unload 之后没有减少内存</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">app</span> <span class="p">=</span> <span class="nf">Load</span><span class="p">();</span>
+
+            <span class="n">GC</span><span class="p">.</span><span class="nf">Collect</span><span class="p">();</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">WaitForFullGCComplete</span><span class="p">();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+
+            <span class="n">AppDomain</span><span class="p">.</span><span class="nf">Unload</span><span class="p">(</span><span class="n">app</span><span class="p">);</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">Collect</span><span class="p">();</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">WaitForFullGCComplete</span><span class="p">();</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">ReadKey</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="n">AppDomain</span> <span class="nf">Load</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="s">"BhgpsWnb.exe"</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">app</span> <span class="p">=</span> <span class="n">AppDomain</span><span class="p">.</span><span class="nf">CreateDomain</span><span class="p">(</span><span class="s">"BhgpsWnb"</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="n">file</span><span class="p">.</span><span class="n">DirectoryName</span><span class="p">,</span> <span class="n">file</span><span class="p">.</span><span class="n">DirectoryName</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+
+            <span class="n">app</span><span class="p">.</span><span class="nf">Load</span><span class="p">(</span><span class="s">"BhgpsWnb, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="n">app</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>所以在加载 dll ，千万不要使用把文件作为 byte 读出来，然后加载，这个方法需要很多的内存。</p>
+
+:ET

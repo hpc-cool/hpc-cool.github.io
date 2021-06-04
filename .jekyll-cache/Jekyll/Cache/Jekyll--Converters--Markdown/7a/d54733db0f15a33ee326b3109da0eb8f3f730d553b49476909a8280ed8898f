@@ -1,0 +1,140 @@
+I"�3<p>堆栈网小伙伴问如何点击滑动条的时候，可以通过动画将滑块从原来的坐标移动到用户点击的坐标，同时用户拖动的时候不做动画
+在后台代码添加两个事件，一个是按下，一个抬起，通过按下和抬起判断坐标可以知道用户是点击还是拖动。然后用上一个值和当前的值做动画就可以。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/3/27 10:51:32 -->
+
+<!-- csdn -->
+
+<p>先创建一个项目，添加简单的界面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">Slider</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Slider"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>在写的时候发现有三个坑</p>
+
+<ol>
+  <li>路由事件的 PointerPressed 会在 Slider 吃了，需要在后台代码添加事件</li>
+  <li>在 PointerPressed 方法调用之前已经设置了 Slider 的值</li>
+  <li>动画修改了依赖属性需要修改 EnableDependentAnimation 属性</li>
+</ol>
+
+<p>因为使用的代码很多，我将代码放在了 github 可以下载</p>
+
+<h2 id="拿到事件">拿到事件</h2>
+
+<p>在 MainPage 的构造函数添加下面代码，在后台写代码可以在控件吃了路由事件还可以拿到事件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+            <span class="n">Slider</span><span class="p">.</span><span class="nf">AddHandler</span><span class="p">(</span><span class="n">PointerPressedEvent</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PointerEventHandler</span><span class="p">(</span><span class="n">Slider_OnPointerPressed</span><span class="p">),</span> <span class="k">true</span><span class="p">);</span>
+            <span class="n">Slider</span><span class="p">.</span><span class="nf">AddHandler</span><span class="p">(</span><span class="n">PointerReleasedEvent</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PointerEventHandler</span><span class="p">(</span><span class="n">Slider_OnPointerReleased</span><span class="p">),</span> <span class="k">true</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意在后台代码的方法最后一个参数设置为 true 就表示控件吃了路由事件，也会调用方法</p>
+
+<h2 id="判断是否点击">判断是否点击</h2>
+
+<p>如果用户是点击那么才使用动画，在 UWP 没有 PointerClick 事件所以需要自己写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Slider_OnPointerPressed</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">slider</span> <span class="p">=</span> <span class="p">(</span><span class="n">Slider</span><span class="p">)</span> <span class="n">sender</span><span class="p">;</span>
+
+            <span class="n">ClickPoint</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="n">slider</span><span class="p">).</span><span class="n">Position</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">Point</span> <span class="n">ClickPoint</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Slider_OnPointerReleased</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">slider</span> <span class="p">=</span> <span class="p">(</span><span class="n">Slider</span><span class="p">)</span> <span class="n">sender</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">point</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="n">slider</span><span class="p">).</span><span class="n">Position</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">x</span> <span class="p">=</span> <span class="n">point</span><span class="p">.</span><span class="n">X</span> <span class="p">-</span> <span class="n">ClickPoint</span><span class="p">.</span><span class="n">X</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">y</span> <span class="p">=</span> <span class="n">point</span><span class="p">.</span><span class="n">Y</span> <span class="p">-</span> <span class="n">ClickPoint</span><span class="p">.</span><span class="n">Y</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="n">x</span> <span class="p">*</span> <span class="n">x</span> <span class="p">+</span> <span class="n">y</span> <span class="p">*</span> <span class="n">y</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">length</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 开始动画</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 <code class="language-plaintext highlighter-rouge">Slider_OnPointerPressed</code> 拿到用户点击坐标，然后在 <code class="language-plaintext highlighter-rouge">Slider_OnPointerReleased</code> 判断两个点就可以知道用户是不是拖动</p>
+
+<p>在 UWP 的 Windows.Foundation.Point 没有默认的两个点相减拿到向量的方法，所以我就自己写了一个</p>
+
+<h2 id="记录之前的值">记录之前的值</h2>
+
+<p>在 <code class="language-plaintext highlighter-rouge">Slider_OnPointerPressed</code> 这些方法拿到的 Slider 的值已经更新了，因为事件是先在 Slider 然后是在 MainPage 里面的方法，在 Slider 里面修改了值，所以需要添加依赖属性用来记录之前的值</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">ValueProperty</span> <span class="p">=</span> <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span>
+            <span class="s">"Value"</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">MainPage</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">default</span><span class="p">(</span><span class="kt">double</span><span class="p">),</span> <span class="p">(</span><span class="n">s</span>
+                <span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+            <span class="p">{</span>
+                <span class="p">((</span><span class="n">MainPage</span><span class="p">)</span> <span class="n">s</span><span class="p">).</span><span class="n">_lastValue</span> <span class="p">=</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">e</span><span class="p">.</span><span class="n">OldValue</span><span class="p">;</span>
+            <span class="p">}));</span>
+
+        <span class="k">public</span> <span class="kt">double</span> <span class="n">Value</span>
+        <span class="p">{</span>
+            <span class="k">get</span> <span class="p">=&gt;</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="nf">GetValue</span><span class="p">(</span><span class="n">ValueProperty</span><span class="p">);</span>
+            <span class="k">set</span> <span class="p">=&gt;</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">ValueProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">double</span> <span class="n">_lastValue</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="动画">动画</h2>
+
+<p>现在知道了用户是不是点击，可以开始做动画</p>
+
+<p>在后台写代码比较不推荐，所以下面我就会在后台写动画。 这个逻辑好像说反了</p>
+
+<p>做动画需要三步</p>
+
+<ol>
+  <li>定义 Storyboard 和 Animation 类</li>
+  <li>通过附加属性绑定 Animation 和元素</li>
+  <li>播放动画</li>
+</ol>
+
+<p>于是开始第一步</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">storyboard</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Storyboard</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">animation</span> <span class="p">=</span> <span class="k">new</span> <span class="n">DoubleAnimation</span>
+            <span class="p">{</span>
+                <span class="n">From</span> <span class="p">=</span> <span class="n">_lastValue</span><span class="p">,</span>
+                <span class="n">To</span> <span class="p">=</span> <span class="n">Value</span><span class="p">,</span>
+                <span class="n">Duration</span> <span class="p">=</span> <span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">2</span><span class="p">),</span>
+                <span class="n">EasingFunction</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CubicEase</span><span class="p">(),</span>
+                <span class="n">EnableDependentAnimation</span> <span class="p">=</span> <span class="k">true</span>
+            <span class="p">};</span>
+</code></pre></div></div>
+
+<p>注意，需要添加 <code class="language-plaintext highlighter-rouge">EnableDependentAnimation = true</code> 动画才能播放，这个和 WPF 不相同。为什么需要这个属性，在<a href="https://docs.microsoft.com/en-us/uwp/api/windows.ui.xaml.media.animation.doubleanimation.enabledependentanimation">DoubleAnimation.EnableDependentAnimation</a>文档里面说到，如果动画修改的是依赖属性，动画需要不断在主线程修改，会降低性能，所以需要用户设置这个属性</p>
+
+<p>第二步开始绑定动画</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Storyboard</span><span class="p">.</span><span class="nf">SetTarget</span><span class="p">(</span><span class="n">animation</span><span class="p">,</span> <span class="n">Slider</span><span class="p">);</span>
+            <span class="n">Storyboard</span><span class="p">.</span><span class="nf">SetTargetProperty</span><span class="p">(</span><span class="n">animation</span><span class="p">,</span> <span class="s">"Value"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>第三步开始播放动画</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">storyboard</span><span class="p">.</span><span class="n">BeginTime</span> <span class="p">=</span> <span class="n">TimeSpan</span><span class="p">.</span><span class="n">Zero</span><span class="p">;</span>
+            <span class="n">storyboard</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">animation</span><span class="p">);</span>
+
+            <span class="n">storyboard</span><span class="p">.</span><span class="nf">Begin</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>尝试运行代码，点击一下就可以看到动画</p>
+
+<p>所有代码在<a href="https://github.com/lindexi/lindexi_gd/tree/2e89ef71bba336d06ec238e9c0f4c8d893c83bdf/LajeweekallqeFiwigewee">github</a></p>
+
+:ET

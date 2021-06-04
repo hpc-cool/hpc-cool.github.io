@@ -1,0 +1,213 @@
+I"�D<p>本文告诉大家如何使用 Windows Community Toolkit 的新控件，在 WPF 使用 Edge 浏览器</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/13 15:33:05 -->
+
+<p>首先需要通过 VisualStudio 创建 WPF 项目。因为  Microsoft.Toolkit.Win32.UI.Controls 库只支持 4.6.2 以上，所以需要选择框架大于 4.6.2</p>
+
+<p>打开 Nuget 安装 Microsoft.Toolkit.Win32.UI.Controls ，需要同意许可</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201861174809142.jpg" alt="" /></p>
+
+<!-- ![](image/WPF 使用 Edge 浏览器/WPF 使用 Edge 浏览器0.png) -->
+<p><img src="http://image.acmx.xyz/lindexi%2F2018611747372558.jpg" alt="" /></p>
+
+<p>打开主页面，在 xaml 添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">xmlns</span><span class="p">:</span><span class="n">wpf</span><span class="p">=</span><span class="s">"clr-namespace:Microsoft.Toolkit.Win32.UI.Controls.WPF;assembly=Microsoft.Toolkit.Win32.UI.Controls"</span> 
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"WebView"</span><span class="p">&gt;&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>在代码跳转到我的博客</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">WebView</span><span class="p">.</span><span class="nf">Navigate</span><span class="p">(</span><span class="s">"https://lindexi.gitee.io"</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>运行一下软件</p>
+
+<!-- ![](image/WPF 使用 Edge 浏览器/WPF 使用 Edge 浏览器1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201861175161261.jpg" alt="" /></p>
+
+<p>如果不想在 xaml 写任何的代码，也可以通过下面代码添加</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">webView</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WebView</span><span class="p">();</span>
+            <span class="n">webView</span><span class="p">.</span><span class="nf">Navigate</span><span class="p">(</span><span class="s">"https://lindexi.gitee.io"</span><span class="p">);</span>
+            <span class="n">Content</span> <span class="p">=</span> <span class="n">webView</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="优点">优点</h2>
+
+<ul>
+  <li>
+    <p>触摸非常流畅</p>
+  </li>
+  <li>
+    <p>加载页面非常快</p>
+  </li>
+  <li>
+    <p>缩放页面几乎不使用CPU</p>
+  </li>
+  <li>
+    <p>对于很多图片的时候使用内存很小</p>
+  </li>
+  <li>
+    <p>可以使用 RenderTransform 修改显示，但不是所有的变换都可以使用</p>
+  </li>
+  <li>
+    <p>可以进行布局，如下图，使用Grid分开按钮</p>
+  </li>
+</ul>
+
+<p><!-- ![](image/WPF 使用 Edge 浏览器/WPF 使用 Edge 浏览器4.png) --></p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201862105019597" alt="" /></p>
+
+<h2 id="存在的问题">存在的问题</h2>
+
+<ul>
+  <li>
+    <p>吃掉了 Touch 事件、MouseDown事件，也就是吃掉了所有用户输入</p>
+  </li>
+  <li>
+    <p>第一次加载无法覆盖控件大小，在修改窗口大小之后才可以</p>
+  </li>
+  <li>
+    <p>设置 IsEnable 无作用</p>
+  </li>
+  <li>
+    <p>设置 IsHitTestVisible 无作用，依然可以响应输入</p>
+  </li>
+  <li>
+    <p>默认没有设置 IsManipulationEnable ，但是可以响应手势</p>
+  </li>
+  <li>
+    <p>能够使用 snoop 在视觉树找到 WebView 但是没有看到 WebView 里面的元素</p>
+  </li>
+</ul>
+
+<h3 id="无法在-webview-上面放控件">无法在 WebView 上面放控件</h3>
+
+<p>我尝试了下面的代码，虽然设计的界面可以看到按钮，但是运行界面没有按钮</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Grid"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"WebView"</span><span class="p">&gt;</span>
+
+            <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">RotateTransform</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"BupeLesedaicee"</span> <span class="n">Angle</span><span class="p">=</span><span class="s">"10"</span><span class="p">&gt;&lt;/</span><span class="n">RotateTransform</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"林德熙都比"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"确定"</span> 
+                <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 使用 Edge 浏览器/WPF 使用 Edge 浏览器2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201862104737741" alt="" /></p>
+
+<p>但是运行的时候就看不到按钮了，所以存在层级问题，这个问题是在08年就有大神说到的问题。</p>
+
+<p>大概就是如果同时有多个渲染，WPF 、 WinForms 如果两个绘制的矩形有重叠，那么重叠部分就不能正常使用。</p>
+
+<!-- ![](image/WPF 使用 Edge 浏览器/WPF 使用 Edge 浏览器3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201862105019597" alt="" /></p>
+
+<p>无论在什么层级放 WebView ，他的层级都是窗口最高</p>
+
+<p>这个问题参见：<a href="https://blogs.msdn.microsoft.com/dwayneneed/2013/02/26/mitigating-airspace-issues-in-wpf-applications/">Mitigating Airspace Issues In WPF Applications – Presentation Source</a></p>
+
+<p>一个解决方法是：<a href="https://github.com/chris84948/AirspaceFixer">chris84948/AirspaceFixer: AirspacePanel fixes all Airspace issues with WPF-hosted Winforms.</a></p>
+
+<h3 id="旋转">旋转</h3>
+
+<p>我尝试使用下面的代码让 WebView 旋转，但是设置值只能让他偏移</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Grid"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"337*"</span><span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"456*"</span><span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"WebView"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span> <span class="p">&gt;</span>
+
+            <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">RotateTransform</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"BupeLesedaicee"</span> <span class="n">Angle</span><span class="p">=</span><span class="s">"10"</span><span class="p">&gt;&lt;/</span><span class="n">RotateTransform</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"lindexi"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Button</span> <span class="n">Content</span><span class="p">=</span><span class="s">"确定"</span> 
+                <span class="n">Click</span><span class="p">=</span><span class="s">"Button_OnClick"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span><span class="p">&gt;&lt;/</span><span class="n">Button</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>按钮点击的时候就添加旋转</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">BupeLesedaicee</span><span class="p">.</span><span class="n">Angle</span> <span class="p">+=</span> <span class="m">5</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 使用 Edge 浏览器/浏览器2.gif) -->
+
+<p><img src="https://i.loli.net/2018/06/02/5b12087b380ce.gif" alt="" /></p>
+
+<h3 id="添加多个浏览器">添加多个浏览器</h3>
+
+<p>如果在相同矩形区域添加多个浏览器，在逻辑树第一个浏览器显示在最前</p>
+
+<p>我在代码打开了我的博客和<a href="https://huangtengxiao.gitee.io/">黄腾霄</a>博客，结果发现我的博客显示在前面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"WebView"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span> <span class="p">&gt;</span>
+
+            <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">RotateTransform</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"BupeLesedaicee"</span> <span class="n">Angle</span><span class="p">=</span><span class="s">"10"</span><span class="p">&gt;&lt;/</span><span class="n">RotateTransform</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">.</span><span class="n">RenderTransform</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span> <span class="n">Source</span><span class="p">=</span><span class="s">"https://huangtengxiao.gitee.io/"</span><span class="p">&gt;&lt;/</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<!-- ![](image/WPF 使用 Edge 浏览器/WPF 使用 Edge 浏览器6.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20186211323328" alt="" /></p>
+
+<p>我尝试使用 <code class="language-plaintext highlighter-rouge">Panel.ZIndex</code> 但是无法修改顺序</p>
+
+<p>最简单的方法是对比一下原来的浏览器和新的浏览器</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"337*"</span> <span class="p">/&gt;</span>
+            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"456*"</span> <span class="p">/&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+
+        <span class="p">&lt;</span><span class="n">wpf</span><span class="p">:</span><span class="n">WebView</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"WebView"</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"0"</span> <span class="n">Source</span><span class="p">=</span><span class="s">"https://lindexi.gitee.io"</span> <span class="p">/&gt;</span>
+
+        <span class="p">&lt;</span><span class="n">WebBrowser</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Source</span><span class="p">=</span><span class="s">"https://huangtengxiao.gitee.io/"</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到新的浏览器还是比以前的好很多</p>
+
+<p>参见：<a href="https://blog.csdn.net/lindexi_gd/article/details/80533053">Windows Community Toolkit 3.0 新功能 在WinForms 和 WPF 使用 UWP 控件 - CSDN博客</a></p>
+
+<p><a href="https://blogs.windows.com/msedgedev/2018/05/09/modern-webview-winforms-wpf-apps/#gUx8ACTB19D37Sdj.97">Bringing a modern WebView to your .NET WinForms and WPF Apps - Microsoft Edge Dev BlogMicrosoft Edge Dev Blog</a></p>
+
+:ET

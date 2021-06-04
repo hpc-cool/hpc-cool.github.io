@@ -1,0 +1,140 @@
+I"�5<p>本文简单告诉大家如何使用 Span 新的功能
+需要知道 Span 是 7.2 才有的功能，如果在正式项目使用，建议安装 Nuget 的方式</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/12/2 11:32:46 -->
+
+<p>在对内存指定的一段的处理，原来的 C# 是比较弱的，因为没有了 C++ 的指针，特别是对于字符串的分割，需要创建多几个字符串。</p>
+
+<p>垃圾微软为了提高 C# 的性能，于是提供了新的类型 Span，这个类可以拿出任意数组的一段，作为一个新的 Span 列表。这样的底层就是指针，而且指针是有判断是否超过范围比 C++ 安全。</p>
+
+<p>首先安装 Nuget System.Memory 库，要求 dotnet framework 4.5 以上，在 UWP 16299 以上，在 dotnet core 2.0 以上</p>
+
+<!-- ![](image/C# Span 入门/C# Span 入门0.png) -->
+<p><img src="http://image.acmx.xyz/lindexi%2F20186181120389359.jpg" alt="" /></p>
+
+<p>先来写一个简单的程序，创建一个数组，然后使用 Span 指定数组的某一段</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">array</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="m">10</span><span class="p">];</span>
+            <span class="n">Span</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">&gt;</span> <span class="n">bytes</span> <span class="p">=</span> <span class="n">array</span><span class="p">;</span> 
+            <span class="n">bytes</span> <span class="p">=</span> <span class="n">bytes</span><span class="p">.</span><span class="nf">Slice</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="m">2</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="m">5</span><span class="p">);</span>
+
+            <span class="n">bytes</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">=</span> <span class="m">5</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="m">2</span><span class="p">]);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">bytes</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+</code></pre></div></div>
+
+<p>可以看到对 bytes[0] 的修改就是对 array[2] 的修改，这样可以做到数组重新计算。</p>
+
+<p>也就是对某个计算，需要加上数组的移动，如二维数组的图片计算，例如行是 w 列是 h ，那么计算第 n 行的元素，在以前的时候，就需要在每个的前面加上　<code class="language-plaintext highlighter-rouge">w*n</code>，现在可以使用　<code class="language-plaintext highlighter-rouge">spanList.Slice(start:w*n, Length:w)</code> 这样重新拿到的数组就是一行，不需要在每个计算都需要添加很多代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">array</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="m">10</span><span class="p">];</span>
+            <span class="n">Span</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">&gt;</span> <span class="n">bytes</span> <span class="p">=</span> <span class="n">array</span><span class="p">;</span> 
+            <span class="n">bytes</span> <span class="p">=</span> <span class="n">bytes</span><span class="p">.</span><span class="nf">Slice</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="m">2</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="m">5</span><span class="p">);</span>
+
+            <span class="n">bytes</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">=</span> <span class="m">5</span><span class="p">;</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">array</span><span class="p">[</span><span class="m">2</span><span class="p">]);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">bytes</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="n">bytes</span><span class="p">[</span><span class="m">5</span><span class="p">]</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">IndexOutOfRangeException</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>有了这个类就不需要担心写出超过范围代码</p>
+
+<h2 id="stackalloc">stackalloc</h2>
+
+<p>如果要和 stackalloc 需要打开不安全代码</p>
+
+<!-- ![](image/C# Span 入门/C# Span 入门1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20186181133158630.jpg" alt="" /></p>
+
+<p>然后点击生成高级，选择 C# 7.2 以上</p>
+
+<p>现在可以写出这样的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">unsafe</span> <span class="k">void</span> <span class="nf">DroosorHotir</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Span</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">&gt;</span> <span class="n">bytes</span> <span class="p">=</span> <span class="k">stackalloc</span> <span class="kt">byte</span><span class="p">[</span><span class="m">2</span><span class="p">];</span>
+            <span class="n">bytes</span><span class="p">[</span><span class="m">0</span><span class="p">]</span> <span class="p">=</span> <span class="m">2</span><span class="p">;</span>
+            <span class="n">bytes</span><span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="p">=</span> <span class="m">3</span><span class="p">;</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">bytes</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">bytes</span><span class="p">[</span><span class="m">1</span><span class="p">]);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>调用这个函数可以输出 2 和 3 ，使用 stackalloc 可以比申请数组使用更少的资源。因为默认申请的数组都在堆中，不使用需要 gc 才可以回收。但是 stackalloc 可以在变量所在函数结束之后直接就回收，不需要移动内存。</p>
+
+<p>但是 stackalloc 容易出现堆栈溢出，请执行下面的代码，堆栈溢出是 catch 也无法让他不让程序直接退出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Span</span><span class="p">&lt;</span><span class="kt">double</span><span class="p">&gt;</span> <span class="n">bytes</span> <span class="p">=</span> <span class="k">stackalloc</span> <span class="kt">double</span><span class="p">[</span><span class="m">200000</span><span class="p">];</span>
+
+</code></pre></div></div>
+
+<p>即使使用 catch ，软件也会直接退出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="n">Span</span><span class="p">&lt;</span><span class="kt">double</span><span class="p">&gt;</span> <span class="n">bytes</span> <span class="p">=</span> <span class="k">stackalloc</span> <span class="kt">double</span><span class="p">[</span><span class="m">200000</span><span class="p">];</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span><span class="p">)</span>
+            <span class="p">{</span>
+               <span class="c1">// 接不住</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="allochglobal">AllocHGlobal</h2>
+
+<p>除了使用 stackalloc 之外，还可以使用 <code class="language-plaintext highlighter-rouge">Marshal.AllocHGlobal</code> 申请一段内存</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">IntPtr</span> <span class="n">ptr</span> <span class="p">=</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">AllocHGlobal</span><span class="p">(</span><span class="m">2</span><span class="p">);</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">bytes</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Span</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">&gt;((</span><span class="kt">byte</span><span class="p">*)</span> <span class="n">ptr</span><span class="p">,</span> <span class="m">2</span><span class="p">)</span> <span class="p">{[</span><span class="m">0</span><span class="p">]</span> <span class="p">=</span> <span class="m">42</span><span class="p">};</span>
+
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">bytes</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">Marshal</span><span class="p">.</span><span class="nf">ReadByte</span><span class="p">(</span><span class="n">ptr</span><span class="p">));</span>
+            <span class="p">}</span>
+            <span class="k">finally</span>
+            <span class="p">{</span>
+                <span class="n">Marshal</span><span class="p">.</span><span class="nf">FreeHGlobal</span><span class="p">(</span><span class="n">ptr</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要注意，申请的内存都需要自己释放</p>
+
+<p>而且需要注意，不要使用比自己申请的内存大的数组</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">IntPtr</span> <span class="n">ptr</span> <span class="p">=</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">AllocHGlobal</span><span class="p">(</span><span class="m">2</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">bytes</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Span</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">&gt;((</span><span class="kt">byte</span><span class="p">*)</span> <span class="n">ptr</span><span class="p">,</span> <span class="m">1000</span><span class="p">)</span> <span class="p">{[</span><span class="m">0</span><span class="p">]</span> <span class="p">=</span> <span class="m">42</span><span class="p">};</span>
+
+</code></pre></div></div>
+
+<p>上面代码申请了内存为 2 但是下一句使用了1000长度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">1000</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+                <span class="p">{</span>
+                    <span class="n">bytes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="m">25</span><span class="p">;</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">bytes</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这时虽然很多次都可以赋值成功，但是运行到某个时候，软件就直接退出。</p>
+
+<p>参考：</p>
+
+<p><a href="https://msdn.microsoft.com/en-us/magazine/mt814808.aspx">C# - All About Span: Exploring a New .NET Mainstay</a></p>
+
+<p><a href="https://www.cnblogs.com/justmine/p/10006621.html">通俗易懂，C#如何安全、高效地玩转任何种类的内存之Span(一)</a></p>
+
+:ET

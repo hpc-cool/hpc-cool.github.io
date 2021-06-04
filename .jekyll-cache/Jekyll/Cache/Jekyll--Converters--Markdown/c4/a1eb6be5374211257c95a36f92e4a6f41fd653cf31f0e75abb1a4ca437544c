@@ -1,0 +1,364 @@
+I"c<p>本文分析在 C# 中使用反射和配置文件和预编译做注入的性能，本文的数据是为<a href="https://blog.walterlv.com/post/dotnet-build-and-roslyn-course-in-tech-summit-2018.html">预编译框架，开发高性能应用 - 课程 - 微软技术暨生态大会 2018 - walterlv</a>提供</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 10:13:17 -->
+
+<!-- 标签：C#，性能测试 -->
+
+<p>本文通过代码生成工具，使用<a href="https://blog.lindexi.com/post/C-%E6%A0%87%E5%87%86%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95.html">C# 标准性能测试</a>拿到三个不同的方法的性能</p>
+
+<p>先来介绍一个程序的构成，这个程序里面有 1000 个类，这些类表示需要注入的类，每个类的代码大概都是这样</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">namespace</span> <span class="nn">LecuryouWuruhempa</span>
+<span class="p">{</span>
+    <span class="p">[</span><span class="n">CelkaturjairQelofe</span><span class="p">]</span>
+    <span class="k">class</span> <span class="err">类名</span>
+    <span class="err">{</span>
+        <span class="nc">public</span> <span class="kt">string</span> <span class="n">Foo</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>所有的类只有类名不相同，注入类的方法本文使用三个不同的方法，第一个就是预编译的方法。这里的预编译的方法就是在编译的时候，通过 Roslyn 拿到程序集里的所有类，和正常写代码一样，写出所有的类的创建和注入。</p>
+
+<p>测试的类里通过一个 <code class="language-plaintext highlighter-rouge">List&lt;object&gt;</code> 作为注入的输入，也就是通过任意的方式将对应的类创建出来，放进这个列表就是注入完成。</p>
+
+<p>使用预编译的方法就像直接在代码里写 <code class="language-plaintext highlighter-rouge">new Foo()</code> 一样</p>
+
+<p>而通过配置文件的方法实际也是反射的方法，只是少了反射整个程序集找到对应的类的过程</p>
+
+<p>通过读取配置文件拿到了程序集需要注入的所有类的类名，然后通过反射的方法拿到对应的 Type 再通过 Type 拿到构造函数，创建对象加入列表。本文为了防止因为读取配置文件让时间都在磁盘就直接写出了程序集的所有类</p>
+
+<p>而反射的方法是反射程序集，通过判断类的 Attitude 也就是上面代码的 <code class="language-plaintext highlighter-rouge">CelkaturjairQelofe</code> 特性，如果一个类有这个特性，那么这个类就是需要注入的类，通过反射创建加入列表。</p>
+
+<p>反射的代码都很简单，先看一下测试的数据</p>
+
+<!-- ![](image/C# 性能分析 反射 VS 配置文件 VS 预编译/C# 性能分析 反射 VS 配置文件 VS 预编译0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101521519594" alt="" /></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th style="text-align: right">Mean</th>
+      <th style="text-align: right">Error</th>
+      <th style="text-align: right">StdDev</th>
+      <th style="text-align: right">Median</th>
+      <th style="text-align: right">Scaled</th>
+      <th style="text-align: right">ScaledSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>预编译</td>
+      <td style="text-align: right">28.20 us</td>
+      <td style="text-align: right">0.3970 us</td>
+      <td style="text-align: right">0.3713 us</td>
+      <td style="text-align: right">28.16 us</td>
+      <td style="text-align: right">1.00</td>
+      <td style="text-align: right">0.00</td>
+    </tr>
+    <tr>
+      <td>配置文件</td>
+      <td style="text-align: right">2,125.77 us</td>
+      <td style="text-align: right">44.3371 us</td>
+      <td style="text-align: right">121.3722 us</td>
+      <td style="text-align: right">2,074.70 us</td>
+      <td style="text-align: right">75.39</td>
+      <td style="text-align: right">4.39</td>
+    </tr>
+    <tr>
+      <td>反射特定的类</td>
+      <td style="text-align: right">3,141.09 us</td>
+      <td style="text-align: right">47.0754 us</td>
+      <td style="text-align: right">41.7311 us</td>
+      <td style="text-align: right">3,146.11 us</td>
+      <td style="text-align: right">111.40</td>
+      <td style="text-align: right">2.01</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>预编译如果使用委托创建，测试数据会比直接 new 的慢很多</p>
+
+<!-- ![](image/C# 性能分析 反射 VS 配置文件 VS 预编译/C# 性能分析 反射 VS 配置文件 VS 预编译1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201810169372573" alt="" /></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Method</th>
+      <th style="text-align: right">Mean</th>
+      <th style="text-align: right">Error</th>
+      <th style="text-align: right">StdDev</th>
+      <th style="text-align: right">Scaled</th>
+      <th style="text-align: right">ScaledSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>预编译-new</td>
+      <td style="text-align: right">28.48 us</td>
+      <td style="text-align: right">0.3682 us</td>
+      <td style="text-align: right">0.3445 us</td>
+      <td style="text-align: right">1.00</td>
+      <td style="text-align: right">0.00</td>
+    </tr>
+    <tr>
+      <td>预编译-委托创建</td>
+      <td style="text-align: right">61.55 us</td>
+      <td style="text-align: right">1.1327 us</td>
+      <td style="text-align: right">1.0595 us</td>
+      <td style="text-align: right">2.16</td>
+      <td style="text-align: right">0.04</td>
+    </tr>
+    <tr>
+      <td>配置文件</td>
+      <td style="text-align: right">2,098.50 us</td>
+      <td style="text-align: right">40.6163 us</td>
+      <td style="text-align: right">48.3508 us</td>
+      <td style="text-align: right">73.70</td>
+      <td style="text-align: right">1.87</td>
+    </tr>
+    <tr>
+      <td>反射特定的类</td>
+      <td style="text-align: right">3,236.56 us</td>
+      <td style="text-align: right">63.3132 us</td>
+      <td style="text-align: right">126.4434 us</td>
+      <td style="text-align: right">113.67</td>
+      <td style="text-align: right">4.59</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>我通过设置了基线是预编译，可以看到通过配置文件创建的方式比预编译慢 75 倍，而通过反射特定的类是慢 100 多倍</p>
+
+<p>其他测试请看 <a href="https://lindexi.oschina.io/lindexi/post/C-%E7%9B%B4%E6%8E%A5%E5%88%9B%E5%BB%BA%E5%A4%9A%E4%B8%AA%E7%B1%BB%E5%92%8C%E4%BD%BF%E7%94%A8%E5%8F%8D%E5%B0%84%E5%88%9B%E5%BB%BA%E7%B1%BB%E7%9A%84%E6%80%A7%E8%83%BD.html">C# 直接创建多个类和使用反射创建类的性能</a></p>
+
+<p><a href="https://lindexi.oschina.io/lindexi/post/C-%E7%A8%8B%E5%BA%8F%E5%86%85%E7%9A%84%E7%B1%BB%E6%95%B0%E9%87%8F%E5%AF%B9%E7%A8%8B%E5%BA%8F%E5%90%AF%E5%8A%A8%E7%9A%84%E5%BD%B1%E5%93%8D.html">C# 程序内的类数量对程序启动的影响</a></p>
+
+<p>整个测试的工程我打包放在下面，这个工程的创建代码很简单，我也直接放在下面</p>
+
+<p>测试的工程 <a href="https://download.csdn.net/download/lindexi_gd/10722444">C# 性能分析 反射 VS 配置文件 VS 预编译-CSDN下载</a></p>
+
+<p>如果觉得我的数据很诡异，那么请自己运行一下</p>
+
+<p>创建工程的代码不包括创建测试的工程的框架，测试项目的框架很简单，只需要创建一个空白的控制台项目，在这个控制台项目安装 BenchmarkDotNet 打开 Program 添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">BenchmarkDotNet.Running</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">BenchmarkRunner</span><span class="p">.</span><span class="n">Run</span><span class="p">&lt;</span><span class="n">SawstoJouweaxo</span><span class="p">&gt;();</span>
+
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过运行 ReecelnaxeaDrasilouhalLaigeci 方法就可以在运行的文件夹找到创建的文件夹，将这个文件夹复制到测试的工程就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">ReecelnaxeaDrasilouhalLaigeci</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">terebawbemTitirear</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WhairchooHerdo</span><span class="p">();</span>
+
+            <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">direhelXideNa</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;();</span>
+
+            <span class="kt">var</span> <span class="n">jisqeCorenerairTurpalhee</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">DirectoryInfo</span><span class="p">(</span><span class="s">"MerelihikeLouseafoopu"</span><span class="p">);</span>
+
+            <span class="n">jisqeCorenerairTurpalhee</span><span class="p">.</span><span class="nf">Create</span><span class="p">();</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">1000</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">pereviCirsir</span> <span class="p">=</span> <span class="n">terebawbemTitirear</span><span class="p">.</span><span class="nf">LemgeDowbovou</span><span class="p">();</span>
+
+                <span class="n">direhelXideNa</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">pereviCirsir</span><span class="p">);</span>
+
+                <span class="kt">var</span> <span class="n">nemhaSibemnoosa</span> <span class="p">=</span> <span class="s">$@"</span><span class="err">
+</span><span class="s">using System;</span><span class="err">
+</span><span class="s">using System.Collections.Generic;</span><span class="err">
+</span><span class="s">using System.Text;</span><span class="err">
+
+</span><span class="s">namespace LecuryouWuruhempa</span><span class="err">
+</span><span class="p">{{</span>
+    <span class="p">[</span><span class="n">CelkaturjairQelofe</span><span class="p">]</span>
+    <span class="k">class</span> <span class="err">{</span><span class="nc">pereviCirsir</span><span class="p">}</span>
+    <span class="p">{{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Foo</span> <span class="p">{{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}}</span>
+    <span class="p">}}</span>
+<span class="p">}</span><span class="s">}"</span><span class="p">;</span>
+
+
+
+                <span class="n">File</span><span class="p">.</span><span class="nf">WriteAllText</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">jisqeCorenerairTurpalhee</span><span class="p">.</span><span class="n">FullName</span><span class="p">,</span> <span class="n">pereviCirsir</span> <span class="p">+</span> <span class="s">".cs"</span><span class="p">),</span> <span class="n">nemhaSibemnoosa</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">celkaturjairQelofeAttribute</span> <span class="p">=</span> <span class="s">@"using System;
+
+namespace LecuryouWuruhempa
+{
+    class CelkaturjairQelofeAttribute : Attribute
+    {
+
+    }
+}"</span><span class="p">;</span>
+            <span class="n">File</span><span class="p">.</span><span class="nf">WriteAllText</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">jisqeCorenerairTurpalhee</span><span class="p">.</span><span class="n">FullName</span><span class="p">,</span> <span class="s">"CelkaturjairQelofeAttribute.cs"</span><span class="p">),</span> <span class="n">celkaturjairQelofeAttribute</span><span class="p">);</span>
+
+
+
+            <span class="kt">var</span> <span class="n">memtichooBowbosir</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">direhelXideNa</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">$"            _jooyiSouse.Add(new </span><span class="p">{</span><span class="n">temp</span><span class="p">}</span><span class="s">());\r\n"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">sowastowVaiyoujall</span> <span class="p">=</span> <span class="s">$@"</span><span class="err">
+</span><span class="s">        [Benchmark(Baseline = true, Description = ""预编译"")]</span><span class="err">
+</span><span class="s">        public void WeejujeGaljouPemhu()</span><span class="err">
+</span><span class="s">        </span><span class="p">{{</span>
+            <span class="n">_jooyiSouse</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+
+<span class="p">{</span><span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">ToString</span><span class="p">()}</span>
+        <span class="p">}}</span><span class="err">
+</span><span class="s">"</span><span class="p">;</span>
+
+            <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+            <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">$@"             List&lt;string&gt; jeesareMewheehowBistawHorbatall = new List&lt;string&gt;()</span><span class="err">
+</span><span class="s">            </span><span class="p">{{</span>
+                <span class="s">");
+</span>           
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">direhelXideNa</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">$"\"</span><span class="p">{</span><span class="n">temp</span><span class="p">}</span><span class="s">\", "</span><span class="p">);</span>
+                <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"\r\n"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"            };"</span><span class="p">);</span>
+            
+
+            <span class="kt">var</span> <span class="n">sifurDassalcha</span> <span class="p">=</span> <span class="s">$@"</span><span class="err">
+</span><span class="s">        [Benchmark(Description = ""配置文件"")]</span><span class="err">
+</span><span class="s">        public void KonejoDewee()</span><span class="err">
+</span><span class="s">        </span><span class="p">{{</span>
+            <span class="n">Type</span> <span class="n">cajeceKisorkeBairdi</span><span class="p">;</span>
+
+            <span class="n">ConstructorInfo</span> <span class="n">wimoDasrugowfo</span><span class="p">;</span>
+            <span class="kt">object</span> <span class="n">relrorlelJosurpo</span><span class="p">;</span>
+            <span class="n">_jooyiSouse</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+
+<span class="p">{</span><span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">ToString</span><span class="p">()}</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">jeesareMewheehowBistawHorbatall</span><span class="p">)</span>
+            <span class="p">{{</span>
+                <span class="n">cajeceKisorkeBairdi</span> <span class="p">=</span> <span class="n">Type</span><span class="p">.</span><span class="nf">GetType</span><span class="p">(</span><span class="s">""</span><span class="n">LecuryouWuruhempa</span><span class="p">.</span><span class="s">""</span> <span class="p">+</span> <span class="n">temp</span><span class="p">);</span>
+                <span class="n">wimoDasrugowfo</span> <span class="p">=</span> <span class="n">cajeceKisorkeBairdi</span><span class="p">.</span><span class="nf">GetConstructor</span><span class="p">(</span><span class="n">Type</span><span class="p">.</span><span class="n">EmptyTypes</span><span class="p">);</span>
+                <span class="n">relrorlelJosurpo</span> <span class="p">=</span> <span class="n">wimoDasrugowfo</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
+                <span class="n">_jooyiSouse</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">relrorlelJosurpo</span><span class="p">);</span>
+ 
+            <span class="p">}}</span>
+
+        <span class="p">}}</span><span class="s">"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">stoomairHem</span> <span class="p">=</span> <span class="s">@"
+        [Benchmark(Description = ""反射"")]
+        public void TirjeTuxemsowwherLaralJunoo()
+        {
+            _jooyiSouse.Clear();
+
+            var bermartaPallnirhi = Assembly.GetExecutingAssembly();
+
+            foreach (var temp in bermartaPallnirhi.GetTypes())
+            {
+                var wimoDasrugowfo = temp.GetConstructor(Type.EmptyTypes);
+                var relrorlelJosurpo = wimoDasrugowfo.Invoke(null);
+                _jooyiSouse.Add(relrorlelJosurpo);
+            }
+        }"</span><span class="p">;</span>
+
+            <span class="n">stoomairHem</span> <span class="p">=</span> <span class="s">""</span><span class="p">;</span>
+
+            <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+
+            <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">@"            List&lt;Func&lt;object&gt;&gt; lairchurBirchalrotro = new List&lt;Func&lt;object&gt;&gt;()
+            {
+"</span><span class="p">);</span>
+
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">direhelXideNa</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">$"                () =&gt; new </span><span class="p">{</span><span class="n">temp</span><span class="p">}</span><span class="s">(),"</span><span class="p">);</span>
+                <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"\r\n"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"            };"</span><span class="p">);</span>
+
+            <span class="n">stoomairHem</span> <span class="p">=</span> <span class="s">$@"</span><span class="err">
+</span><span class="s">         [Benchmark(Description = ""委托创建"")]</span><span class="err">
+</span><span class="s">         public void LemjobesuDijisleci()</span><span class="err">
+</span><span class="s">        </span><span class="p">{{</span>
+
+            <span class="n">_jooyiSouse</span><span class="p">.</span><span class="nf">Clear</span><span class="p">();</span>
+
+<span class="p">{</span><span class="n">memtichooBowbosir</span><span class="p">.</span><span class="nf">ToString</span><span class="p">()}</span>
+
+             <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">lairchurBirchalrotro</span><span class="p">)</span>
+            <span class="p">{{</span>
+                <span class="n">_jooyiSouse</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="nf">temp</span><span class="p">());</span>
+            <span class="p">}}</span>
+        <span class="p">}}</span><span class="s">"</span><span class="p">;</span>
+
+
+            <span class="kt">var</span> <span class="n">drairdreBibearnou</span> <span class="p">=</span> <span class="s">@"
+        [Benchmark(Description = ""反射特定的类"")]
+        public void SasesoJirkoukistiCowqu()
+        {
+            _jooyiSouse.Clear();
+
+            var bermartaPallnirhi = Assembly.GetExecutingAssembly();
+
+            foreach (var temp in bermartaPallnirhi.GetTypes().Where(temp=&gt; temp.GetCustomAttribute&lt;CelkaturjairQelofeAttribute&gt;() != null))
+            {
+                var wimoDasrugowfo = temp.GetConstructor(Type.EmptyTypes);
+                var relrorlelJosurpo = wimoDasrugowfo.Invoke(null);
+                _jooyiSouse.Add(relrorlelJosurpo);
+            }
+        }"</span><span class="p">;</span>
+
+
+            <span class="kt">var</span> <span class="n">whelvejawTinaw</span> <span class="p">=</span> <span class="s">$@"using System;</span><span class="err">
+</span><span class="s">using System.Collections.Generic;</span><span class="err">
+</span><span class="s">using System.Linq;</span><span class="err">
+</span><span class="s">using System.Text;</span><span class="err">
+</span><span class="s">using System.Runtime.CompilerServices;</span><span class="err">
+</span><span class="s">using System.Reflection;</span><span class="err">
+</span><span class="s">using System.Threading.Tasks;</span><span class="err">
+</span><span class="s">using BenchmarkDotNet.Attributes;</span><span class="err">
+
+</span><span class="s">namespace LecuryouWuruhempa</span><span class="err">
+</span><span class="p">{{</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">SawstoJouweaxo</span>
+    <span class="p">{{</span>
+
+<span class="p">{</span><span class="n">sowastowVaiyoujall</span><span class="p">}</span>
+
+<span class="p">{</span><span class="n">sifurDassalcha</span><span class="p">}</span>
+
+<span class="p">{</span><span class="n">stoomairHem</span><span class="p">}</span>
+
+<span class="p">{</span><span class="n">drairdreBibearnou</span><span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">_jooyiSouse</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;();</span>
+
+    <span class="p">}}</span>
+<span class="p">}}</span><span class="s">"</span><span class="p">;</span>
+
+            <span class="n">File</span><span class="p">.</span><span class="nf">WriteAllText</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">jisqeCorenerairTurpalhee</span><span class="p">.</span><span class="n">FullName</span><span class="p">,</span> <span class="s">"SawstoJouweaxo.cs"</span><span class="p">),</span> <span class="n">whelvejawTinaw</span><span class="p">);</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+:ET

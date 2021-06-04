@@ -1,0 +1,51 @@
+I"B<p>我就好奇无穷大和 NAN 在 C# 的二进制是如何表示的</p>
+
+<!--more-->
+
+<!-- CreateTime:6/12/2020 8:52:44 AM -->
+
+<p>揭开谜底</p>
+
+<p>NAN: 00,00,00,00,00,00,F8,FF</p>
+
+<p>正无穷 PositiveInfinity : 00,00,00,00,00,00,F0,7F</p>
+
+<p>负无穷 NegativeInfinity : 00,00,00,00,00,00,F0,FF</p>
+
+<p>测试方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">MemoryStream</span> <span class="n">stream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MemoryStream</span><span class="p">();</span>
+            <span class="n">BinaryWriter</span> <span class="n">writer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">BinaryWriter</span><span class="p">(</span><span class="n">stream</span><span class="p">);</span>
+
+            <span class="kt">double</span> <span class="n">db</span> <span class="p">=</span> <span class="kt">double</span><span class="p">.</span><span class="n">NaN</span><span class="p">;</span>
+            <span class="n">writer</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">db</span><span class="p">);</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">","</span><span class="p">,</span> <span class="n">stream</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">().</span><span class="nf">Select</span><span class="p">(</span><span class="n">b</span> <span class="p">=&gt;</span> <span class="n">b</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X2"</span><span class="p">))));</span>
+
+            <span class="n">stream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
+            <span class="n">db</span> <span class="p">=</span> <span class="kt">double</span><span class="p">.</span><span class="n">PositiveInfinity</span><span class="p">;</span>
+            <span class="n">writer</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">db</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">","</span><span class="p">,</span> <span class="n">stream</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">().</span><span class="nf">Select</span><span class="p">(</span><span class="n">b</span> <span class="p">=&gt;</span> <span class="n">b</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X2"</span><span class="p">))));</span>
+
+            <span class="n">stream</span><span class="p">.</span><span class="nf">Seek</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">SeekOrigin</span><span class="p">.</span><span class="n">Begin</span><span class="p">);</span>
+            <span class="n">db</span> <span class="p">=</span> <span class="kt">double</span><span class="p">.</span><span class="n">NegativeInfinity</span><span class="p">;</span>
+            <span class="n">writer</span><span class="p">.</span><span class="nf">Write</span><span class="p">(</span><span class="n">db</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">","</span><span class="p">,</span> <span class="n">stream</span><span class="p">.</span><span class="nf">ToArray</span><span class="p">().</span><span class="nf">Select</span><span class="p">(</span><span class="n">b</span> <span class="p">=&gt;</span> <span class="n">b</span><span class="p">.</span><span class="nf">ToString</span><span class="p">(</span><span class="s">"X2"</span><span class="p">))));</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个值不是乱存的，有标准，请看 <a href="https://en.wikipedia.org/wiki/IEEE_754">IEEE 754 - Wikipedia</a></p>
+
+<p>是不是还有更简单的方法拿到某个变量的内存里面的值存放方法？试试下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">double</span> <span class="n">d</span> <span class="p">=</span> <span class="kt">double</span><span class="p">.</span><span class="n">NaN</span><span class="p">;</span>
+<span class="n">Span</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">&gt;</span> <span class="n">sp</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Span</span><span class="p">&lt;</span><span class="kt">byte</span><span class="p">&gt;(&amp;</span><span class="n">d</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">double</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>试试看下 sp 的值</p>
+
+<p>感谢 <code class="language-plaintext highlighter-rouge">（￣▽￣）</code> 小伙伴提供的方法</p>
+
+:ET

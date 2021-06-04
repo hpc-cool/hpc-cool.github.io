@@ -1,0 +1,201 @@
+I"�Z<p>本文告诉大家一个方法让 Page 继承一个泛型类。
+我使用自己的<a href="https://www.nuget.org/packages/lindexi.uwp.Framework">框架</a>的时候，发现每个页面都需要添加一些相同的代码，所以就想把他写出来，作为一个基础的 Page 。
+这个 Page 需要指定自己的 ViewModel 但是这个 ViewModel 却是每个 Page 不相同，所以一个好的方法是指定他的泛型类。但是这时如果使用 Page 继承，就会出现编译错误。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<!-- csdn -->
+
+<p>因为需要使用下面的代码才可以从页面拿到传入的 ViewModel ，所以所有的页面都添加相同的代码，在软件上是比较差的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainPage</span> <span class="p">:</span> <span class="n">Page</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">ViewModel</span> <span class="n">ViewModel</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ViewModel</span> <span class="p">=</span> <span class="p">(</span><span class="n">ViewModel</span><span class="p">)</span> <span class="n">e</span><span class="p">.</span><span class="n">Parameter</span><span class="p">;</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="n">ViewModel</span><span class="p">;</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果可以使用泛型，那么代码会简单很多</p>
+
+<p>首先写出一个基础类  DslujbefGgtvl 这个类继承 Page ，于是就可以把所有 Page 需要写的代码只写一次</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">DslujbefGgtvl</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">Page</span> <span class="k">where</span> <span class="n">T</span><span class="p">:</span> <span class="n">IViewModel</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">T</span> <span class="n">ViewModel</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ViewModel</span> <span class="p">=</span> <span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="n">e</span><span class="p">.</span><span class="n">Parameter</span><span class="p">;</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="n">ViewModel</span><span class="p">;</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样 Page 继承 DslujbefGgtvl 就需要告诉他现在需要哪个 ViewModel 不需要其他的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainPage</span> <span class="p">:</span> <span class="n">DslujbefGgtvl</span><span class="p">&lt;</span><span class="n">ViewModel</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是这时会出现错误<code class="language-plaintext highlighter-rouge">Error CS0263: “MainPage”的分部声明一定不能指定不同的基类 (23, 33)</code> 这是因为 xaml 没有继承  DslujbefGgtvl</p>
+
+<p>打开 xaml 把 Page 替换为 DslujbefGgtvl 然后添加 TypeArguments</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">DslujbefGgtvl</span>
+    <span class="n">x</span><span class="p">:</span><span class="n">TypeArguments</span><span class="p">=</span><span class="s">"local:ViewModel"</span> <span class="n">x</span><span class="p">:</span><span class="n">Class</span><span class="p">=</span><span class="s">"TwipmeHpka.MainPage"</span>
+    <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">x</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">local</span><span class="p">=</span><span class="s">"using:TwipmeHpka"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">d</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">mc</span><span class="p">=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="n">mc</span><span class="p">:</span><span class="n">Ignorable</span><span class="p">=</span><span class="s">"d"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">DslujbefGgtvl</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>这时编译出现    Error CS0305: 使用泛型 类型“DslujbefGgtvl<T>”需要 1 个类型参数 (1, 1) ，所以看起来 Page 无法继承 泛型类</T></p>
+
+<p>一个解决方法是写另一个类去继承，下面我写 RavthuVythrbe 继承  DslujbefGgtvl 这样就可以使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainPage</span> <span class="p">:</span> <span class="n">RavthuVythrbe</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">RavthuVythrbe</span> <span class="p">:</span> <span class="n">DslujbefGgtvl</span><span class="p">&lt;</span><span class="n">ViewModel</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">DslujbefGgtvl</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">Page</span> <span class="k">where</span> <span class="n">T</span><span class="p">:</span> <span class="n">IViewModel</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">T</span> <span class="n">ViewModel</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ViewModel</span> <span class="p">=</span> <span class="p">(</span><span class="n">T</span><span class="p">)</span> <span class="n">e</span><span class="p">.</span><span class="n">Parameter</span><span class="p">;</span>
+            <span class="n">DataContext</span> <span class="p">=</span> <span class="n">ViewModel</span><span class="p">;</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">RavthuVythrbe</span>
+    <span class="n">x</span><span class="p">:</span><span class="n">Class</span><span class="p">=</span><span class="s">"TwipmeHpka.MainPage"</span>
+    <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">x</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">local</span><span class="p">=</span><span class="s">"using:TwipmeHpka"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">d</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">mc</span><span class="p">=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="n">mc</span><span class="p">:</span><span class="n">Ignorable</span><span class="p">=</span><span class="s">"d"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">RavthuVythrbe</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>所以需要添加一个类来继承泛型的才可以被Page继承。</p>
+
+<p>这个方法需要添加一个类，但是还有另一个方法可以写在框架，需要把 xaml 继承 Page 修改为 IPage</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">sealed</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainPage</span> <span class="p">:</span> <span class="n">DslujbefGgtvl</span><span class="p">&lt;</span><span class="n">ViewModel</span><span class="p">&gt;,</span> <span class="n">IPage</span>
+
+    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IPage</span>
+    <span class="p">{</span>
+         <span class="n">UIElement</span> <span class="n">Content</span> <span class="p">{</span>  <span class="k">get</span><span class="p">;</span>  <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">IPage</span>
+    <span class="n">x</span><span class="p">:</span><span class="n">Class</span><span class="p">=</span><span class="s">"TwipmeHpka.MainPage"</span>
+    <span class="n">xmlns</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">x</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">local</span><span class="p">=</span><span class="s">"using:TwipmeHpka"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">d</span><span class="p">=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+    <span class="n">xmlns</span><span class="p">:</span><span class="n">mc</span><span class="p">=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+    <span class="n">mc</span><span class="p">:</span><span class="n">Ignorable</span><span class="p">=</span><span class="s">"d"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">IPage</span><span class="p">.</span><span class="n">Content</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">Grid</span> <span class="n">Background</span><span class="p">=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Margin</span><span class="p">=</span><span class="s">"10,10,10,10"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"lindexi"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">IPage</span><span class="p">.</span><span class="n">Content</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">IPage</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>所以 page 不可以继承泛型，但是可以继承接口，所以在框架可以使用这个方法让 Page 继承一个泛型的类，这样可以减少代码</p>
+
+<p>实际使用的 IPage 的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="k">public</span> <span class="k">interface</span> <span class="nc">IPage</span><span class="p">:</span> <span class="n">IFrameworkElement</span>
+    <span class="p">{</span>
+        <span class="n">UIElement</span> <span class="n">Content</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">Frame</span> <span class="n">Frame</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">NavigationCacheMode</span> <span class="n">NavigationCacheMode</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">AppBar</span> <span class="n">TopAppBar</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">AppBar</span> <span class="n">BottomAppBar</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IFrameworkElement</span>
+    <span class="p">{</span>
+        <span class="n">TriggerCollection</span> <span class="n">Triggers</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">ResourceDictionary</span> <span class="n">Resources</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">object</span> <span class="n">Tag</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">string</span> <span class="n">Language</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">ActualWidth</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">ActualHeight</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">Width</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">Height</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">MinWidth</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">MaxWidth</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">MinHeight</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">double</span> <span class="n">MaxHeight</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">HorizontalAlignment</span> <span class="n">HorizontalAlignment</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">VerticalAlignment</span> <span class="n">VerticalAlignment</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">Thickness</span> <span class="n">Margin</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">Uri</span> <span class="n">BaseUri</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="kt">object</span> <span class="n">DataContext</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">Style</span> <span class="n">Style</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">DependencyObject</span> <span class="n">Parent</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="n">FlowDirection</span> <span class="n">FlowDirection</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">event</span> <span class="n">RoutedEventHandler</span> <span class="n">Loaded</span><span class="p">;</span>
+        <span class="k">event</span> <span class="n">RoutedEventHandler</span> <span class="n">Unloaded</span><span class="p">;</span>
+        <span class="k">event</span> <span class="n">SizeChangedEventHandler</span> <span class="n">SizeChanged</span><span class="p">;</span>
+        <span class="k">event</span> <span class="n">EventHandler</span><span class="p">&lt;</span><span class="kt">object</span><span class="p">&gt;</span> <span class="n">LayoutUpdated</span><span class="p">;</span>
+        <span class="kt">object</span> <span class="nf">FindName</span><span class="p">(</span><span class="kt">string</span> <span class="n">name</span><span class="p">);</span>
+        <span class="k">void</span> <span class="nf">SetBinding</span><span class="p">(</span><span class="n">DependencyProperty</span> <span class="n">dp</span><span class="p">,</span> <span class="n">BindingBase</span> <span class="n">binding</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

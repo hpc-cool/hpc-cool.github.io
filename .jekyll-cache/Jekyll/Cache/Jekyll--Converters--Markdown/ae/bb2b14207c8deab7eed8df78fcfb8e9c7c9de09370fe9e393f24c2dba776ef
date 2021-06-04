@@ -1,0 +1,100 @@
+I" -<p>局域网可以使用的 IP 地址有很多，我写了一段代码用来枚举所有可以用的 ip 地址</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/10/31 8:57:55 -->
+
+<p>小伙伴都知道，局域网可以使用的 IP 范围如下</p>
+
+<ul>
+  <li>A类地址：10.0.0.0 - 10.255.255.255</li>
+  <li>B类地址：172.16.0.0 - 172.31.255.255</li>
+  <li>C类地址：192.168.0.0 -192.168.255.255</li>
+</ul>
+
+<p>我写了函数 GetIpList 用于在传入两个 IP 地址，一个是开始，一个是结束地址，返回这个范围所有的 IP 地址</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IPAddress</span><span class="p">&gt;</span> <span class="nf">GetIpList</span><span class="p">(</span><span class="n">IPAddress</span> <span class="n">ipFrom</span><span class="p">,</span> <span class="n">IPAddress</span> <span class="n">ipTo</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">ipEnd</span> <span class="p">=</span> <span class="n">ipTo</span><span class="p">.</span><span class="nf">GetAddressBytes</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">ipNext</span> <span class="p">=</span> <span class="n">ipFrom</span><span class="p">.</span><span class="nf">GetAddressBytes</span><span class="p">();</span>
+
+            <span class="k">while</span> <span class="p">(</span><span class="nf">CompareIPs</span><span class="p">(</span><span class="n">ipNext</span><span class="p">,</span> <span class="n">ipEnd</span><span class="p">)</span> <span class="p">&lt;</span> <span class="m">1</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">ip</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IPAddress</span><span class="p">(</span><span class="n">ipNext</span><span class="p">);</span>
+                <span class="nf">IncrementIP</span><span class="p">(</span><span class="n">ipNext</span><span class="p">);</span>
+                <span class="k">yield</span> <span class="k">return</span> <span class="n">ip</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">int</span> <span class="nf">CompareIPs</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">ip1</span><span class="p">,</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">ip2</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ip1</span> <span class="p">==</span> <span class="k">null</span> <span class="p">||</span> <span class="n">ip1</span><span class="p">.</span><span class="n">Length</span> <span class="p">!=</span> <span class="m">4</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="p">-</span><span class="m">1</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">ip2</span> <span class="p">==</span> <span class="k">null</span> <span class="p">||</span> <span class="n">ip2</span><span class="p">.</span><span class="n">Length</span> <span class="p">!=</span> <span class="m">4</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="m">1</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">compare</span> <span class="p">=</span> <span class="n">ip1</span><span class="p">[</span><span class="m">0</span><span class="p">].</span><span class="nf">CompareTo</span><span class="p">(</span><span class="n">ip2</span><span class="p">[</span><span class="m">0</span><span class="p">]);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">compare</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">compare</span> <span class="p">=</span> <span class="n">ip1</span><span class="p">[</span><span class="m">1</span><span class="p">].</span><span class="nf">CompareTo</span><span class="p">(</span><span class="n">ip2</span><span class="p">[</span><span class="m">1</span><span class="p">]);</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">compare</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">compare</span> <span class="p">=</span> <span class="n">ip1</span><span class="p">[</span><span class="m">2</span><span class="p">].</span><span class="nf">CompareTo</span><span class="p">(</span><span class="n">ip2</span><span class="p">[</span><span class="m">2</span><span class="p">]);</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">compare</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">compare</span> <span class="p">=</span> <span class="n">ip1</span><span class="p">[</span><span class="m">3</span><span class="p">].</span><span class="nf">CompareTo</span><span class="p">(</span><span class="n">ip2</span><span class="p">[</span><span class="m">3</span><span class="p">]);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="n">compare</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">IncrementIP</span><span class="p">(</span><span class="kt">byte</span><span class="p">[]</span> <span class="n">ip</span><span class="p">,</span> <span class="kt">int</span> <span class="n">idx</span> <span class="p">=</span> <span class="m">3</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ip</span> <span class="p">==</span> <span class="k">null</span> <span class="p">||</span> <span class="n">ip</span><span class="p">.</span><span class="n">Length</span> <span class="p">!=</span> <span class="m">4</span> <span class="p">||</span> <span class="n">idx</span> <span class="p">&lt;</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">ip</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">==</span> <span class="m">254</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">ip</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span>
+                <span class="nf">IncrementIP</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">idx</span> <span class="p">-</span> <span class="m">1</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">ip</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">=</span> <span class="p">(</span><span class="kt">byte</span><span class="p">)</span> <span class="p">(</span><span class="n">ip</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="p">+</span> <span class="m">1</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时可以列举局域网所有地址</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">ipFrom</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"172.16.0.0"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">ipTo</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"172.31.255.255"</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="nf">GetIpList</span><span class="p">(</span><span class="n">ipFrom</span><span class="p">,</span> <span class="n">ipTo</span><span class="p">).</span><span class="nf">Count</span><span class="p">());</span>
+
+            <span class="n">ipFrom</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"192.168.0.0"</span><span class="p">);</span>
+            <span class="n">ipTo</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"192.168.255.255"</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="nf">GetIpList</span><span class="p">(</span><span class="n">ipFrom</span><span class="p">,</span> <span class="n">ipTo</span><span class="p">).</span><span class="nf">Count</span><span class="p">());</span>
+
+            <span class="n">ipFrom</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"10.0.0.0"</span><span class="p">);</span>
+            <span class="n">ipTo</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"10.255.255.255"</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="nf">GetIpList</span><span class="p">(</span><span class="n">ipFrom</span><span class="p">,</span> <span class="n">ipTo</span><span class="p">).</span><span class="nf">Count</span><span class="p">());</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/5e4ed220da093aeb922f147988be133f8160ceec/HayberenerhihaWaceafardu">github</a> 欢迎小伙伴访问</p>
+
+:ET

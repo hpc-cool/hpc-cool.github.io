@@ -1,0 +1,54 @@
+I"�	<p>有时候我们会把一些仓库放到本地，当他更新的时候，可以使用简单命名更新他。
+不是所有时间我们都有网，所以把远程的仓库作为镜像，可以方便我们查看
+普通的git clone不能下载所有分支，想要简单的git clone所有分支，可以用镜像方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/2 12:57:37 -->
+
+<div id="toc"></div>
+
+<p>做一个镜像仓库很简单。</p>
+
+<p>进入一个放仓库的文件夹，然后复制他的远程Url</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">clone</span> <span class="p">--</span><span class="n">mirror</span> <span class="n">Url</span>
+
+<span class="err">我自己的镜像，假如要把我的</span><span class="n">https</span><span class="p">:</span><span class="c1">//github.com/lindexi/UWP.git 做镜像到本地</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="p">--</span><span class="n">mirror</span> <span class="n">https</span><span class="p">:</span><span class="c1">//github.com/lindexi/UWP.git</span>
+</code></pre></div></div>
+
+<p>这样就有本地镜像，我们需要更新他的时候用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">remote</span> <span class="n">update</span>
+
+</code></pre></div></div>
+<p>这样我们还要手动更新，那么有没自动更新方法，其实我们还可以用gogs</p>
+
+<p>gogs的下载 https://github.com/gogits/gogs 下载完在Windows下打开</p>
+
+<p>打开需要用命令行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">gogos</span><span class="p">.</span><span class="n">exe</span> <span class="n">web</span>
+
+</code></pre></div></div>
+
+<p>绑定了端口就好</p>
+
+<p>需要使用gogs镜像，添加外部</p>
+
+<p><img src="http://image.acmx.xyz/48607e54-9b56-4d1b-a11f-ff44b53046c4201612693440.jpg" alt="" /></p>
+
+<p>输入地址</p>
+
+<p><img src="http://image.acmx.xyz/48607e54-9b56-4d1b-a11f-ff44b53046c4201612693522.jpg" alt="" /></p>
+
+<p>然后设置他24小时更新</p>
+
+<p>默认就是24小时</p>
+
+<p>我最近在用gogs同步我的本地项目，然后用坚果云同步</p>
+
+<p>gogs 可以我传上csdn，下载：http://download.csdn.net/detail/lindexi_gd/9738926</p>
+
+:ET

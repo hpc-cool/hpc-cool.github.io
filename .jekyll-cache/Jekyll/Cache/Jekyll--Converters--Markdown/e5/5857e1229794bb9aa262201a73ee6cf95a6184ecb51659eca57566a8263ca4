@@ -1,0 +1,38 @@
+I"�<p>有时候需要这个效果，触摸向下可以向下滑动，不需要鼠标滑轮。
+<img src="http://image.acmx.xyz/AwCCAwMAItoFAMV+BQA28wYAAQAEAK4+AQBmQwIAaOgJAOjZ/panel2017311092024.gif" alt="" /></p>
+
+<!--more-->
+
+<!-- CreateTime:2018/10/11 14:10:41 -->
+
+<div id="toc"></div>
+
+<p>使用 ListBox 可以简单做到，那么如何使用 ScrollViewer 做到相同效果？</p>
+
+<p>复制一下代码，运行可以看到，我的可以做到拖动时，自动滑动。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>          <span class="p">&lt;</span><span class="n">ScrollViewer</span> <span class="n">VerticalScrollBarVisibility</span><span class="p">=</span><span class="s">"Visible"</span>
+                        <span class="n">PanningMode</span><span class="p">=</span><span class="s">"VerticalOnly"</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"林德熙"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"lindexi.oschina.io"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"blog.csdn.net/lindexi_gd"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"UWP"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"开发者"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"MS"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"csdn"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"滚动"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"点击"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"7.0"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"第一个是Out"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"Tuples"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"内部函数"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">StackPanel</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ScrollViewer</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>其实就是设置<code class="language-plaintext highlighter-rouge">PanningMode="VerticalOnly"</code></p>
+
+<p>参见 <a href="https://www.cnblogs.com/kybs0/p/9766324.html">WPF 可触摸移动的ScrollViewer控件 - 唐宋元明清2188 - 博客园</a></p>
+
+:ET

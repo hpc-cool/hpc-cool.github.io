@@ -1,0 +1,657 @@
+I"?�<p>本文记录一些代码审查套路，在看到小伙伴写出某些代码的时候可以告诉他这样写有锅</p>
+
+<!--more-->
+
+<!-- CreateTime:6/6/2020 9:19:16 AM -->
+
+<p>我在各个项目里面进行代码审查，我维护了很多个项目</p>
+
+<!-- ![](image/dotnet 一些代码审查套路/dotnet 一些代码审查套路0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202066945231794.jpg" alt="" /></p>
+
+<p>这是我截图某一天的一个核心项目的在 Gitlab 上的 MR 情况，我觉得头像应该是不用保密的，这样知道的小伙伴自然就知道了。对了，那些挂了超过3天的都是标记 WIP 还在开发中的</p>
+
+<!-- ![](image/dotnet 一些代码审查套路/dotnet 一些代码审查套路1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202066949354081.jpg" alt="" /></p>
+
+<p>回到主题，代码审查时有哪些套路？</p>
+
+<h2 id="多语言">多语言</h2>
+
+<p>如果写了固定的在界面显示的字符串，请询问是否需要使用多语言</p>
+
+<h2 id="魔数的处理">魔数的处理</h2>
+
+<p>啥是魔数？写固定的一些数值等</p>
+
+<p>魔数尽量不要出现，抽成常量，便于修改，一定避免不了使用魔数的话添加详细注释</p>
+
+<p>如以下代码，后续维护难度几乎等于无穷</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nf">Foo</span><span class="p">(</span><span class="m">1</span><span class="p">,</span> <span class="m">200</span><span class="p">,</span> <span class="m">15</span><span class="p">,</span> <span class="m">16</span><span class="p">,</span> <span class="m">20</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="注释说的是不是和代码做的相同">注释说的是不是和代码做的相同</h2>
+
+<p>有时候改动的时候忘记改注释了，此时注释说的和代码做的不是一回事，因此代码审查不要跳过注释写的</p>
+
+<h2 id="变量名拼写-语法规范">变量名拼写 语法规范</h2>
+
+<p>变量名拼写是否符合语法，符合规范</p>
+
+<p>这部分其实用机器人不错，如 GitHub 的代码风格自动审查机器人 <a href="https://github.com/marketplace/codefactor">CodeFactor</a> 可以自动审查代码风格</p>
+
+<h2 id="该加单位的属性是否明确了单位">该加单位的属性是否明确了单位</h2>
+
+<p>用的最多的就是时间单位，请问如下属性表示的是秒还是毫秒</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="kt">double</span> <span class="n">Foo</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>要么让类型可以表示时间的单位，要么在属性命名上区分，请看 <a href="https://blog.lindexi.com/post/%E7%A8%8B%E5%BA%8F%E7%8C%BF%E4%BF%AE%E5%85%BB-%E7%BB%99%E5%B1%9E%E6%80%A7%E4%B8%80%E4%B8%AA%E5%8D%95%E4%BD%8D.html">程序猿修养 给属性一个单位</a></p>
+
+<h2 id="函数的参数个数不要太多">函数的参数个数不要太多</h2>
+
+<p>太多的参数调用起来也不方便，代码可读性也比较渣</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">CubeAdsorb</span><span class="p">(</span><span class="n">Point</span> <span class="n">start</span><span class="p">,</span> <span class="n">Point</span> <span class="n">end</span><span class="p">,</span> <span class="n">Point</span> <span class="n">topLeft</span><span class="p">,</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">Point</span><span class="p">&gt;</span> <span class="n">points</span><span class="p">,</span> <span class="kt">double</span> <span class="n">theta</span><span class="p">,</span> <span class="n">Matrix</span> <span class="n">backMatrix</span><span class="p">,</span> <span class="n">Vector</span> <span class="n">vector</span><span class="p">,</span> <span class="n">Cube</span> <span class="n">cube</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>太多的参数建议定义一个新的类用来包装</p>
+
+<h2 id="判断逻辑判断方法不要随意倒换">判断逻辑判断方法不要随意倒换</h2>
+
+<p>其实只要固定下来，可读性会比较好，如以下反例</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="nf">FontStyle</span><span class="p">(</span><span class="kt">int</span> <span class="n">style</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="m">0</span> <span class="p">&lt;=</span> <span class="n">style</span> <span class="p">&amp;&amp;</span> <span class="n">style</span> <span class="p">&lt;=</span> <span class="m">2</span><span class="p">);</span>
+
+            <span class="n">_style</span> <span class="p">=</span> <span class="n">style</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这是 WPF 框架源代码的 FontStyle 类的代码，可读性比较渣的代码是 <code class="language-plaintext highlighter-rouge">0 &lt;= style &amp;&amp; style &lt;= 2</code> 因为判断方法存在一次倒换。第一次判断是使用常量和变量判断，第二次反过来</p>
+
+<p>当然，适应之后也会发现其实上面的写法也是有一些可读的，因为可以和数学一样表示一个区间</p>
+
+<h2 id="注意外部属性或字段的变更">注意外部属性或字段的变更</h2>
+
+<p>有很多代码写的时候需要考虑多线程访问，多线程的时候可能其他线程会变更外部的属性或字段，因此如下面代码是不安全的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">if</span> <span class="p">(</span><span class="n">s_providers</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+
+            <span class="n">EncodingProvider</span><span class="p">[]</span> <span class="n">providers</span> <span class="p">=</span> <span class="n">s_providers</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面代码的 <code class="language-plaintext highlighter-rouge">s_providers</code> 的定义是一个静态字段，上面代码在判断 <code class="language-plaintext highlighter-rouge">s_providers == null</code> 时，此时 <code class="language-plaintext highlighter-rouge">s_providers</code> 是存在值的。但是后续获取 <code class="language-plaintext highlighter-rouge">providers = s_providers</code> 时，可能此时的 <code class="language-plaintext highlighter-rouge">s_providers</code> 的值就被改为 null 此时的逻辑是不对的</p>
+
+<p>推荐的写法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">EncodingProvider</span><span class="p">[]</span> <span class="n">providers</span> <span class="p">=</span> <span class="n">s_providers</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">providers</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+                <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>先获取外部字段放在局部变量，再判断局部变量。这样能解决两次访问外部字段的时候，访问的对象不是相同的对象</p>
+
+<h2 id="属性的获取应该是轻量的">属性的获取应该是轻量的</h2>
+
+<p>从 C# 的设计上，使用属性可以做到对字段或内存空间的封装，可以在获取之前进行一些运算。但是咱默认的约定应该是属性的获取应该是轻量的运算，最好不要做 IO 或重计算，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="kt">string</span> <span class="n">Foo</span>
+<span class="p">{</span>
+    <span class="k">get</span>
+    <span class="p">{</span>
+        <span class="c1">// 访问数据库</span>
+        <span class="c1">// 读写文件</span>
+        <span class="k">return</span> <span class="n">xx</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>因为大部分小伙伴在使用属性的时候都是不期望去看 get 的代码，都是认为有这个属性可以获取，也许会写入如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+<span class="p">{</span>
+    <span class="nf">F1</span><span class="p">(</span><span class="n">Foo</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>也就是在循环里面不断获取属性，而这个属性获取的性能又比较差</p>
+
+<p>如果属性的获取的性能比较差，推荐修改为方法，如 <code class="language-plaintext highlighter-rouge">GetFoo</code> 这样小伙伴看到方法也有预期</p>
+
+<h2 id="通过局部变量简化获取属性的属性的写法">通过局部变量简化获取属性的属性的写法</h2>
+
+<p>如看到以下的代码，会觉得代码很复杂</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">f1</span> <span class="p">=</span> <span class="n">Axxx</span><span class="p">.</span><span class="n">Bxxxxx</span><span class="p">.</span><span class="n">Cxxxxx</span><span class="p">;</span>
+<span class="kt">var</span> <span class="n">f2</span> <span class="p">=</span> <span class="nf">F3</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">Axxx</span><span class="p">.</span><span class="n">Bxxxxx</span><span class="p">.</span><span class="n">Dxxxxx</span><span class="p">);</span>
+<span class="nf">F4</span><span class="p">(</span><span class="n">f2</span><span class="p">,</span> <span class="n">Axxx</span><span class="p">.</span><span class="n">Bxxxxx</span><span class="p">.</span><span class="n">Exxxxx</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>如果此时将 <code class="language-plaintext highlighter-rouge">Axxx.Bxxxxx</code> 提取出来，相对来说代码看起来就没有那么多</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">bxx</span> <span class="p">=</span> <span class="n">Axxx</span><span class="p">.</span><span class="n">Bxxxxx</span><span class="p">;</span>
+
+<span class="kt">var</span> <span class="n">f1</span> <span class="p">=</span> <span class="n">bxx</span><span class="p">.</span><span class="n">Cxxxxx</span><span class="p">;</span>
+<span class="kt">var</span> <span class="n">f2</span> <span class="p">=</span> <span class="nf">F3</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span> <span class="n">bxx</span><span class="p">.</span><span class="n">Dxxxxx</span><span class="p">);</span>
+<span class="nf">F4</span><span class="p">(</span><span class="n">f2</span><span class="p">,</span> <span class="n">bxx</span><span class="p">.</span><span class="n">Exxxxx</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="小心属性的属性的属性的写法中途存在空值">小心属性的属性的属性的写法中途存在空值</h2>
+
+<p>尽可能不要太多层的属性的属性的写法，如下面代码，听说下面这行代码抛了一个空异常，请问哪个是空</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="n">A</span><span class="p">.</span><span class="n">B</span><span class="p">.</span><span class="n">C</span><span class="p">.</span><span class="n">D</span><span class="p">.</span><span class="n">E</span><span class="p">.</span><span class="n">F</span><span class="p">.</span><span class="n">G</span><span class="p">;</span>
+</code></pre></div></div>
+
+<h2 id="事件的加等">事件的加等</h2>
+
+<p>推荐存在重入的方法对事件加等之前使用减等，至少多余的减等没啥坏处，但是可以解决某些事件被添加多次</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">F1Event</span> <span class="p">+=</span> <span class="n">F2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时如果存在多次的加等，那么 F1Event 触发一次将会调用两次 F2 方法。而这个逻辑在开始写的时候应该是没锅，但是后续小伙伴改动的时候也许会多调用一次 Foo 方法，此时就炸了</p>
+
+<p>修改后的代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">F1Event</span> <span class="p">-=</span> <span class="n">F2</span><span class="p">;</span>
+    <span class="n">F1Event</span> <span class="p">+=</span> <span class="n">F2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>第一次进入的时候，假设 F1Event 是空，此时 <code class="language-plaintext highlighter-rouge">F1Event -= F2</code> 没有任何作用，也不会出错。但是如果是第二次进入的时候，就可以做到干掉之前监听的事件</p>
+
+<p>好，第二个问题就是应该让减等跟随加等，放在相邻的两句代码。如果不遵守会如何，如下面的故事。逗 A 说德熙说要先减等然后再加等，好我写了下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">F1Event</span> <span class="p">-=</span> <span class="n">F2</span><span class="p">;</span>
+
+    <span class="c1">// 其他的业务</span>
+
+    <span class="n">F1Event</span> <span class="p">+=</span> <span class="n">F2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后逗 B 就改了上面的逻辑，中间加了有趣的逻辑，例如再次调用自身</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">F1Event</span> <span class="p">-=</span> <span class="n">F2</span><span class="p">;</span>
+
+    <span class="c1">// 其他的业务</span>
+    <span class="nf">Foo</span><span class="p">();</span>
+
+    <span class="n">F1Event</span> <span class="p">+=</span> <span class="n">F2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>请问上面代码会有什么坑？第一次调用 F1Event 的减等，此时 F1Event 没有被 F2 监听。而第二次调用 Foo 方法，此时 F1Event 没有被 F2 监听。然后在 Foo 里面调用了 <code class="language-plaintext highlighter-rouge">F1Event += F2</code> 加等一次，接着再来一次加等，最后也就是会加等两次</p>
+
+<p>因此推荐上面的规则，让减等和加等放在相邻的代码，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">F1Event</span> <span class="p">-=</span> <span class="n">F2</span><span class="p">;</span>
+    <span class="n">F1Event</span> <span class="p">+=</span> <span class="n">F2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时没有在加等和减等插入逻辑，基本上除非是多线程，那么最终只是监听一次</p>
+
+<h2 id="先执行再加等事件">先执行再加等事件</h2>
+
+<p>大多数的业务，都需要先加等事件再执行业务，否则在遇到有多线程的时候，可能就是偶尔是另一个线程先执行完成，而事件还没有加等，因此没有收到通知</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 执行 A 业务</span>
+<span class="n">foo</span><span class="p">.</span><span class="nf">A</span><span class="p">();</span>
+<span class="n">foo</span><span class="p">.</span><span class="n">AChanged</span> <span class="p">+=</span> <span class="n">Fx</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>推荐的是先执行事件的加等，然后再执行逻辑。当然，这个和具体业务是相关的，也许业务上就是想要忽略一次事件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 先加等事件，这样 A 执行完触发事件就可以被收到</span>
+<span class="n">foo</span><span class="p">.</span><span class="n">AChanged</span> <span class="p">+=</span> <span class="n">Fx</span><span class="p">;</span>
+<span class="c1">// 执行 A 业务</span>
+<span class="n">foo</span><span class="p">.</span><span class="nf">A</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>如果有看到事件的加等，请看一下是否可以放在业务的最开始</p>
+
+<h2 id="字典性能相关">字典性能相关</h2>
+
+<p>字典的时候需要关注的是两次获取的问题</p>
+
+<h3 id="字典获取值">字典获取值</h3>
+
+<p>如需要判断如果字典存在就获取，有下面两个写法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">if</span> <span class="p">(</span><span class="n">Dictionary</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">foo</span><span class="p">))</span>
+    <span class="p">{</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>第二个写法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(</span><span class="n">Dictionary</span><span class="p">.</span><span class="nf">ContainsKey</span><span class="p">(</span><span class="n">xx</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="n">Dictionary</span><span class="p">[</span><span class="n">xx</span><span class="p">];</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>这两个方法哪个性能好？其实 TryGetValue 只需要获取一次，性能比较好，测试请看下面博客</p>
+
+<p><a href="https://blog.lindexi.com/post/C-%E5%AD%97%E5%85%B8-Dictionary-%E7%9A%84-TryGetValue-%E4%B8%8E%E5%85%88%E5%88%A4%E6%96%AD-ContainsKey-%E7%84%B6%E5%90%8E-Get-%E7%9A%84%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94.html">C# 字典 Dictionary 的 TryGetValue 与先判断 ContainsKey 然后 Get 的性能对比</a></p>
+
+<h3 id="字典添加值">字典添加值</h3>
+
+<p>想要判断如果字典不存在值的时候才添加，也有两个写法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span><span class="p">(!</span><span class="n">Dictionary</span><span class="p">.</span><span class="nf">ContainsKey</span><span class="p">(</span><span class="n">xx</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="n">Dictionary</span><span class="p">[</span><span class="n">xx</span><span class="p">]</span> <span class="p">=</span> <span class="n">foo</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>另一个写法是采用 .NET Core 2.0 和 .NET Standard 2.1 添加的 TryAdd 方法添加值</p>
+
+<p>使用 TryAdd 方法的性能会更好，不过这个方法是最近才添加的，也许很多小伙伴不知道</p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.dictionary-2.tryadd?wt.mc_id=MVP">Dictionary.TryAdd(TKey, TValue) Method (System.Collections.Generic)</a></p>
+
+<p><a href="https://blog.lindexi.com/post/dotnet-%E5%AD%97%E5%85%B8%E7%B1%BB%E6%89%BE%E4%B8%8D%E5%88%B0-TryAdd-%E6%96%B9%E6%B3%95.html">dotnet 字典类找不到 TryAdd 方法</a></p>
+
+<h2 id="数组-列表-集合的初始化">数组 列表 集合的初始化</h2>
+
+<p>如果在此上下文中能够明确知道数组 列表 集合将要分配的大小，那么推荐给定一个指定的大小，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">&gt;(</span><span class="m">10</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>此规则不仅适用于 List 同时也适用于 Dictionary 等集合类</p>
+
+<p>给定明确的大小可以减少后续的集合分配内存，提升性能。可以提升内存性能和 CPU 性能。原因是 大部分集合类 底层分配是两倍两倍分配，重新分配的内存需要将原有的拷贝过去。而因为是两倍两倍分配，所以大部分时候都会比需要的多一些</p>
+
+<p>因此给定明确的分配大小可以减少内存分配和拷贝，提升性能</p>
+
+<p>详细请看 <a href="https://www.cnblogs.com/huangxincheng/p/12954569.html">List的扩容机制，你真的明白吗？ - 一线码农 - 博客园</a></p>
+
+<h2 id="尽可能的只读的列表或数组">尽可能的只读的列表或数组</h2>
+
+<p>对于函数的返回值或者属性的获取，如果是返回 List 或 IList 的时候，请想一下，是否可以使用只读列表或只读数组代替。参数传入的时候，也考虑一下是否可以使用只读列表或只读数组传入</p>
+
+<p>尽可能使用只读的列表和数组可以减少在后续开发过程中，遇到数组或列表缓存问题以及元素更改问题，同时可以减少很多 ToList 等的调用</p>
+
+<h2 id="空数组使用-arrayempty-表示">空数组使用 Array.Empty 表示</h2>
+
+<p>如果是在返回值或传入参数等，表示默认值需要用到空的数组或空的枚举，可以使用 Array.Empty 使用共享的静态的对象。当然了，这也仅仅只推荐对于常用的类型这样使用，因此一旦某个类型是很少使用的，同时也只有很少的逻辑会用到，而且这部分逻辑调用次数非常少，那么就需要考虑浪费这个对象的占用内存空间是否值的。此时调用 Array.Empty 将会因为创建泛形的静态字段而占用一个对象的空间，不会进行释放</p>
+
+<h2 id="字符串的大量拼接使用-stringbuilder-代替">字符串的大量拼接使用 StringBuilder 代替</h2>
+
+<p>根据字符串的原理，如果进行不断的拼接，将会带来一点性能损耗。原因是每次拼接都会创建新的字符串对象</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">n</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+<span class="p">{</span>
+    <span class="n">str</span> <span class="p">+=</span> <span class="n">i</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>如上面代码将会创建大量中间的字符串对象，而最终需要的对象仅仅只有一个字符串。一个优化的方法就是使用 StringBuilder 代替 string 此时能提升不少的性能</p>
+
+<h2 id="条件分支的合并">条件分支的合并</h2>
+
+<p>对于同一对象非白即黑的判断，用if……else if……，而不是if……if……两次判断</p>
+
+<p>如以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="p">&gt;</span> <span class="m">10</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// 业务</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// 业务</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>明显此时的 n 如果大于 10 那么进入上面分支，此时就不可能进入下面分支。因此使用 else if 可以减少一次判断逻辑</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="p">&gt;</span> <span class="m">10</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// 业务</span>
+<span class="p">}</span>
+<span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// 业务</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="文件路径相关">文件路径相关</h2>
+
+<h3 id="获取文件夹">获取文件夹</h3>
+
+<p>如果看到获取文件夹的代码是通过自行寻找 <code class="language-plaintext highlighter-rouge">\</code> 字符判断的，如以下逻辑</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">dir</span> <span class="p">=</span> <span class="n">fileName</span><span class="p">.</span><span class="nf">Substring</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">fileName</span><span class="p">.</span><span class="nf">LastIndexOf</span><span class="p">(</span><span class="s">"\\"</span><span class="p">,</span> <span class="n">StringComparison</span><span class="p">.</span><span class="n">Ordinal</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>可以使用 <code class="language-plaintext highlighter-rouge">Path.GetDirectoryName</code> 代替，如以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">dir</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetDirectoryName</span><span class="p">(</span><span class="n">fileName</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="判断文件夹不存在创建文件夹">判断文件夹不存在，创建文件夹</h3>
+
+<p>默认在 Directory.CreateDirectory 方法里面已包含了判断文件夹是否存在，如果存在就不重复判断的逻辑，因此在 <code class="language-plaintext highlighter-rouge">Directory.CreateDirectory</code> 之前判断文件夹是否存在的代码可以删除，如以下逻辑</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">if</span> <span class="p">(!</span><span class="n">Directory</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">dir</span><span class="p">))</span>
+ <span class="p">{</span>
+     <span class="n">Directory</span><span class="p">.</span><span class="nf">CreateDirectory</span><span class="p">(</span><span class="n">dir</span><span class="p">);</span>
+ <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以删除判断文件夹是否存在的逻辑，如以下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Directory</span><span class="p">.</span><span class="nf">CreateDirectory</span><span class="p">(</span><span class="n">dir</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h3 id="拼接路径">拼接路径</h3>
+
+<p>如果看到有代码自己使用 <code class="language-plaintext highlighter-rouge">/</code> 或 <code class="language-plaintext highlighter-rouge">\</code> 拼接路径，可以使用 <code class="language-plaintext highlighter-rouge">Path.Combine</code> 方法代替</p>
+
+<h2 id="task">Task</h2>
+
+<p>如果一个 Task 在做耗时任务，需要看这个任务是不是会使用很长的时间，如果会就需要设置为长时间线程</p>
+
+<h2 id="设置异步方法返回值为-void-不等待">设置异步方法返回值为 void 不等待</h2>
+
+<p>如果设置了异步方法，而且设置了方法的返回值为 void ，那么需要确认是否会出现重入的情况。也就是这个函数可能被多次调用，而且因为没有等待，相同的逻辑被进入多次</p>
+
+<h2 id="锁的对象应该是不变的对象">锁的对象应该是不变的对象</h2>
+
+<p>看到使用 lock 时，请关注 lock 的对象。按照 lock 的工作原理，应该 lock 一个多线程访问的时候为共同的对象。根据这一点可以了解到有以下需要注意的套路</p>
+
+<ul>
+  <li>是否 lock 了一个局部创建的变量</li>
+  <li>是否 lock 了一个本业务外的对象</li>
+  <li>是否 lock 了一个被复制结构体</li>
+</ul>
+
+<p>咱一条条过一下</p>
+
+<p>如下面代码，咱在代码里面 lock 了一个局部创建的变量。那么此时这个变量不能代表多线程进来的时候能访问的相同的对象， 因此这段逻辑的 lock 和没有使用 lock 是等价的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">(</span><span class="n">A</span> <span class="n">a</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">b</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">object</span><span class="p">();</span>
+    <span class="k">lock</span> <span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// 业务</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>稍微改一下上面代码，咱 lock 的是传入的参数，请问此时是否是安全的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">void</span> <span class="nf">Foo</span><span class="p">(</span><span class="n">A</span> <span class="n">a</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">lock</span> <span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// 业务</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时代码是挖坑代码，为什么？在写的时候，也许大部分进入 Foo 的线程能拿到相同的 a 对象，此时的lock就能生效。但是如果后续小伙伴改动了上层业务逻辑，传入的 a 不是相同的对象，那么就 gg 了。相信后续也需要用比较多的精力才能调试出来这里的坑</p>
+
+<p>好，下一条，是否 lock 了一个本业务外的对象</p>
+
+<p>这个问题是也许会出现相互等待的锁，因为很难了解到本业务外的对象是否也会被其他业务拿来作为锁的对象。此时就可能出现了某个线程获取了 A 对象的锁，然后等待本线程执行完成。但是本线程又想要获取 A 对象的锁，此时就挖了一个大坑</p>
+
+<p>不经意会写出的坑还有如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">lock</span> <span class="p">(</span><span class="s">"林德熙是逗比"</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>所有字符串常量只要字面值相同，就是相同对象。敲黑板，这一点很重要，尽量不要将字符串作为锁对象</p>
+
+<p>最后一条，根据 lock 的定义，和第一条相同的坑，因为结构体每次获取都是复制新的值，此时是不安全的，也就是两次结构体虽然代码看起来是相同的对象，但是实际上存在了结构体的复制。虽然一般小伙伴写不出这样的代码，但是写出来就是挖坑</p>
+
+<p>代码审查到锁要求第一个注意的是是否使用了相同的对象，以及使用用的对象是共享的，会被其他业务拿来作为锁的对象</p>
+
+<h2 id="延迟的目的要说明清楚">延迟的目的要说明清楚</h2>
+
+<p>如图</p>
+
+<!-- ![](image/dotnet 一些代码审查套路/dotnet 一些代码审查套路3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020661615332939.jpg" alt="" /></p>
+
+<p>看到 <code class="language-plaintext highlighter-rouge">await Task.Delay(TimeSpan.FromSeconds(2));</code> 的代码需要留意一下，也许这是逗比代码</p>
+
+<h2 id="obsolete-标记建议告知新的方法">Obsolete 标记建议告知新的方法</h2>
+
+<p>咱可以给不适用的属性或方法或类表示 Obsolete 特性，这就能告诉开发者不建议使用此方法或属性等。此时既然建议了不要使用，那么有啥可以代替，或者应该如何做？此时推荐写在 Obsolete 里面，告诉开发者推荐的做法</p>
+
+<p>因此如果代码审查看到仅有 <code class="language-plaintext highlighter-rouge">[Obsolete]</code> 就需要提示添加告诉开发者推荐的做法</p>
+
+<h2 id="在-obsolete-上添加-editorbrowsable-特性让-ide-不加上提示">在 Obsolete 上添加 EditorBrowsable 特性让 IDE 不加上提示</h2>
+
+<p>如果某个成员被标记了 Obsolete 了，那么理论上是不建议后续的开发者还见到的，此时可以考虑加上 EditorBrowsable 特性，让 IDE 不会在代码智能提示的时候列出这一项，写法大概如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System.ComponentModel</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+
+    <span class="p">[</span><span class="nf">EditorBrowsable</span><span class="p">(</span><span class="n">EditorBrowsableState</span><span class="p">.</span><span class="n">Never</span><span class="p">)]</span>
+    <span class="p">[</span><span class="nf">Obsolete</span><span class="p">(</span><span class="s">"这是一个不对的实现，请使用 Foo 代替"</span><span class="p">)]</span>
+</code></pre></div></div>
+
+<h2 id="是否吃掉异常">是否吃掉异常</h2>
+
+<p>如果运行某个业务，然后这个业务没有按照预期执行，也没有什么日志输出。那么此时的调试就坑了。也就是说业务吃掉了异常，会让调用业务的上层觉得很诡异，因为异常没有抛出，上层业务不知道存在异常。如果此时也没有做日志，那么小伙伴想想可以如何调试</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">try</span>
+<span class="p">{</span>
+    <span class="c1">// 业务</span>
+<span class="p">}</span>
+<span class="k">catch</span>
+<span class="p">{</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>在代码审查看到吃掉全部异常的，就需要问问小伙伴是否必要，另外需要问问他是否可以记一下日志</p>
+
+<h2 id="wpf-相关">WPF 相关</h2>
+
+<p>以下是 WPF 专门用的代码审查，里面包括了一些性能提升的建议，以及减少踩坑的建议</p>
+
+<h3 id="空白的容器定义">空白的容器定义</h3>
+
+<p>如果看到了有定义 Panel 的基类如 Grid 或 Canvas 等，同时没有加上 <code class="language-plaintext highlighter-rouge">x:Name</code> 标识，而是这个容器里面没有任何的元素，也许这就是开发调试的时候写出的代码。一个空白的容器在运行的时候也是需要经过布局的，能省就省，如果是完全没有业务用到的，推荐删掉</p>
+
+<h3 id="背景或边框使用-border-代替-grid-控件">背景或边框使用 Border 代替 Grid 控件</h3>
+
+<p>如果只是需要显示背景色或者只是为了显示边框，此时选用 Grid 控件就太重了，可以使用 Border 代替，减少内存占用以及提升对象初始化性能</p>
+
+<h3 id="公开在-xaml-中使用对象的访问权限">公开在 XAML 中使用对象的访问权限</h3>
+
+<p>在 XAML 中使用的对象，包括转换器以及自定义元素等，推荐将这部分类的定义的可访问权限，在不影响整个框架设计的情况下，设置为 public 权限，用来提升 XAML 创建对象的性能</p>
+
+<p>原因是在 XAML 创建对象的时候，会通过反射的方法创建，而如果是反射创建的话，使用 public 权限，可以让类的构造函数被 WPF 框架进行缓存，可以大大提高对象创建的性能</p>
+
+<p>详细请看 <a href="https://blog.lindexi.com/post/dotnet-%E8%AF%BB-WPF-%E6%BA%90%E4%BB%A3%E7%A0%81%E7%AC%94%E8%AE%B0-XAML-%E5%88%9B%E5%BB%BA%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%96%B9%E6%B3%95.html">dotnet 读 WPF 源代码笔记 XAML 创建对象的方法</a></p>
+
+<h3 id="尽可能使用-textblock-代替-label-控件">尽可能使用 TextBlock 代替 Label 控件</h3>
+
+<p>在 WPF 中，存在一个框架设计问题是引入了 Label 这个定位不够明确的控件。在所有使用 Label 的地方，都应该尽可能使用 TextBlock 代替，用来提升性能。其实在 WPF 中 Label 也仅仅只是对 TextBlock 的封装，除了性能比 TextBlock 更差之外，几乎没有别的差别</p>
+
+<h3 id="颜色的创建">颜色的创建</h3>
+
+<p>如果发现有笔刷颜色的创建是采用创建 SolidColorBrush 对象传入一个已知颜色，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">lindexi</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">SolidColorBrush</span><span class="p">(</span><span class="n">Colors</span><span class="p">.</span><span class="n">Black</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>那么应该提出使用 Brushes 静态类代替</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">lindexi</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Black</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>如果 Color 颜色属于已知颜色，但是使用 ARGB 的方式创建，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Color</span> <span class="n">color</span> <span class="p">=</span> <span class="n">Color</span><span class="p">.</span><span class="nf">FromRgb</span><span class="p">(</span><span class="m">0xFF</span><span class="p">,</span> <span class="m">0x00</span><span class="p">,</span> <span class="m">0x00</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>那么应该建议使用 Colors.Red 代替</p>
+
+<p>如果是创建了笔刷，那么尽量调用 Freeze 方法，调用之后能提升很小的性能而且可以在其他线程使用</p>
+
+<h3 id="共用的相同的资源推荐抽出来">共用的相同的资源推荐抽出来</h3>
+
+<p>推荐在 App.xaml 添加引用统一的颜色管理，按照视觉设计的推荐，一个应用里面不建议有大量的不同的颜色，因此完全可以做到统一的一次管理。不仅可以规范视觉设计，还可以减少画刷的重复创建提升性能</p>
+
+<p>如果发现在 ListView 里面的每个项都使用一个独立的用户控件，同时用户控件里面包含了很多可以共用的资源，那么推荐抽离到 App.xaml 里面，减少资源的重复多次创建</p>
+
+<h3 id="空用户控件的-xaml-删除">空用户控件的 XAML 删除</h3>
+
+<p>如果一个用户控件的 XAML 没有代码，而且可以预期后面也不会添加 XAML 代码的，可以删除掉 XAML 文件，此时保存 cs 文件。可以提升一些性能</p>
+
+<h3 id="给-xaml-使用的类应该公开">给 XAML 使用的类应该公开</h3>
+
+<p>给 XAML 里面创建的类型应该是公开的，这样才能发挥 XAML 的创建对象性能。如果类型是 internal 的，那么 XAML 每次创建都需要反射创建</p>
+
+<p>在 XAML 里面的创建的类型包括了用户自定义控件和转换器等类型，这些类型推荐是作为公开的，除非是确实不能公开的类型</p>
+
+<p>为什么使用公开的类型能发挥 XAML 创建对象的性能？请看 <a href="https://blog.lindexi.com/post/dotnet-%E8%AF%BB-WPF-%E6%BA%90%E4%BB%A3%E7%A0%81%E7%AC%94%E8%AE%B0-XAML-%E5%88%9B%E5%BB%BA%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%96%B9%E6%B3%95.html">dotnet 读 WPF 源代码笔记 XAML 创建对象的方法</a></p>
+
+<h3 id="调用-dispatcherinvoke-时需要判断是否可以使用-dispatcherinvokeasync-代替">调用 Dispatcher.Invoke 时需要判断是否可以使用 Dispatcher.InvokeAsync 代替</h3>
+
+<p>在使用 WPF 的 Dispatcher.Invoke 时，如果遇到异步，是有可能出现锁的相互等待。因此更多推荐使用 Dispatcher.InvokeAsync 代替，如果可以修改为 Dispatcher.InvokeAsync 那么推荐使用 Dispatcher.InvokeAsync 代替。如果需要等待 Invoke 内容执行完成，记得使用 Dispatcher.InvokeAsync 时需要加上 await 等待</p>
+
+<p>关于 Dispatcher.Invoke 锁相互等待问题，请看<a href="https://blog.lindexi.com/post/wpf-%E4%BD%BF%E7%94%A8-Dispatcher.Invoke-%E5%86%BB%E7%BB%93%E7%AA%97%E5%8F%A3.html">wpf 使用 Dispatcher.Invoke 冻结窗口</a></p>
+
+<h3 id="调用-dispatcherinvoke-里面使用-shutdown-方法可以使用-invokeshutdown-代替">调用 Dispatcher.Invoke 里面使用 Shutdown 方法可以使用 InvokeShutdown 代替</h3>
+
+<p>如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">Application</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(()</span> <span class="p">=&gt;</span>
+  <span class="p">{</span>
+      <span class="n">Application</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="nf">Shutdown</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+  <span class="p">});</span>
+</code></pre></div></div>
+
+<p>可以使用 InvokeShutdown 代替</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="n">Application</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">InvokeShutdown</span><span class="p">();</span>
+</code></pre></div></div>
+
+<h3 id="获得依赖属性值更新记得释放">获得依赖属性值更新记得释放</h3>
+
+<p>在 WPF 中，可以获得任意 WPF 依赖对象的某个依赖属性的变更通知，如下面方式。下面代码中是获取 Border 类型的 Board 对象的 Padding 属性更改通知</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">DependencyPropertyDescriptor</span><span class="p">.</span><span class="nf">FromProperty</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Border</span><span class="p">)).</span><span class="nf">AddValueChanged</span><span class="p">(</span><span class="n">Board</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">Padding</span> <span class="p">=</span> <span class="n">Board</span><span class="p">.</span><span class="n">Padding</span><span class="p">;</span>
+                    <span class="n">BoardPadding</span> <span class="p">=</span> <span class="n">Board</span><span class="p">.</span><span class="n">Padding</span><span class="p">;</span>
+                <span class="p">});</span>
+</code></pre></div></div>
+
+<p>在调用 AddValueChanged 将会添加一个静态的引用，需要在不需要使用时添加 RemoveValueChanged 进行清除。因此在代码审查，发现了使用委托的形式加上了 AddValueChanged 方法就可以证明没有调用 RemoveValueChanged 方法，也就是说将会让传入的各个参数的对象都不会被回收</p>
+
+<p>推荐的方法是添加一个方法代替委托，然后在不使用的时候调用 RemoveValueChanged 方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="n">DependencyPropertyDescriptor</span><span class="p">.</span><span class="nf">FromProperty</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Border</span><span class="p">)).</span><span class="nf">AddValueChanged</span><span class="p">(</span><span class="n">Board</span><span class="p">,</span>                <span class="n">Board_OnPaddingChanged</span><span class="p">);</span>
+
+     <span class="c1">// 在不使用的时候调用 RemoveValueChanged 方法</span>
+     <span class="n">DependencyPropertyDescriptor</span><span class="p">.</span><span class="nf">FromProperty</span><span class="p">(</span><span class="n">Border</span><span class="p">.</span><span class="n">PaddingProperty</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Border</span><span class="p">)).</span><span class="nf">RemoveValueChanged</span><span class="p">(</span><span class="n">Board</span><span class="p">,</span>                <span class="n">Board_OnPaddingChanged</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>详细请看 <a href="https://blog.lindexi.com/post/WPF-%E5%BC%80%E5%8F%91.html">WPF 开发</a></p>
+
+<h3 id="继承路由事件参数记得重写-invokeeventhandler-方法">继承路由事件参数记得重写 InvokeEventHandler 方法</h3>
+
+<p>如果自己写了某个类型作为路由事件参数，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">LindexiRoutedEventArgs</span> <span class="p">:</span> <span class="n">RoutedEventArgs</span>
+</code></pre></div></div>
+
+<p>那么推荐重写 InvokeEventHandler 方法，重写了这个方法，可以将传入的 Delegate 强转为自己已知的委托类型，然后触发。这样的性能会比较好</p>
+
+<p>以下是一个推荐的路由事件定义的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Owner</span> <span class="p">:</span> <span class="n">UIElement</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">RoutedEvent</span> <span class="n">LindexiEvent</span> <span class="p">=</span> <span class="n">EventManager</span><span class="p">.</span><span class="nf">RegisterRoutedEvent</span><span class="p">(</span><span class="s">"Lindexi"</span><span class="p">,</span>
+            <span class="n">RoutingStrategy</span><span class="p">.</span><span class="n">Bubble</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">LindexiRoutedEventEventHandler</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Owner</span><span class="p">));</span>
+
+        <span class="k">public</span> <span class="k">event</span> <span class="n">LindexiRoutedEventEventHandler</span> <span class="n">Lindexi</span>
+        <span class="p">{</span>
+            <span class="k">add</span> <span class="p">{</span> <span class="nf">AddHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+            <span class="k">remove</span> <span class="p">{</span> <span class="nf">RemoveHandler</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">RaiseLindexiEvent</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">RaiseEvent</span><span class="p">(</span><span class="k">new</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">LindexiEvent</span><span class="p">,</span> <span class="k">this</span><span class="p">));</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">LindexiRoutedEventArgs</span> <span class="p">:</span> <span class="n">RoutedEventArgs</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">RoutedEvent</span> <span class="n">routedEvent</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">routedEvent</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">LindexiRoutedEventArgs</span><span class="p">(</span><span class="n">RoutedEvent</span> <span class="n">routedEvent</span><span class="p">,</span> <span class="kt">object</span> <span class="n">source</span><span class="p">)</span> <span class="p">:</span> <span class="k">base</span><span class="p">(</span><span class="n">routedEvent</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">InvokeEventHandler</span><span class="p">(</span><span class="n">Delegate</span> <span class="n">genericHandler</span><span class="p">,</span> <span class="kt">object</span> <span class="n">genericTarget</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 这个方法的重写是可选的，用途是为了提升性能</span>
+            <span class="c1">// 如无重写，底层将会调用 Delegate.DynamicInvoke 方法触发事件，这是通过反射的方法调用的</span>
+            <span class="kt">var</span> <span class="n">handler</span> <span class="p">=</span> <span class="p">(</span><span class="n">LindexiRoutedEventEventHandler</span><span class="p">)</span> <span class="n">genericHandler</span><span class="p">;</span>
+            <span class="nf">handler</span><span class="p">(</span><span class="n">genericTarget</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">delegate</span> <span class="k">void</span> <span class="nf">LindexiRoutedEventEventHandler</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span>
+        <span class="n">LindexiRoutedEventArgs</span> <span class="n">e</span><span class="p">);</span>
+</code></pre></div></div>
+
+<h2 id="最后再附加小笑话">最后再附加小笑话</h2>
+
+<h3 id="谁删了我的代码">谁删了我的代码</h3>
+
+<p>德熙看到了胡承评论了代码的变量名不好理解，因为德熙觉得这个变量名修改是很快的事情，于是就点了已解决。这时德熙在本地修改了变量名，出去和小伙伴聊天，回来就上传代码。过了几分钟，发现dev上没有自己的代码，而且MegerRequest合并了。是谁删了我的代码？</p>
+
+<p>实际上在德熙提交之前，胡承已经把代码合并到dev了，如果一个分支在合并到dev之后的提交是不会自动合并到dev，需要再次提交请求才会合并。</p>
+
+<p>如果要避免再次发生这个事情，那么在解决完之后提交再点击以解决</p>
+
+<!-- ![](image/dotnet 一些代码审查套路/dotnet 一些代码审查套路2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020661526116350.jpg" alt="" /></p>
+
+:ET

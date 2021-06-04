@@ -1,0 +1,64 @@
+I"f<p>颜色变换是对基础颜色的相关属性的修改。 例如，透明度是与颜色相关的属性。 颜色转换被指定为任何颜色模型标签的子标签，可以在任何颜色加上颜色变换</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/7 10:43:07 -->
+
+<p>大概的写法如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;a:solidFill&gt;</span>
+   <span class="nt">&lt;a:srgbClr</span> <span class="na">val=</span><span class="s">"00B050"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;a:alpha</span> <span class="na">val=</span><span class="s">"51000"</span><span class="nt">/&gt;</span>
+   <span class="nt">&lt;/a:srgbClr&gt;</span>
+<span class="nt">&lt;/a:solidFill&gt;</span> 
+</code></pre></div></div>
+
+<p>上面代码表示一个 使用 Solid Color Brush 的填充(a:solidFill) 颜色是 RGB 颜色，基础值是 <code class="language-plaintext highlighter-rouge">#00B050</code> 在此基础上加上 alpha 通道，值是 EMU 单位的</p>
+
+<p>而 <code class="language-plaintext highlighter-rouge">a:alpha</code> 就是颜色变换的内容，除了 <code class="language-plaintext highlighter-rouge">a:alpha</code> 之后，还有很多其他的颜色变换</p>
+
+<ul>
+  <li>tint：产生较浅版本的输入颜色。 如 10％的色彩是输入颜色的10％，再加上90％的白色。</li>
+  <li>shade：产生其输入颜色的较暗版本。如 10％的阴影是输入颜色的10％加上90％的黑色。</li>
+  <li>comp：产生其输入颜色的补码。例如，红色的补码是绿色。</li>
+  <li>inv：产生其输入颜色的倒数。例如，红色（1,0,0）的倒数是青色（0,1,1）。</li>
+  <li>gray：考虑到红色，绿色和蓝色原色的相对强度，产生其输入颜色的灰度。</li>
+  <li>alpha：产生具有指定不透明度的输入颜色，但其颜色不变。</li>
+  <li>alphaOff：产生其输入颜色或多或少不透明的版本。 Alpha偏移量永远不会使Alpha值超过100％或降低至0％以下；也就是说，转换结果会将alpha固定为[0％，100％]的范围。 如 10％的alpha偏移将50％的不透明度增加到60％。如 -10％的alpha偏移将50％的不透明度降低到40％。</li>
+  <li>alphaMod：产生其输入颜色或多或少的不透明版本。 alpha调制永远不会将alpha增加到100％以上。如 200％的alpha调制使输入颜色的透明度是以前的两倍。 50％的alpha调制使输入颜色的透明度是以前的一半。</li>
+  <li>hue：产生具有指定色相但饱和度和亮度不变的输入颜色。</li>
+  <li>hueOff：改变其色调但不改变其饱和度和亮度，以产生输入颜色。</li>
+  <li>hueMod：产生输入色，其色相由给定百分比调制。</li>
+  <li>sat：以指定的饱和度产生输入颜色，但其色相和亮度不变。通常，饱和度值在[0％，100％]范围内。</li>
+  <li>satOff：产生具有饱和度偏移但色相和亮度不变的输入颜色。</li>
+  <li>satMod：产生输入颜色，其饱和度由给定的百分比调制。 如 50％饱和度调制可将饱和度降低一半。如 200％的饱和度调制会使饱和度加倍。</li>
+  <li>lum：以指定的亮度产生输入颜色，但其色相和饱和度不变。通常，亮度值在[0％，100％]范围内。</li>
+  <li>lumOff：产生输入颜色，其亮度发生变化，但其色相和饱和度不变。</li>
+  <li>lumMod：产生输入颜色，其亮度由给定百分比调制。如 50％的亮度调制将亮度降低一半。如 200％的亮度调制使亮度加倍。单位是千倍百分比</li>
+  <li>red：使用指定的红色分量产生输入颜色，但绿色和蓝色分量不变。</li>
+  <li>redOff：产生输入颜色，其中红色分量发生偏移，而绿色和蓝色分量保持不变。</li>
+  <li>redMod：产生输入颜色，其红色分量由给定的百分比调制。如 50％的红色调制将红色分量减少一半。如 200％的红色调制会使红色分量加倍。</li>
+  <li>green：产生具有指定绿色成分的输入颜色，但红色和蓝色成分不变。</li>
+  <li>greenOff：产生输入颜色，其中绿色分量发生偏移，但红色和蓝色分量保持不变。</li>
+  <li>greenMod：产生输入颜色，其绿色分量由给定的百分比调制。如 50％的绿色调制将绿色分量减少一半。如 200％的绿色调制将绿色分量加倍。</li>
+  <li>blue：产生具有指定蓝色成分的输入颜色，但其红色和绿色成分不变。</li>
+  <li>blueOff：产生输入颜色，其中蓝色分量已移动，但红色和绿色分量未更改。</li>
+  <li>blueMod：产生输入颜色，其蓝色分量由给定的百分比调制。如 50％的蓝色调制可将蓝色分量减少一半。如 200％的蓝色调制使蓝色分量加倍。</li>
+  <li>gamma：产生其输入颜色的sRGB gamma偏移。</li>
+  <li>invGamma：产生其输入颜色的sRGB逆γ偏移。</li>
+</ul>
+
+<p>详细请看 ECMA 376 的 L.4.8.3 文档和 20.1.2.3 Colors 文档</p>
+
+<p>上面的所有标记了百分比的值的单位都是千倍百分比，也就是在 OpenXML 文档里写的值如下面代码，这里的 <code class="language-plaintext highlighter-rouge">lumMod</code> 就是表示百分比</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">a</span><span class="p">:</span><span class="n">schemeClr</span> <span class="n">val</span><span class="p">=</span><span class="s">"tx1"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">a</span><span class="p">:</span><span class="n">lumMod</span> <span class="n">val</span><span class="p">=</span><span class="s">"65000"</span> <span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="n">a</span><span class="p">:</span><span class="n">schemeClr</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>这里的 65000 就是千倍百分比，每 1000 表示百分之一，关于单位请看<a href="https://blog.lindexi.com/post/Office-Open-XML-%E7%9A%84%E6%B5%8B%E9%87%8F%E5%8D%95%E4%BD%8D.html">Office Open XML 的测量单位</a></p>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+:ET

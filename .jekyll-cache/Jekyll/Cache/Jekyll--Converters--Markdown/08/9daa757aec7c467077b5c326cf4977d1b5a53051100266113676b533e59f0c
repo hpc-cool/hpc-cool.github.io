@@ -1,0 +1,73 @@
+I"8<p>很多时候不需要获取整个文件夹的文件，是需要获取文件夹里指定的文件。
+那么 UWP 如何对文件夹里的文件进行过滤，只拿出自己需要的文件？
+本文：如何使用通配符或文件匹配方式在uwp获取文件夹中指定的文件
+如果阅读中发现有任何句子不通的，请告诉我 lindexi_gd@163.com</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<p>假如需要文件 有前缀”latest_” ，简单的方法是拿出 文件夹所有的文件，使用简单的对比，但是这样需要获取文件夹所有文件，速度比较慢。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">previousInfo</span> <span class="p">=</span> <span class="p">(</span><span class="k">await</span> <span class="n">rootFolder</span><span class="p">.</span><span class="nf">GetFilesAsync</span><span class="p">()).</span><span class="nf">Where</span><span class="p">(</span><span class="n">file</span> <span class="p">=&gt;</span> <span class="n">file</span><span class="p">.</span><span class="n">DisplayName</span><span class="p">.</span><span class="nf">StartsWith</span><span class="p">(</span><span class="s">"latest_"</span><span class="p">)).</span><span class="nf">FirstOrDefault</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>一个好的方法是使用 <a href="https://msdn.microsoft.com/zh-cn/library/windows/desktop/bb266512(v=vs.85).aspx">Advanced Query Syntax </a></p>
+
+<p>第一步，新建QueryOptions</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">queryOptions</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">QueryOptions</span><span class="p">();</span>
+<span class="n">queryOptions</span><span class="p">.</span><span class="n">ApplicationSearchFilter</span> <span class="p">=</span> <span class="s">"System.FileName:latest_*"</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>上面的 ApplicationSearchFilter 就是根据 <a href="https://msdn.microsoft.com/zh-cn/library/windows/desktop/bb266512(v=vs.85).aspx">Using Advanced Query Syntax Programmatically (Windows)</a> 写出对应判断</p>
+
+<p>然后从当前的 文件夹 获取匹配</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">StorageFileQueryResult</span> <span class="n">queryResult</span> <span class="p">=</span> <span class="n">folder</span><span class="p">.</span><span class="nf">CreateFileQueryWithOptions</span><span class="p">(</span><span class="n">queryOptions</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>最后就是从结果拿出文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">files</span> <span class="p">=</span> <span class="k">await</span> <span class="n">queryResult</span><span class="p">.</span><span class="nf">GetFilesAsync</span><span class="p">();</span> 
+</code></pre></div></div>
+
+<p>参见：http://stackoverflow.com/a/43829407/6116637</p>
+
+<h2 id="uwp-获取指定后缀的文件">UWP 获取指定后缀的文件</h2>
+
+<p>修改上面的 ApplicationSearchFilter 为下面格式就可以获得后缀</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">System</span><span class="p">.</span><span class="n">FileExtension</span><span class="p">:=</span><span class="s">".后缀"</span>
+</code></pre></div></div>
+
+<p>如获取 txt 可以使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">queryOptions</span><span class="p">.</span><span class="n">ApplicationSearchFilter</span> <span class="p">=</span> <span class="s">"System.FileExtension:=\".txt\""</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>设置后缀除了上面的方法，可以使用简单的设置</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             <span class="kt">var</span> <span class="n">queryOptions</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">QueryOptions</span><span class="p">();</span>
+            <span class="n">queryOptions</span><span class="p">.</span><span class="n">FileTypeFilter</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">".txt"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>除了后缀，还可以设置文件大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">System</span><span class="p">.</span><span class="n">Size</span><span class="p">:</span> 
+
+    <span class="n">System</span><span class="p">.</span><span class="n">Size</span><span class="p">:</span> <span class="p">&lt;</span><span class="m">1</span><span class="n">kb</span>
+</code></pre></div></div>
+
+<p>如果有多个判断，使用 and 连接或 or 连接，但是关于他的语法文档很少。</p>
+
+<p>如果需要的搜索是包括子文件夹的内容，请设置  queryOptions.FolderDepth</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">queryOptions</span><span class="p">.</span><span class="n">FolderDepth</span> <span class="p">=</span> <span class="n">FolderDepth</span><span class="p">.</span><span class="n">Deep</span>
+</code></pre></div></div>
+
+<p>参见：<a href="https://msdn.microsoft.com/zh-cn/library/windows/apps/aa965711.aspx">Advanced Query Syntax</a></p>
+
+<p>https://docs.microsoft.com/en-us/uwp/api/windows.storage.search.queryoptions</p>
+
+:ET

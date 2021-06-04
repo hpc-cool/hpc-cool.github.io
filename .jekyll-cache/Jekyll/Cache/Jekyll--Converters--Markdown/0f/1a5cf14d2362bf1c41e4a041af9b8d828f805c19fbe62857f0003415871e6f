@@ -1,0 +1,120 @@
+I":<p>本文来安利大家一个有趣而且强大的库，通过 F# 和 C# 混合编程编写 WPF 应用，可以在 WPF 中使用到 F# 强大的数据处理能力</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/18 19:59:36 -->
+
+<!-- 发布 -->
+
+<p>在 GitHub 上完全开源 Elmish.WPF 库，请看 <a href="https://github.com/elmish/Elmish.WPF">https://github.com/elmish/Elmish.WPF</a></p>
+
+<p>在阅读本文之前，我期望大家已了解部分 F# 的知识。在学会 C# 基础知识之下，了解 F# 基础知识是很快的，而本文也仅仅只是用到很少的知识。大家都知道，使用 F# 能带来很好的数据处理能力，从 F# 语法层面带来的编写效率提升和编写逻辑的优化，而 F# 本身是没有带 GUI 可视化应用编程的。但是 F# 是在 dotnet 体系下的，天然就可以用上 dotnet 系的技术，当然就包括 WPF 了。因此上一句话说 F# 本身是没有带 GUI 可视化应用编程是完全错误的，因为 F# 可以非常方便调起 WPF 和 WinForms 等成熟的 UI 框架作为自身的可视化应用框架</p>
+
+<p>通过 Elmish.WPF 库，将可以让开发更顺，以下是一个简单的例子。这个例子的代码完全放在 Elmish.WPF 库里，可以通过 <a href="https://github.com/elmish/Elmish.WPF">https://github.com/elmish/Elmish.WPF</a> 获取所有代码</p>
+
+<p>咱依然通过 VS 创建一个空白的 C# 空白 WPF 程序，在此例子里面，几乎没有 C# 多少的戏份，只是为了使用 C# 更好的驱动 WPF 程序而已，因为部分初始化方法和类型等在 F# 写起来的代码量可不少。本文的主角将交给 XAML 和 F# 这两个语言</p>
+
+<p>打开 App.xaml.cs 文件，咱将修改本文仅有的一点 C# 代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">App</span> <span class="p">:</span> <span class="n">Application</span>
+  <span class="p">{</span>
+    <span class="k">public</span> <span class="nf">App</span><span class="p">()</span>
+    <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">Activated</span> <span class="p">+=</span> <span class="n">StartElmish</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">StartElmish</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">EventArgs</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="n">Activated</span> <span class="p">-=</span> <span class="n">StartElmish</span><span class="p">;</span>
+      <span class="n">Program</span><span class="p">.</span><span class="nf">main</span><span class="p">(</span><span class="n">MainWindow</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上代码的 Program 类是在 F# 项目里面编写的，也就是说 C# 语言只是胶水，用来做初始化的连接</p>
+
+<p>接下来咱来创建一个简单的界面，这个界面如下</p>
+
+<!-- ![](image/dotnet 通过 Elmish.WPF 使用 F# 编写 WPF 应用/dotnet 通过 Elmish.WPF 使用 F# 编写 WPF 应用0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2021518204142412.jpg" alt="" /></p>
+
+<p>基本功能是点击加号和减号分别实现当前数值的加减</p>
+
+<p>大概的 XAML 代码如下</p>
+
+<pre><code class="language-xaml">  &lt;StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,25,0,0"&gt;
+    &lt;TextBlock Text="{Binding CounterValue, StringFormat='Counter value: {0}'}" Width="110" Margin="0,5,10,5" /&gt;
+    &lt;Button Command="{Binding Decrement}" Content="-" Margin="0,5,10,5" Width="30" /&gt;
+    &lt;Button Command="{Binding Increment}" Content="+" Margin="0,5,10,5" Width="30" /&gt;
+    &lt;TextBlock Text="{Binding StepSize, StringFormat='Step size: {0}'}" Width="70" Margin="0,5,10,5" /&gt;
+    &lt;Slider Value="{Binding StepSize}" TickFrequency="1" Maximum="10" Minimum="1" IsSnapToTickEnabled="True" Width="100" Margin="0,5,10,5" /&gt;
+    &lt;Button Command="{Binding Reset}" Content="Reset" Margin="0,5,10,5" Width="50" /&gt;
+  &lt;/StackPanel&gt;
+</code></pre>
+
+<p>在 XAML 中定义了命令和值的绑定，没有做实际的实现</p>
+
+<p>接下来创建一个 F# 项目，将这个项目被刚才创建的 WPF 项目所引用，将 WPF 项目作为启动项目。运行的顺序是先启动 WPF 项目，进入 App 类里面，在 App 的 Activated 事件，调用 F# 项目的逻辑，然后接下来就交给 F# 来进行数据绑定，在 F# 项目中，将给 MainWindow 附加自身作为 DataContext 数据用于在 XAML 绑定</p>
+
+<p>在 F# 的 Program.fs 文件里面添加如下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>module Elmish.WPF.Samples.SingleCounter.Program
+
+open Serilog
+open Serilog.Extensions.Logging
+open Elmish.WPF
+
+type Model =
+  { Count: int
+    StepSize: int }
+
+type Msg =
+  | Increment
+  | Decrement
+  | SetStepSize of int
+  | Reset
+
+let init =
+  { Count = 0
+    StepSize = 1 }
+
+let canReset = (&lt;&gt;) init
+
+let update msg m =
+  match msg with
+  | Increment -&gt; { m with Count = m.Count + m.StepSize }
+  | Decrement -&gt; { m with Count = m.Count - m.StepSize }
+  | SetStepSize x -&gt; { m with StepSize = x }
+  | Reset -&gt; init
+
+let bindings () : Binding&lt;Model, Msg&gt; list = [
+  "CounterValue" |&gt; Binding.oneWay (fun m -&gt; m.Count)
+  "Increment" |&gt; Binding.cmd Increment
+  "Decrement" |&gt; Binding.cmd Decrement
+  "StepSize" |&gt; Binding.twoWay(
+    (fun m -&gt; float m.StepSize),
+    int &gt;&gt; SetStepSize)
+  "Reset" |&gt; Binding.cmdIf(Reset, canReset)
+]
+
+let designVm = ViewModel.designInstance init (bindings ())
+
+let main window =
+
+  let logger =
+    LoggerConfiguration()
+      .MinimumLevel.Override("Elmish.WPF.Update", Events.LogEventLevel.Verbose)
+      .MinimumLevel.Override("Elmish.WPF.Bindings", Events.LogEventLevel.Verbose)
+      .MinimumLevel.Override("Elmish.WPF.Performance", Events.LogEventLevel.Verbose)
+      .WriteTo.Console()
+      .CreateLogger()
+
+  WpfProgram.mkSimple (fun () -&gt; init) update bindings
+  |&gt; WpfProgram.withLogger (new SerilogLoggerFactory(logger))
+  |&gt; WpfProgram.startElmishLoop window
+</code></pre></div></div>
+
+<p>十分简单的逻辑，在 F# 定义的命令等将可以通过 Elmish.WPF 库和 WPF 的 XAML 绑定，相当于 XAML 提供界面逻辑，而 F# 提供数据驱动的处理逻辑。各个语言的职责是 XAML 负责界面，而 F# 负责后台逻辑。将 XAML 和 F# 连接起来以及应用程序的启动是 C# 语言</p>
+
+:ET

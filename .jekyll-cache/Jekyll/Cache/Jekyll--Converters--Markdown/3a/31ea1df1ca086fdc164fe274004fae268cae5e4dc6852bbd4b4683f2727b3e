@@ -1,0 +1,91 @@
+I"�<p>在 ScrollViewer 如果需要收到触摸消息，通过 Manipulation 触摸滚动，不能只是通过设置 IsManipulationEnabled 方法，还需要设置 PanningMode 才可以</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 10:21:47 -->
+
+<!-- csdn -->
+
+<p>那么如何知道滚动条的触摸事件是否触发，可以写一个类继承滚动条</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">StisvearpaHudalserevow</span> <span class="p">:</span> <span class="n">ScrollViewer</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnManipulationDelta</span><span class="p">(</span><span class="n">ManipulationDeltaEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"OnManipulationDelta"</span><span class="p">);</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnManipulationDelta</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnManipulationCompleted</span><span class="p">(</span><span class="n">ManipulationCompletedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"OnManipulationCompleted"</span><span class="p">);</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnManipulationCompleted</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnManipulationStarted</span><span class="p">(</span><span class="n">ManipulationStartedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"OnManipulationStarted"</span><span class="p">);</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnManipulationStarted</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>在界面添加这个类，如果有触摸输入就可以通过输出看到了，简单一个界面，可以看到默认的滚动条是不能滚动的</p>
+
+<!-- ![](image/WPF 开启 ScrollViewer 的触摸滚动/WPF 开启 ScrollViewer 的触摸滚动0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018122612330218" alt="" /></p>
+
+<p>同时触摸的时候没有输出</p>
+
+<p>尝试添加 IsManipulationEnabled 方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">StisvearpaHudalserevow</span> <span class="n">IsManipulationEnabled</span><span class="p">=</span><span class="s">"True"</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到有输出但是就是不能滚动</p>
+
+<p>在我博客 <a href="https://blog.lindexi.com/post/WPF-%E6%8B%96%E5%8A%A8%E6%BB%9A%E5%8A%A8.html">WPF 拖动滚动</a> 告诉大家通过 PanningMode 的方法可以让滚动条滚动</p>
+
+<p>只要在初始的过程设置了 PanningMode 因为在代码里面通过 InvalidateProperty 重新设置 IsManipulationEnabled 的值，所以只需要设置 PanningMode 就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>       <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     Method which sets IsManipulationEnabled</span>
+        <span class="c1">///     property based on the PanningMode</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnPanningModeChanged</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">PanningMode</span> <span class="n">mode</span> <span class="p">=</span> <span class="n">PanningMode</span><span class="p">;</span>
+ 
+            <span class="c1">// Call InvalidateProperty for IsManipulationEnabledProperty</span>
+            <span class="c1">// to reset previous SetCurrentValueInternal if any. </span>
+            <span class="c1">// Then call SetCurrentValueInternal to</span>
+            <span class="c1">// set the value of these properties if needed.</span>
+            <span class="nf">InvalidateProperty</span><span class="p">(</span><span class="n">IsManipulationEnabledProperty</span><span class="p">);</span>
+ 
+            <span class="k">if</span> <span class="p">(</span><span class="n">mode</span> <span class="p">!=</span> <span class="n">PanningMode</span><span class="p">.</span><span class="n">None</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">SetCurrentValueInternal</span><span class="p">(</span><span class="n">IsManipulationEnabledProperty</span><span class="p">,</span> <span class="n">BooleanBoxes</span><span class="p">.</span><span class="n">TrueBox</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是如果在触摸的过程，出现了设置 IsManipulationEnabled 为 false 就会触发 OnManipulationCompleted 事件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnManipulationStarted</span><span class="p">(</span><span class="n">ManipulationStartedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"OnManipulationStarted"</span><span class="p">);</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnManipulationStarted</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="nf">FromSeconds</span><span class="p">(</span><span class="m">3</span><span class="p">)).</span><span class="nf">ContinueWith</span><span class="p">(</span><span class="n">_</span> <span class="p">=&gt;</span> <span class="n">IsManipulationEnabled</span> <span class="p">=</span> <span class="k">false</span><span class="p">,</span>
+                <span class="n">TaskScheduler</span><span class="p">.</span><span class="nf">FromCurrentSynchronizationContext</span><span class="p">());</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>还可以通过设置 <code class="language-plaintext highlighter-rouge">IsHitTestVisible = false</code> 触发 OnManipulationCompleted 同时触发之后也没有触摸</p>
+
+:ET

@@ -1,0 +1,81 @@
+I"�<p>本文告诉大家如何使用一段代码炸掉 VisualStudio 请不要在正式环境使用这个代码</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/1/17 9:55:29 -->
+
+<!-- csdn -->
+
+<p>创建一个空白的 dotnet core 程序，当然，其他的项目也可以</p>
+
+<p>然后输入下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">foo</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">string</span><span class="p">(</span><span class="err">'\</span><span class="n">u0483</span><span class="err">'</span><span class="p">,</span> <span class="m">550</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在代码里面添加一个断点，然后运行</p>
+
+<p>打开自动窗口，可以看到有一个变量</p>
+
+<!-- ![](image/一段能让 VisualStudio 炸掉的代码/一段能让 VisualStudio 炸掉的代码0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F201911517649978" alt="" /></p>
+
+<p>然后双击一下值，尝试修改 foo 的值</p>
+
+<!-- ![](image/一段能让 VisualStudio 炸掉的代码/一段能让 VisualStudio 炸掉的代码1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191151773418" alt="" /></p>
+
+<p>可以看到你的 VS 已经变颜色了</p>
+
+<p>因为这是 WPF 的一个已知的坑，通过 TextBox 显示这个字符串就会 gg 的问题</p>
+
+<p>代码 https://github.com/dotnet-campus/wpf-issues/tree/master/WPFAppsCrashIfDisplayTextWithTooManyCombiningMarks</p>
+
+<p><a href="https://github.com/dotnet/wpf/issues/244">WPF apps crash if they display text with too many combining marks</a></p>
+
+<p>现在的WPF开源了，有什么坑都可以在这里面喷</p>
+
+<p>当然，开源了 WPF 是很有底气的，既然你看到问题了，不要只是喷，你自己修啊</p>
+
+<p>另外，这个坑在 UWP 居然不会让 UWP 炸掉，只是让他的显示有些诡异</p>
+
+<p>步骤：</p>
+
+<ol>
+  <li>
+    <p>创建一个 xaml 界面，在里面添加一个 TextBox 元素</p>
+  </li>
+  <li>
+    <p>在后台代码给这个 TextBox 设置上面的字符串</p>
+  </li>
+</ol>
+
+<p>下面是 xaml 代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TextBox</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"Txt"</span> <span class="n">HorizontalAlignment</span><span class="p">=</span><span class="s">"Center"</span> <span class="n">VerticalAlignment</span><span class="p">=</span><span class="s">"Center"</span><span class="p">&gt;&lt;/</span><span class="n">TextBox</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>下面是后台代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">Txt</span><span class="p">.</span><span class="n">Text</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">string</span><span class="p">(</span><span class="err">'\</span><span class="n">u0483</span><span class="err">'</span><span class="p">,</span> <span class="m">550</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>现在尝试运行代码，可以看到下面的界面，打开的时候发现 TextBox 填充整个页面，再点击的时候就还原了。</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20191179354379" alt="" /></p>
+
+<p>已经将这个坑放在了 github 上 <a href="https://github.com/Microsoft/microsoft-ui-xaml/issues/194">UWP TextBox will Fill of the Page if they display text with too many combining marks</a> 欢迎小伙伴帮我修语法</p>
+
+:ET

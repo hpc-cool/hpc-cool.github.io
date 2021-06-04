@@ -1,0 +1,323 @@
+I"a�<p>只需不到 150 行代码就能实现一个支持多指顺滑的笔迹书写的应用。当然，这个应用除了笔迹书写外，没有其他任何功能。本文将不会使用 InkCanvas 而是使用更底的方法，通过 Stroke 进行绘制</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/20 9:46:18 -->
+
+<p>这是我在写测试应用的时候，我想要了解我能用多少行代码实现一个多指顺滑的笔迹书写的核心逻辑。其实在 WPF 下，可以通过 Stroke 类的辅助，不断给 Stroke 添加点的方式，做到绘制出笔迹</p>
+
+<p>绘制笔迹需要给定一个 DrawingAttributes 告诉笔迹的粗细和颜色等</p>
+
+<p>其次需要创建 Stroke 类，在这个类的 StylusPoints 数组里面不断添加点，此时添加的点将会被加入到笔迹里面。在 WPF 的笔迹实际上算法就是将离散的点连接作为一段顺滑的笔迹</p>
+
+<p>那么如何在界面显示出来？在 Stroke 类提供了 Draw 方法，可以绘制到 DrawingContext 里面</p>
+
+<p>根据上面这些内容，咱写一个 StrokeVisual 继承 DrawingVisual 类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">///     用于显示笔迹的类</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">StrokeVisual</span> <span class="p">:</span> <span class="n">DrawingVisual</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>第一步就是拿到 DrawingAttributes 的值，可以使用如下代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     创建显示笔迹的类</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="nf">StrokeVisual</span><span class="p">()</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="k">new</span> <span class="nf">DrawingAttributes</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Color</span> <span class="p">=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">Red</span><span class="p">,</span>
+            <span class="n">FitToCurve</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span>
+            <span class="n">Width</span> <span class="p">=</span> <span class="m">5</span>
+        <span class="p">})</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     创建显示笔迹的类</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="drawingAttributes"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="nf">StrokeVisual</span><span class="p">(</span><span class="n">DrawingAttributes</span> <span class="n">drawingAttributes</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_drawingAttributes</span> <span class="p">=</span> <span class="n">drawingAttributes</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="n">DrawingAttributes</span> <span class="n">_drawingAttributes</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>第二步就是实现不断添加点的功能</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     设置或获取显示的笔迹</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">Stroke</span> <span class="n">Stroke</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     在笔迹中添加点</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="point"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">StylusPoint</span> <span class="n">point</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Stroke</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">collection</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StylusPointCollection</span> <span class="p">{</span><span class="n">point</span><span class="p">};</span>
+                <span class="n">Stroke</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Stroke</span><span class="p">(</span><span class="n">collection</span><span class="p">)</span> <span class="p">{</span><span class="n">DrawingAttributes</span> <span class="p">=</span> <span class="n">_drawingAttributes</span><span class="p">};</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">Stroke</span><span class="p">.</span><span class="n">StylusPoints</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">point</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>最后一步是让 Stroke 回执到 DrawingContext 里面。在 StrokeVisual 类，是继承 DrawingVisual 的，所以可以通过调用 RenderOpen 的方法实现</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     重新画出笔迹</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Redraw</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="nn">var</span> <span class="n">dc</span> <span class="p">=</span> <span class="nf">RenderOpen</span><span class="p">();</span>
+            <span class="n">Stroke</span><span class="p">.</span><span class="nf">Draw</span><span class="p">(</span><span class="n">dc</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在拿到一个 Visual 类，也就是 StrokeVisual 可以如何在 WPF 中显示？最简单的方法是加一个自定义的类继承 FrameworkElement 来做，当然，在我自己的工具库里面是有默认实现的，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">VisualCanvas</span> <span class="p">:</span> <span class="n">FrameworkElement</span>
+    <span class="p">{</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="n">Visual</span> <span class="nf">GetVisualChild</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Visual</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="kt">int</span> <span class="n">VisualChildrenCount</span> <span class="p">=&gt;</span> <span class="m">1</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="nf">VisualCanvas</span><span class="p">(</span><span class="n">DrawingVisual</span> <span class="n">visual</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Visual</span> <span class="p">=</span> <span class="n">visual</span><span class="p">;</span>
+            <span class="nf">AddVisualChild</span><span class="p">(</span><span class="n">visual</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">DrawingVisual</span> <span class="n">Visual</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码需要注意的有一点就是需要添加视觉树，通过 AddVisualChild 方法，否则加入的控件将只会被渲染一次。敲黑板，不在视觉树上的元素将不会持续渲染</p>
+
+<p>接下来就是实现多指了，实现方式是通过 StylusMove 和 StylusUp 事件实现。每一个手指将会对应一个 StrokeVisual 类，因此 StrokeVisual 类只包含一条笔迹</p>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">e.StylusDevice.Id</code> 可以区分当前触摸的是哪个手指，通过写一个字典就能快速做到分开多个触摸</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">StrokeVisual</span><span class="p">&gt;</span> <span class="n">StrokeVisualList</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">StrokeVisual</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>添加一个辅助方法，通过输入的 Id 返回一个 StrokeVisual 类，如果输入的 Id 不存在，也就是这是第一个按下，此时创建一个新的，同时加入到界面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">StrokeVisual</span> <span class="nf">GetStrokeVisual</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">StrokeVisualList</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">visual</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">visual</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">strokeVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StrokeVisual</span><span class="p">();</span>
+            <span class="n">StrokeVisualList</span><span class="p">[</span><span class="n">id</span><span class="p">]</span> <span class="p">=</span> <span class="n">strokeVisual</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">visualCanvas</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualCanvas</span><span class="p">(</span><span class="n">strokeVisual</span><span class="p">);</span>
+            <span class="n">Grid</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">visualCanvas</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="n">strokeVisual</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接下来就是在 StylusMove 的事件，拿到触摸点，传入到 StrokeVisual 类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_StylusMove</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">StylusEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">strokeVisual</span> <span class="p">=</span> <span class="nf">GetStrokeVisual</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">StylusDevice</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">stylusPointCollection</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetStylusPoints</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stylusPoint</span> <span class="k">in</span> <span class="n">stylusPointCollection</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">strokeVisual</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">StylusPoint</span><span class="p">(</span><span class="n">stylusPoint</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="n">stylusPoint</span><span class="p">.</span><span class="n">Y</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="n">strokeVisual</span><span class="p">.</span><span class="nf">Redraw</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>为什么使用 Stylus 事件，而不是 Touch 事件？原因有两个，第一个是 Stylus 是触笔，也就是触摸和笔都会进入。第二个是通过 GetStylusPoints 可以拿到密集的点集，此时绘制才能做到顺滑。那么为什么 GetStylusPoints 可以获取比 WM_Touch 更密集的点？原因是 GetStylusPoints 是通过 RealTime Stylus 实时触摸获取的点</p>
+
+<p>最后一步就是在手指抬起的时候，删除字典的对应的值。因此触摸的 Id 是在相同时刻是不同的，但是取值只有0-255也就是最多画 255 画之后，将会存在至少一次 Id 的重复</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainWindow_StylusUp</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">StylusEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">StrokeVisualList</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">StylusDevice</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这样就实现了一个简单的多指顺滑的笔迹书写，但这不是一个高性能的书写方案。有啥可以做到虐次方案的性能的？有两个点，一个是输入一个是输出。这里的输入就是接收触摸，而输出就是渲染</p>
+
+<p>拿到触摸最快的方法是通过 <a href="https://blog.lindexi.com/post/WPF-%E9%AB%98%E6%80%A7%E8%83%BD%E7%AC%94.html">WPF 高性能笔</a> 的 <a href="https://blog.lindexi.com/post/WPF-%E9%AB%98%E9%80%9F%E4%B9%A6%E5%86%99-StylusPlugIn-%E5%8E%9F%E7%90%86.html">WPF 高速书写 StylusPlugIn 原理</a> 方法拿到触摸点，简单的代码请看 <a href="https://blog.lindexi.com/post/WPF-%E6%9C%80%E5%B0%8F%E7%9A%84%E4%BB%A3%E7%A0%81%E4%BD%BF%E7%94%A8-DynamicRenderer-%E4%B9%A6%E5%86%99.html">WPF 最小的代码使用 DynamicRenderer 书写</a></p>
+
+<p>而渲染部分，请看 <a href="https://blog.lindexi.com/post/%E9%AB%98%E6%80%A7%E8%83%BD%E7%AC%94%E8%BF%B9%E5%8E%9F%E7%90%86.html">高性能笔迹原理</a></p>
+
+<p>渲染相对复杂，最简单的就是不要让 Stroke 包含太多的点，如果包含很多点，那么分为多个不同的 Stroke 对象，这样每次渲染的内容都不会很多，渲染性能相对比较高</p>
+
+<p>本文的代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/4317c4c015365dc65284124aa38fca52c888b70e/KemjawyecawDurbahelal">github</a> 欢迎小伙伴访问</p>
+
+<p>全部代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">MultiTouchInkCanvas</span> <span class="p">:</span> <span class="n">Grid</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="nf">MultiTouchInkCanvas</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 只是为了命中测试，设置背景是透明，这样就能收到输入</span>
+            <span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Transparent</span><span class="p">;</span>
+
+            <span class="n">HorizontalAlignment</span> <span class="p">=</span> <span class="n">HorizontalAlignment</span><span class="p">.</span><span class="n">Stretch</span><span class="p">;</span>
+            <span class="n">VerticalAlignment</span> <span class="p">=</span> <span class="n">VerticalAlignment</span><span class="p">.</span><span class="n">Stretch</span><span class="p">;</span>
+
+            <span class="c1">// 使用 StylusMove 事件的速度将会比较慢</span>
+            <span class="n">StylusMove</span> <span class="p">+=</span> <span class="n">MultiTouchInkCanvas_StylusMove</span><span class="p">;</span>
+            <span class="n">StylusUp</span> <span class="p">+=</span> <span class="n">MultiTouchInkCanvas_StylusUp</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MultiTouchInkCanvas_StylusUp</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">StylusEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">StrokeVisualList</span><span class="p">.</span><span class="nf">Remove</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">StylusDevice</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MultiTouchInkCanvas_StylusMove</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">StylusEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">strokeVisual</span> <span class="p">=</span> <span class="nf">GetStrokeVisual</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="n">StylusDevice</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">stylusPointCollection</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetStylusPoints</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">stylusPoint</span> <span class="k">in</span> <span class="n">stylusPointCollection</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">strokeVisual</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">StylusPoint</span><span class="p">(</span><span class="n">stylusPoint</span><span class="p">.</span><span class="n">X</span><span class="p">,</span> <span class="n">stylusPoint</span><span class="p">.</span><span class="n">Y</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="n">strokeVisual</span><span class="p">.</span><span class="nf">Redraw</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 其实不使用 Grid 而使用自己定制的 Panel 的性能能更好，但是这里只是给例子而已</span>
+        <span class="k">public</span> <span class="n">Grid</span> <span class="n">Grid</span> <span class="p">=&gt;</span> <span class="k">this</span><span class="p">;</span>
+
+        <span class="c1">// 如果后续性能优化，使用触摸线程拿到输入，那么记得鼠标和触摸是两个不同线程，不能使用字典</span>
+        <span class="k">private</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">StrokeVisual</span><span class="p">&gt;</span> <span class="n">StrokeVisualList</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">StrokeVisual</span><span class="p">&gt;();</span>
+
+        <span class="k">private</span> <span class="n">StrokeVisual</span> <span class="nf">GetStrokeVisual</span><span class="p">(</span><span class="kt">int</span> <span class="n">id</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">StrokeVisualList</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">visual</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">visual</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">strokeVisual</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StrokeVisual</span><span class="p">();</span>
+            <span class="n">StrokeVisualList</span><span class="p">[</span><span class="n">id</span><span class="p">]</span> <span class="p">=</span> <span class="n">strokeVisual</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">visualCanvas</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">VisualCanvas</span><span class="p">(</span><span class="n">strokeVisual</span><span class="p">);</span>
+            <span class="n">Grid</span><span class="p">.</span><span class="n">Children</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">visualCanvas</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="n">strokeVisual</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+
+    <span class="c1">/// &lt;summary&gt;</span>
+    <span class="c1">///     用于显示笔迹的类</span>
+    <span class="c1">/// &lt;/summary&gt;</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">StrokeVisual</span> <span class="p">:</span> <span class="n">DrawingVisual</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     创建显示笔迹的类</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="nf">StrokeVisual</span><span class="p">()</span> <span class="p">:</span> <span class="k">this</span><span class="p">(</span><span class="k">new</span> <span class="nf">DrawingAttributes</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Color</span> <span class="p">=</span> <span class="n">Colors</span><span class="p">.</span><span class="n">Red</span><span class="p">,</span>
+            <span class="n">FitToCurve</span> <span class="p">=</span> <span class="k">true</span><span class="p">,</span>
+            <span class="n">Width</span> <span class="p">=</span> <span class="m">5</span>
+        <span class="p">})</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     创建显示笔迹的类</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="drawingAttributes"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="nf">StrokeVisual</span><span class="p">(</span><span class="n">DrawingAttributes</span> <span class="n">drawingAttributes</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_drawingAttributes</span> <span class="p">=</span> <span class="n">drawingAttributes</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">readonly</span> <span class="n">DrawingAttributes</span> <span class="n">_drawingAttributes</span><span class="p">;</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     设置或获取显示的笔迹</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">Stroke</span> <span class="n">Stroke</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     在笔迹中添加点</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="point"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">StylusPoint</span> <span class="n">point</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Stroke</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">collection</span> <span class="p">=</span> <span class="k">new</span> <span class="n">StylusPointCollection</span> <span class="p">{</span><span class="n">point</span><span class="p">};</span>
+                <span class="n">Stroke</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Stroke</span><span class="p">(</span><span class="n">collection</span><span class="p">)</span> <span class="p">{</span><span class="n">DrawingAttributes</span> <span class="p">=</span> <span class="n">_drawingAttributes</span><span class="p">};</span>
+            <span class="p">}</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="n">Stroke</span><span class="p">.</span><span class="n">StylusPoints</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">point</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">///     重新画出笔迹</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Redraw</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">using</span> <span class="nn">var</span> <span class="n">dc</span> <span class="p">=</span> <span class="nf">RenderOpen</span><span class="p">();</span>
+            <span class="n">Stroke</span><span class="p">.</span><span class="nf">Draw</span><span class="p">(</span><span class="n">dc</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">VisualCanvas</span> <span class="p">:</span> <span class="n">FrameworkElement</span>
+    <span class="p">{</span>
+        <span class="k">protected</span> <span class="k">override</span> <span class="n">Visual</span> <span class="nf">GetVisualChild</span><span class="p">(</span><span class="kt">int</span> <span class="n">index</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Visual</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">protected</span> <span class="k">override</span> <span class="kt">int</span> <span class="n">VisualChildrenCount</span> <span class="p">=&gt;</span> <span class="m">1</span><span class="p">;</span>
+
+        <span class="k">public</span> <span class="nf">VisualCanvas</span><span class="p">(</span><span class="n">DrawingVisual</span> <span class="n">visual</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Visual</span> <span class="p">=</span> <span class="n">visual</span><span class="p">;</span>
+            <span class="nf">AddVisualChild</span><span class="p">(</span><span class="n">visual</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">DrawingVisual</span> <span class="n">Visual</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是无论如何做，都没有 UWP 的快。除非在 WPF 中上 Composition API <a href="https://blog.lindexi.com/post/WPF-%E4%BD%BF%E7%94%A8-Composition-API-%E5%81%9A%E9%AB%98%E6%80%A7%E8%83%BD%E6%B8%B2%E6%9F%93.html">使用 Composition API 做高性能渲染</a> 再加上 <a href="https://blog.lindexi.com/post/WPF-%E4%BD%BF%E7%94%A8-Win2d-%E6%B8%B2%E6%9F%93.html">WPF 使用 Win2d 渲染</a>的方法，使用 <a href="https://blog.lindexi.com/post/win10-uwp-%E9%80%9A%E8%BF%87-win2d-%E7%94%BB%E5%87%BA%E7%AC%94%E8%BF%B9.html">win2d 画出笔迹</a> 和 <a href="https://blog.lindexi.com/post/win10-uwp-win2d-CanvasVirtualControl-%E4%B8%8E-CanvasAnimatedControl.html">win2d CanvasVirtualControl</a> 存放绘制的笔迹</p>
+
+<p>更多笔迹相关请看</p>
+
+<ul>
+  <li><a href="https://lindexi.gitee.io/post/WPF-%E6%B8%B2%E6%9F%93%E5%8E%9F%E7%90%86.html">WPF 渲染原理</a></li>
+  <li><a href="https://blog.lindexi.com/post/%E9%AB%98%E6%80%A7%E8%83%BD%E7%AC%94%E8%BF%B9%E5%8E%9F%E7%90%86.html">高性能笔迹原理</a></li>
+  <li><a href="https://blog.lindexi.com/post/WPF-%E9%AB%98%E6%80%A7%E8%83%BD%E7%AC%94.html">WPF 高性能笔</a></li>
+  <li><a href="https://blog.lindexi.com/post/WPF-%E9%AB%98%E9%80%9F%E4%B9%A6%E5%86%99-StylusPlugIn-%E5%8E%9F%E7%90%86.html">WPF 高速书写 StylusPlugIn 原理</a></li>
+  <li><a href="https://blog.lindexi.com/post/WPF-%E6%9C%80%E5%B0%8F%E7%9A%84%E4%BB%A3%E7%A0%81%E4%BD%BF%E7%94%A8-DynamicRenderer-%E4%B9%A6%E5%86%99.html">WPF 最小的代码使用 DynamicRenderer 书写</a></li>
+  <li><a href="https://blog.lindexi.com/post/WPF-%E4%BD%BF%E7%94%A8-Composition-API-%E5%81%9A%E9%AB%98%E6%80%A7%E8%83%BD%E6%B8%B2%E6%9F%93.html">WPF 使用 Composition API 做高性能渲染</a></li>
+  <li><a href="https://blog.lindexi.com/post/WPF-%E4%BD%BF%E7%94%A8-Win2d-%E6%B8%B2%E6%9F%93.html">WPF 使用 Win2d 渲染</a></li>
+  <li><a href="https://blog.lindexi.com/post/win10-uwp-win2d-CanvasVirtualControl-%E4%B8%8E-CanvasAnimatedControl.html">win10 uwp win2d CanvasVirtualControl 与 CanvasAnimatedControl</a></li>
+</ul>
+
+:ET

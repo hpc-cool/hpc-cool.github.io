@@ -1,0 +1,45 @@
+I"g<p>在 Unity 的 RenderTexture 是一个特殊的纹理，这个纹理是渲染器纹理，可以用于关联摄像机画面和物体，做到在物体上附加某个摄像机画面的纹理</p>
+
+<!--more-->
+
+<!-- CreateTime:6/5/2020 6:48:51 PM -->
+
+<p>这个 RenderTexture 比较特殊，一方面是获取某个相机的画面，另一个方面是作为纹理放在某个物体上</p>
+
+<p>首先右击创建，创建一个渲染器纹理</p>
+
+<!-- ![](image/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202065184948104.jpg" alt="" /></p>
+
+<p>接着将这个渲染器纹理改一下名字，如修改为 RenderTexture1 的名字</p>
+
+<p>接着创建一个相机，这个相机的内容将会作为 RenderTexture1 的内容，做法是选择摄像机，拖动 RenderTexture1 放在目标纹理上，请看下图</p>
+
+<!-- ![](image/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202065185346161.jpg" alt="" /></p>
+
+<p>然后将这个 RenderTexture1 拖放到物体上，如一个 Cube 上，此时这个 Cube 就会显示相机的内容</p>
+
+<!-- ![](image/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2020651855452148.jpg" alt="" /></p>
+
+<p>现在可以看到的效果如下图，下图选中的摄像机的画面将会作为纹理贴到立方体上</p>
+
+<!-- ![](image/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果/Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果3.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202065185702346.jpg" alt="" /></p>
+
+<p>实在不知道怎么做的，不妨看看我的视频 <a href="https://v.huya.com/play/347702616.html">Unity 2019.3 将 RenderTexture 绑定到相机和物体作出镜子效果_一起学精彩视频_虎牙视频</a></p>
+
+<embed src="https://vhuya-static.huya.com/video/vppp.swf" allowfullscreen="true" quality="high" height="" width="" align="middle" allowscriptaccess="always" flashvars="uu=a04808d307&amp;vu=&amp;channelId=yqx&amp;auto_play=1&amp;sdk=dw&amp;vid=347702616&amp;logo=huya&amp;no_danmu=1&amp;from=vhuyashareweb" type="application/x-shockwave-flash" style="z-index:-1" wmode="transparent" />
+
+<p>收到零哥的邀请，我将视频放到了虎牙，放心，没有任何广告，只是讲得比较渣</p>
+
+<p>更多请看 <a href="https://docs.unity3d.com/ScriptReference/RenderTexture.html">RenderTexture</a></p>
+
+<p><a href="https://www.jianshu.com/p/334770f39127">Unity RenderTexture的应用 - 简书</a></p>
+
+:ET

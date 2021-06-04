@@ -1,0 +1,101 @@
+I"<p>本文讲的是当我们应用失去焦点时，我们获得事件，当我们应用获得焦点，同样获得事件。同时，在应用不可以见时，我们也可以获得。</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/9/2 12:57:38 -->
+
+<div id="toc"></div>
+
+<p><img src="http://img.blog.csdn.net/20160923204915589" alt="这里写图片描述" /></p>
+
+<p>上面一张图，开始是应用启动，获得焦点，应用显示。然后我们打开另一个应用，切换，这时我们应用没有焦点。</p>
+
+<p>然后我们用鼠标点击应用，我们应用获得焦点，这时显示鼠标点击获得焦点。</p>
+
+<p>我们使用Alt+tab，切换出去别的软件，然后使用Alt+tab切换回，可以看到获得焦点。</p>
+
+<p>然后点击任务栏，把应用最小化，这时我们的应用不显示，因为点开他就显示，我就使用字符串<code class="language-plaintext highlighter-rouge">+</code>这样我们的应用就可以获得失去焦点和从哪获得焦点、应用不显示。</p>
+
+<p>我们应用有两个事件，一个是<code class="language-plaintext highlighter-rouge">Window.Current.Activated</code>一个<code class="language-plaintext highlighter-rouge">Window.Current.VisibilityChanged</code>，我们可以通过<code class="language-plaintext highlighter-rouge">Window.Current.Activated</code>来知道，我们的应用得到焦点。</p>
+
+<p>UWP应用获得焦点可以使用<code class="language-plaintext highlighter-rouge">Window.Current.Activated</code>，事件参数有几个，<code class="language-plaintext highlighter-rouge">WindowActivatedEventArgs e</code>，<code class="language-plaintext highlighter-rouge">CoreWindowActivationState</code>有</p>
+
+<ul>
+  <li>
+    <p>CodeActivated 
+从操作系统拿到焦点，这个就是我们使用Alt+tab，不是鼠标点击的获得焦点。我们这里，用鼠标点击任务栏打开应用，是操作系统给应用焦点。</p>
+  </li>
+  <li>
+    <p>PointerActivated
+鼠标点击获得焦点，用鼠标点击应用。</p>
+  </li>
+  <li>
+    <p>Deactivated
+没有焦点。</p>
+  </li>
+</ul>
+
+<p>我用简单的字符串绑定到View，我们可以看到，我们应用失去焦点和获得焦点。</p>
+
+<pre><code class="language-C#">        private void Current_Activated(object sender, WindowActivatedEventArgs e)
+        {
+            if (e.WindowActivationState == CoreWindowActivationState.CodeActivated)
+            {
+                ActivateReminder = "获得焦点\r\n";
+            }
+            else if (e.WindowActivationState == CoreWindowActivationState.PointerActivated)
+            {
+                ActivateReminder = "鼠标点获得\r\n";
+            }
+            else if (e.WindowActivationState == CoreWindowActivationState.Deactivated)
+            {
+                ActivateReminder = "没焦点\r\n";
+            }
+        }
+
+</code></pre>
+
+<p>我们可以用<code class="language-plaintext highlighter-rouge">Window.Current.VisibilityChanged</code>获得我们应用显示，参数<code class="language-plaintext highlighter-rouge">VisibilityChangedEventArgs e</code>如果<code class="language-plaintext highlighter-rouge">e.Visible==true</code>就是显示。</p>
+
+<p>我们把应用最小化，应用就会不显示。</p>
+
+<p>参见：http://grogansoft.com/blog/?p=1269</p>
+
+<h2 id="如何判断应用是否获得焦点">如何判断应用是否获得焦点</h2>
+
+<p>有时候需要判断应用是否获得焦点，我的图床软件判断当前应用有焦点就自动复制。</p>
+
+<p>但是不可以通过 <code class="language-plaintext highlighter-rouge">Window.Current.CoreWindow.Visible</code> 判断窗口是否获得焦点，这个值判断是窗口是否最小或，在手机可以使用这个，但是在pc不可以，因为可能我是打开其他的软件。</p>
+
+<p>为了在UWP 判断窗口是否获得焦点，简单的方法是使用上面的代码在失去焦点获得，从而设置一个本地值，让他知道是否获得焦点。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="k">private</span> <span class="k">void</span> <span class="nf">Current_Activated</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">WindowActivatedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_visibility</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">WindowActivationState</span> <span class="p">!=</span> <span class="n">CoreWindowActivationState</span><span class="p">.</span><span class="n">Deactivated</span><span class="p">;</span>
+        <span class="p">}</span>
+
+
+         <span class="k">private</span> <span class="kt">bool</span> <span class="n">_visibility</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+
+</code></pre></div></div>
+<p>但是还需要加上 当窗口的可见变化时的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">VisibilityChanged</span> <span class="p">+=</span> <span class="n">Current_VisibilityChanged</span><span class="p">;</span>
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Current_VisibilityChanged</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">VisibilityChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_visibility</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">Visible</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<p>如果是在一个页面或一个控件使用上面的代码，注意，因为函数被加到一个静态的值，所以这个控件或page不会被释放，因为一直有引用。
+如果经常进行导航，而且都是新建页面，那么会创建很多页面。</p>
+
+<p>这些页面不会释放，于是内存占用越来越大，所以需要进行释放，方法是在视觉树取消时，从静态值删除函数。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="k">private</span> <span class="k">void</span> <span class="nf">Unloaded</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">VisibilityChanged</span> <span class="p">-=</span> <span class="n">Current_VisibilityChanged</span><span class="p">;</span>
+            <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Activated</span> <span class="p">-=</span> <span class="n">Current_Activated</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

@@ -1,0 +1,324 @@
+I"K�<p>默认在 dotnet 里面框架提供了 Microsoft.Extensions.Logging 可以和依赖注入做日志框架，而有些业务，如需要自己定制日志行为，此时就需要定制日志</p>
+
+<!--more-->
+
+<!-- CreateTime:6/28/2020 7:49:17 PM -->
+
+<p>当初写一个类继承 ILogger 是做不到定制，需要再写一个类继承 ILoggerProvider 才好做定制</p>
+
+<p>如以下的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">CCloudConsoleLogProvider</span> <span class="p">:</span> <span class="n">ILoggerProvider</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="n">ILogger</span> <span class="nf">CreateLogger</span><span class="p">(</span><span class="kt">string</span> <span class="n">categoryName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">CCloudConsoleLogger</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">class</span> <span class="nc">CCloudConsoleLogger</span> <span class="p">:</span> <span class="n">ILogger</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过 DI 的注入，在注入之前先干掉其他的 ILoggerProvider 实例</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">services</span><span class="p">.</span><span class="nf">AddLogging</span><span class="p">(</span><span class="n">builder</span> <span class="p">=&gt;</span>
+<span class="p">{</span>
+    <span class="n">builder</span><span class="p">.</span><span class="nf">ClearProviders</span><span class="p">();</span>
+    <span class="n">builder</span><span class="p">.</span><span class="nf">AddProvider</span><span class="p">(</span><span class="k">new</span> <span class="nf">CCloudConsoleLogProvider</span><span class="p">());</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p>现在所有拿到的 ILogger 都是从 CCloudConsoleLogProvider 创建的</p>
+
+<p>下面是我定制的符合 honeycomb log 输出格式的日志，输出内容如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="m">2099</span><span class="p">-</span><span class="m">10</span><span class="p">-</span><span class="m">19</span> <span class="m">19</span><span class="p">:</span><span class="m">07</span><span class="p">:</span><span class="m">45.456</span><span class="p">][</span><span class="n">threadName</span><span class="p">][</span><span class="n">INFO</span><span class="p">][</span><span class="err">类</span><span class="p">:</span><span class="err">行数</span><span class="p">][</span><span class="n">_traceId</span><span class="p">:</span><span class="n">realTraceId</span><span class="p">][</span><span class="n">_userId</span><span class="p">:</span><span class="n">realUserId</span><span class="p">][</span><span class="n">tag</span><span class="p">:</span><span class="n">custom</span><span class="p">]</span> <span class="err">业务的日志</span><span class="p">/</span><span class="err">异常堆栈</span>
+</code></pre></div></div>
+
+<p>全部代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">CCloudConsoleLogProvider</span> <span class="p">:</span> <span class="n">ILoggerProvider</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="n">ILogger</span> <span class="nf">CreateLogger</span><span class="p">(</span><span class="kt">string</span> <span class="n">categoryName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="k">new</span> <span class="nf">CCloudConsoleLogger</span><span class="p">(</span><span class="n">categoryName</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">class</span> <span class="nc">CCloudConsoleLogger</span> <span class="p">:</span> <span class="n">ILogger</span>
+        <span class="p">{</span>
+            <span class="k">public</span> <span class="nf">CCloudConsoleLogger</span><span class="p">(</span><span class="kt">string</span> <span class="n">categoryName</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">_categoryName</span> <span class="p">=</span> <span class="n">categoryName</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">class</span> <span class="nc">Empty</span> <span class="p">:</span> <span class="n">IDisposable</span>
+            <span class="p">{</span>
+                <span class="c1">/// &lt;inheritdoc /&gt;</span>
+                <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+                <span class="p">{</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="n">IDisposable</span> <span class="n">BeginScope</span><span class="p">&lt;</span><span class="n">TState</span><span class="p">&gt;(</span><span class="n">TState</span> <span class="n">state</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="nf">Empty</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="kt">bool</span> <span class="nf">IsEnabled</span><span class="p">(</span><span class="n">LogLevel</span> <span class="n">logLevel</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">private</span> <span class="k">readonly</span> <span class="kt">string</span> <span class="n">_categoryName</span><span class="p">;</span>
+
+            <span class="c1">/// &lt;inheritdoc /&gt;</span>
+            <span class="k">public</span> <span class="k">void</span> <span class="n">Log</span><span class="p">&lt;</span><span class="n">TState</span><span class="p">&gt;(</span><span class="n">LogLevel</span> <span class="n">logLevel</span><span class="p">,</span> <span class="n">EventId</span> <span class="n">eventId</span><span class="p">,</span> <span class="n">TState</span> <span class="n">state</span><span class="p">,</span> <span class="n">Exception</span> <span class="n">exception</span><span class="p">,</span>
+                <span class="n">Func</span><span class="p">&lt;</span><span class="n">TState</span><span class="p">,</span> <span class="n">Exception</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span> <span class="n">formatter</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// [2099-10-19 19:07:45.456][threadName][INFO][类:行数][_traceId:realTraceId][_userId:realUserId][tag:custom] 业务的日志/异常堆栈</span>
+                <span class="kt">string</span> <span class="n">message</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">TState</span><span class="p">)</span> <span class="p">==</span> <span class="k">typeof</span><span class="p">(</span><span class="n">CCloudLogInfo</span><span class="p">))</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">logInfo</span> <span class="p">=</span> <span class="n">state</span> <span class="k">as</span> <span class="n">CCloudLogInfo</span><span class="p">;</span>
+                    <span class="n">Debug</span><span class="p">.</span><span class="nf">Assert</span><span class="p">(</span><span class="n">logInfo</span> <span class="p">!=</span> <span class="k">null</span><span class="p">,</span> <span class="k">nameof</span><span class="p">(</span><span class="n">logInfo</span><span class="p">)</span> <span class="p">+</span> <span class="s">" != null"</span><span class="p">);</span>
+                    <span class="n">logInfo</span><span class="p">.</span><span class="n">CategoryName</span> <span class="p">=</span> <span class="n">_categoryName</span><span class="p">;</span>
+                    <span class="n">message</span> <span class="p">=</span> <span class="nf">formatter</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">exception</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="c1">// [2099-10-19 19:07:45.456][threadName][INFO][类:行数][_traceId:realTraceId][_userId:realUserId][tag:custom] 业务的日志/异常堆栈</span>
+                    <span class="n">message</span> <span class="p">=</span>
+                        <span class="s">$"[</span><span class="p">{</span><span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">:</span><span class="n">yyyy</span><span class="p">-</span><span class="n">MM</span><span class="p">-</span><span class="n">dd</span> <span class="n">HH</span><span class="p">:</span><span class="n">mm</span><span class="p">:</span><span class="n">ss</span><span class="p">.</span><span class="n">fff</span><span class="p">}</span><span class="s">][</span><span class="p">{</span><span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">Name</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">ManagedThreadId</span><span class="p">}</span><span class="s">][</span><span class="p">{</span><span class="n">CCloudLogExtension</span><span class="p">.</span><span class="nf">LogLevelToString</span><span class="p">(</span><span class="n">logLevel</span><span class="p">)}</span><span class="s">][</span><span class="p">{</span><span class="n">_categoryName</span><span class="p">}</span><span class="s">][-][-][-][EventId=</span><span class="p">{</span><span class="n">eventId</span><span class="p">.</span><span class="n">Id</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">eventId</span><span class="p">.</span><span class="n">Name</span><span class="p">}</span><span class="s">] </span><span class="p">{</span><span class="nf">formatter</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">exception</span><span class="p">)}</span><span class="s">"</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">internal</span> <span class="k">class</span> <span class="nc">CCloudLogInfo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">CategoryName</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ThreadName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">ThreadId</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ClassFile</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">LineNumber</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Message</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">TraceId</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">UserId</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">MemberName</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span><span class="p">[]</span> <span class="n">Tags</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">LogLevel</span> <span class="n">LogLevel</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">class</span> <span class="nc">CCloudLogExtension</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Error</span><span class="p">(</span><span class="k">this</span> <span class="n">ILogger</span> <span class="n">logger</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">message</span><span class="p">,</span>
+            <span class="n">Exception</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">traceId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">userId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerMemberName</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">memberName</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerFilePath</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">sourceFilePath</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerLineNumber</span><span class="p">]</span>
+            <span class="kt">int</span> <span class="n">sourceLineNumber</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
+            <span class="k">params</span> <span class="kt">string</span><span class="p">[]</span> <span class="n">tags</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="n">LogLevel</span> <span class="n">logLevel</span> <span class="p">=</span> <span class="n">LogLevel</span><span class="p">.</span><span class="n">Error</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">logInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CCloudLogInfo</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">ClassFile</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetFileName</span><span class="p">(</span><span class="n">sourceFilePath</span><span class="p">),</span>
+                <span class="n">ThreadId</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">ManagedThreadId</span><span class="p">,</span>
+                <span class="n">ThreadName</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span>
+                <span class="n">LineNumber</span> <span class="p">=</span> <span class="n">sourceLineNumber</span><span class="p">,</span>
+                <span class="n">Message</span> <span class="p">=</span> <span class="n">message</span><span class="p">,</span>
+                <span class="n">TraceId</span> <span class="p">=</span> <span class="n">traceId</span><span class="p">,</span>
+                <span class="n">UserId</span> <span class="p">=</span> <span class="n">userId</span><span class="p">,</span>
+                <span class="n">MemberName</span> <span class="p">=</span> <span class="n">memberName</span><span class="p">,</span>
+                <span class="n">Tags</span> <span class="p">=</span> <span class="n">tags</span><span class="p">,</span>
+                <span class="n">LogLevel</span> <span class="p">=</span> <span class="n">logLevel</span>
+            <span class="p">};</span>
+
+            <span class="n">logger</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="n">logLevel</span><span class="p">,</span> <span class="n">eventId</span><span class="p">:</span> <span class="n">EmptyEventId</span><span class="p">,</span> <span class="n">logInfo</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">Formatter</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Warning</span><span class="p">(</span><span class="k">this</span> <span class="n">ILogger</span> <span class="n">logger</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">message</span><span class="p">,</span>
+            <span class="n">Exception</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">traceId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">userId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerMemberName</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">memberName</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerFilePath</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">sourceFilePath</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerLineNumber</span><span class="p">]</span>
+            <span class="kt">int</span> <span class="n">sourceLineNumber</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
+            <span class="k">params</span> <span class="kt">string</span><span class="p">[]</span> <span class="n">tags</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">const</span> <span class="n">LogLevel</span> <span class="n">logLevel</span> <span class="p">=</span> <span class="n">LogLevel</span><span class="p">.</span><span class="n">Warning</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">logInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CCloudLogInfo</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">ClassFile</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetFileNameWithoutExtension</span><span class="p">(</span><span class="n">sourceFilePath</span><span class="p">),</span>
+                <span class="n">ThreadId</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">ManagedThreadId</span><span class="p">,</span>
+                <span class="n">ThreadName</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span>
+                <span class="n">LineNumber</span> <span class="p">=</span> <span class="n">sourceLineNumber</span><span class="p">,</span>
+                <span class="n">Message</span> <span class="p">=</span> <span class="n">message</span><span class="p">,</span>
+                <span class="n">TraceId</span> <span class="p">=</span> <span class="n">traceId</span><span class="p">,</span>
+                <span class="n">UserId</span> <span class="p">=</span> <span class="n">userId</span><span class="p">,</span>
+                <span class="n">MemberName</span> <span class="p">=</span> <span class="n">memberName</span><span class="p">,</span>
+                <span class="n">Tags</span> <span class="p">=</span> <span class="n">tags</span><span class="p">,</span>
+                <span class="n">LogLevel</span> <span class="p">=</span> <span class="n">logLevel</span>
+            <span class="p">};</span>
+
+            <span class="n">logger</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="n">logLevel</span><span class="p">,</span> <span class="n">eventId</span><span class="p">:</span> <span class="n">EmptyEventId</span><span class="p">,</span> <span class="n">logInfo</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">Formatter</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 为什么只有 Info 可以添加 Exception 不添加信息，因为如果是 Warning 和 Error 推荐写是哪个模块</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Info</span><span class="p">(</span><span class="k">this</span> <span class="n">ILogger</span> <span class="n">logger</span><span class="p">,</span>
+            <span class="n">Exception</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">traceId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">userId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerMemberName</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">memberName</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerFilePath</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">sourceFilePath</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerLineNumber</span><span class="p">]</span>
+            <span class="kt">int</span> <span class="n">sourceLineNumber</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
+            <span class="k">params</span> <span class="kt">string</span><span class="p">[]</span> <span class="n">tags</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// ReSharper disable ExplicitCallerInfoArgument</span>
+            <span class="nf">Info</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">traceId</span><span class="p">,</span> <span class="n">userId</span><span class="p">,</span> <span class="n">memberName</span><span class="p">,</span> <span class="n">sourceFilePath</span><span class="p">,</span> <span class="n">sourceLineNumber</span><span class="p">,</span> <span class="n">tags</span><span class="p">);</span>
+            <span class="c1">// ReSharper restore ExplicitCallerInfoArgument</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Info</span><span class="p">(</span><span class="k">this</span> <span class="n">ILogger</span> <span class="n">logger</span><span class="p">,</span> 
+            <span class="kt">string</span> <span class="n">message</span><span class="p">,</span>
+            <span class="n">Exception</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">traceId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">userId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerMemberName</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">memberName</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerFilePath</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">sourceFilePath</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerLineNumber</span><span class="p">]</span>
+            <span class="kt">int</span> <span class="n">sourceLineNumber</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
+            <span class="k">params</span> <span class="kt">string</span><span class="p">[]</span> <span class="n">tags</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// 刚好在 Linux 下构建的在 Linux 下运行，而在 Windows 构建的库在 Windows 下执行。此时使用 GetFileNameWithoutExtension 能保持输入路径和解析相同</span>
+            <span class="c1">// 假定在 Windows 下构建而在 Linux 下构建，只是让路径变长而已，我相信咱的日志系统炸不了…… 或者说，炸了再说</span>
+            <span class="c1">// 炸了的解决方法是在 dotnet runtime\src\libraries\System.Private.CoreLib\src\System\IO\Path.cs 的 GetFileName 方法里面将 `PathInternal.IsDirectorySeparator(path[i])` 替换为实际需要的 \ 或 / 符号</span>
+
+            <span class="k">const</span> <span class="n">LogLevel</span> <span class="n">logLevel</span> <span class="p">=</span> <span class="n">LogLevel</span><span class="p">.</span><span class="n">Information</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">logInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CCloudLogInfo</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">ClassFile</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetFileName</span><span class="p">(</span><span class="n">sourceFilePath</span><span class="p">),</span>
+                <span class="n">ThreadId</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">ManagedThreadId</span><span class="p">,</span>
+                <span class="n">ThreadName</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span>
+                <span class="n">LineNumber</span> <span class="p">=</span> <span class="n">sourceLineNumber</span><span class="p">,</span>
+                <span class="n">Message</span> <span class="p">=</span> <span class="n">message</span><span class="p">,</span>
+                <span class="n">TraceId</span> <span class="p">=</span> <span class="n">traceId</span><span class="p">,</span>
+                <span class="n">UserId</span> <span class="p">=</span> <span class="n">userId</span><span class="p">,</span>
+                <span class="n">MemberName</span> <span class="p">=</span> <span class="n">memberName</span><span class="p">,</span>
+                <span class="n">Tags</span> <span class="p">=</span> <span class="n">tags</span><span class="p">,</span>
+                <span class="n">LogLevel</span> <span class="p">=</span> <span class="n">logLevel</span>
+            <span class="p">};</span>
+
+            <span class="n">logger</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="n">logLevel</span><span class="p">,</span> <span class="n">eventId</span><span class="p">:</span> <span class="n">EmptyEventId</span><span class="p">,</span> <span class="n">logInfo</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">Formatter</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">Debug</span><span class="p">(</span><span class="k">this</span> <span class="n">ILogger</span> <span class="n">logger</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">message</span><span class="p">,</span>
+            <span class="n">Exception</span> <span class="n">exception</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">traceId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="kt">string</span> <span class="n">userId</span> <span class="p">=</span> <span class="k">null</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerMemberName</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">memberName</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerFilePath</span><span class="p">]</span>
+            <span class="kt">string</span> <span class="n">sourceFilePath</span> <span class="p">=</span> <span class="s">""</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">System</span><span class="p">.</span><span class="n">Runtime</span><span class="p">.</span><span class="n">CompilerServices</span><span class="p">.</span><span class="n">CallerLineNumber</span><span class="p">]</span>
+            <span class="kt">int</span> <span class="n">sourceLineNumber</span> <span class="p">=</span> <span class="m">0</span><span class="p">,</span>
+            <span class="k">params</span> <span class="kt">string</span><span class="p">[]</span> <span class="n">tags</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">logInfo</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CCloudLogInfo</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">ClassFile</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetFileName</span><span class="p">(</span><span class="n">sourceFilePath</span><span class="p">),</span>
+                <span class="n">ThreadId</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">ManagedThreadId</span><span class="p">,</span>
+                <span class="n">ThreadName</span> <span class="p">=</span> <span class="n">Thread</span><span class="p">.</span><span class="n">CurrentThread</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span>
+                <span class="n">LineNumber</span> <span class="p">=</span> <span class="n">sourceLineNumber</span><span class="p">,</span>
+                <span class="n">Message</span> <span class="p">=</span> <span class="n">message</span><span class="p">,</span>
+                <span class="n">TraceId</span> <span class="p">=</span> <span class="n">traceId</span><span class="p">,</span>
+                <span class="n">UserId</span> <span class="p">=</span> <span class="n">userId</span><span class="p">,</span>
+                <span class="n">MemberName</span> <span class="p">=</span> <span class="n">memberName</span><span class="p">,</span>
+                <span class="n">Tags</span> <span class="p">=</span> <span class="n">tags</span><span class="p">,</span>
+                <span class="n">LogLevel</span> <span class="p">=</span> <span class="n">LogLevel</span><span class="p">.</span><span class="n">Debug</span>
+            <span class="p">};</span>
+
+            <span class="n">logger</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="n">logInfo</span><span class="p">.</span><span class="n">LogLevel</span><span class="p">,</span> <span class="n">eventId</span><span class="p">:</span> <span class="n">EmptyEventId</span><span class="p">,</span> <span class="n">logInfo</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">Formatter</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">Formatter</span><span class="p">(</span><span class="n">CCloudLogInfo</span> <span class="n">logInfo</span><span class="p">,</span> <span class="n">Exception</span> <span class="n">exception</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// honeycomb-log</span>
+            <span class="c1">// [2099-10-19 19:07:45.456][threadName][INFO][类:行数][_traceId:realTraceId][_userId:realUserId][tag:custom] 业务的日志/异常堆栈</span>
+
+            <span class="k">const</span> <span class="kt">string</span> <span class="n">empty</span> <span class="p">=</span> <span class="s">"-"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">traceMessage</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">logInfo</span><span class="p">.</span><span class="n">TraceId</span><span class="p">)</span> <span class="p">?</span> <span class="n">empty</span> <span class="p">:</span> <span class="s">$"_traceId:</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">TraceId</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">userMessage</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">logInfo</span><span class="p">.</span><span class="n">UserId</span><span class="p">)</span> <span class="p">?</span> <span class="n">empty</span> <span class="p">:</span> <span class="s">$"_userId:</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">UserId</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">logLevelMessage</span> <span class="p">=</span> <span class="nf">LogLevelToString</span><span class="p">(</span><span class="n">logInfo</span><span class="p">.</span><span class="n">LogLevel</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">logInfoMessage</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">logInfo</span><span class="p">.</span><span class="n">Message</span><span class="p">)</span> <span class="p">?</span> <span class="n">exception</span><span class="p">?.</span><span class="n">Message</span> <span class="p">:</span> <span class="n">logInfo</span><span class="p">.</span><span class="n">Message</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="s">$"[</span><span class="p">{</span><span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">:</span><span class="n">yyyy</span><span class="p">-</span><span class="n">MM</span><span class="p">-</span><span class="n">dd</span> <span class="n">HH</span><span class="p">:</span><span class="n">mm</span><span class="p">:</span><span class="n">ss</span><span class="p">.</span><span class="n">sss</span><span class="p">}</span><span class="s">][</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">ThreadName</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">ThreadId</span><span class="p">}</span><span class="s">][</span><span class="p">{</span><span class="n">logLevelMessage</span><span class="p">}</span><span class="s">][</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">ClassFile</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">CategoryName</span><span class="p">}</span><span class="s">.</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">MemberName</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">logInfo</span><span class="p">.</span><span class="n">LineNumber</span><span class="p">}</span><span class="s">][</span><span class="p">{</span><span class="n">traceMessage</span><span class="p">}</span><span class="s">][</span><span class="p">{</span><span class="n">userMessage</span><span class="p">}</span><span class="s">][tags:</span><span class="p">{</span><span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="s">";"</span><span class="p">,</span> <span class="n">logInfo</span><span class="p">.</span><span class="n">Tags</span><span class="p">)}</span><span class="s">] </span><span class="p">{</span><span class="n">logInfoMessage</span><span class="p">}</span><span class="s"> </span><span class="p">{</span><span class="n">exception</span><span class="p">?.</span><span class="nf">ToString</span><span class="p">()}</span><span class="s">"</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">LogLevelToString</span><span class="p">(</span><span class="n">LogLevel</span> <span class="n">logLevel</span><span class="p">)</span>
+            <span class="p">=&gt;</span> <span class="n">logLevel</span> <span class="k">switch</span>
+            <span class="p">{</span>
+                <span class="n">LogLevel</span><span class="p">.</span><span class="n">Trace</span> <span class="p">=&gt;</span> <span class="s">"TRACE"</span><span class="p">,</span>
+                <span class="n">LogLevel</span><span class="p">.</span><span class="n">Debug</span> <span class="p">=&gt;</span> <span class="s">"DEBUG"</span><span class="p">,</span>
+                <span class="n">LogLevel</span><span class="p">.</span><span class="n">Information</span> <span class="p">=&gt;</span> <span class="s">"INFO"</span><span class="p">,</span>
+                <span class="n">LogLevel</span><span class="p">.</span><span class="n">Warning</span> <span class="p">=&gt;</span> <span class="s">"WARNING"</span><span class="p">,</span>
+                <span class="n">LogLevel</span><span class="p">.</span><span class="n">Error</span> <span class="p">=&gt;</span> <span class="s">"ERROR"</span><span class="p">,</span>
+                <span class="n">LogLevel</span><span class="p">.</span><span class="n">Critical</span> <span class="p">=&gt;</span> <span class="s">"CRITICAL"</span><span class="p">,</span>
+                <span class="n">LogLevel</span><span class="p">.</span><span class="n">None</span> <span class="p">=&gt;</span> <span class="s">"NONE"</span><span class="p">,</span>
+                <span class="n">_</span> <span class="p">=&gt;</span> <span class="s">"NONE"</span>
+            <span class="p">};</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">EventId</span> <span class="n">EmptyEventId</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">EventId</span><span class="p">();</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

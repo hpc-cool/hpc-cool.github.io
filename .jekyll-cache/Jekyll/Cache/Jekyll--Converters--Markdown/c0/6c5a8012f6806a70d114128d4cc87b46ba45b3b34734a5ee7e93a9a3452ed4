@@ -1,0 +1,286 @@
+I"|V<p>Button是一个常用控件，有很多和wpf一样，可以看《深入浅出WPF》，但还有一些虽然常用，但是可能大家不知道的功能</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<div id="toc"></div>
+
+<p>Button常用的就是点击</p>
+
+<p>我们可以在button的click写上</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"确定"</span> <span class="na">Click=</span><span class="s">"Button_Click"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>在Button_Click按F12到代码写上点击按钮需要运行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_Click</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+              <span class="c1">//这里写上点击按钮后触发</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>除了写在xaml.cs也可以写在ViewModel，ViewModel的写法很简单，我们需要在ViewModel建立一个方法，这个方法的参数为<code class="language-plaintext highlighter-rouge">void</code>或<code class="language-plaintext highlighter-rouge">object sender, RoutedEventArgs e</code></p>
+
+<p>假如viewModel有一个方法 ce</p>
+
+<p>在Button可以在Click写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Click</span><span class="p">=</span><span class="s">"{x:Bind view.ce}"</span>
+</code></pre></div></div>
+
+<p>原来的WPF使用的是Command，实在不好看，用了UWP我都不在WPF写Command</p>
+
+<p>在用ViewModel需要在MainPage.xaml.cs写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">viewModel</span> <span class="n">view</span> <span class="p">{</span><span class="k">set</span><span class="p">;</span><span class="k">get</span><span class="p">;}=</span> <span class="k">new</span> <span class="nf">viewModel</span><span class="p">();</span>
+
+</code></pre></div></div>
+
+<h2 id="内容">内容</h2>
+
+<p>button content可以使用一个元素，这个元素可以是Grid，我们可以做一个圆形头像</p>
+
+<p>先找出一张图，我们把这张图做头像</p>
+
+<p>把图放到项目</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Button</span> <span class="na">Height=</span><span class="s">"100"</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Padding=</span><span class="s">"0"</span> <span class="na">Foreground=</span><span class="s">"{x:Null}"</span> <span class="na">BorderBrush=</span><span class="s">"{x:Null}"</span> <span class="na">Background=</span><span class="s">"{x:Null}"</span><span class="nt">&gt;</span> 
+        <span class="nt">&lt;Button.Content&gt;</span>                       
+            <span class="nt">&lt;Ellipse</span> <span class="na">Margin=</span><span class="s">"0,0,0,0"</span> <span class="na">Height=</span><span class="s">"90"</span> <span class="na">Width=</span><span class="s">"90"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;Ellipse.Fill&gt;</span>
+                    <span class="nt">&lt;ImageBrush</span> <span class="na">ImageSource=</span><span class="s">"Assets/20151226160608688.jpg"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/Ellipse.Fill&gt;</span>
+            <span class="nt">&lt;/Ellipse&gt;</span>                                          
+         <span class="nt">&lt;/Button.Content&gt;</span>
+    <span class="nt">&lt;/Button&gt;</span>
+</code></pre></div></div>
+
+<p>注意，放在项目的图片，不是这么简单，具体如何使用，参见 <a href="http://lindexi.oschina.io/lindexi/post/win10-uwp-访问解决方案文件/">win10 uwp 访问解决方案文件</a></p>
+
+<h2 id="修改鼠标在按钮上的样子">修改鼠标在按钮上的样子</h2>
+
+<p>我们可以修改鼠标在按钮上的样子</p>
+
+<p>button可以设置属性，使用资源
+资源可以写在页面</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Page.Resources&gt;</span>
+        
+    <span class="nt">&lt;/Page.Resources&gt;</span>
+</code></pre></div></div>
+
+<p>所有按钮使用同样式</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Page.Resources&gt;</span>
+        <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+            
+        <span class="nt">&lt;/Style&gt;</span>
+    <span class="nt">&lt;/Page.Resources&gt;</span>
+</code></pre></div></div>
+
+<p>按钮的属性用<code class="language-plaintext highlighter-rouge">&lt;Setter Property="属性" Value="值"/&gt;</code></p>
+
+<p>按钮的背景</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Page.Resources&gt;</span>
+        <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Background"</span> <span class="na">Value=</span><span class="s">"White"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Style&gt;</span>
+    <span class="nt">&lt;/Page.Resources&gt;</span>
+</code></pre></div></div>
+
+<p>指定一个样式，key</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Page.Resources&gt;</span>
+        <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Background"</span> <span class="na">Value=</span><span class="s">"White"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Width"</span> <span class="na">Value=</span><span class="s">"100"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Height"</span> <span class="na">Value=</span><span class="s">"100"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Style&gt;</span>
+        <span class="nt">&lt;Style</span>  <span class="na">x:Key=</span><span class="s">"button"</span> <span class="na">TargetType=</span><span class="s">"Button"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Background"</span> <span class="na">Value=</span><span class="s">"White"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Width"</span> <span class="na">Value=</span><span class="s">"50"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Height"</span> <span class="na">Value=</span><span class="s">"50"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Style&gt;</span>
+    <span class="nt">&lt;/Page.Resources&gt;</span>
+</code></pre></div></div>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="nt">&lt;Button</span> <span class="na">Content=</span><span class="s">"默认"</span><span class="nt">/&gt;</span>
+         <span class="nt">&lt;Button</span> <span class="na">Style=</span><span class="s">"{StaticResource button}"</span> <span class="na">Content=</span><span class="s">"确定"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p><img src="image/20151211154753136.jpg" alt="这里写图片描述" /></p>
+
+<p>在设计，点按钮，右击，编辑模板副本，选择当前页
+<img src="image/QQ截图20160103092022.png" alt="这里写图片描述" /></p>
+
+<p>可以看到</p>
+
+<pre><code class="language-xaml">    &lt;Page.Resources&gt;
+        &lt;Style x:Key="ButtonStyle1" TargetType="Button"&gt;
+            &lt;Setter Property="Background" Value="{ThemeResource SystemControlBackgroundBaseLowBrush}"/&gt;
+            &lt;Setter Property="Foreground" Value="{ThemeResource SystemControlForegroundBaseHighBrush}"/&gt;
+            &lt;Setter Property="BorderBrush" Value="{ThemeResource SystemControlForegroundTransparentBrush}"/&gt;
+            &lt;Setter Property="BorderThickness" Value="{ThemeResource ButtonBorderThemeThickness}"/&gt;
+            &lt;Setter Property="Padding" Value="8,4,8,4"/&gt;
+            &lt;Setter Property="HorizontalAlignment" Value="Left"/&gt;
+            &lt;Setter Property="VerticalAlignment" Value="Center"/&gt;
+            &lt;Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}"/&gt;
+            &lt;Setter Property="FontWeight" Value="Normal"/&gt;
+            &lt;Setter Property="FontSize" Value="{ThemeResource ControlContentThemeFontSize}"/&gt;
+            &lt;Setter Property="UseSystemFocusVisuals" Value="True"/&gt;
+            &lt;Setter Property="Template"&gt;
+                &lt;Setter.Value&gt;
+                    &lt;ControlTemplate TargetType="Button"&gt;
+                        &lt;Grid x:Name="RootGrid" Background="{TemplateBinding Background}"&gt;
+                            &lt;VisualStateManager.VisualStateGroups&gt;
+                                &lt;VisualStateGroup x:Name="CommonStates"&gt;
+                                    &lt;VisualState x:Name="Normal"&gt;
+                                        &lt;Storyboard&gt;
+                                            &lt;PointerUpThemeAnimation Storyboard.TargetName="RootGrid"/&gt;
+                                        &lt;/Storyboard&gt;
+                                    &lt;/VisualState&gt;
+                                    &lt;VisualState x:Name="PointerOver"&gt;
+                                        &lt;Storyboard&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="BorderBrush" Storyboard.TargetName="ContentPresenter"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlHighlightBaseMediumLowBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Foreground" Storyboard.TargetName="ContentPresenter"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlHighlightBaseHighBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                            &lt;PointerUpThemeAnimation Storyboard.TargetName="RootGrid"/&gt;
+                                        &lt;/Storyboard&gt;
+                                    &lt;/VisualState&gt;
+                                    &lt;VisualState x:Name="Pressed"&gt;
+                                        &lt;Storyboard&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Background" Storyboard.TargetName="RootGrid"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlBackgroundBaseMediumLowBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="BorderBrush" Storyboard.TargetName="ContentPresenter"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlHighlightTransparentBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Foreground" Storyboard.TargetName="ContentPresenter"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlHighlightBaseHighBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                            &lt;PointerDownThemeAnimation Storyboard.TargetName="RootGrid"/&gt;
+                                        &lt;/Storyboard&gt;
+                                    &lt;/VisualState&gt;
+                                    &lt;VisualState x:Name="Disabled"&gt;
+                                        &lt;Storyboard&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Background" Storyboard.TargetName="RootGrid"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlBackgroundBaseLowBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Foreground" Storyboard.TargetName="ContentPresenter"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlDisabledBaseLowBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                            &lt;ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="BorderBrush" Storyboard.TargetName="ContentPresenter"&gt;
+                                                &lt;DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource SystemControlDisabledTransparentBrush}"/&gt;
+                                            &lt;/ObjectAnimationUsingKeyFrames&gt;
+                                        &lt;/Storyboard&gt;
+                                    &lt;/VisualState&gt;
+                                &lt;/VisualStateGroup&gt;
+                            &lt;/VisualStateManager.VisualStateGroups&gt;
+                            &lt;ContentPresenter x:Name="ContentPresenter" AutomationProperties.AccessibilityView="Raw" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" ContentTemplate="{TemplateBinding ContentTemplate}" ContentTransitions="{TemplateBinding ContentTransitions}" Content="{TemplateBinding Content}" HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}" Padding="{TemplateBinding Padding}" VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/&gt;
+                        &lt;/Grid&gt;
+                    &lt;/ControlTemplate&gt;
+                &lt;/Setter.Value&gt;
+            &lt;/Setter&gt;
+        &lt;/Style&gt;
+    &lt;/Page.Resources&gt;
+</code></pre>
+
+<p>在<code class="language-plaintext highlighter-rouge">&lt;VisualState x:Name="Pressed"&gt;</code>可以把里面写成这个状态的样子，按钮有正常，按下，鼠标在按钮上，可以对每个修改</p>
+
+<p><img src="image/QQ截图20160103093039.png" alt="这里写图片描述" /></p>
+
+<p>点击Pressed更改pressed</p>
+
+<p><img src="image/QQ截图20160103093204.png" alt="点击Pressed更改pressed" /></p>
+
+<p>看到这里按钮有背景</p>
+
+<p><img src="image/QQ截图20160103093320.png" alt="看到这里按钮有背景" /></p>
+
+<p>去掉背景，按F4把背景无画笔</p>
+
+<p><img src="image/QQ截图20160103093441.png" alt="去掉背景，按F4把背景无画笔" /></p>
+
+<p>添加过度</p>
+
+<p><img src="image/QQ截图20160103093544.png" alt="添加过度" /></p>
+
+<p>记录关键帧</p>
+
+<p><img src="image/QQ截图20160103093647.png" alt="记录关键帧" title="记录关键帧" /></p>
+
+<p>选时间0.5改变背景</p>
+
+<p><img src="image/QQ截图20160103093838.png" alt="选时间0.5改变背景" title="选时间0.5改变背景" /></p>
+
+<p>选时间，改变背景</p>
+
+<p><img src="image/QQ截图20160103094007.png" alt="" /></p>
+
+<p>点播放可以看到我们做出来的按钮，可以运行。移动到button显示文字</p>
+
+<p>在装机必备移动到搜狐显示搜狐，具体代码
+参考：<a href="http://blog.csdn.net/lindexi_gd/article/details/50166161">http://blog.csdn.net/lindexi_gd/article/details/50166161</a></p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                        <span class="nt">&lt;Button</span> <span class="na">Click=</span><span class="s">"souhu_Click"</span> <span class="na">ToolTipService.ToolTip=</span><span class="s">"搜狐视频"</span> <span class="na">Padding=</span><span class="s">"0"</span> <span class="nt">&gt;</span>
+                            <span class="nt">&lt;Button.Content&gt;</span>
+                                <span class="nt">&lt;Grid&gt;</span>
+                                    <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+                                        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"auto"</span><span class="nt">/&gt;</span>
+                                        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"auto"</span><span class="nt">/&gt;</span>
+                                    <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+                                    <span class="nt">&lt;Image</span> <span class="na">Source=</span><span class="s">"ms-appx:///Assets/搜狐.png"</span> <span class="na">Grid.Row=</span><span class="s">"0"</span> <span class="na">ScrollViewer.VerticalScrollBarVisibility=</span><span class="s">"Disabled"</span> <span class="nt">/&gt;</span>
+                                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"搜狐视频"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+                                <span class="nt">&lt;/Grid&gt;</span>
+                            <span class="nt">&lt;/Button.Content&gt;</span>
+                        <span class="nt">&lt;/Button&gt;</span>
+</code></pre></div></div>
+
+<p><img src="image/20151211161126290.jpg" alt="这里写图片描述" /></p>
+
+<p>显示图片</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                        <span class="nt">&lt;Button</span> <span class="na">Click=</span><span class="s">"souhu_Click"</span> <span class="na">Padding=</span><span class="s">"0"</span> <span class="nt">&gt;</span>
+                            <span class="nt">&lt;Button.Content&gt;</span>
+                                <span class="nt">&lt;Grid&gt;</span>
+                                    <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+                                        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"auto"</span><span class="nt">/&gt;</span>
+                                        <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"auto"</span><span class="nt">/&gt;</span>
+                                    <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+                                    <span class="nt">&lt;Image</span> <span class="na">Source=</span><span class="s">"ms-appx:///Assets/搜狐.png"</span> <span class="na">Grid.Row=</span><span class="s">"0"</span> <span class="na">ScrollViewer.VerticalScrollBarVisibility=</span><span class="s">"Disabled"</span> <span class="nt">/&gt;</span>
+                                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"搜狐视频"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+                                <span class="nt">&lt;/Grid&gt;</span>
+                            <span class="nt">&lt;/Button.Content&gt;</span>
+                            <span class="nt">&lt;ToolTipService.ToolTip&gt;</span>
+                                <span class="nt">&lt;Image</span> <span class="na">Height=</span><span class="s">"50"</span> <span class="na">Width=</span><span class="s">"50"</span> <span class="na">Source=</span><span class="s">"ms-appx:///Assets/搜狐.png"</span><span class="nt">/&gt;</span>
+                            <span class="nt">&lt;/ToolTipService.ToolTip&gt;</span>
+                        <span class="nt">&lt;/Button&gt;</span>
+</code></pre></div></div>
+
+<h2 id="圆角按钮">圆角按钮</h2>
+
+<p>参见：<a href="http://lindexi.oschina.io/lindexi/post/win10-uwp-圆角按钮/">圆角按钮</a></p>
+
+<h2 id="点击进度条按钮">点击进度条按钮</h2>
+
+<p><img src="http://image.acmx.xyz/bae3aa76-b425-4667-92dd-3e59e0987cbaProgressButton.gif" alt="" /></p>
+
+<p>https://github.com/lindexi/uwp/tree/master/uwp/control/Button</p>
+
+<h2 id="大神写的按钮">大神写的按钮</h2>
+
+<ul>
+  <li>
+    <p><a href="http://www.cnblogs.com/blue-fire/p/7237158.html">UWP：使用Behavior实现Button点击动态效果 - 叫我蓝火火 - 博客园</a></p>
+
+    <p><img src="https://images2017.cnblogs.com/blog/1179189/201707/1179189-20170725222230185-1476172220.gif" alt="" /></p>
+  </li>
+</ul>
+
+:ET

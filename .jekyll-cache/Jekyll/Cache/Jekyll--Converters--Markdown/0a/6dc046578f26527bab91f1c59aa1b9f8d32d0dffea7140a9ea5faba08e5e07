@@ -1,0 +1,360 @@
+I"4�<p>本文告诉大家如何在 UWP 做客户端和 asp dotnet core 做服务器端来做一个图床工具</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/2/29 11:54:11 -->
+
+<div id="toc"></div>
+
+<h2 id="服务器端">服务器端</h2>
+
+<p>从 <a href="https://blog.csdn.net/lindexi_gd/article/details/80733259">win10 uwp 手把手教你使用 asp dotnet core 做 cs 程序</a> 可以了解一个简单的 asp dotnet core 程序是如何搭建，下面来告诉搭建如何做一个简单的图床服务器</p>
+
+<p>注意本文提供的方式不能用在正式的项目，只能在自己玩的项目使用。</p>
+
+<h3 id="创建数据库">创建数据库</h3>
+
+<p>为了简单，本文就使用内存做数据库</p>
+
+<p>打开 Startup 的 ConfigureServices 方法，替换为下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">services</span><span class="p">.</span><span class="nf">AddMvc</span><span class="p">().</span><span class="nf">SetCompatibilityVersion</span><span class="p">(</span><span class="n">CompatibilityVersion</span><span class="p">.</span><span class="n">Version_2_1</span><span class="p">);</span>
+
+            <span class="n">services</span><span class="p">.</span><span class="n">AddDbContext</span><span class="p">&lt;</span><span class="n">KehallzorDralnaContext</span><span class="p">&gt;(</span><span class="n">options</span> <span class="p">=&gt;</span>
+                    <span class="n">options</span><span class="p">.</span><span class="nf">UseInMemoryDatabase</span><span class="p">(</span><span class="s">"DihoostaDanarSouser"</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>这样就可以使用内存数据库</p>
+
+<h3 id="创建模型">创建模型</h3>
+
+<p>首先创建一个 asp dotnet core 项目，然后添加一个模型</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">XaseYinairtraiSeawhallkouN</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Id</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">File</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这个模型就是用来创建图片使用的，上传图片就调用这个类，包括了文件的文件名和文件</p>
+
+<h3 id="创建控制器">创建控制器</h3>
+
+<p>通过右击添加控制器的方法添加一个控制器，控制器需要选使用 EF 的 API 控制器</p>
+
+<!-- ![](image/win10 uwp 使用 asp dotnet core 做图床服务器客户端/win10 uwp 使用 asp dotnet core 做图床服务器客户端0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018101820273610" alt="" /></p>
+
+<p>接下来就是选择刚才模型创建控制器</p>
+
+<!-- ![](image/win10 uwp 使用 asp dotnet core 做图床服务器客户端/win10 uwp 使用 asp dotnet core 做图床服务器客户端1.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20181018202824441" alt="" /></p>
+
+<h3 id="添加上传下载代码">添加上传下载代码</h3>
+
+<p>打开创建的控制器，添加上传和下载的代码，上传的代码很简单，需要用到 post 的方式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">HttpPost</span><span class="p">(</span><span class="s">"UploadFile"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">UploadFile</span><span class="p">([</span><span class="n">FromForm</span><span class="p">]</span><span class="n">CukaiZexiridror</span> <span class="n">rarmelHopidrearLis</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>这里有一个细节是参数 rarmelHopidrearLis 是从 Form 拿到，这样就需要在 UWP 程序使用 MultipartFormDataContent 的方法上传，这里的 CukaiZexiridror 类包含了两个属性，一个是 Name 一个是上传的文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">CukaiZexiridror</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">IFormFile</span> <span class="n">File</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的 MultipartFormDataContent 的内容需要包含一个 string 内容和一个 Stream 内容，还需要设置对应的 Name 请看本文下方的方法</p>
+
+<p>在调用方法拿到 rarmelHopidrearLis 可以访问本地的一个文件夹，然后将文件写入这个文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">nefaycisirJisrea</span> <span class="p">=</span> <span class="n">Directory</span><span class="p">.</span><span class="nf">GetCurrentDirectory</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">demmiraWurrupooHasur</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">nefaycisirJisrea</span><span class="p">,</span> <span class="s">"Image"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>上面代码使用 GetCurrentDirectory 拿到一个文件夹，这个项目不发了用在实际使用的一个原因就是这里拿到的文件夹建议是管理起来，而不是直接拿到一个文件夹。</p>
+
+<p>这里先判断是否存在文件夹，如果文件夹不存在，就创建文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">if</span> <span class="p">(!</span><span class="n">Directory</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Directory</span><span class="p">.</span><span class="nf">CreateDirectory</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>判断是否存在文件，如果存在文件就将这个文件删除，当然这样做只是在玩的时候可以这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">gowkusayJomalltrur</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">,</span> <span class="n">rarmelHopidrearLis</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">gowkusayJomalltrur</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="n">gowkusayJomalltrur</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从上传的文件写入到服务器可以使用下面代码，这里的 IFormFile 提供了 CopyTo 可以复制到一个 Stream 调用这个方法就可以让用户创建文件，但是这个方法也有一个问题就是不支持断点续传，同时也不支持大的文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">massesuhouHarle</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="n">gowkusayJomalltrur</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Create</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">rarmelHopidrearLis</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">CopyTo</span><span class="p">(</span><span class="n">massesuhouHarle</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>很简单的代码就可以保存用户上传的文件，下面就是需要保存文件的路径</p>
+
+<p>将文件的路径写入到数据库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">_context</span><span class="p">.</span><span class="n">XaseYinairtraiSeawhallkou</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">XaseYinairtraiSeawhallkou</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">File</span> <span class="p">=</span> <span class="n">gowkusayJomalltrur</span><span class="p">,</span>
+                <span class="n">Name</span> <span class="p">=</span> <span class="n">rarmelHopidrearLis</span><span class="p">.</span><span class="n">Name</span>
+            <span class="p">});</span>
+
+            <span class="n">_context</span><span class="p">.</span><span class="nf">SaveChanges</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>现在的上传的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">HttpPost</span><span class="p">(</span><span class="s">"UploadFile"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="nf">UploadFile</span><span class="p">([</span><span class="n">FromForm</span><span class="p">]</span><span class="n">CukaiZexiridror</span> <span class="n">rarmelHopidrearLis</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">nefaycisirJisrea</span> <span class="p">=</span> <span class="n">Directory</span><span class="p">.</span><span class="nf">GetCurrentDirectory</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">demmiraWurrupooHasur</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">nefaycisirJisrea</span><span class="p">,</span> <span class="s">"Image"</span><span class="p">);</span>
+
+            <span class="k">if</span> <span class="p">(!</span><span class="n">Directory</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">Directory</span><span class="p">.</span><span class="nf">CreateDirectory</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">gowkusayJomalltrur</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">,</span> <span class="n">rarmelHopidrearLis</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">gowkusayJomalltrur</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">Delete</span><span class="p">(</span><span class="n">gowkusayJomalltrur</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">massesuhouHarle</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="n">gowkusayJomalltrur</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Create</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">rarmelHopidrearLis</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">CopyTo</span><span class="p">(</span><span class="n">massesuhouHarle</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">_context</span><span class="p">.</span><span class="n">XaseYinairtraiSeawhallkou</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">XaseYinairtraiSeawhallkou</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="n">File</span> <span class="p">=</span> <span class="n">gowkusayJomalltrur</span><span class="p">,</span>
+                <span class="n">Name</span> <span class="p">=</span> <span class="n">rarmelHopidrearLis</span><span class="p">.</span><span class="n">Name</span>
+            <span class="p">});</span>
+
+            <span class="n">_context</span><span class="p">.</span><span class="nf">SaveChanges</span><span class="p">();</span>
+
+            <span class="k">return</span> <span class="s">"上传完成"</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码将上传的信息存放在本地用的是 File.CopyTo 的方式，这个方式可能让写入的文件的长度为 0 也就是没有写入文件成功，另一个推荐的做法是调用 OpenReadStream 的方式复制</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">fileStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="n">gowkusayJomalltrur</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Create</span><span class="p">,</span> <span class="n">FileAccess</span><span class="p">.</span><span class="n">Write</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">rarmelHopidrearLis</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">OpenReadStream</span><span class="p">();</span>
+                <span class="k">using</span> <span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">stream</span><span class="p">.</span><span class="nf">CopyTo</span><span class="p">(</span><span class="n">fileStream</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="n">_logger</span><span class="p">.</span><span class="nf">LogInformation</span><span class="p">(</span><span class="s">$"</span><span class="p">{</span><span class="n">fileStream</span><span class="p">.</span><span class="n">Length</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<hr />
+
+<p>为什么林德熙逗比会说 File.CopyTo 的方式会让写入的文件的长度为 0 但实际上用 File.CopyTo 里面是调用了stream.CopyTo也就是代码是相同的。原因是写了 <code class="language-plaintext highlighter-rouge">CopyToAsync</code> 没有等待</p>
+
+<hr />
+
+<p>上传的代码很简单，同时下载的代码就更加简单，核心就是通过 File 方法返回</p>
+
+<p>在服务器的下载代码是通过 get 的方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">HttpGet</span><span class="p">(</span><span class="s">"DownLoadFile"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">IActionResult</span> <span class="nf">DownLoadFile</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileName</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>只要有文件名，所有人都可以下载，本文不告诉大家如何做用户权限</p>
+
+<p>下载的时候使用文件名从数据库找，如果找到了，就判断是否存在这个文件，如果存在就返回</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="p">[</span><span class="nf">HttpGet</span><span class="p">(</span><span class="s">"DownLoadFile"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">IActionResult</span> <span class="nf">DownLoadFile</span><span class="p">(</span><span class="kt">string</span> <span class="n">fileName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">demmiraWurrupooHasur</span> <span class="p">=</span>
+                <span class="n">_context</span><span class="p">.</span><span class="n">XaseYinairtraiSeawhallkou</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">xileQawkirXeafis</span> <span class="p">=&gt;</span>
+                    <span class="n">xileQawkirXeafis</span><span class="p">.</span><span class="n">Name</span> <span class="p">==</span> <span class="n">fileName</span><span class="p">)?.</span><span class="n">File</span><span class="p">;</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="kt">string</span><span class="p">.</span><span class="nf">IsNullOrEmpty</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nf">NotFound</span><span class="p">();</span>
+            <span class="p">}</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">Exists</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="nf">File</span><span class="p">(</span><span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="n">demmiraWurrupooHasur</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Open</span><span class="p">),</span> <span class="s">"image/png"</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="nf">NotFound</span><span class="p">();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里通过 File 方法返回，需要告诉用户当返回的<code class="language-plaintext highlighter-rouge">content-type</code> 这里不是实际的项目，所以返回的都是 png 图片</p>
+
+<h2 id="客户端">客户端</h2>
+
+<p>首先打开 VisualStudio 新建一个 UWP 项目，可以基于 10240 或者其他的。</p>
+
+<p>然后在界面添加两个按钮，一个按钮是点击上传文件，另一个按钮是点击下载文件</p>
+
+<p>在点击上传文件的代码，先让用户选择一张图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">lisNailallkear</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileOpenPicker</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="n">FileTypeFilter</span> <span class="p">=</span>
+                    <span class="p">{</span>
+                        <span class="s">".png"</span>
+                    <span class="p">}</span>
+                <span class="p">};</span>
+
+                <span class="kt">var</span> <span class="n">whejowNoukiru</span> <span class="p">=</span> <span class="k">await</span> <span class="n">lisNailallkear</span><span class="p">.</span><span class="nf">PickSingleFileAsync</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>然后将图片转换为流</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">Stream</span><span class="p">&gt;</span> <span class="nf">GetFile</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">lisNailallkear</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileOpenPicker</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="n">FileTypeFilter</span> <span class="p">=</span>
+                    <span class="p">{</span>
+                        <span class="s">".png"</span>
+                    <span class="p">}</span>
+                <span class="p">};</span>
+
+                <span class="kt">var</span> <span class="n">whejowNoukiru</span> <span class="p">=</span> <span class="k">await</span> <span class="n">lisNailallkear</span><span class="p">.</span><span class="nf">PickSingleFileAsync</span><span class="p">();</span>
+
+                <span class="k">return</span> <span class="k">await</span> <span class="n">whejowNoukiru</span><span class="p">.</span><span class="nf">OpenStreamForReadAsync</span><span class="p">();</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>通过 MultipartFormDataContent 发送到服务器，这里使用 MultipartFormDataContent 是因为需要发送文件名和文件，通过下面的代码可以添加文件名</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>             <span class="kt">var</span> <span class="n">casnisHoubou</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MultipartFormDataContent</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">taykiHerniCeawerenel</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringContent</span><span class="p">(</span><span class="s">"文件名"</span><span class="p">);</span>
+            <span class="n">casnisHoubou</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">taykiHerniCeawerenel</span><span class="p">,</span> <span class="s">"Name"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这里就将文件名写为文件名，通过 MultipartFormDataContent 添加，加入的时候注意添加名字</p>
+
+<p>然后使用 StreamContent 添加文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">henocoRowrarlarVegonirnis</span> <span class="p">=</span> <span class="k">await</span> <span class="nf">GetFile</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">tobemmanuCamuCaivi</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StreamContent</span><span class="p">(</span><span class="n">henocoRowrarlarVegonirnis</span><span class="p">);</span>
+            <span class="n">casnisHoubou</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">tobemmanuCamuCaivi</span><span class="p">,</span> <span class="s">"File"</span><span class="p">,</span> <span class="s">"BardelCairdallChodiMestebarnai"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>通过 URL 的方法 Post 创建的 casnisHoubou 就可以将文件上传到服务器</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">rejairJate</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">sairlallilarRaibedoYertousebow</span> <span class="p">=</span> <span class="s">"http://localhost:62435/api/XaseYinairtraiSeawhallkous/"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">casnisHoubou</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MultipartFormDataContent</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">taykiHerniCeawerenel</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringContent</span><span class="p">(</span><span class="s">"文件名"</span><span class="p">);</span>
+            <span class="n">casnisHoubou</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">taykiHerniCeawerenel</span><span class="p">,</span> <span class="s">"Name"</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">henocoRowrarlarVegonirnis</span> <span class="p">=</span> <span class="k">await</span> <span class="nf">GetFile</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">tobemmanuCamuCaivi</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StreamContent</span><span class="p">(</span><span class="n">henocoRowrarlarVegonirnis</span><span class="p">);</span>
+            <span class="n">casnisHoubou</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">tobemmanuCamuCaivi</span><span class="p">,</span> <span class="s">"File"</span><span class="p">,</span> <span class="s">"BardelCairdallChodiMestebarnai"</span><span class="p">);</span>
+
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">tizicheLouru</span> <span class="p">=</span>
+                    <span class="k">await</span> <span class="n">rejairJate</span><span class="p">.</span><span class="nf">PostAsync</span><span class="p">(</span><span class="n">sairlallilarRaibedoYertousebow</span> <span class="p">+</span> <span class="s">"UploadFile"</span><span class="p">,</span> <span class="n">casnisHoubou</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">exception</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">exception</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="k">async</span> <span class="n">Task</span><span class="p">&lt;</span><span class="n">Stream</span><span class="p">&gt;</span> <span class="nf">GetFile</span><span class="p">()</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">lisNailallkear</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileOpenPicker</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="n">FileTypeFilter</span> <span class="p">=</span>
+                    <span class="p">{</span>
+                        <span class="s">".png"</span>
+                    <span class="p">}</span>
+                <span class="p">};</span>
+
+                <span class="kt">var</span> <span class="n">whejowNoukiru</span> <span class="p">=</span> <span class="k">await</span> <span class="n">lisNailallkear</span><span class="p">.</span><span class="nf">PickSingleFileAsync</span><span class="p">();</span>
+
+                <span class="k">return</span> <span class="k">await</span> <span class="n">whejowNoukiru</span><span class="p">.</span><span class="nf">OpenStreamForReadAsync</span><span class="p">();</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意在自己的项目的时候需要在服务器端右击属性调试，替换上面的 URL 链接</p>
+
+<!-- ![](image/win10 uwp 使用 asp dotnet core 做图床服务器客户端/win10 uwp 使用 asp dotnet core 做图床服务器客户端2.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20181018203933380" alt="" /></p>
+
+<p>一般只需要修改端口就可以</p>
+
+<h3 id="下载文件">下载文件</h3>
+
+<p>现在来尝试加上下载文件的代码</p>
+
+<p>先构造 URL 从服务器的代码可以知道，需要调用 DownLoadFile 传入参数，这里的端口请使用自己的项目的端口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">sairlallilarRaibedoYertousebow</span> <span class="p">=</span> <span class="s">"http://localhost:62435/api/XaseYinairtraiSeawhallkous/DownLoadFile?fileName=文件名"</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>下载的代码很简单</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">rejairJate</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">sairlallilarRaibedoYertousebow</span> <span class="p">=</span> <span class="s">"http://localhost:62435/api/XaseYinairtraiSeawhallkous/DownLoadFile?fileName=文件名"</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">qarJorfis</span> <span class="p">=</span> <span class="k">await</span> <span class="n">rejairJate</span><span class="p">.</span><span class="nf">GetStreamAsync</span><span class="p">(</span><span class="n">sairlallilarRaibedoYertousebow</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>保存到应用程序的临时文件夹</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">husasLana</span> <span class="p">=</span> <span class="k">await</span> <span class="n">ApplicationData</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">TemporaryFolder</span><span class="p">.</span><span class="nf">CreateFileAsync</span><span class="p">(</span><span class="s">"1.png"</span><span class="p">,</span><span class="n">CreationCollisionOption</span><span class="p">.</span><span class="n">ReplaceExisting</span><span class="p">);</span>
+
+                <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">cairKeredoNukall</span> <span class="p">=</span> <span class="k">await</span> <span class="n">husasLana</span><span class="p">.</span><span class="nf">OpenStreamForWriteAsync</span><span class="p">())</span>
+                <span class="p">{</span>
+                    <span class="n">qarJorfis</span><span class="p">.</span><span class="nf">CopyTo</span><span class="p">(</span><span class="n">cairKeredoNukall</span><span class="p">);</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>从上面的代码可以看到，保存到一个 1.png 文件，但是这个文件相对比较难打开，可以使用下面代码打开</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="k">await</span> <span class="n">Launcher</span><span class="p">.</span><span class="nf">LaunchFileAsync</span><span class="p">(</span><span class="n">husasLana</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>现在尝试先运行服务器端然后再运行客户端，可以看到点击上传和下载都是可以使用</p>
+
+<p>这就是一个简单的使用 asp dotnet core 做文件服务器，但是这个服务器离实际可以使用的服务器还很远，本文只是告诉大家一个简单的方法。</p>
+
+<p>代码 <a href="https://download.csdn.net/download/lindexi_gd/10730499">win10 uwp 使用 asp dotnet core 做图床服务器客户端-CSDN下载</a> 如果有分的话，欢迎从 CSDN 下载。没有的话，从 github 下载</p>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/blob/0a099476e01dd10da3b4483bc0cadbfabf38f00f/KehallzorDralna/">github</a> 欢迎小伙伴访问</p>
+
+<p>参考</p>
+
+<p><a href="https://www.cnblogs.com/qmhuang/p/8306627.html">.NET Core 文件的上传与下载 - Degalo - 博客园</a></p>
+
+<p><a href="https://www.codeproject.com/Articles/1203408/Upload-Download-Files-in-ASP-NET-Core">Upload/Download Files in ASP.NET Core 2.0 - CodeProject</a></p>
+
+:ET

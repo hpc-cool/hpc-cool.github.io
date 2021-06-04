@@ -1,0 +1,26 @@
+I"�<p>本文告诉大家如何通过 WMI 使用Win32_ComputerSystem获取设备厂商</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/2/21 20:02:45 -->
+
+<!-- csdn -->
+
+<!-- 标签：PowerShell,WMI -->
+
+<p>通过下面代码可以获取 机器型号 和 制造厂商</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Get</span><span class="p">-</span><span class="n">WmiObject</span> <span class="n">Win32_ComputerSystem</span> <span class="p">|</span> <span class="n">Format</span><span class="p">-</span><span class="n">List</span> <span class="n">Description</span><span class="p">,</span><span class="n">Manufacturer</span><span class="p">,</span><span class="n">model</span><span class="p">,</span><span class="n">UserName</span>
+</code></pre></div></div>
+
+<p>运行代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Description</span>  <span class="p">:</span> <span class="n">AT</span><span class="p">/</span><span class="n">AT</span> <span class="n">COMPATIBLE</span>
+<span class="n">Manufacturer</span> <span class="p">:</span> <span class="n">Gigabyte</span> <span class="n">Technology</span> <span class="n">Co</span><span class="p">.,</span> <span class="n">Ltd</span><span class="p">.</span>
+<span class="n">model</span>        <span class="p">:</span> <span class="n">To</span> <span class="n">be</span> <span class="n">filled</span> <span class="k">by</span> <span class="n">O</span><span class="p">.</span><span class="n">E</span><span class="p">.</span><span class="n">M</span><span class="p">.</span>
+<span class="n">UserName</span>     <span class="p">:</span> <span class="n">DESKTOP</span><span class="p">-</span><span class="n">KA1CD6M</span><span class="err">\</span><span class="n">lindexi</span>
+</code></pre></div></div>
+
+<p><a href="https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/win32-computersystem">Win32_ComputerSystem class - Windows applications</a></p>
+
+:ET

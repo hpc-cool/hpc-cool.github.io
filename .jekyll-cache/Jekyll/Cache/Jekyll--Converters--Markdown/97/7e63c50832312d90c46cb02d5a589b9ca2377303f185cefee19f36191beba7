@@ -1,0 +1,79 @@
+I"`'<p>经常会遇到在 xaml 使用矢量图，对于 svg 的矢量图，一般都可以拿出来写在 Path 的 Data ，所以可以写为资源，但是写出来的是字符串，如何绑定 Geometry 到字符串资源？</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:17:19 -->
+
+<p>假如在资源写一个图片，看起来就是下面的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Page</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="n">x</span><span class="p">:</span><span class="n">String</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"HomeIconGeometry"</span><span class="p">&gt;</span><span class="n">F1</span> <span class="n">M</span> <span class="m">24.0033</span><span class="p">,</span><span class="m">56.0078L</span> <span class="m">24.0033</span><span class="p">,</span><span class="m">38.0053L</span> <span class="m">22.0031</span><span class="p">,</span><span class="m">40.0056L</span> <span class="m">19.0027</span><span class="p">,</span><span class="m">35.0049L</span> <span class="m">38.0053</span><span class="p">,</span><span class="m">20.0028L</span> <span class="m">45.0063</span><span class="p">,</span><span class="m">25.5299L</span> <span class="m">45.0063</span><span class="p">,</span><span class="m">21.753L</span> <span class="m">49.0068</span><span class="p">,</span><span class="m">21.0029L</span> <span class="m">49.0068</span><span class="p">,</span><span class="m">28.6882L</span> <span class="m">57.008</span><span class="p">,</span><span class="m">35.0049L</span> <span class="m">54.0075</span><span class="p">,</span><span class="m">40.0056L</span> <span class="m">52.0073</span><span class="p">,</span><span class="m">38.0053L</span> <span class="m">52.0073</span><span class="p">,</span><span class="m">56.0078L</span> <span class="m">24.0033</span><span class="p">,</span><span class="m">56.0078</span> <span class="n">Z</span> <span class="n">M</span> <span class="m">38.0053</span><span class="p">,</span><span class="m">26.9204L</span> <span class="m">27.0038</span><span class="p">,</span><span class="m">36.005L</span> <span class="m">27.0038</span><span class="p">,</span><span class="m">53.0074L</span> <span class="m">33.0046</span><span class="p">,</span><span class="m">53.0074L</span> <span class="m">33.0046</span><span class="p">,</span><span class="m">42.006L</span> <span class="m">43.006</span><span class="p">,</span><span class="m">42.006L</span> <span class="m">43.006</span><span class="p">,</span><span class="m">53.0074L</span> <span class="m">49.0068</span><span class="p">,</span><span class="m">53.0074L</span> <span class="m">49.0068</span><span class="p">,</span><span class="m">36.005L</span> <span class="m">38.0053</span><span class="p">,</span><span class="m">26.9204</span> <span class="n">Z</span><span class="p">&lt;/</span><span class="n">x</span><span class="p">:</span><span class="n">String</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="n">Page</span><span class="p">.</span><span class="n">Resources</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p>然后发现使用的是 string ，如果这时创建了一个用户控件，里面写了一个属性，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="n">Geometry</span> <span class="n">IconData</span>
+<span class="p">{</span>
+    <span class="k">get</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">Geometry</span><span class="p">)</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">IconDataProperty</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">set</span> <span class="p">{</span> <span class="nf">SetValue</span><span class="p">(</span><span class="n">IconDataProperty</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">public</span> <span class="k">static</span> <span class="k">readonly</span> <span class="n">DependencyProperty</span> <span class="n">IconDataProperty</span> <span class="p">=</span> 
+    <span class="n">DependencyProperty</span><span class="p">.</span><span class="nf">Register</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">IconData</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Geometry</span><span class="p">),</span> <span class="k">typeof</span><span class="p">(</span><span class="n">Header</span><span class="p">),</span> <span class="k">new</span> <span class="nf">PropertyMetadata</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>界面直接使用代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">Header</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"HeaderPanel"</span> <span class="n">IconData</span><span class="p">=</span><span class="s">"{StaticResource HomeIconGeometry}"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>就会在运行出现无法从string转换，但是如何把用户控件改为 Path ，就可以运行</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017718194714.jpg" alt="" /></p>
+
+<p>那么如何在用户控件使用资源的字符串</p>
+
+<p>可以使用绑定，如果无法转换，可以写一个转换</p>
+
+<p>先创建一个转换类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">GeometryConvert</span> <span class="p">:</span> <span class="n">IValueConverter</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="kt">string</span> <span class="n">language</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="k">value</span> <span class="k">is</span> <span class="kt">string</span> <span class="n">str</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">geometry</span> <span class="p">=</span> <span class="p">(</span><span class="n">Geometry</span><span class="p">)</span> <span class="n">XamlReader</span><span class="p">.</span><span class="nf">Load</span><span class="p">(</span>
+                <span class="s">"&lt;Geometry xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'&gt;"</span>
+                <span class="p">+</span> <span class="n">str</span> <span class="p">+</span> <span class="s">"&lt;/Geometry&gt;"</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">object</span> <span class="nf">ConvertBack</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="kt">string</span> <span class="n">language</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">throw</span> <span class="k">new</span> <span class="nf">NotImplementedException</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>然后在使用绑定的地方使用转换</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">GeometryConvert</span> <span class="n">x</span><span class="p">:</span><span class="n">Key</span><span class="p">=</span><span class="s">"GeometryConvert"</span><span class="p">&gt;&lt;/</span><span class="n">local</span><span class="p">:</span><span class="n">GeometryConvert</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="n">local</span><span class="p">:</span><span class="n">Header</span> <span class="n">x</span><span class="p">:</span><span class="n">Name</span><span class="p">=</span><span class="s">"HeaderPanel"</span> <span class="n">IconData</span><span class="p">=</span><span class="s">"{Binding Source={StaticResource HomeIconGeometry},Converter={StaticResource GeometryConvert}}"</span> <span class="p">/&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到，这个方法可以显示图片</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017718194953.jpg" alt="" /></p>
+
+<p>所以，需要绑定字符串，可以使用这个方法。</p>
+
+<p>有人说，绑定到字符串可以不使用转换，他可以做到，直接使用绑定，但是我暂时没法</p>
+
+<p><a href="https://stackoverflow.com/a/45142555/6116637">https://stackoverflow.com/a/45142555/6116637</a></p>
+
+:ET

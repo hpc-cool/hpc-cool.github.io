@@ -1,0 +1,71 @@
+I"<p>本文来告诉大家在 WPF 里面的 SafeMILHandleMemoryPressure 类的作用。这是一个 internal 不开放的类，是在 WPF 中和 Dx 等模块调用使用的，用途就是辅助 GC 统计当前内存情况，用来在内存不够的时候触发回收</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/12/25 9:09:44 -->
+
+<!-- 发布 -->
+
+<p>这个类放在 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\PresentationCore\System\Windows\Media\SafeMILHandleMemoryPressure.cs</code> 文件，核心调用是通过 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.gc.addmemorypressure?WT.mc_id=WD-MVP-5003260">GC.AddMemoryPressure(Int64)</a> 方法告诉 GC 当前非托管部分占用了多少内存</p>
+
+<p>根据 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.gc.addmemorypressure?WT.mc_id=WD-MVP-5003260">GC.AddMemoryPressure(Int64) 官方文档</a> 的说法，这个 AddMemoryPressure 需要和 RemoveMemoryPressure 成对使用，在使用的时候必须由业务方成对调用，否则将会影响 GC 的效率</p>
+
+<p>为什么需要有 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.gc.addmemorypressure?WT.mc_id=WD-MVP-5003260">GC.AddMemoryPressure</a> 这个方法？原因是假定咱的所有代码都是托管的清真的代码，那么 GC 是能统计当前占用了多少的内存的。但如果咱调用了一些非托管部分，这些模块也申请了内存，此时的 GC 是不了解当前使用到多少内存的，属于这个非托管模块用的内存是多少。通过 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.gc.addmemorypressure?WT.mc_id=WD-MVP-5003260">GC.AddMemoryPressure</a> 这个方法可以告诉 GC 当前这个非托管模块使用到多少内存了</p>
+
+<p>而 GC 的清理是需要根据当前内存占用量决定的，假定现在内存多的是，而且进程也没有用多少内存，那么 GC 将不会进行全清理。但如果当前进程用到了大量的内存了，那么 GC 也许就需要考虑来一次完全内存回收了。上面说的内存完全回收大概可以理解为回收到二代同时压缩内存，更多内存细节请看伟民哥翻译的 .NET内存管理宝典 - 提高代码质量、性能和可扩展性 这本书</p>
+
+<p>那如果我只是调用了 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.gc.addmemorypressure?WT.mc_id=WD-MVP-5003260">GC.AddMemoryPressure</a> 但没有调用 RemoveMemoryPressure 方法会如何？此时的 GC 将会以为内存里面有这些模块占用了内存，而且这些模块也没有释放</p>
+
+<p>为了能在 WPF 里面更好管理内存，同时成对调用 <a href="https://docs.microsoft.com/en-us/dotnet/api/system.gc.addmemorypressure?WT.mc_id=WD-MVP-5003260">GC.AddMemoryPressure</a> 和 RemoveMemoryPressure 方法，而且是准确在非托管释放的时候调用 RemoveMemoryPressure 方法，就封装了 SafeMILHandleMemoryPressure 类</p>
+
+<p>在 SafeMILHandleMemoryPressure 的构造函数里面，将会传入当前非托管模块使用到的内存量</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="nf">SafeMILHandleMemoryPressure</span><span class="p">(</span><span class="kt">long</span> <span class="n">gcPressure</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_gcPressure</span> <span class="p">=</span> <span class="n">gcPressure</span><span class="p">;</span>
+            <span class="n">_refCount</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+
+            
+            <span class="c1">// Removed WPF specific GC algorithm and all bitmap allocations/deallocations</span>
+            <span class="c1">// are now tracked with GC.Add/RemoveMemoryPressure.</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">AddMemoryPressure</span><span class="p">(</span><span class="n">_gcPressure</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接着跟随非托管的指针引用添加或减少引用，相当于自己实现了引用计算。在引用数量为 零 的时候，调用 RemoveMemoryPressure 方法告诉 GC 非托管没有占用资源</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">void</span> <span class="nf">AddRef</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Interlocked</span><span class="p">.</span><span class="nf">Increment</span><span class="p">(</span><span class="k">ref</span> <span class="n">_refCount</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">internal</span> <span class="k">void</span> <span class="nf">Release</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">Interlocked</span><span class="p">.</span><span class="nf">Decrement</span><span class="p">(</span><span class="k">ref</span> <span class="n">_refCount</span><span class="p">)</span> <span class="p">==</span> <span class="m">0</span><span class="p">)</span>
+            <span class="p">{</span>
+                
+                <span class="c1">// Removed WPF specific GC algorithm and all bitmap allocations/deallocations</span>
+                <span class="c1">// are now tracked with GC.Add/RemoveMemoryPressure.</span>
+                <span class="n">GC</span><span class="p">.</span><span class="nf">RemoveMemoryPressure</span><span class="p">(</span><span class="n">_gcPressure</span><span class="p">);</span>
+                <span class="n">_gcPressure</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Estimated size in bytes of the unmanaged memory</span>
+        <span class="k">private</span> <span class="kt">long</span> <span class="n">_gcPressure</span><span class="p">;</span>
+
+        <span class="c1">//</span>
+        <span class="c1">// SafeMILHandleMemoryPressure does its own ref counting in managed code, because the</span>
+        <span class="c1">// associated memory pressure should be removed when there are no more managed</span>
+        <span class="c1">// references to the unmanaged resource. There can still be references to it from</span>
+        <span class="c1">// unmanaged code elsewhere, but that should not prevent the memory pressure from being</span>
+        <span class="c1">// released.</span>
+        <span class="c1">//</span>
+        <span class="k">private</span> <span class="kt">int</span> <span class="n">_refCount</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>当前这个类只是在和 MIL 调用这里使用，但设计是通用的</p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/api/system.gc.addmemorypressure?WT.mc_id=WD-MVP-5003260">GC.AddMemoryPressure(Int64) Method (System)</a></p>
+
+:ET

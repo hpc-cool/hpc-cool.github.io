@@ -1,0 +1,71 @@
+I" <p>本文告诉大家如何从 PPTX 文件里面解析出视频</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/13 19:09:15 -->
+
+<p>我期望看到本文的小伙伴是了解 OpenXML 的，如果想要解析 Office 的文档，我推荐使用使用 OpenXML SDK 这个开源的库，更多入门级博客请看 <a href="https://blog.lindexi.com/post/C-dotnet-%E4%BD%BF%E7%94%A8-OpenXml-%E8%A7%A3%E6%9E%90-PPT-%E6%96%87%E4%BB%B6.html">C# dotnet 使用 OpenXml 解析 PPT 文件</a></p>
+
+<p>我做了一个简单的 PPT 文件，这个文件里面只有一页，这一页上面有一个视频。做这个文件的作用是方便调试，本文将从这个文件里面拿到视频</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">presentationDocument</span> <span class="p">=</span>
+                <span class="n">DocumentFormat</span><span class="p">.</span><span class="n">OpenXml</span><span class="p">.</span><span class="n">Packaging</span><span class="p">.</span><span class="n">PresentationDocument</span><span class="p">.</span><span class="nf">Open</span><span class="p">(</span><span class="s">@"小视频.pptx"</span><span class="p">,</span> <span class="k">false</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">presentationPart</span> <span class="p">=</span> <span class="n">presentationDocument</span><span class="p">.</span><span class="n">PresentationPart</span><span class="p">;</span>
+                <span class="kt">var</span> <span class="n">slidePart</span> <span class="p">=</span> <span class="n">presentationPart</span><span class="p">.</span><span class="n">SlideParts</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">();</span>
+
+                <span class="c1">// 忽略代码</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码是打开解析文件，我拿到第一页，而获取页面的元素需要了解一点是 PPT 将所有元素存放 ShapeTree 而视频是不存在元素的，在 PPT 里面用 Picture 存放视频</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;p:pic&gt;</span>
+    <span class="nt">&lt;p:nvpicpr&gt;</span>
+        <span class="nt">&lt;p:cnvpr</span> <span class="na">id=</span><span class="s">"4"</span> <span class="na">name=</span><span class="s">"视频"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;a:hlinkclick</span> <span class="na">action=</span><span class="s">"ppaction://media"</span> <span class="na">r:id=</span><span class="s">""</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/a:hlinkclick&gt;</span>
+        <span class="nt">&lt;/p:cnvpr&gt;</span>
+        <span class="nt">&lt;p:cnvpicpr&gt;</span>
+            <span class="nt">&lt;a:piclocks</span> <span class="na">nochangeaspect=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/a:piclocks&gt;</span>
+        <span class="nt">&lt;/p:cnvpicpr&gt;</span>
+        <span class="nt">&lt;p:nvpr&gt;</span>
+            <span class="nt">&lt;a:videofile</span> <span class="na">r:link=</span><span class="s">"rId2"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/a:videofile&gt;</span>
+            <span class="nt">&lt;p:extlst&gt;</span>
+                <span class="nt">&lt;p:ext</span> <span class="na">uri=</span><span class="s">"{DAA4B4D4-6D71-4841-9C94-3DE7FCFB9230}"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;p14:media</span> <span class="na">r:embed=</span><span class="s">"rId1"</span> <span class="na">xmlns:p14=</span><span class="s">"http://schemas.microsoft.com/office/powerpoint/2010/main"</span><span class="nt">&gt;</span>
+                    <span class="nt">&lt;/p14:media&gt;</span>
+                <span class="nt">&lt;/p:ext&gt;</span>
+            <span class="nt">&lt;/p:extlst&gt;</span>
+        <span class="nt">&lt;/p:nvpr&gt;</span>
+    <span class="nt">&lt;/p:nvpicpr&gt;</span>
+<span class="nt">&lt;/p:pic&gt;</span>
+</code></pre></div></div>
+
+<p>如上面代码，这就是视频元素其实也就是 Picture 元素，可以在 picture.NonVisualPictureProperties.ApplicationNonVisualDrawingProperties 找到 VideoFromFile 解析视频</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">picture</span> <span class="p">=</span> <span class="n">slidePart</span><span class="p">.</span><span class="n">Slide</span><span class="p">.</span><span class="n">CommonSlideData</span><span class="p">.</span><span class="n">ShapeTree</span><span class="p">.</span><span class="n">OfType</span><span class="p">&lt;</span><span class="n">Picture</span><span class="p">&gt;().</span><span class="nf">FirstOrDefault</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">videoFromFile</span> <span class="p">=</span> <span class="n">picture</span><span class="p">.</span><span class="n">NonVisualPictureProperties</span>
+                    <span class="p">.</span><span class="n">ApplicationNonVisualDrawingProperties</span>
+                    <span class="p">.</span><span class="n">GetFirstChild</span><span class="p">&lt;</span><span class="n">VideoFromFile</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>而视频用的是 <code class="language-plaintext highlighter-rouge">r:link</code> 拿到对应的资源，在 PPT 里面，用 GetPartById 获取 ChildrenRelationshipParts 的资源，用 GetReferenceRelationship 拿到 ReferenceRelationshipList 的资源</p>
+
+<p>在 PPT 里面的视频放在 ReferenceRelationshipList 使用下面代码拿到</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>           <span class="kt">var</span> <span class="n">openXmlPart</span> <span class="p">=</span> <span class="p">(</span><span class="n">DataPartReferenceRelationship</span><span class="p">)</span> <span class="n">slidePart</span><span class="p">.</span><span class="nf">GetReferenceRelationship</span><span class="p">(</span><span class="n">videoFromFile</span><span class="p">.</span><span class="n">Link</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>通过 GetStream 方法可以拿到压缩包里面的文件，此时不需要解压缩，新建文件写入就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">openXmlPart</span><span class="p">.</span><span class="n">DataPart</span><span class="p">.</span><span class="nf">GetStream</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">Path</span><span class="p">.</span><span class="nf">GetTempPath</span><span class="p">(),</span> <span class="s">"林德熙是逗比.mp4"</span><span class="p">);</span>
+                <span class="n">File</span><span class="p">.</span><span class="nf">WriteAllBytes</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="nf">ReadAllBytes</span><span class="p">(</span><span class="n">stream</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/8551ad78455f7e56e2f1cafa66d6ae62d7a94995/GairhajelkewaiHeyerjeaginu">github</a> 欢迎小伙伴访问</p>
+
+:ET

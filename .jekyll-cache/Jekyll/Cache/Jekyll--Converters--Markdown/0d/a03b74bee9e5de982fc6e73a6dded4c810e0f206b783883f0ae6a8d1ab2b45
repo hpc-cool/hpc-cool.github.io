@@ -1,0 +1,58 @@
+I"H<p>有一些程序是不想通过管理员权限运行的，因为在很多文件的读写，如果用了管理员权限程序写入的程序，其他普通权限的程序是无法直接访问的。
+本文告诉大家如何判断当前的程序是通过管理员权限运行，然后通过资源管理器使用普通权限运行</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>通过下面代码可以判断当前的程序是管理员权限运行</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">identity</span> <span class="p">=</span> <span class="n">WindowsIdentity</span><span class="p">.</span><span class="nf">GetCurrent</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">principal</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowsPrincipal</span><span class="p">(</span><span class="n">identity</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">principal</span><span class="p">.</span><span class="nf">IsInRole</span><span class="p">(</span><span class="n">WindowsBuiltInRole</span><span class="p">.</span><span class="n">Administrator</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="c1">// 当前正在以管理员权限运行。</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果是 dotnet core 程序，需要安装 <a href="https://www.nuget.org/packages/Microsoft.Windows.Compatibility">Microsoft.Windows.Compatibility</a> 才可以使用上面代码</p>
+
+<p>通过 Explorer 运行自己，在 dotnet framework 程序和 dotnet core 程序在获得自己的 exe 文件的方法是不同的</p>
+
+<p>在 dotnet framework 程序可以直接在 Main 函数通过 Assembly.GetEntryAssembly().Location 拿到 exe 文件的路径</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">Process</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="s">"explorer.exe"</span><span class="p">,</span> <span class="n">Assembly</span><span class="p">.</span><span class="nf">GetEntryAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span>
+
+</code></pre></div></div>
+
+<p>但是如果在 dotnet core 程序，通过 Assembly.GetEntryAssembly().Location 会拿到 xx.dll 而不是 exe 的路径，需要使用下面的代码拿到 exe 的文件</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// 方法1</span>
+
+                <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetExecutingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">exe</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">DirectoryName</span><span class="p">,</span> <span class="n">file</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="nf">Replace</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">Extension</span><span class="p">,</span> <span class="s">""</span><span class="p">)+</span><span class="s">".exe"</span><span class="p">);</span>
+
+<span class="c1">// 方法2</span>
+                <span class="kt">var</span> <span class="n">exe</span> <span class="p">=</span> <span class="n">Process</span><span class="p">.</span><span class="nf">GetCurrentProcess</span><span class="p">().</span><span class="n">MainModule</span><span class="p">.</span><span class="n">FileName</span><span class="p">;</span>
+
+<span class="c1">// 更多方法</span>
+</code></pre></div></div>
+
+<p>然后自己关闭</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">identity</span> <span class="p">=</span> <span class="n">WindowsIdentity</span><span class="p">.</span><span class="nf">GetCurrent</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">principal</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowsPrincipal</span><span class="p">(</span><span class="n">identity</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">principal</span><span class="p">.</span><span class="nf">IsInRole</span><span class="p">(</span><span class="n">WindowsBuiltInRole</span><span class="p">.</span><span class="n">Administrator</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetExecutingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">exe</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">DirectoryName</span><span class="p">,</span> <span class="n">file</span><span class="p">.</span><span class="n">Name</span><span class="p">.</span><span class="nf">Replace</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="n">Extension</span><span class="p">,</span> <span class="s">""</span><span class="p">)</span> <span class="p">+</span> <span class="s">".exe"</span><span class="p">);</span>
+           	
+                <span class="c1">// 检测到当前进程是以管理员权限运行的，于是降权启动自己之后，把自己关掉。</span>
+                <span class="n">Process</span><span class="p">.</span><span class="nf">Start</span><span class="p">(</span><span class="s">"explorer.exe"</span><span class="p">,</span> <span class="n">Assembly</span><span class="p">.</span><span class="nf">GetEntryAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">);</span>
+                <span class="n">Environment</span><span class="p">.</span><span class="nf">Exit</span><span class="p">(</span><span class="m">0</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p><a href="https://blog.walterlv.com/post/start-process-with-lowered-uac-privileges.html">在 Windows 系统上降低 UAC 权限运行程序（从管理员权限降权到普通用户权限） - walterlv</a></p>
+
+:ET

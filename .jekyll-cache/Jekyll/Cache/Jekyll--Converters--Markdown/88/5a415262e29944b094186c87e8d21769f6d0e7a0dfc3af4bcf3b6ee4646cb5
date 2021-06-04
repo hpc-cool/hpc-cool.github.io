@@ -1,0 +1,46 @@
+I",<p>最近在使用 smms 图床上传发现需要使用 UserAgent ，不然不会返回值。
+所以我就询问了<a href="https://t.me/smms_images">群里</a>大神，他们告诉我需要设置 UserAgent ，本文就是告诉大家如何设置 HttpClient 的浏览器标识</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/3/22 9:01:55 -->
+
+<!-- csdn -->
+
+<p>如果使用 HttpClient 上传图片很简单，只需要创建 HttpMultipartFormDataContent ，里面写图片就可以上传。</p>
+
+<p>设置的方法是<code class="language-plaintext highlighter-rouge">HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd</code>，请看下面</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">HttpClient</span> <span class="n">webHttpClient</span> <span class="p">=</span>
+                <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+           <span class="kt">var</span> <span class="n">userAgent</span> <span class="p">=</span> <span class="s">"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36"</span><span class="p">;</span>
+            <span class="n">webHttpClient</span><span class="p">.</span><span class="n">DefaultRequestHeaders</span><span class="p">.</span><span class="n">UserAgent</span><span class="p">.</span><span class="nf">ParseAdd</span><span class="p">(</span><span class="n">userAgent</span><span class="p">);</span>              
+</code></pre></div></div>
+
+<p>这里 userAgent 是从<a href="https://developers.whatismybrowser.com/useragents/explore/software_name/chrome/">Chrome User Agents</a>拿到，这样就可以了。</p>
+
+<p>如果大家希望知道如何上传图片到 smms ，那么请使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="kt">string</span> <span class="n">url</span> <span class="p">=</span> <span class="s">"https://sm.ms/api/upload"</span><span class="p">;</span>
+            <span class="n">HttpClient</span> <span class="n">webHttpClient</span> <span class="p">=</span>
+                <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+            <span class="n">HttpMultipartFormDataContent</span> <span class="n">httpMultipartFormDataContent</span> <span class="p">=</span>
+                <span class="k">new</span> <span class="nf">HttpMultipartFormDataContent</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">fileContent</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpStreamContent</span><span class="p">(</span><span class="k">await</span> <span class="n">File</span><span class="p">.</span><span class="nf">OpenAsync</span><span class="p">(</span><span class="n">FileAccessMode</span><span class="p">.</span><span class="n">Read</span><span class="p">));</span>
+            <span class="n">fileContent</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"Content-Type"</span><span class="p">,</span> <span class="s">"application/octet-stream"</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">userAgent</span> <span class="p">=</span> <span class="s">"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36"</span><span class="p">;</span>
+            <span class="n">webHttpClient</span><span class="p">.</span><span class="n">DefaultRequestHeaders</span><span class="p">.</span><span class="n">UserAgent</span><span class="p">.</span><span class="nf">ParseAdd</span><span class="p">(</span><span class="n">userAgent</span><span class="p">);</span>
+
+            <span class="n">httpMultipartFormDataContent</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="n">fileContent</span><span class="p">,</span> <span class="s">"smfile"</span><span class="p">,</span> <span class="n">File</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">str</span> <span class="p">=</span> <span class="k">await</span> <span class="n">webHttpClient</span><span class="p">.</span><span class="nf">PostAsync</span><span class="p">(</span><span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">url</span><span class="p">),</span> <span class="n">httpMultipartFormDataContent</span><span class="p">);</span>
+            <span class="c1">//这里可以拿到返回的值 str.Content.ToString();</span>
+</code></pre></div></div>
+
+<p>拿到的返回的值就可以转换拿到上传的图片，现在我做了图床，欢迎大家使用</p>
+
+<p><img src="https://i.loli.net/2018/03/22/5ab30077c2c09.jpg" alt="" /></p>
+
+<p>如果需要设置 WebView 的标识，请看<a href="http://blog.csdn.net/lindexi_gd/article/details/51820950">win10 uwp 如何让WebView标识win10手机</a></p>
+
+:ET

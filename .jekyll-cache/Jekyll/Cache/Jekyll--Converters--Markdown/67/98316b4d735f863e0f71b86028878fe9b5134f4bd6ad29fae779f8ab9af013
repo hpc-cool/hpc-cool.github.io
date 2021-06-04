@@ -1,0 +1,5 @@
+I"�<p>本文告诉大家一个方法让 Page 继承一个泛型类。
+我使用自己的<a href="https://www.nuget.org/packages/lindexi.uwp.Framework">框架</a>的时候，发现每个页面都需要添加一些相同的代码，所以就想把他写出来，作为一个基础的 Page 。
+这个 Page 需要指定自己的 ViewModel 但是这个 ViewModel 却是每个 Page 不相同，所以一个好的方法是指定他的泛型类。但是这时如果使用 Page 继承，就会出现编译错误。</p>
+
+:ET

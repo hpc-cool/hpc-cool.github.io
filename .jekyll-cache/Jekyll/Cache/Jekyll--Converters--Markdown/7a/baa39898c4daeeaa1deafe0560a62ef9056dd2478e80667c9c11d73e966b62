@@ -1,0 +1,75 @@
+I"[ <!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:51 -->
+
+<div id="toc"></div>
+
+<p>在列表新建一个图标，添加 Visibility</p>
+
+<p><code class="language-plaintext highlighter-rouge">Visibility="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}}"</code></p>
+
+<p>我这里用的是 TextBlock ，鼠标移动就会显示</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">&lt;</span><span class="n">ListView</span> <span class="n">AlternationCount</span><span class="p">=</span><span class="s">"10"</span><span class="p">&gt;</span>
+            <span class="p">&lt;</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+                <span class="p">&lt;</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+                    <span class="p">&lt;</span><span class="n">Grid</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"20"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="n">Width</span><span class="p">=</span><span class="s">"Auto"</span><span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                            <span class="p">&lt;</span><span class="n">ColumnDefinition</span> <span class="p">&gt;&lt;/</span><span class="n">ColumnDefinition</span><span class="p">&gt;</span>
+                        <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">.</span><span class="n">ColumnDefinitions</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Text</span><span class="p">=</span><span class="s">"{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex),Mode=OneWay,Converter={StaticResource NumberAddOne}}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"1"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"点击"</span>
+                                   <span class="n">Visibility</span><span class="p">=</span><span class="s">"{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=IsMouseOver, Converter={StaticResource BooleanToVisibilityConverter}}"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                        <span class="p">&lt;</span><span class="n">TextBlock</span> <span class="n">Grid</span><span class="p">.</span><span class="n">Column</span><span class="p">=</span><span class="s">"2"</span> <span class="n">Text</span><span class="p">=</span><span class="s">"lindexi"</span><span class="p">&gt;&lt;/</span><span class="n">TextBlock</span><span class="p">&gt;</span>
+                    <span class="p">&lt;/</span><span class="n">Grid</span><span class="p">&gt;</span>
+                <span class="p">&lt;/</span><span class="n">DataTemplate</span><span class="p">&gt;</span>
+            <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">.</span><span class="n">ItemTemplate</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="n">ListView</span><span class="p">&gt;</span>
+</code></pre></div></div>
+
+<p><img src="http://image.acmx.xyz/%E9%BC%A0%E6%A0%87%E7%A7%BB%E5%8A%A8%E5%88%B0%E5%88%97%E8%A1%A8%E4%B8%8A.gif" alt="" /></p>
+
+<p>获取当前列表项，使用<code class="language-plaintext highlighter-rouge">{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex),Mode=OneWay,Converter={StaticResource NumberAddOne}}</code>。注意 AlternationCount 如果没设不会显示</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ListView</span> <span class="na">AlternationCount=</span><span class="s">"10"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;ListViewItem&gt;</span>
+                <span class="nt">&lt;Grid&gt;</span>
+                    <span class="nt">&lt;Grid.ColumnDefinitions&gt;</span>
+                        <span class="nt">&lt;ColumnDefinition</span> <span class="na">Width=</span><span class="s">"20"</span><span class="nt">&gt;&lt;/ColumnDefinition&gt;</span>
+                        <span class="nt">&lt;ColumnDefinition</span> <span class="nt">&gt;&lt;/ColumnDefinition&gt;</span>
+                    <span class="nt">&lt;/Grid.ColumnDefinitions&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex),Mode=OneWay,Converter={StaticResource NumberAddOne}}"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Grid.Column=</span><span class="s">"1"</span> <span class="na">Text=</span><span class="s">"lindexi"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+                <span class="nt">&lt;/Grid&gt;</span>
+            <span class="nt">&lt;/ListViewItem&gt;</span>
+        <span class="nt">&lt;/ListView&gt;</span>
+
+</code></pre></div></div>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">NumberAddOne</span> <span class="p">:</span> <span class="n">IValueConverter</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">object</span> <span class="nf">Convert</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">index</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="k">value</span><span class="p">;</span>
+            <span class="k">return</span> <span class="n">index</span> <span class="p">+</span> <span class="m">1</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">object</span> <span class="nf">ConvertBack</span><span class="p">(</span><span class="kt">object</span> <span class="k">value</span><span class="p">,</span> <span class="n">Type</span> <span class="n">targetType</span><span class="p">,</span> <span class="kt">object</span> <span class="n">parameter</span><span class="p">,</span> <span class="n">CultureInfo</span> <span class="n">culture</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nf">NotImplementedException</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>为何添加上面转化，这个程序员和客户对于数组的开始是不同的。</p>
+
+<p><img src="http://image.acmx.xyz/90d81d04-5aeb-42a3-adc2-8bc3f0d458b1201722210250.jpg" alt="" /></p>
+
+<!-- for(var i = 57;i>0;i--)
+{
+    document.getElementById('msg'+i).checked = true; 
+} -->
+
+:ET

@@ -1,0 +1,397 @@
+I"��<p>在 WPF 中可以使用 Dxva2 或 GDI 的方法调整屏幕亮度或获取屏幕亮度</p>
+
+<!--more-->
+
+<!-- CreateTime:7/3/2020 2:39:50 PM -->
+
+<p>比较推荐使用 Dxva2 的方法修改亮度，但不是所有的屏幕都支持的。假定某个设备有多个屏幕，此时可以使用 User32 的 MonitorFromWindow 方法获取某个窗口所在的屏幕，此时根据这个屏幕的返回的 GetMonitorBrightness 判断是否支持 Dxva2 的方法</p>
+
+<p>如果 Dxva2 的方法不支持，那么尝试使用 GDI 的方式，下面请让我告诉大家两个方法如何使用</p>
+
+<p>先定义 AdjustScreenByDxva2 类，这个类通过 <code class="language-plaintext highlighter-rouge">dxva2.dll</code> 的几个方法进行获取或修改屏幕亮度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">SetMonitorBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span> <span class="kt">short</span> <span class="n">brightness</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetMonitorBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">pdwMinimumBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">pdwCurrentBrightness</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">pdwMaximumBrightness</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetNumberOfPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">uint</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span>
+            <span class="kt">uint</span> <span class="n">dwPhysicalMonitorArraySize</span><span class="p">,</span> <span class="p">[</span><span class="n">Out</span><span class="p">]</span> <span class="n">PhysicalMonitor</span><span class="p">[]</span> <span class="n">pPhysicalMonitorArray</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">MonitorFromWindow</span><span class="p">([</span><span class="n">In</span><span class="p">]</span> <span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">dwFlags</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>这里 PhysicalMonitor 的定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">StructLayout</span><span class="p">(</span><span class="n">LayoutKind</span><span class="p">.</span><span class="n">Sequential</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">CharSet</span><span class="p">.</span><span class="n">Unicode</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">struct</span> <span class="nc">PhysicalMonitor</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">IntPtr</span> <span class="n">hPhysicalMonitor</span><span class="p">;</span>
+
+        <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">ByValTStr</span><span class="p">,</span> <span class="n">SizeConst</span> <span class="p">=</span> <span class="m">128</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">szPhysicalMonitorDescription</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>设置屏幕亮度和获取屏幕亮度的方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="handle"&gt;所在屏幕窗口的句柄&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="brightness"&gt;亮度&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">SetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="kt">short</span> <span class="n">brightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="p">==</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+
+            <span class="kt">uint</span> <span class="n">pdwNumberOfPhysicalMonitors</span> <span class="p">=</span> <span class="kt">uint</span><span class="p">.</span><span class="n">MinValue</span><span class="p">;</span>
+            <span class="c1">//获取屏幕所在的屏幕设备</span>
+            <span class="kt">var</span> <span class="n">hMonitor</span> <span class="p">=</span> <span class="nf">MonitorFromWindow</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">NativeConstantsEnum</span><span class="p">.</span><span class="n">MonitorDefaultToPrimary</span><span class="p">);</span>
+            <span class="nf">GetNumberOfPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">screen</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PhysicalMonitor</span><span class="p">[</span><span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">];</span>
+            <span class="nf">GetPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">,</span> <span class="n">screen</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">screen</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;=</span> <span class="m">0</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="k">return</span> <span class="nf">SetMonitorBrightness</span><span class="p">(</span><span class="n">screen</span><span class="p">[</span><span class="m">0</span><span class="p">].</span><span class="n">hPhysicalMonitor</span><span class="p">,</span> <span class="n">brightness</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="handle"&gt;所在屏幕窗口的句柄&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="minBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="currentBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="maxBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">GetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">minBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">currentBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">maxBrightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="p">==</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="kt">uint</span> <span class="n">pdwNumberOfPhysicalMonitors</span> <span class="p">=</span> <span class="kt">uint</span><span class="p">.</span><span class="n">MinValue</span><span class="p">;</span>
+            <span class="c1">//获取屏幕所在的屏幕设备</span>
+            <span class="kt">var</span> <span class="n">hMonitor</span> <span class="p">=</span> <span class="nf">MonitorFromWindow</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">NativeConstantsEnum</span><span class="p">.</span><span class="n">MonitorDefaultToPrimary</span><span class="p">);</span>
+            <span class="nf">GetNumberOfPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">screen</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PhysicalMonitor</span><span class="p">[</span><span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">];</span>
+            <span class="nf">GetPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">,</span> <span class="n">screen</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">screen</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;=</span> <span class="m">0</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="nf">GetMonitorBrightness</span><span class="p">(</span><span class="n">screen</span><span class="p">[</span><span class="m">0</span><span class="p">].</span><span class="n">hPhysicalMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="n">minBrightness</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">currentBrightness</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">maxBrightness</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>如果获取 GetBrightness 返回 false 那么此屏幕不支持通过 dxva2 设置亮度</p>
+
+<p>此时可以尝试使用 GDI 的方法，使用 GDI 的方法只支持设置主屏幕，不能根据传入的窗口获取窗口所在的屏幕的方式设置某个屏幕的亮度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"gdi32.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetDeviceGammaRamp</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hDC</span><span class="p">,</span> <span class="k">ref</span> <span class="n">RAMP</span> <span class="n">lpRamp</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"gdi32.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">SetDeviceGammaRamp</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hDC</span><span class="p">,</span> <span class="k">ref</span> <span class="n">RAMP</span> <span class="n">lpRamp</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>设置和获取屏幕亮度的方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">double</span> <span class="nf">CalAllGammaVal</span><span class="p">(</span><span class="n">RAMP</span> <span class="n">ramp</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Round</span><span class="p">(((</span><span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">.</span><span class="n">Blue</span><span class="p">)</span> <span class="p">+</span> <span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">.</span><span class="n">Red</span><span class="p">)</span> <span class="p">+</span>
+                                <span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">.</span><span class="n">Green</span><span class="p">))</span> <span class="p">/</span> <span class="m">3</span><span class="p">),</span> <span class="m">2</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">double</span> <span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="kt">ushort</span><span class="p">[]</span> <span class="n">line</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">max</span> <span class="p">=</span> <span class="n">line</span><span class="p">.</span><span class="nf">Max</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">min</span> <span class="p">=</span> <span class="n">line</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+            <span class="kt">var</span> <span class="n">index</span> <span class="p">=</span> <span class="n">Array</span><span class="p">.</span><span class="nf">FindIndex</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">n</span> <span class="p">=&gt;</span> <span class="n">n</span> <span class="p">==</span> <span class="n">max</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">gamma</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Round</span><span class="p">((((</span><span class="kt">double</span><span class="p">)</span> <span class="p">(</span><span class="n">max</span> <span class="p">-</span> <span class="n">min</span><span class="p">)</span> <span class="p">/</span> <span class="n">index</span><span class="p">)</span> <span class="p">/</span> <span class="m">255</span><span class="p">),</span> <span class="m">2</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">gamma</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 读取屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="minBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="currentBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="maxBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">GetBrightness</span><span class="p">(</span><span class="k">ref</span> <span class="kt">short</span> <span class="n">minBrightness</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">currentBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">maxBrightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">handle</span> <span class="p">=</span> <span class="n">Graphics</span><span class="p">.</span><span class="nf">FromHwnd</span><span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">).</span><span class="nf">GetHdc</span><span class="p">();</span>
+            <span class="c1">//0-50 亮度变化太小，所以从50开始</span>
+            <span class="n">minBrightness</span> <span class="p">=</span> <span class="m">50</span><span class="p">;</span>
+            <span class="n">maxBrightness</span> <span class="p">=</span> <span class="m">100</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">ramp</span> <span class="p">=</span> <span class="k">default</span><span class="p">(</span><span class="n">RAMP</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">deviceGammaRamp</span> <span class="p">=</span> <span class="nf">GetDeviceGammaRamp</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="n">ramp</span><span class="p">);</span>
+            <span class="n">currentBrightness</span> <span class="p">=</span> <span class="p">(</span><span class="kt">short</span><span class="p">)</span> <span class="p">((</span><span class="n">deviceGammaRamp</span> <span class="p">?</span> <span class="nf">CalAllGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">)</span> <span class="p">:</span> <span class="m">0.5</span><span class="p">)</span> <span class="p">*</span> <span class="m">100</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">deviceGammaRamp</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="brightness"&gt;0-100&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">SetBrightness</span><span class="p">(</span><span class="kt">short</span> <span class="n">brightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">handle</span> <span class="p">=</span> <span class="n">Graphics</span><span class="p">.</span><span class="nf">FromHwnd</span><span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">).</span><span class="nf">GetHdc</span><span class="p">();</span>
+            <span class="kt">double</span> <span class="k">value</span> <span class="p">=</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">brightness</span> <span class="p">/</span> <span class="m">100</span><span class="p">;</span>
+            <span class="n">RAMP</span> <span class="n">ramp</span> <span class="p">=</span> <span class="k">default</span><span class="p">(</span><span class="n">RAMP</span><span class="p">);</span>
+            <span class="n">ramp</span><span class="p">.</span><span class="n">Red</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">ushort</span><span class="p">[</span><span class="m">256</span><span class="p">];</span>
+            <span class="n">ramp</span><span class="p">.</span><span class="n">Green</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">ushort</span><span class="p">[</span><span class="m">256</span><span class="p">];</span>
+            <span class="n">ramp</span><span class="p">.</span><span class="n">Blue</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">ushort</span><span class="p">[</span><span class="m">256</span><span class="p">];</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">256</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">tmp</span> <span class="p">=</span> <span class="p">(</span><span class="kt">ushort</span><span class="p">)</span> <span class="p">(</span><span class="n">i</span> <span class="p">*</span> <span class="m">255</span> <span class="p">*</span> <span class="k">value</span><span class="p">);</span>
+                <span class="n">ramp</span><span class="p">.</span><span class="n">Red</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">ramp</span><span class="p">.</span><span class="n">Green</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">ramp</span><span class="p">.</span><span class="n">Blue</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Max</span><span class="p">(</span><span class="kt">ushort</span><span class="p">.</span><span class="n">MinValue</span><span class="p">,</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="kt">ushort</span><span class="p">.</span><span class="n">MaxValue</span><span class="p">,</span> <span class="n">tmp</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">deviceGammaRamp</span> <span class="p">=</span> <span class="nf">SetDeviceGammaRamp</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="n">ramp</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">deviceGammaRamp</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>一个可用的封装如下，只需要使用 AdjustScreenBuilder.CreateAdjustScreen 获取修改屏幕亮度的对象，通过这个对象就可以设置或获取屏幕亮度</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Windows</span><span class="p">;</span>
+<span class="k">using</span> <span class="nn">System.Windows.Interop</span><span class="p">;</span>
+
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">AdjustScreenBuilder</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 创建一个调整屏幕亮度的对象</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;如果返回空，则代表此屏幕不支持&lt;/returns&gt;</span>
+        <span class="p">[</span><span class="n">CanBeNull</span><span class="p">]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="n">IAdjustScreen</span> <span class="nf">CreateAdjustScreen</span><span class="p">(</span><span class="n">Window</span> <span class="n">window</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">window</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentNullException</span><span class="p">(</span><span class="k">nameof</span><span class="p">(</span><span class="n">window</span><span class="p">));</span>
+            <span class="c1">//第一次尝试使用Dxva2方式</span>
+            <span class="n">AdjustScreenByDxva2</span> <span class="n">adjustScreenByDxva2</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">AdjustScreenByDxva2</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">handle</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WindowInteropHelper</span><span class="p">(</span><span class="n">window</span><span class="p">).</span><span class="n">Handle</span><span class="p">;</span>
+            <span class="kt">short</span> <span class="n">min</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="kt">short</span> <span class="n">current</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="kt">short</span> <span class="n">max</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">adjustScreenByDxva2Value</span> <span class="p">=</span> <span class="n">adjustScreenByDxva2</span><span class="p">.</span><span class="nf">GetBrightness</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="n">min</span><span class="p">,</span> <span class="k">ref</span> <span class="n">current</span><span class="p">,</span> <span class="k">ref</span> <span class="n">max</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">adjustScreenByDxva2Value</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">adjustScreenByDxva2</span><span class="p">;</span>
+            <span class="c1">//如果不满足，则尝试使用Gdi32方式</span>
+            <span class="k">else</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">adjustScreenByGdi32</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">AdjustScreenByGdi32</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">adjustScreenByGdi32Value</span> <span class="p">=</span> <span class="n">adjustScreenByGdi32</span><span class="p">.</span><span class="nf">GetBrightness</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="n">min</span><span class="p">,</span> <span class="k">ref</span> <span class="n">current</span><span class="p">,</span> <span class="k">ref</span> <span class="n">max</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">adjustScreenByGdi32Value</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">adjustScreenByGdi32</span><span class="p">;</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">AdjustScreenByDxva2</span> <span class="p">:</span> <span class="n">IAdjustScreen</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">SetMonitorBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span> <span class="kt">short</span> <span class="n">brightness</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetMonitorBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">pdwMinimumBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">pdwCurrentBrightness</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">pdwMaximumBrightness</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetNumberOfPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">uint</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"dxva2.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hMonitor</span><span class="p">,</span>
+            <span class="kt">uint</span> <span class="n">dwPhysicalMonitorArraySize</span><span class="p">,</span> <span class="p">[</span><span class="n">Out</span><span class="p">]</span> <span class="n">PhysicalMonitor</span><span class="p">[]</span> <span class="n">pPhysicalMonitorArray</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"user32.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="n">IntPtr</span> <span class="nf">MonitorFromWindow</span><span class="p">([</span><span class="n">In</span><span class="p">]</span> <span class="n">IntPtr</span> <span class="n">hwnd</span><span class="p">,</span> <span class="kt">uint</span> <span class="n">dwFlags</span><span class="p">);</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// internal类型不要修改，不希望外界构造。可通过&lt;see cref="AdjustScreenBuilder.CreateAdjustScreen"/&gt;创建</span>
+        <span class="c1">/// 由于调整屏幕亮度有多种方案，不同的屏幕适配不同的方案。所以不需要外界做过多判断。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">internal</span> <span class="nf">AdjustScreenByDxva2</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="handle"&gt;所在屏幕窗口的句柄&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="brightness"&gt;亮度&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">SetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="kt">short</span> <span class="n">brightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="p">==</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+
+            <span class="kt">uint</span> <span class="n">pdwNumberOfPhysicalMonitors</span> <span class="p">=</span> <span class="kt">uint</span><span class="p">.</span><span class="n">MinValue</span><span class="p">;</span>
+            <span class="c1">//获取屏幕所在的屏幕设备</span>
+            <span class="kt">var</span> <span class="n">hMonitor</span> <span class="p">=</span> <span class="nf">MonitorFromWindow</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">NativeConstantsEnum</span><span class="p">.</span><span class="n">MonitorDefaultToPrimary</span><span class="p">);</span>
+            <span class="nf">GetNumberOfPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">screen</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PhysicalMonitor</span><span class="p">[</span><span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">];</span>
+            <span class="nf">GetPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">,</span> <span class="n">screen</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">screen</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;=</span> <span class="m">0</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="k">return</span> <span class="nf">SetMonitorBrightness</span><span class="p">(</span><span class="n">screen</span><span class="p">[</span><span class="m">0</span><span class="p">].</span><span class="n">hPhysicalMonitor</span><span class="p">,</span> <span class="n">brightness</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="handle"&gt;所在屏幕窗口的句柄&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="minBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="currentBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="maxBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">GetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">minBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">currentBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">maxBrightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">handle</span> <span class="p">==</span> <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+            <span class="kt">uint</span> <span class="n">pdwNumberOfPhysicalMonitors</span> <span class="p">=</span> <span class="kt">uint</span><span class="p">.</span><span class="n">MinValue</span><span class="p">;</span>
+            <span class="c1">//获取屏幕所在的屏幕设备</span>
+            <span class="kt">var</span> <span class="n">hMonitor</span> <span class="p">=</span> <span class="nf">MonitorFromWindow</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">NativeConstantsEnum</span><span class="p">.</span><span class="n">MonitorDefaultToPrimary</span><span class="p">);</span>
+            <span class="nf">GetNumberOfPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">screen</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PhysicalMonitor</span><span class="p">[</span><span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">];</span>
+            <span class="nf">GetPhysicalMonitorsFromHMONITOR</span><span class="p">(</span><span class="n">hMonitor</span><span class="p">,</span> <span class="n">pdwNumberOfPhysicalMonitors</span><span class="p">,</span> <span class="n">screen</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">screen</span><span class="p">.</span><span class="n">Length</span> <span class="p">&lt;=</span> <span class="m">0</span><span class="p">)</span> <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+
+            <span class="k">return</span> <span class="nf">GetMonitorBrightness</span><span class="p">(</span><span class="n">screen</span><span class="p">[</span><span class="m">0</span><span class="p">].</span><span class="n">hPhysicalMonitor</span><span class="p">,</span> <span class="k">ref</span> <span class="n">minBrightness</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">currentBrightness</span><span class="p">,</span>
+                <span class="k">ref</span> <span class="n">maxBrightness</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">AdjustScreenByGdi32</span> <span class="p">:</span> <span class="n">IAdjustScreen</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"gdi32.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">GetDeviceGammaRamp</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hDC</span><span class="p">,</span> <span class="k">ref</span> <span class="n">RAMP</span> <span class="n">lpRamp</span><span class="p">);</span>
+
+        <span class="p">[</span><span class="nf">DllImport</span><span class="p">(</span><span class="s">"gdi32.dll"</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="k">extern</span> <span class="kt">bool</span> <span class="nf">SetDeviceGammaRamp</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">hDC</span><span class="p">,</span> <span class="k">ref</span> <span class="n">RAMP</span> <span class="n">lpRamp</span><span class="p">);</span>
+
+        <span class="k">private</span> <span class="kt">double</span> <span class="nf">CalAllGammaVal</span><span class="p">(</span><span class="n">RAMP</span> <span class="n">ramp</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Round</span><span class="p">(((</span><span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">.</span><span class="n">Blue</span><span class="p">)</span> <span class="p">+</span> <span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">.</span><span class="n">Red</span><span class="p">)</span> <span class="p">+</span>
+                                <span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">.</span><span class="n">Green</span><span class="p">))</span> <span class="p">/</span> <span class="m">3</span><span class="p">),</span> <span class="m">2</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// internal类型不要修改，不希望外界构造。可通过&lt;see cref="AdjustScreenBuilder.CreateAdjustScreen"/&gt;创建</span>
+        <span class="c1">/// 由于调整屏幕亮度有多种方案，不同的屏幕适配不同的方案。所以不需要外界做过多判断。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">internal</span> <span class="nf">AdjustScreenByGdi32</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">double</span> <span class="nf">CalColorGammaVal</span><span class="p">(</span><span class="kt">ushort</span><span class="p">[]</span> <span class="n">line</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">max</span> <span class="p">=</span> <span class="n">line</span><span class="p">.</span><span class="nf">Max</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">min</span> <span class="p">=</span> <span class="n">line</span><span class="p">[</span><span class="m">0</span><span class="p">];</span>
+            <span class="kt">var</span> <span class="n">index</span> <span class="p">=</span> <span class="n">Array</span><span class="p">.</span><span class="nf">FindIndex</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">n</span> <span class="p">=&gt;</span> <span class="n">n</span> <span class="p">==</span> <span class="n">max</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">gamma</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Round</span><span class="p">((((</span><span class="kt">double</span><span class="p">)</span> <span class="p">(</span><span class="n">max</span> <span class="p">-</span> <span class="n">min</span><span class="p">)</span> <span class="p">/</span> <span class="n">index</span><span class="p">)</span> <span class="p">/</span> <span class="m">255</span><span class="p">),</span> <span class="m">2</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">gamma</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 读取屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="handle"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="minBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="currentBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="maxBrightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">GetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">minBrightness</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">currentBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">maxBrightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">handle</span> <span class="p">=</span> <span class="n">Graphics</span><span class="p">.</span><span class="nf">FromHwnd</span><span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">).</span><span class="nf">GetHdc</span><span class="p">();</span>
+            <span class="c1">//0-50 亮度变化太小，所以从50开始</span>
+            <span class="n">minBrightness</span> <span class="p">=</span> <span class="m">50</span><span class="p">;</span>
+            <span class="n">maxBrightness</span> <span class="p">=</span> <span class="m">100</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">ramp</span> <span class="p">=</span> <span class="k">default</span><span class="p">(</span><span class="n">RAMP</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">deviceGammaRamp</span> <span class="p">=</span> <span class="nf">GetDeviceGammaRamp</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="n">ramp</span><span class="p">);</span>
+            <span class="n">currentBrightness</span> <span class="p">=</span> <span class="p">(</span><span class="kt">short</span><span class="p">)</span> <span class="p">((</span><span class="n">deviceGammaRamp</span> <span class="p">?</span> <span class="nf">CalAllGammaVal</span><span class="p">(</span><span class="n">ramp</span><span class="p">)</span> <span class="p">:</span> <span class="m">0.5</span><span class="p">)</span> <span class="p">*</span> <span class="m">100</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">deviceGammaRamp</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 设置屏幕亮度</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="handle"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;param name="brightness"&gt;&lt;/param&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">SetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="kt">short</span> <span class="n">brightness</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">handle</span> <span class="p">=</span> <span class="n">Graphics</span><span class="p">.</span><span class="nf">FromHwnd</span><span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">).</span><span class="nf">GetHdc</span><span class="p">();</span>
+            <span class="kt">double</span> <span class="k">value</span> <span class="p">=</span> <span class="p">(</span><span class="kt">double</span><span class="p">)</span> <span class="n">brightness</span> <span class="p">/</span> <span class="m">100</span><span class="p">;</span>
+            <span class="n">RAMP</span> <span class="n">ramp</span> <span class="p">=</span> <span class="k">default</span><span class="p">(</span><span class="n">RAMP</span><span class="p">);</span>
+            <span class="n">ramp</span><span class="p">.</span><span class="n">Red</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">ushort</span><span class="p">[</span><span class="m">256</span><span class="p">];</span>
+            <span class="n">ramp</span><span class="p">.</span><span class="n">Green</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">ushort</span><span class="p">[</span><span class="m">256</span><span class="p">];</span>
+            <span class="n">ramp</span><span class="p">.</span><span class="n">Blue</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">ushort</span><span class="p">[</span><span class="m">256</span><span class="p">];</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">1</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">256</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">tmp</span> <span class="p">=</span> <span class="p">(</span><span class="kt">ushort</span><span class="p">)</span> <span class="p">(</span><span class="n">i</span> <span class="p">*</span> <span class="m">255</span> <span class="p">*</span> <span class="k">value</span><span class="p">);</span>
+                <span class="n">ramp</span><span class="p">.</span><span class="n">Red</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">ramp</span><span class="p">.</span><span class="n">Green</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">ramp</span><span class="p">.</span><span class="n">Blue</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Max</span><span class="p">(</span><span class="kt">ushort</span><span class="p">.</span><span class="n">MinValue</span><span class="p">,</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Min</span><span class="p">(</span><span class="kt">ushort</span><span class="p">.</span><span class="n">MaxValue</span><span class="p">,</span> <span class="n">tmp</span><span class="p">));</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">deviceGammaRamp</span> <span class="p">=</span> <span class="nf">SetDeviceGammaRamp</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="n">ramp</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">deviceGammaRamp</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IAdjustScreen</span>
+    <span class="p">{</span>
+        <span class="kt">bool</span> <span class="nf">GetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="k">ref</span> <span class="kt">short</span> <span class="n">minBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">currentBrightness</span><span class="p">,</span>
+            <span class="k">ref</span> <span class="kt">short</span> <span class="n">maxBrightness</span><span class="p">);</span>
+
+        <span class="kt">bool</span> <span class="nf">SetBrightness</span><span class="p">(</span><span class="n">IntPtr</span> <span class="n">handle</span><span class="p">,</span> <span class="kt">short</span> <span class="n">brightness</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="nf">StructLayout</span><span class="p">(</span><span class="n">LayoutKind</span><span class="p">.</span><span class="n">Sequential</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">CharSet</span><span class="p">.</span><span class="n">Ansi</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">struct</span> <span class="nc">RAMP</span>
+    <span class="p">{</span>
+        <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">ByValArray</span><span class="p">,</span> <span class="n">SizeConst</span> <span class="p">=</span> <span class="m">256</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">UInt16</span><span class="p">[]</span> <span class="n">Red</span><span class="p">;</span>
+
+        <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">ByValArray</span><span class="p">,</span> <span class="n">SizeConst</span> <span class="p">=</span> <span class="m">256</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">UInt16</span><span class="p">[]</span> <span class="n">Green</span><span class="p">;</span>
+
+        <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">ByValArray</span><span class="p">,</span> <span class="n">SizeConst</span> <span class="p">=</span> <span class="m">256</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="n">UInt16</span><span class="p">[]</span> <span class="n">Blue</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="nf">StructLayout</span><span class="p">(</span><span class="n">LayoutKind</span><span class="p">.</span><span class="n">Sequential</span><span class="p">,</span> <span class="n">CharSet</span> <span class="p">=</span> <span class="n">CharSet</span><span class="p">.</span><span class="n">Unicode</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">struct</span> <span class="nc">PhysicalMonitor</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="n">IntPtr</span> <span class="n">hPhysicalMonitor</span><span class="p">;</span>
+
+        <span class="p">[</span><span class="nf">MarshalAs</span><span class="p">(</span><span class="n">UnmanagedType</span><span class="p">.</span><span class="n">ByValTStr</span><span class="p">,</span> <span class="n">SizeConst</span> <span class="p">=</span> <span class="m">128</span><span class="p">)]</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">szPhysicalMonitorDescription</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">enum</span> <span class="n">NativeConstantsEnum</span>
+    <span class="p">{</span>
+        <span class="n">MonitorDefaultToNull</span><span class="p">,</span>
+        <span class="n">MonitorDefaultToPrimary</span><span class="p">,</span>
+        <span class="n">MonitorDefaultToNearest</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

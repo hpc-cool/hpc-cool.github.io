@@ -1,0 +1,64 @@
+I"�<p>好了还是回到问题，我想把两个git合并</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>首先用git bash 到我的一个仓库，作为需要合并的仓库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cd</span> <span class="err">仓库</span>
+</code></pre></div></div>
+
+<p>添加我要合并仓库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">#</span> <span class="n">git</span> <span class="n">remote</span> <span class="k">add</span> <span class="err">仓库</span> <span class="err">仓库可以是远程仓库</span>
+<span class="n">git</span> <span class="n">remote</span> <span class="k">add</span> <span class="n">lindexi</span> <span class="n">git@github</span><span class="p">.</span><span class="n">com</span><span class="p">:</span><span class="n">lindexi</span><span class="p">/</span><span class="n">lindexi</span><span class="p">.</span><span class="n">github</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">git</span>
+</code></pre></div></div>
+<p>从远程仓库下载，这时我们弄个新的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">branch</span> <span class="n">lindexi</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">lindexi</span>
+<span class="n">git</span> <span class="n">fetch</span> <span class="n">lindexi</span>
+<span class="n">git</span> <span class="n">merge</span> <span class="n">lindexi</span><span class="p">/</span><span class="n">master</span>
+<span class="err">解决冲突</span>
+<span class="n">git</span> <span class="k">add</span> <span class="p">.</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="p">-</span><span class="n">m</span> <span class="s">"合并"</span>
+<span class="n">git</span> <span class="n">push</span> <span class="n">lindexi</span> <span class="n">lindexi</span><span class="p">:</span><span class="n">ma</span><span class="err">我有两个仓库，一个是</span><span class="n">gitbook</span><span class="err">在写一本</span><span class="n">UWP</span><span class="err">入门，一个是放在</span><span class="n">github</span><span class="err">的垃圾，这个是我想要开个人网站，但是做的还是不行</span><span class="n">https</span><span class="p">:</span><span class="c1">//github.com/lindexi/lindexi.github.io结果发现我需要做html，本来的文件没法直接转过去，但是我又不想使用第三方工具，于是最后我想着自己来写一个，于是就做了winMarkdown，win10软件，不过已经几个月没做</span>
+
+<span class="err">好了还是回到问题，我想把两个</span><span class="n">git</span><span class="err">合并</span>
+
+<span class="p">&lt;!--</span><span class="n">more</span><span class="p">--&gt;</span>
+<span class="p">&lt;!--</span> <span class="n">CreateTime</span><span class="p">:</span><span class="m">2018</span><span class="p">/</span><span class="m">2</span><span class="p">/</span><span class="m">13</span> <span class="m">17</span><span class="p">:</span><span class="m">23</span><span class="p">:</span><span class="m">03</span> <span class="p">--&gt;</span>
+
+
+<span class="p">&lt;</span><span class="n">div</span> <span class="n">id</span><span class="p">=</span><span class="s">"toc"</span><span class="p">&gt;&lt;/</span><span class="n">div</span><span class="p">&gt;</span>
+
+<span class="err">首先用</span><span class="n">git</span> <span class="n">bash</span> <span class="err">到我的一个仓库，作为需要合并的仓库</span>
+
+<span class="err">```</span><span class="n">csharp</span>
+<span class="n">cd</span> <span class="err">仓库</span>
+</code></pre></div></div>
+
+<p>添加我要合并仓库</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="err">#</span> <span class="n">git</span> <span class="n">remote</span> <span class="k">add</span> <span class="err">仓库</span> <span class="err">仓库可以是远程仓库</span>
+<span class="n">git</span> <span class="n">remote</span> <span class="k">add</span> <span class="n">lindexi</span> <span class="n">git@github</span><span class="p">.</span><span class="n">com</span><span class="p">:</span><span class="n">lindexi</span><span class="p">/</span><span class="n">lindexi</span><span class="p">.</span><span class="n">github</span><span class="p">.</span><span class="n">io</span><span class="p">.</span><span class="n">git</span>
+</code></pre></div></div>
+<p>从远程仓库下载，这时我们弄个新的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">branch</span> <span class="n">lindexi</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">lindexi</span>
+<span class="n">git</span> <span class="n">fetch</span> <span class="n">lindexi</span>
+<span class="n">git</span> <span class="n">merge</span> <span class="n">lindexi</span><span class="p">/</span><span class="n">master</span>
+<span class="err">解决冲突</span>
+<span class="n">git</span> <span class="k">add</span> <span class="p">.</span>
+<span class="n">git</span> <span class="n">commit</span> <span class="p">-</span><span class="n">m</span> <span class="s">"合并"</span>
+<span class="n">git</span> <span class="n">push</span> <span class="n">lindexi</span> <span class="n">lindexi</span><span class="p">:</span><span class="n">master</span>
+<span class="n">git</span> <span class="n">checkout</span> <span class="n">master</span>
+<span class="n">git</span> <span class="n">merge</span> <span class="n">lindexi</span>
+<span class="n">git</span> <span class="n">branch</span> <span class="p">-</span><span class="n">d</span> <span class="n">lindexi</span>
+</code></pre></div></div>
+
+:ET

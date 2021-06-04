@@ -1,0 +1,50 @@
+I"v<p>在使用 Mock 的时候，可以设置一个 Mock 的对象继承多个接口，而不需要自己定义一个接口去继承其他的多个接口</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/1/12 16:34:23 -->
+
+<!-- 发布 -->
+
+<p>这个算是 Mock 的高级的玩法了，在 Mock 的官方文档有说到，可以使用 As 的方法，给 Mock 的对象加入其他的接口继承</p>
+
+<p>如下面代码，我有两个接口，定义如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IF1</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IF2</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>此时我想要定义一个 Mock 的对象，让这个对象继承上面这两个没有继承关系的接口，此时的代码可以如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="kt">var</span> <span class="n">mock</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Mock</span><span class="p">&lt;</span><span class="n">IF1</span><span class="p">&gt;();</span>
+ <span class="n">mock</span><span class="p">.</span><span class="n">As</span><span class="p">&lt;</span><span class="n">IF2</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>尝试判断一下，可以看到拿到的对象是继承两个接口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="n">Assert</span><span class="p">.</span><span class="nf">IsInstanceOfType</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">IF1</span><span class="p">));</span>
+   <span class="n">Assert</span><span class="p">.</span><span class="nf">IsInstanceOfType</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">IF2</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>也就是说如果有多个接口需要继承，只需要加上 As 方法，在里面传入自己需要的接口就可以了</p>
+
+<p>而调用 As 方法是有返回值的，通过此返回值就可以给接口设置调用的方法等</p>
+
+<p>通过这样的方法就不需要自己去定义一个接口分别继承 Mock 需要继承的接口，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">interface</span> <span class="nc">IF3</span><span class="p">:</span> <span class="n">IF1</span><span class="p">,</span> <span class="n">IF2</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/47267274/JajegeefinereCakairerekejeye">github</a> 欢迎小伙伴访问</p>
+
+:ET

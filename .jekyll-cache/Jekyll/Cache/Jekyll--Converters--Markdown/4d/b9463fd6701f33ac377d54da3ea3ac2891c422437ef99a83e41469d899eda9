@@ -1,0 +1,188 @@
+I"�(<p>This article is written in both <a href="#English">English</a> and <a href="#中文">Chinese</a>. 
+本文使用<a href="#中文">中文</a>和<a href="#English">英文</a>两个版本。
+在 win10 的 17025（直到 17134 也就是正式版 1803 也没有修复） 可以容易让 UWP 触摸失效。做法是创建一个窗口背景是透明的 wpf 程序，把他置顶，这时所有 uwp 程序就无法触摸。在正式版 17134 是所有的触摸程序都触摸失效，除了可以把触摸转鼠标的程序如 VisualStudio 和 QQ 还能使用，如 Edge 和 Chrome 都无法使用。
+I found the easy way to make the UWP app touch not work in win10 17025(until 17134). To create a wpf app with transparent background and make it Topmost, you can see all of the UWP app’s touch not work.</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/9/1 9:50:18 -->
+
+<!-- 标签：WPF，UWP，触摸 -->
+
+<h2 id="中文">中文</h2>
+
+<p>写英文的原因是给微软报这个问题，现在发在 <a href="https://developercommunity.visualstudio.com/content/problem/255063/on-windows-10-1803-all-applications-lost-touch-or.html">微软反馈</a> 希望大家投票。</p>
+
+<p>步骤：</p>
+
+<ol>
+  <li>
+    <p>创建一个 wpf 程序</p>
+  </li>
+  <li>
+    <p>设置 wpf 的窗口最大化</p>
+  </li>
+  <li>
+    <p>设置 wpf 程序的背景为透明</p>
+  </li>
+  <li>
+    <p>启动 wpf 程序</p>
+  </li>
+</ol>
+
+<p>这时就可以看到 Edge 等软件都无法触摸</p>
+
+<p>在检查的时候可以使用<a href="https://github.com/walterlv/ManipulationDemo">ManipulationDemo</a>，可以看到在触摸的时候没有 Pointer 消息。</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201711231645122017112316470.jpg" alt="" /></p>
+
+<p>下面是关闭 wpf 程序之后，可以看到最下面有 Pointer 消息</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017112316451220171123165235.jpg" alt="" /></p>
+
+<p>下面是这个wpf软件代码：</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">AllowsTransparency</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="n">WindowStyle</span> <span class="p">=</span> <span class="n">WindowStyle</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+            <span class="n">WindowState</span> <span class="p">=</span> <span class="n">WindowState</span><span class="p">.</span><span class="n">Maximized</span><span class="p">;</span>
+            <span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Transparent</span><span class="p">;</span>
+            <span class="n">Topmost</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="解决方案">解决方案</h3>
+
+<p>最新的微软补丁<a href="https://support.microsoft.com/zh-cn/help/4346783/windows-10-update-kb4346783">August 30, 2018—KB4346783</a> 修复了这个问题，只需要在用户的设备安装这个补丁就可以解决</p>
+
+<!-- ![](image/win10 17025 触摸bug/win10 17025 触摸bug0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018919495409" alt="" /></p>
+
+<p>下面是不使用补丁的方法</p>
+
+<p>如果设置了一个窗口满足下面的属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">WindowStyle</span> <span class="p">=</span> <span class="n">WindowStyle</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+            <span class="n">WindowState</span> <span class="p">=</span> <span class="n">WindowState</span><span class="p">.</span><span class="n">Maximized</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>或</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">WindowStyle</span><span class="p">=</span><span class="s">"None"</span> 
+            <span class="n">AllowsTransparency</span><span class="p">=</span><span class="s">"True"</span>
+</code></pre></div></div>
+
+<p>那么就必须要设置 <code class="language-plaintext highlighter-rouge">ResizeMode="NoResize"</code> 不然就会出现下面的问题</p>
+
+<ul>
+  <li>
+    <p>在 win10 17025-17134 版本，如果同时设置<code class="language-plaintext highlighter-rouge">AllowsTransparency = true;</code>窗口下面所有程序触摸失效</p>
+  </li>
+  <li>
+    <p>还原窗口再最大化，窗口出现偏移</p>
+  </li>
+  <li>
+    <p>切换屏幕，窗口出现偏移</p>
+  </li>
+</ul>
+
+<h2 id="english">English</h2>
+
+<p>Step:</p>
+
+<ol>
+  <li>
+    <p>Create a wpf app</p>
+  </li>
+  <li>
+    <p>Set the wpf app’s windows state is Maximized</p>
+  </li>
+  <li>
+    <p>Set the wpf app’s windows background is transparent</p>
+  </li>
+  <li>
+    <p>Run the wpf app</p>
+  </li>
+</ol>
+
+<p>Then you can see all of the uwp app’s such as edge and setting touch not work.</p>
+
+<p>You can use <a href="https://github.com/walterlv/ManipulationDemo">ManipulationDemo</a> to help you see the Pointer message that cant get when touch. I use <a href="https://github.com/walterlv/ManipulationDemo">ManipulationDemo</a> to find the pointer message have not be received. The app can only receive the mouse message.</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201711231645122017112316470.jpg" alt="" /></p>
+
+<p>I took an image that shows the pointer message when I closed the wpf app.</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017112316451220171123165235.jpg" alt="" /></p>
+
+<p>This is the wpf app’s code:</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">AllowsTransparency</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="n">WindowStyle</span> <span class="p">=</span> <span class="n">WindowStyle</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+            <span class="n">WindowState</span> <span class="p">=</span> <span class="n">WindowState</span><span class="p">.</span><span class="n">Maximized</span><span class="p">;</span>
+            <span class="n">Background</span> <span class="p">=</span> <span class="n">Brushes</span><span class="p">.</span><span class="n">Transparent</span><span class="p">;</span>
+            <span class="n">Topmost</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>This is my system and I think in win10 17025 the windows cant make the app uses pointer message to work that exists another transparent background app in above.</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201711231645122017112317012.jpg" alt="" /></p>
+
+<h3 id="solution">Solution</h3>
+
+<p>Microsoft has fixed this issue in <strong><a href="https://blogs.msdn.microsoft.com/dotnet/2018/08/30/net-framework-august-2018-preview-of-quality-rollup/">.NET Framework August 2018 Preview of Quality Rollup</a></strong>.</p>
+
+<ul>
+  <li><a href="https://support.microsoft.com/zh-cn/help/4346783/windows-10-update-kb4346783">August 30, 2018—KB4346783 (OS Build 17134.254)</a></li>
+</ul>
+
+<blockquote>
+  <p>Addresses an issue where touch and mouse events were handled differently in Windows Presentation Foundation (WPF) applications that have a transparent overlay window.</p>
+</blockquote>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2018919495409" alt="" /></p>
+
+<hr />
+
+<p>If you have a Window that set the following properties.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">WindowStyle</span> <span class="p">=</span> <span class="n">WindowStyle</span><span class="p">.</span><span class="n">None</span><span class="p">;</span>
+            <span class="n">WindowState</span> <span class="p">=</span> <span class="n">WindowState</span><span class="p">.</span><span class="n">Maximized</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>Or</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">WindowStyle</span><span class="p">=</span><span class="s">"None"</span> 
+            <span class="n">AllowsTransparency</span><span class="p">=</span><span class="s">"True"</span>
+</code></pre></div></div>
+
+<p>You must set <code class="language-plaintext highlighter-rouge">ResizeMode="NoResize"</code> to avoid some problems as</p>
+
+<ul>
+  <li>
+    <p>All applications lost touch or stylus if a WPF transparent window covers on them.</p>
+  </li>
+  <li>
+    <p>Windows appears offset when set it to <code class="language-plaintext highlighter-rouge">Maximized</code> from <code class="language-plaintext highlighter-rouge">Normal</code>.</p>
+  </li>
+  <li>
+    <p>Windows appears offset when switch screen.</p>
+  </li>
+</ul>
+
+<p>See <a href="https://stackoverflow.com/questions/50382605/on-windows-10-1803-all-applications-lost-touch-or-stylus-if-a-wpf-transparent">c# - On Windows 10 (1803), all applications lost touch or stylus if a WPF transparent window covers on them</a></p>
+
+<p><a href="https://developercommunity.visualstudio.com/content/problem/255063/on-windows-10-1803-all-applications-lost-touch-or.html">On Windows 10 (1803), all applications lost touch or stylus if a WPF transparent window covers on them - Developer Community</a></p>
+
+<p><a href="https://github.com/dotnet-campus/TouchIssueOnWindows10.0.17134">dotnet-campus/TouchIssueOnWindows10.0.17134: On Windows 10 (1803), all applications lost touch or stylus if a WPF transparent window covers on them</a></p>
+
+:ET

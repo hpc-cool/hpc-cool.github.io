@@ -1,0 +1,65 @@
+I"�
+<p>最近在做视频后期处理，但是我发现 AE 的文件都很大，大概一个 10 分钟视频 10G ，所以有什么办法让他输出的文件变小？一个方法是使用 MPEG 输出。
+本文告诉大家如何让 AE 输出 MPEG 让视频变小。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:17:19 -->
+
+<!-- 标签：AE -->
+
+<p>首先打开一个合成，点击添加渲染，可以看到下面的页面</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171215165340.jpg" alt="" /></p>
+
+<p>点击输出模块可以看到现在没有一个选项使用 MPEG ，所以需要先安装软件</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017121516556.jpg" alt="" /></p>
+
+<p>安装 <a href="http://download.csdn.net/download/lindexi_gd/10160598">QuickTime</a> 就可以，在安装之后需要重新启动 AE 然后点击输出选择 MOV 就可以找到这个，请看下面的图</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171215165911.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201712151723520171215175417.jpg" alt="" /></p>
+
+<p>我有很多 ae 素材，分享 btsync: B6GHG2CEBGZ4TK4SDWHRB7NBSIJCH7B5E</p>
+
+<p>那么在使用 AE 输出还是很大，可以用哪个软件把视频压缩？推荐 <a href="http://tmpgenc.pegasys-inc.com/en/product/tvmw6.html">TMPGEnc </a> 和 Adobe Media Encoder 不过这是一个收费软件。如果需要破解的软件可以找我。</p>
+
+<p>下面告诉大家如何使用 TMPGEnc 这个软件来把视频压缩</p>
+
+<ol>
+  <li>
+    <p>打开软件选择新建</p>
+
+    <p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171215172352017121519343.jpg" alt="" /></p>
+  </li>
+  <li>
+    <p>导入视频，在弹出的文件选择需要压缩的视频</p>
+  </li>
+  <li>
+    <p>裁剪，如果不需要裁剪就点确定</p>
+
+    <p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017121517235201712151962.jpg" alt="" /></p>
+  </li>
+  <li>
+    <p>点格式选择输出</p>
+
+    <p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171215172352017121519659.jpg" alt="" /></p>
+  </li>
+  <li>
+    <p>选择保存文件</p>
+
+    <p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171215172352017121519744.jpg" alt="" /></p>
+  </li>
+  <li>
+    <p>点击编码，然后点开始</p>
+
+    <p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F20171215172352017121519815.jpg" alt="" /> <br />
+这样就可以把视频压缩，一般选择 mp4 其他的不需要选择，用这个软件可以做出比较清晰的视频</p>
+  </li>
+</ol>
+
+<p>如果需要素材，可以问我要</p>
+
+:ET

@@ -1,0 +1,28 @@
+I"=<p>基本所有的桌面都会存在回收站快捷方式，如果想要多创建几个快捷方式，点开就是回收站，请看本文的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:30:35 -->
+
+<p>在引用 Windows Script Host Object Model 这个 COM 方法之后可以使用下面代码在桌面创建 <code class="language-plaintext highlighter-rouge">Recycle Bin.lnk</code> 快捷方式，这个快捷方式可以打开回收站</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">object</span> <span class="n">shDesktop</span> <span class="p">=</span> <span class="s">"Desktop"</span><span class="p">;</span>
+            <span class="n">WshShell</span> <span class="n">shell</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">WshShell</span><span class="p">();</span>
+            <span class="kt">string</span> <span class="n">shortcutAddress</span> <span class="p">=</span> <span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="n">shell</span><span class="p">.</span><span class="n">SpecialFolders</span><span class="p">.</span><span class="nf">Item</span><span class="p">(</span><span class="k">ref</span> <span class="n">shDesktop</span><span class="p">)</span> <span class="p">+</span> <span class="s">@"\Recycle Bin.lnk"</span><span class="p">;</span>
+            <span class="n">IWshShortcut</span> <span class="n">shortcut</span> <span class="p">=</span> <span class="p">(</span><span class="n">IWshShortcut</span><span class="p">)</span> <span class="n">shell</span><span class="p">.</span><span class="nf">CreateShortcut</span><span class="p">(</span><span class="n">shortcutAddress</span><span class="p">);</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="n">Description</span> <span class="p">=</span> <span class="s">"New shortcut for Recycle Bin"</span><span class="p">;</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="n">Hotkey</span> <span class="p">=</span> <span class="s">"Ctrl+Shift+N"</span><span class="p">;</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="n">IconLocation</span> <span class="p">=</span> <span class="s">@"C:\WINDOWS\System32\imageres.dll"</span><span class="p">;</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="n">TargetPath</span> <span class="p">=</span> <span class="s">"::{645ff040-5081-101b-9f08-00aa002f954e}"</span><span class="p">;</span>
+            <span class="n">shortcut</span><span class="p">.</span><span class="nf">Save</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>参见 <a href="https://blog.walterlv.com/post/create-shortcut-file-using-csharp.html">使用 C# 代码创建快捷方式文件 - walterlv</a></p>
+
+<p><a href="https://blog.lindexi.com/post/C-%E5%A6%82%E4%BD%95%E5%BC%95%E7%94%A8-WshShell-%E7%B1%BB.html">C# 如何引用 WshShell 类</a></p>
+
+<p><a href="https://stackoverflow.com/a/41825480/6116637">c# - Programmatically create a shortcut to the recycle bin or other special folders - Stack Overflow</a></p>
+
+<p>本文代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/230bef81356c0a666671be533adf2bdd25d96c6f/PelrejougiMatrembeecem">github</a> 欢迎小伙伴访问</p>
+
+:ET

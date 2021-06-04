@@ -1,0 +1,3 @@
+I"�<p>在写 msbuild 的预编译逻辑，如果想要拿到项目安装的 NuGet 库和版本，可以通过获取 PackageReference 的方法获取</p>
+
+:ET

@@ -1,0 +1,332 @@
+I"�|<p>我在微软官网找到了用 C# 做 UDP 组播的方法，我优化一些逻辑，保留核心代码，然后加了一点封装</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/12/5 8:43:38 -->
+
+<!-- csdn -->
+
+<p>在使用之前需要注意的是组播可以用来做局域网传输，但是组播不是可靠的方案，随时可能因为路由器等发送失败或无法接收消息</p>
+
+<p>使用组播的方法是创建 Socket 通过 UDP 向组播地址发送数据或从组播地址接收数据</p>
+
+<p>可以作为组播的地址是 239.0.0.0～239.255.255.255 的范围，这个范围是局域网可用。但实际可用或不可用还需要靠实际的路由器</p>
+
+<p>首先创建一个 Socket 然后绑定到端口</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">IPAddress</span> <span class="n">LocalIpAddress</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="n">Any</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="n">Socket</span> <span class="n">MulticastSocket</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">MulticastPort</span> <span class="p">=</span> <span class="m">15003</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">TryBindSocket</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="n">MulticastPort</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">65530</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">try</span>
+                <span class="p">{</span>
+                    <span class="n">EndPoint</span> <span class="n">localEndPoint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">LocalIpAddress</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+
+                    <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">Bind</span><span class="p">(</span><span class="n">localEndPoint</span><span class="p">);</span>
+                    <span class="k">return</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">catch</span> <span class="p">(</span><span class="n">SocketException</span> <span class="n">e</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>绑定的端口是用来接收的端口，所以绑定失败不会影响发送</p>
+
+<p>绑定完成需要加入组播网络，发送和接收需要加入相同的组播地址才可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">multicastOption</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MulticastOption</span><span class="p">(</span><span class="n">MulticastAddress</span><span class="p">,</span> <span class="n">IPAddress</span><span class="p">.</span><span class="n">Any</span><span class="p">);</span>
+
+                <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">SetSocketOption</span><span class="p">(</span><span class="n">SocketOptionLevel</span><span class="p">.</span><span class="n">IP</span><span class="p">,</span>
+                    <span class="n">SocketOptionName</span><span class="p">.</span><span class="n">AddMembership</span><span class="p">,</span>
+                    <span class="n">multicastOption</span><span class="p">);</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 组播地址</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 224.0.0.0～224.0.0.255为预留的组播地址（永久组地址），地址224.0.0.0保留不做分配，其它地址供路由协议使用；</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 224.0.1.0～224.0.1.255是公用组播地址，可以用于Internet；</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 224.0.2.0～238.255.255.255为用户可用的组播地址（临时组地址），全网范围内有效；</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 239.0.0.0～239.255.255.255为本地管理组播地址，仅在特定的本地范围内有效。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">IPAddress</span> <span class="n">MulticastAddress</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要注意，上面代码的 LocalIpAddress 写的是 Any 也就是只有在默认的网卡是和其他设备网段才能访问，也就是如果你的默认网卡是虚拟网卡，那么就不能接收发送</p>
+
+<p>如果发现其他设备不能接收到信息，那么请修改 LocalIpAddress 为你设备的地址</p>
+
+<p>接收方法和接收其他相同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">ReceiveBroadcastMessages</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 接收需要绑定 MulticastPort 端口</span>
+            <span class="kt">var</span> <span class="n">bytes</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">MaxByteLength</span><span class="p">];</span>
+            <span class="n">EndPoint</span> <span class="n">remoteEndPoint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">IPAddress</span><span class="p">.</span><span class="n">Any</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">ReceiveFrom</span><span class="p">(</span><span class="n">bytes</span><span class="p">,</span> <span class="k">ref</span> <span class="n">remoteEndPoint</span><span class="p">);</span>
+
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">.</span><span class="nf">GetString</span><span class="p">(</span><span class="n">bytes</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">length</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接收和发送都是二进制</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 发送组播</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="message"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">SendBroadcastMessage</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">endPoint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">MulticastAddress</span><span class="p">,</span> <span class="n">MulticastPort</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">.</span><span class="nf">GetBytes</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+
+                <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">SendTo</span><span class="p">(</span><span class="n">byteList</span><span class="p">,</span> <span class="n">endPoint</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"\n"</span> <span class="p">+</span> <span class="n">e</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>但是客户端不是所有设备都能使用组播，例如用了虚拟网卡，就不能通过虚拟网卡发送，如注册表策略。如果发现不能使用组播请先尝试禁用虚拟网卡，如果是win7请尝试修改注册表</p>
+
+<ul>
+  <li><a href="https://blog.csdn.net/yxljl1314/article/details/11211267">win7 无法组播的问题 - yxljl1219的专栏 - CSDN博客</a></li>
+  <li><a href="https://blog.csdn.net/lixiang987654321/article/details/41697533">网络UDP广播包发不出去或接收不到问题 - lixiang987654321的专栏 - CSDN博客</a></li>
+</ul>
+
+<p>在组播发送请不要发送过快，发送过快就是会丢包</p>
+
+<p>所有代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">internal</span> <span class="k">class</span> <span class="nc">PeerMulticastFinder</span> <span class="p">:</span> <span class="n">IDisposable</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="nf">PeerMulticastFinder</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">MulticastSocket</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Socket</span><span class="p">(</span><span class="n">AddressFamily</span><span class="p">.</span><span class="n">InterNetwork</span><span class="p">,</span>
+                <span class="n">SocketType</span><span class="p">.</span><span class="n">Dgram</span><span class="p">,</span>
+                <span class="n">ProtocolType</span><span class="p">.</span><span class="n">Udp</span><span class="p">);</span>
+            <span class="n">MulticastAddress</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"230.138.100.2"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 寻找局域网设备</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">FindPeer</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 实际是反过来，让其他设备询问</span>
+
+            <span class="nf">StartMulticast</span><span class="p">();</span>
+
+            <span class="kt">var</span> <span class="n">ipList</span> <span class="p">=</span> <span class="nf">GetLocalIpList</span><span class="p">().</span><span class="nf">ToList</span><span class="p">();</span>
+            <span class="kt">var</span> <span class="n">message</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Join</span><span class="p">(</span><span class="sc">';'</span><span class="p">,</span><span class="n">ipList</span><span class="p">);</span>
+            <span class="nf">SendBroadcastMessage</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+            <span class="c1">// 先发送再获取消息，这样就不会收到自己发送的消息</span>
+            <span class="n">ReceivedMessage</span> <span class="p">+=</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span> <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"找到 </span><span class="p">{</span><span class="n">e</span><span class="p">}</span><span class="s">"</span><span class="p">);</span> <span class="p">};</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 获取本地 IP 地址</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;returns&gt;&lt;/returns&gt;</span>
+        <span class="k">private</span> <span class="n">IEnumerable</span><span class="p">&lt;</span><span class="n">IPAddress</span><span class="p">&gt;</span> <span class="nf">GetLocalIpList</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">host</span> <span class="p">=</span> <span class="n">Dns</span><span class="p">.</span><span class="nf">GetHostEntry</span><span class="p">(</span><span class="n">Dns</span><span class="p">.</span><span class="nf">GetHostName</span><span class="p">());</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">ip</span> <span class="k">in</span> <span class="n">host</span><span class="p">.</span><span class="n">AddressList</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">ip</span><span class="p">.</span><span class="n">AddressFamily</span> <span class="p">==</span> <span class="n">AddressFamily</span><span class="p">.</span><span class="n">InterNetwork</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">yield</span> <span class="k">return</span> <span class="n">ip</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 组播地址</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 224.0.0.0～224.0.0.255为预留的组播地址（永久组地址），地址224.0.0.0保留不做分配，其它地址供路由协议使用；</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 224.0.1.0～224.0.1.255是公用组播地址，可以用于Internet；</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 224.0.2.0～238.255.255.255为用户可用的组播地址（临时组地址），全网范围内有效；</span>
+        <span class="c1">/// &lt;para/&gt;</span>
+        <span class="c1">/// 239.0.0.0～239.255.255.255为本地管理组播地址，仅在特定的本地范围内有效。</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="n">IPAddress</span> <span class="n">MulticastAddress</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">MulticastPort</span> <span class="p">=</span> <span class="m">15003</span><span class="p">;</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 启动组播</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">StartMulticast</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="c1">// 如果首次绑定失败，那么将无法接收，但是可以发送</span>
+                <span class="nf">TryBindSocket</span><span class="p">();</span>
+
+                <span class="c1">// Define a MulticastOption object specifying the multicast group </span>
+                <span class="c1">// address and the local IPAddress.</span>
+                <span class="c1">// The multicast group address is the same as the address used by the server.</span>
+                <span class="c1">// 有多个 IP 时，指定本机的 IP 地址，此时可以接收到具体的内容</span>
+                <span class="kt">var</span> <span class="n">multicastOption</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">MulticastOption</span><span class="p">(</span><span class="n">MulticastAddress</span><span class="p">,</span> <span class="n">IPAddress</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="s">"172.18.134.16"</span><span class="p">));</span>
+
+                <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">SetSocketOption</span><span class="p">(</span><span class="n">SocketOptionLevel</span><span class="p">.</span><span class="n">IP</span><span class="p">,</span>
+                    <span class="n">SocketOptionName</span><span class="p">.</span><span class="n">AddMembership</span><span class="p">,</span>
+                    <span class="n">multicastOption</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+            <span class="p">}</span>
+
+            <span class="n">Task</span><span class="p">.</span><span class="nf">Run</span><span class="p">(</span><span class="n">ReceiveBroadcastMessages</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 收到消息</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="k">public</span> <span class="k">event</span> <span class="n">EventHandler</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">&gt;</span> <span class="n">ReceivedMessage</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">ReceiveBroadcastMessages</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 接收需要绑定 MulticastPort 端口</span>
+            <span class="kt">var</span> <span class="n">bytes</span> <span class="p">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="p">[</span><span class="n">MaxByteLength</span><span class="p">];</span>
+            <span class="n">EndPoint</span> <span class="n">remoteEndPoint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">IPAddress</span><span class="p">.</span><span class="n">Any</span><span class="p">,</span> <span class="m">0</span><span class="p">);</span>
+
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="k">while</span> <span class="p">(!</span><span class="n">_disposedValue</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">length</span> <span class="p">=</span> <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">ReceiveFrom</span><span class="p">(</span><span class="n">bytes</span><span class="p">,</span> <span class="k">ref</span> <span class="n">remoteEndPoint</span><span class="p">);</span>
+
+                    <span class="nf">OnReceivedMessage</span><span class="p">(</span><span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">.</span><span class="nf">GetString</span><span class="p">(</span><span class="n">bytes</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">length</span><span class="p">));</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">.</span><span class="nf">ToString</span><span class="p">());</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">/// &lt;summary&gt;</span>
+        <span class="c1">/// 发送组播</span>
+        <span class="c1">/// &lt;/summary&gt;</span>
+        <span class="c1">/// &lt;param name="message"&gt;&lt;/param&gt;</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">SendBroadcastMessage</span><span class="p">(</span><span class="kt">string</span> <span class="n">message</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="kt">var</span> <span class="n">endPoint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">MulticastAddress</span><span class="p">,</span> <span class="n">MulticastPort</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="n">Encoding</span><span class="p">.</span><span class="n">UTF8</span><span class="p">.</span><span class="nf">GetBytes</span><span class="p">(</span><span class="n">message</span><span class="p">);</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">byteList</span><span class="p">.</span><span class="n">Length</span> <span class="p">&gt;</span> <span class="n">MaxByteLength</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">(</span><span class="s">$"传入 message 转换为 byte 数组长度太长，不能超过</span><span class="p">{</span><span class="n">MaxByteLength</span><span class="p">}</span><span class="s">字节"</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">Data</span> <span class="p">=</span>
+                        <span class="p">{</span>
+                            <span class="p">{</span> <span class="s">"message"</span><span class="p">,</span> <span class="n">message</span> <span class="p">},</span>
+                            <span class="p">{</span> <span class="s">"byteList"</span><span class="p">,</span> <span class="n">byteList</span> <span class="p">}</span>
+                        <span class="p">}</span>
+                    <span class="p">};</span>
+                <span class="p">}</span>
+
+                <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">SendTo</span><span class="p">(</span><span class="n">byteList</span><span class="p">,</span> <span class="n">endPoint</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">e</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"\n"</span> <span class="p">+</span> <span class="n">e</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">IPAddress</span> <span class="n">LocalIpAddress</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="n">IPAddress</span><span class="p">.</span><span class="n">Any</span><span class="p">;</span>
+
+        <span class="k">private</span> <span class="n">Socket</span> <span class="n">MulticastSocket</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">TryBindSocket</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">var</span> <span class="n">i</span> <span class="p">=</span> <span class="n">MulticastPort</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">65530</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="k">try</span>
+                <span class="p">{</span>
+                    <span class="n">EndPoint</span> <span class="n">localEndPoint</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">IPEndPoint</span><span class="p">(</span><span class="n">LocalIpAddress</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+
+                    <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">Bind</span><span class="p">(</span><span class="n">localEndPoint</span><span class="p">);</span>
+                    <span class="k">return</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">catch</span> <span class="p">(</span><span class="n">SocketException</span> <span class="n">e</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">MaxByteLength</span> <span class="p">=</span> <span class="m">1024</span><span class="p">;</span>
+
+        <span class="err">#</span><span class="n">region</span> <span class="n">IDisposable</span> <span class="n">Support</span>
+
+        <span class="k">private</span> <span class="kt">bool</span> <span class="n">_disposedValue</span> <span class="p">=</span> <span class="k">false</span><span class="p">;</span> <span class="c1">// 要检测冗余调用</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">(</span><span class="kt">bool</span> <span class="n">disposing</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(!</span><span class="n">_disposedValue</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">disposing</span><span class="p">)</span>
+                <span class="p">{</span>
+                <span class="p">}</span>
+
+                <span class="n">MulticastSocket</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+
+                <span class="n">ReceivedMessage</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+                <span class="n">MulticastAddress</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+
+                <span class="n">_disposedValue</span> <span class="p">=</span> <span class="k">true</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="c1">// 添加此代码以正确实现可处置模式。</span>
+        <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">// 请勿更改此代码。将清理代码放入以上 Dispose(bool disposing) 中。</span>
+            <span class="nf">Dispose</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+            <span class="n">GC</span><span class="p">.</span><span class="nf">SuppressFinalize</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="err">#</span><span class="n">endregion</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">OnReceivedMessage</span><span class="p">(</span><span class="kt">string</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">ReceivedMessage</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+:ET

@@ -1,0 +1,211 @@
+I"/t<p>我的项目，<a href="https://marketplace.visualstudio.com/items?itemName=lindexigd.vs-extension-18109">编码工具</a> 需要检测打开一个工程，获取所有项目。
+但是发现原来的方法，如果存在文件夹，把项目放在文件夹中，那么是无法获得项目，于是我就找了一个方法去获得sln文件的所有项目。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>原先使用的方法<code class="language-plaintext highlighter-rouge">dte.Solution.Projects</code>但是放在文件夹的项目获取不到，所以使用堆栈提供的方法。</p>
+
+<p>首先添加引用  <code class="language-plaintext highlighter-rouge">Microsoft.Build</code> 注意版本</p>
+
+<p><img src="http://img.blog.csdn.net/20170209103948364?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvbGluZGV4aV9nZA==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" alt="这里写图片描述" /></p>
+
+<p>然后把我三个类放到项目，其实放两个就好了，具体参见我的<a href="https://gist.github.com/lindexi/b36feb816fe9e586ffbbdf58397b25da">github</a></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Solution</span>
+    <span class="p">{</span>
+        <span class="c1">//internal class SolutionParser</span>
+        <span class="c1">//Name: Microsoft.Build.Construction.SolutionParser</span>
+        <span class="c1">//Assembly: Microsoft.Build, Version=4.0.0.0</span>
+
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">Type</span> <span class="n">s_SolutionParser</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">s_SolutionParser_solutionReader</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">MethodInfo</span> <span class="n">s_SolutionParser_parseSolution</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">s_SolutionParser_projects</span><span class="p">;</span>
+
+        <span class="k">static</span> <span class="nf">Solution</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="c1">//s_SolutionParser_projects.GetValue()</span>
+            <span class="n">s_SolutionParser</span> <span class="p">=</span> <span class="n">Type</span><span class="p">.</span><span class="nf">GetType</span><span class="p">(</span><span class="s">"Microsoft.Build.Construction.SolutionParser, Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"</span><span class="p">,</span> <span class="k">false</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">s_SolutionParser</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">s_SolutionParser_solutionReader</span> <span class="p">=</span> <span class="n">s_SolutionParser</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"SolutionReader"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+                <span class="n">s_SolutionParser_projects</span> <span class="p">=</span> <span class="n">s_SolutionParser</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"Projects"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+                <span class="n">s_SolutionParser_parseSolution</span> <span class="p">=</span> <span class="n">s_SolutionParser</span><span class="p">.</span><span class="nf">GetMethod</span><span class="p">(</span><span class="s">"ParseSolution"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">SolutionProject</span><span class="p">&gt;</span> <span class="n">Projects</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">SolutionConfiguration</span><span class="p">&gt;</span> <span class="n">Configurations</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="nf">Solution</span><span class="p">(</span><span class="kt">string</span> <span class="n">solutionFileName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">s_SolutionParser</span> <span class="p">==</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="k">new</span> <span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">"Can not find type 'Microsoft.Build.Construction.SolutionParser' are you missing a assembly reference to 'Microsoft.Build.dll'?"</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="kt">var</span> <span class="n">solutionParser</span> <span class="p">=</span> <span class="n">s_SolutionParser</span><span class="p">.</span><span class="nf">GetConstructors</span><span class="p">(</span><span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span><span class="p">).</span><span class="nf">First</span><span class="p">().</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">null</span><span class="p">);</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">streamReader</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StreamReader</span><span class="p">(</span><span class="n">solutionFileName</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">s_SolutionParser_solutionReader</span><span class="p">.</span><span class="nf">SetValue</span><span class="p">(</span><span class="n">solutionParser</span><span class="p">,</span> <span class="n">streamReader</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+                <span class="n">s_SolutionParser_parseSolution</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(</span><span class="n">solutionParser</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="kt">var</span> <span class="n">projects</span> <span class="p">=</span> <span class="k">new</span> <span class="n">List</span><span class="p">&lt;</span><span class="n">SolutionProject</span><span class="p">&gt;();</span>
+            <span class="kt">var</span> <span class="n">array</span> <span class="p">=</span> <span class="p">(</span><span class="n">Array</span><span class="p">)</span><span class="n">s_SolutionParser_projects</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionParser</span><span class="p">,</span> <span class="k">null</span><span class="p">);</span>
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="n">array</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">projects</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">SolutionProject</span><span class="p">(</span><span class="n">array</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">i</span><span class="p">)));</span>
+            <span class="p">}</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">Projects</span> <span class="p">=</span> <span class="n">projects</span><span class="p">;</span>
+            <span class="nf">GetProjectFullName</span><span class="p">(</span><span class="n">solutionFileName</span><span class="p">);</span>
+            <span class="c1">//Object cfgArray = //s_SolutionParser_configurations.GetValue</span>
+            <span class="c1">//    s_SolutionParser_projects.GetValue(solutionParser, null);</span>
+            <span class="c1">//PropertyInfo[] pInfos = null;</span>
+            <span class="c1">//pInfos = cfgArray.GetType().GetProperties();</span>
+            <span class="c1">//int count = (int)pInfos[1].GetValue(cfgArray, null);</span>
+
+            <span class="c1">//var configs = new List&lt;SolutionConfiguration&gt;();</span>
+            <span class="c1">//for (int i = 0; i &lt; count; i++)</span>
+            <span class="c1">//{</span>
+            <span class="c1">//    configs.Add(new SolutionConfiguration(pInfos[2].GetValue(cfgArray, new object[] { i })));</span>
+            <span class="c1">//}</span>
+
+            <span class="c1">//this.Configurations = configs;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">GetProjectFullName</span><span class="p">(</span><span class="kt">string</span> <span class="n">solutionFileName</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">DirectoryInfo</span> <span class="n">solution</span> <span class="p">=</span> <span class="p">(</span><span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">solutionFileName</span><span class="p">)).</span><span class="n">Directory</span><span class="p">;</span>
+            <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">Projects</span><span class="p">.</span><span class="n">Where</span>
+                <span class="c1">//(temp=&gt;temp.RelativePath.EndsWith("csproj"))</span>
+                <span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="p">!</span><span class="n">temp</span><span class="p">.</span><span class="n">RelativePath</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">temp</span><span class="p">.</span><span class="n">ProjectName</span><span class="p">))</span>
+            <span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nf">GetProjectFullName</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="n">temp</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">GetProjectFullName</span><span class="p">(</span><span class="n">DirectoryInfo</span> <span class="n">solution</span><span class="p">,</span> <span class="n">SolutionProject</span> <span class="n">project</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">//Uri newUri =new Uri(,UriKind./*Absolute*/);</span>
+            <span class="c1">//if(project.RelativePath)</span>
+
+            <span class="n">project</span><span class="p">.</span><span class="n">FullName</span> <span class="p">=</span> <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">solution</span><span class="p">.</span><span class="n">FullName</span><span class="p">,</span> <span class="n">project</span><span class="p">.</span><span class="n">RelativePath</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="p">[</span><span class="nf">DebuggerDisplay</span><span class="p">(</span><span class="s">"{ProjectName}, {RelativePath}, {ProjectGuid}"</span><span class="p">)]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">SolutionProject</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">Type</span> <span class="n">s_ProjectInSolution</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">s_ProjectInSolution_ProjectName</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">s_ProjectInSolution_RelativePath</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">s_ProjectInSolution_ProjectGuid</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">s_ProjectInSolution_ProjectType</span><span class="p">;</span>
+
+        <span class="k">static</span> <span class="nf">SolutionProject</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">s_ProjectInSolution</span> <span class="p">=</span> <span class="n">Type</span><span class="p">.</span><span class="nf">GetType</span><span class="p">(</span><span class="s">"Microsoft.Build.Construction.ProjectInSolution, Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"</span><span class="p">,</span> <span class="k">false</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">s_ProjectInSolution</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">s_ProjectInSolution_ProjectName</span> <span class="p">=</span> <span class="n">s_ProjectInSolution</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"ProjectName"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+                <span class="n">s_ProjectInSolution_RelativePath</span> <span class="p">=</span> <span class="n">s_ProjectInSolution</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"RelativePath"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+                <span class="n">s_ProjectInSolution_ProjectGuid</span> <span class="p">=</span> <span class="n">s_ProjectInSolution</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"ProjectGuid"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+                <span class="n">s_ProjectInSolution_ProjectType</span> <span class="p">=</span> <span class="n">s_ProjectInSolution</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"ProjectType"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ProjectName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">RelativePath</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ProjectGuid</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">ProjectType</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">FullName</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="nf">SolutionProject</span><span class="p">(</span><span class="kt">object</span> <span class="n">solutionProject</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">ProjectName</span> <span class="p">=</span> <span class="n">s_ProjectInSolution_ProjectName</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionProject</span><span class="p">,</span> <span class="k">null</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">RelativePath</span> <span class="p">=</span> <span class="n">s_ProjectInSolution_RelativePath</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionProject</span><span class="p">,</span> <span class="k">null</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">ProjectGuid</span> <span class="p">=</span> <span class="n">s_ProjectInSolution_ProjectGuid</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionProject</span><span class="p">,</span> <span class="k">null</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">ProjectType</span> <span class="p">=</span> <span class="n">s_ProjectInSolution_ProjectType</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionProject</span><span class="p">,</span> <span class="k">null</span><span class="p">).</span><span class="nf">ToString</span><span class="p">();</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">SolutionConfiguration</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">Type</span> <span class="n">s_ConfigInSolution</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">configInSolution_configurationname</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">configInSolution_fullName</span><span class="p">;</span>
+        <span class="k">static</span> <span class="k">readonly</span> <span class="n">PropertyInfo</span> <span class="n">configInSolution_platformName</span><span class="p">;</span>
+
+        <span class="k">static</span> <span class="nf">SolutionConfiguration</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">s_ConfigInSolution</span> <span class="p">=</span> <span class="n">Type</span><span class="p">.</span><span class="nf">GetType</span><span class="p">(</span><span class="s">"Microsoft.Build.Construction.ConfigurationInSolution, Microsoft.Build, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a"</span><span class="p">,</span> <span class="k">false</span><span class="p">,</span> <span class="k">false</span><span class="p">);</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">s_ConfigInSolution</span> <span class="p">!=</span> <span class="k">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">configInSolution_configurationname</span> <span class="p">=</span> <span class="n">s_ConfigInSolution</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"ConfigurationName"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+                <span class="n">configInSolution_fullName</span> <span class="p">=</span> <span class="n">s_ConfigInSolution</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"FullName"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+                <span class="n">configInSolution_platformName</span> <span class="p">=</span> <span class="n">s_ConfigInSolution</span><span class="p">.</span><span class="nf">GetProperty</span><span class="p">(</span><span class="s">"PlatformName"</span><span class="p">,</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">NonPublic</span> <span class="p">|</span> <span class="n">BindingFlags</span><span class="p">.</span><span class="n">Instance</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">configurationName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">fullName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">platformName</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">private</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+
+        <span class="k">public</span> <span class="nf">SolutionConfiguration</span><span class="p">(</span><span class="kt">object</span> <span class="n">solutionConfiguration</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">configurationName</span> <span class="p">=</span> <span class="n">configInSolution_configurationname</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionConfiguration</span><span class="p">,</span> <span class="k">null</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">fullName</span> <span class="p">=</span> <span class="n">configInSolution_fullName</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionConfiguration</span><span class="p">,</span> <span class="k">null</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+            <span class="k">this</span><span class="p">.</span><span class="n">platformName</span> <span class="p">=</span> <span class="n">configInSolution_platformName</span><span class="p">.</span><span class="nf">GetValue</span><span class="p">(</span><span class="n">solutionConfiguration</span><span class="p">,</span> <span class="k">null</span><span class="p">)</span> <span class="k">as</span> <span class="kt">string</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>注意要引用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>     <span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+     <span class="k">using</span> <span class="nn">System.Collections.Generic</span><span class="p">;</span>
+     <span class="k">using</span> <span class="nn">System.Diagnostics</span><span class="p">;</span>
+     <span class="k">using</span> <span class="nn">System.IO</span><span class="p">;</span>
+     <span class="k">using</span> <span class="nn">System.Linq</span><span class="p">;</span>
+     <span class="k">using</span> <span class="nn">System.Reflection</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<p>稍微说下上面代码，主要用的是反射。</p>
+
+<p>用反射获得解析 sln 的 <code class="language-plaintext highlighter-rouge">s_SolutionParser_parseSolution</code> 他可以获得所有项目。</p>
+
+<p>但是获得的项目路径是相对的，于是使用<a href="https://blog.lindexi.com/post/C-%E7%9B%B8%E5%AF%B9%E8%B7%AF%E5%BE%84%E8%BD%AC%E7%BB%9D%E5%AF%B9%E8%B7%AF%E5%BE%84.html">C＃ 相对路径转绝对路径</a>，可以转换项目路径。</p>
+
+<h2 id="使用">使用</h2>
+
+<p>输入工程文件名就好，输入工程名，会自动获得所有项目。</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="n">Solution</span> <span class="n">solution</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Solution</span><span class="p">(</span><span class="err">工程文件路径</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>获得工程文件的所有项目</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="k">foreach</span> <span class="p">(</span><span class="kt">var</span> <span class="n">temp</span> <span class="k">in</span> <span class="n">solution</span><span class="p">.</span><span class="n">Projects</span><span class="p">)</span>
+  <span class="p">{</span>
+
+
+  <span class="p">}</span>
+</code></pre></div></div>
+
+<script src="https://gist.github.com/lindexi/b36feb816fe9e586ffbbdf58397b25da.js"></script>
+
+<p>代码：https://gist.github.com/lindexi/b36feb816fe9e586ffbbdf58397b25da</p>
+
+<p>参见：https://msdn.microsoft.com/en-us/library/microsoft.build.buildengine.project.propertygroups%28v=vs.110%29.aspx?f=255&amp;MSPPError=-2147217396</p>
+
+<p>https://msdn.microsoft.com/en-us/library/microsoft.build.buildengine.project%28v=vs.110%29.aspx?f=255&amp;MSPPError=-2147217396</p>
+
+<p>http://stackoverflow.com/questions/707107/parsing-visual-studio-solution-files</p>
+
+:ET

@@ -1,0 +1,160 @@
+I"�*<p>虽然已经通过很多篇博客告诉大家如何通过 Directory.Build.props 文件修改编译的方法，但是本文还是提供一个新的思路
+只需要在项目文件夹，或者磁盘的文件夹，如 <code class="language-plaintext highlighter-rouge">E:\ </code> 放下本文提供的 Directory.Build.props 文件，整个文件夹内的控制台项目就会输出 林德熙是逗比 想要知道是怎么做的，请看下面</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/4/29 12:01:44 -->
+
+<!-- csdn -->
+
+<!-- 标签：Roslyn,MSBuild,编译器 -->
+
+<p>在开始阅读本文之前，需要让大家知道什么是 Directory.Build.props 文件，这个文件是给在 VisualStudio 控制编译，可以用来控制 Directory.Build.props 文件所在的文件夹内的所有项目。</p>
+
+<p>如我在 <code class="language-plaintext highlighter-rouge">E:\lindexi</code> 文件夹内放一个 <code class="language-plaintext highlighter-rouge">Directory.Build.props</code> 文件，在 <code class="language-plaintext highlighter-rouge">E:\lindexi</code> 文件夹内，如果有放工程，就可以通过这个文件修改。如我创建了工程 foo 这个工程的路径是 <code class="language-plaintext highlighter-rouge">E:\lindexi\1\Foo\</code> 那么这个工程就可以被这个文件修改</p>
+
+<p>所以将 <code class="language-plaintext highlighter-rouge">Directory.Build.props</code> 文件 放在磁盘文件夹，如<code class="language-plaintext highlighter-rouge">E:\\</code>就可以让整个放在 <code class="language-plaintext highlighter-rouge">E:\\</code> 的工程可以被这个文件修改</p>
+
+<p>详细请看 <a href="https://lindexi.gitee.io/post/Roslyn-%E4%BD%BF%E7%94%A8-Directory.Build.props-%E6%96%87%E4%BB%B6%E5%AE%9A%E4%B9%89%E7%BC%96%E8%AF%91.html">Roslyn 使用 Directory.Build.props 文件定义编译</a></p>
+
+<p>现在我告诉小伙伴，将这个文件放在你的文件夹内，然后他的控制台项目都会输出 林德熙是逗比是如何做到的？</p>
+
+<p>实际上很简单，我只需要在 Directory.Build.props 定义编译过程，移除原来的所有文件，然后将 输出林德熙是逗比的文件加入到编译，这样就可以</p>
+
+<p>于是来写一个简单的代码，输出 林德熙是逗比 代码很简单</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">using</span> <span class="nn">System</span><span class="p">;</span>
+
+<span class="k">namespace</span> <span class="nn">CeseacooteeGowgu</span>
+<span class="p">{</span>
+    <span class="k">class</span> <span class="nc">Program</span>
+    <span class="p">{</span>
+        <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">(</span><span class="kt">string</span><span class="p">[]</span> <span class="n">args</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"林德熙是逗比"</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>那么现在的问题是，我刚才说的是将这个文件放在你的项目文件夹，但是要输出林德熙是逗比的代码需要放在一个文件，当然不能放两个文件，那么可以怎么做？简单的方法是使用<a href="https://lindexi.gitee.io/post/Roslyn-%E4%BD%BF%E7%94%A8-WriteLinesToFile-%E8%A7%A3%E5%86%B3%E5%8F%82%E6%95%B0%E8%BF%87%E9%95%BF%E6%97%A0%E6%B3%95%E4%BC%A0%E5%85%A5.html">Roslyn 使用 WriteLinesToFile 解决参数过长无法传入</a>提供的方法，写入文件</p>
+
+<p>先假设写入文件很简单，需要在 <code class="language-plaintext highlighter-rouge">Directory.Build.props</code> 文件添加文件所在的路径，然后移除其他的文件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Project&gt;</span>
+  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"T1"</span> <span class="na">BeforeTargets=</span><span class="s">"BeforeBuild"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;PropertyGroup&gt;</span>
+      <span class="nt">&lt;SomeThing&gt;</span>$(IntermediateOutputPath)Foo.cs<span class="nt">&lt;/SomeThing&gt;</span>
+    <span class="nt">&lt;/PropertyGroup&gt;</span>
+    
+    <span class="nt">&lt;ItemGroup&gt;</span>
+      <span class="nt">&lt;Compile</span> <span class="na">Remove=</span><span class="s">"@(Compile)"</span><span class="nt">&gt;&lt;/Compile&gt;</span>
+      <span class="nt">&lt;Compile</span> <span class="na">Include=</span><span class="s">"$(SomeThing)"</span><span class="nt">&gt;&lt;/Compile&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div></div>
+
+<p>这里的 SomeThing 就是写入代码的文件，关于 <code class="language-plaintext highlighter-rouge">$(IntermediateOutputPath)</code> 请看 <a href="https://blog.walterlv.com/post/known-properties-in-csproj.html">项目文件中的已知属性（知道了这些，就不会随便在 csproj 中写死常量啦） - walterlv</a></p>
+
+<p>在这个 Target 里面就定义了代码文件的路径，然后通过移除现在所有的文件，添加写入的文件的方法，让编译的时候运行的是输出 林德熙是逗比 这里需要注意的是 <code class="language-plaintext highlighter-rouge">BeforeTargets</code> 需要写为 编译之前，这样小伙伴看到自己的代码还是原来的代码，但是编译的时候是忽略小伙伴的代码编译刚才写的文件</p>
+
+<p>那么文件写入有哪些难点？第一个就是换行，第二个就是 C# 代码使用分号作为行的最后。但是在 msbuild 使用 分号分开不同的项。在 xml 可以通过 CDATA 让内容不会被转义</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="cp">&lt;![CDATA[  不进行转义代码 ]]&gt;</span>
+</code></pre></div></div>
+
+<p>然后可以使用 <code class="language-plaintext highlighter-rouge">%3b</code> 代替分号</p>
+
+<p>现在看起来的代码是这样写</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="nt">&lt;Text&gt;</span>
+        <span class="cp">&lt;![CDATA[
+using System%3b
+
+namespace CeseacooteeGowgu
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("林德熙是逗比")%3b
+        }
+    }
+}
+        ]]&gt;</span>
+      <span class="nt">&lt;/Text&gt;</span>
+</code></pre></div></div>
+
+<p>只需要将代码写入文件就可以，在写入之前先删除原有的文件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"T1"</span> <span class="na">BeforeTargets=</span><span class="s">"BeforeBuild"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;PropertyGroup&gt;</span>
+      <span class="nt">&lt;SomeThing&gt;</span>$(IntermediateOutputPath)Foo.cs<span class="nt">&lt;/SomeThing&gt;</span>
+      <span class="nt">&lt;Text&gt;</span>
+        <span class="cp">&lt;![CDATA[
+using System%3b
+
+namespace CeseacooteeGowgu
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("林德熙是逗比")%3b
+        }
+    }
+}
+        ]]&gt;</span>
+      <span class="nt">&lt;/Text&gt;</span>
+    <span class="nt">&lt;/PropertyGroup&gt;</span>
+    <span class="nt">&lt;Delete</span> <span class="na">Files=</span><span class="s">"$(SomeThing)"</span> <span class="na">Condition=</span><span class="s">"Exists($(SomeThing))"</span><span class="nt">&gt;&lt;/Delete&gt;</span>
+    <span class="nt">&lt;WriteLinesToFile</span> <span class="na">File=</span><span class="s">"$(SomeThing)"</span> <span class="na">Lines=</span><span class="s">"$(Text)"</span><span class="nt">&gt;&lt;/WriteLinesToFile&gt;</span>
+    <span class="nt">&lt;ItemGroup&gt;</span>
+      <span class="nt">&lt;Compile</span> <span class="na">Remove=</span><span class="s">"@(Compile)"</span><span class="nt">&gt;&lt;/Compile&gt;</span>
+      <span class="nt">&lt;Compile</span> <span class="na">Include=</span><span class="s">"$(SomeThing)"</span><span class="nt">&gt;&lt;/Compile&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<p>全部的代码请看下面，只需要将这个文件放在小伙伴的项目文件夹，就可以让他的控制台项目输出 林德熙是逗比 当然大家可以修改输出，找小伙伴秀一下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Project&gt;</span>
+  <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"T1"</span> <span class="na">BeforeTargets=</span><span class="s">"BeforeBuild"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;PropertyGroup&gt;</span>
+      <span class="nt">&lt;SomeThing&gt;</span>$(IntermediateOutputPath)Foo.cs<span class="nt">&lt;/SomeThing&gt;</span>
+      <span class="nt">&lt;Text&gt;</span>
+        <span class="cp">&lt;![CDATA[
+using System%3b
+
+namespace CeseacooteeGowgu
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("林德熙是逗比")%3b
+        }
+    }
+}
+        ]]&gt;</span>
+      <span class="nt">&lt;/Text&gt;</span>
+    <span class="nt">&lt;/PropertyGroup&gt;</span>
+    <span class="nt">&lt;Delete</span> <span class="na">Files=</span><span class="s">"$(SomeThing)"</span> <span class="na">Condition=</span><span class="s">"Exists($(SomeThing))"</span><span class="nt">&gt;&lt;/Delete&gt;</span>
+    <span class="nt">&lt;WriteLinesToFile</span> <span class="na">File=</span><span class="s">"$(SomeThing)"</span> <span class="na">Lines=</span><span class="s">"$(Text)"</span><span class="nt">&gt;&lt;/WriteLinesToFile&gt;</span>
+    <span class="nt">&lt;ItemGroup&gt;</span>
+      <span class="nt">&lt;Compile</span> <span class="na">Remove=</span><span class="s">"@(Compile)"</span><span class="nt">&gt;&lt;/Compile&gt;</span>
+      <span class="nt">&lt;Compile</span> <span class="na">Include=</span><span class="s">"$(SomeThing)"</span><span class="nt">&gt;&lt;/Compile&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+  <span class="nt">&lt;/Target&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div></div>
+
+<p><a href="https://blog.lindexi.com/post/roslyn.html">手把手教你写 Roslyn 修改编译</a></p>
+
+:ET

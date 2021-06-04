@@ -1,0 +1,28 @@
+I"-<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<div id="toc"></div>
+
+<p><img src="http://image.acmx.xyz/2af64c0d-f144-4f44-985d-3e155a8209532016121185647.jpg" alt="" /></p>
+
+<p>可以使用</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"CheckBox"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Margin"</span> <span class="na">Value=</span><span class="s">"10,10,10,10"</span><span class="nt">&gt;&lt;/Setter&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"VerticalAlignment"</span> <span class="na">Value=</span><span class="s">"Center"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"FontSize"</span> <span class="na">Value=</span><span class="s">"10"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Style&gt;</span>
+        <span class="nt">&lt;Style</span> <span class="na">TargetType=</span><span class="s">"{x:Type TextBlock}"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Margin"</span> <span class="na">Value=</span><span class="s">"1,1,1,1"</span> <span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Style&gt;</span>
+                <span class="nt">&lt;CheckBox</span> <span class="na">Grid.Row=</span><span class="s">"0"</span> <span class="na">Grid.Column=</span><span class="s">"1"</span>  <span class="nt">&gt;</span>
+                    <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"内容"</span> <span class="nt">/&gt;</span>
+                <span class="nt">&lt;/CheckBox&gt;</span>
+</code></pre></div></div>
+
+<p>https://dotblogs.com.tw/v6610688/2014/04/21/xaml_checkbox_content_alignment&amp;prev=searc</p>
+
+<p>博客blog.csdn.net/lindexi_gd</p>
+
+:ET

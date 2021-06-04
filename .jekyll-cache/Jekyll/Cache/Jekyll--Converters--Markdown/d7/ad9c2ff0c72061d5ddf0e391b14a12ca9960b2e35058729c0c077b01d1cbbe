@@ -1,0 +1,213 @@
+I"�T<p>在 csdn 的访问统计里面，只能用 csdn 提供的访问统计，因为在 csdn 中不支持在博客加上 js 代码，也就是无法使用友盟等工具统计。
+通过在 asp dotnet core 创建一个图片链接的方式，将这个链接作为图片放在 csdn 的博客，可以在链接被访问的时候统计用户访问</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:26:58 -->
+
+<p>新建一个 asp dotnet core 项目，在自己的 controler 里面添加一个方法，这个方法的访问链接是 <code class="language-plaintext highlighter-rouge">xx.png</code> 假装这是一张图片，请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="p">[</span><span class="nf">Route</span><span class="p">(</span><span class="s">"api/[controller]"</span><span class="p">)]</span>
+    <span class="p">[</span><span class="n">ApiController</span><span class="p">]</span>
+    <span class="k">public</span> <span class="k">class</span> <span class="nc">ImageController</span> <span class="p">:</span> <span class="n">ControllerBase</span>
+    <span class="p">{</span>
+    	<span class="p">[</span><span class="nf">Route</span><span class="p">(</span><span class="s">"csdn/Image.png"</span><span class="p">)]</span>
+        <span class="p">[</span><span class="n">HttpGet</span><span class="p">]</span>
+        <span class="k">public</span> <span class="n">FileResult</span> <span class="nf">GetCSDNImage</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 csdn 上通过访问我的域名对应的链接就可以调用 GetCSDNImage 方法</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>![] (http://bulleimage.service.walterlv.com/api/image/csdn/image.png )
+</code></pre></div></div>
+
+<p>注意路由的命名要清真一点，我本来是用来做广告的，于是命名为广告，然而发现在 csdn 无法被访问到，原因请看 <a href="https://blog.lindexi.com/post/asp-dotnet-core-%E5%9B%BE%E7%89%87%E5%9C%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B2%A1%E8%AE%BF%E9%97%AE%E5%8F%AF%E8%83%BD%E5%8E%9F%E5%9B%A0.html">asp dotnet core 图片在浏览器没访问可能原因</a></p>
+
+<p>通过在 GetCSDNImage 返回一张图片，同时按照这个方法调用的次数就可以用来统计用户的访问了</p>
+
+<h2 id="缓存图片">缓存图片</h2>
+
+<p>在 GetCSDNImage 需要返回图片才可以用来假装这是一个静态图片的链接</p>
+
+<p>我将一张图片放在输出文件夹，做法就是在解决方案添加一张图片，右击属性设置复制输出到文件夹</p>
+
+<p>在 Startup 的 ConfigureServices 里面添加内存缓存</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="k">void</span> <span class="nf">ConfigureServices</span><span class="p">(</span><span class="n">IServiceCollection</span> <span class="n">services</span><span class="p">)</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略其他代码</span>
+            <span class="n">services</span><span class="p">.</span><span class="nf">AddMemoryCache</span><span class="p">();</span> <span class="c1">// 添加这一行代码就可以使用内存缓存</span>
+
+            <span class="n">services</span><span class="p">.</span><span class="nf">AddControllers</span><span class="p">()</span>
+                <span class="p">.</span><span class="nf">AddNewtonsoftJson</span><span class="p">();</span>
+            <span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>修改 ImageController 在构造注入缓存 IMemoryCache 方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">ImageController</span><span class="p">(</span><span class="n">IMemoryCache</span> <span class="n">memoryCache</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_cache</span> <span class="p">=</span> <span class="n">memoryCache</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="n">IMemoryCache</span> <span class="n">_cache</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>这样就可以在 GetCSDNImage 方法里面使用缓存了</p>
+
+<p>在使用缓存之前需要读取输出文件夹里面的图片，我添加一个方法用来读取输出文件夹里面的图片。在 asp dotnet core 中，很多都是使用指定静态的文件夹作为静态资源的文件夹，直接通过输出文件夹读取的比较少。但是设置一个静态文件夹是另外的知识，本文就直接通过输出文件夹读取</p>
+
+<p>使用 <code class="language-plaintext highlighter-rouge">Path.GetDirectoryName(Assembly.GetCallingAssembly().Location)</code> 可以拿到输出文件夹，详细请看<a href="https://blog.lindexi.com/post/dotnet-%E8%8E%B7%E5%8F%96%E7%A8%8B%E5%BA%8F%E6%89%80%E5%9C%A8%E8%B7%AF%E5%BE%84%E7%9A%84%E6%96%B9%E6%B3%95.html">dotnet 获取程序所在路径的方法</a></p>
+
+<p>使用下面代码就可以读取图片文件作为字节了，建议只读取一次，解决多线程访问文件的问题</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="kt">byte</span><span class="p">[]</span> <span class="nf">GetImage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="nf">GetDirectoryName</span><span class="p">(</span><span class="n">Assembly</span><span class="p">.</span><span class="nf">GetCallingAssembly</span><span class="p">().</span><span class="n">Location</span><span class="p">),</span> <span class="s">"Image.png"</span><span class="p">);</span>
+
+            <span class="k">return</span> <span class="n">System</span><span class="p">.</span><span class="n">IO</span><span class="p">.</span><span class="n">File</span><span class="p">.</span><span class="nf">ReadAllBytes</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在 GetCSDNImage 方法里面通过缓存，判断如果缓存里面没有值就从文件读取图片，如果有值就直接从内存返回</p>
+
+<p>如果这段代码是需要我自己写，可能要写几天，因为还存在了多线程访问的问题，如果一开始不存在值，那么就需要创建值，如何作为第一次创建值的时候，刚好多个线程进来，只有一个线程创建等问题。还好微软提供的缓存里面有这样的方法 GetOrCreate 方法，尝试从内存获取，如果获取不到就创建，在这个方法里面第一个参数是传入 key 第二个参数就是传入如何创建的方法。在缓存中就通过 key 来获取或设置值，用法和字典差不多</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">_cache</span><span class="p">.</span><span class="nf">GetOrCreate</span><span class="p">(</span><span class="s">"Image"</span><span class="p">,</span> <span class="n">entry</span> <span class="p">=&gt;</span> <span class="nf">GetImage</span><span class="p">());</span>
+
+</code></pre></div></div>
+
+<p>现在拿到了值，可以通过 File 方法返回，注意在返回的时候添加 content type 说这是一张图片</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">public</span> <span class="n">FileResult</span> <span class="nf">GetCSDNImage</span><span class="p">()</span>
+        <span class="p">{</span>     
+             <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">_cache</span><span class="p">.</span><span class="nf">GetOrCreate</span><span class="p">(</span><span class="s">"Image"</span><span class="p">,</span> <span class="n">entry</span> <span class="p">=&gt;</span> <span class="nf">GetImage</span><span class="p">());</span>
+      
+             <span class="k">return</span> <span class="nf">File</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s">"image/png"</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="统计用户访问">统计用户访问</h2>
+
+<p>我不会告诉大家如何去创建数据库去存放用户访问的数据，因为这些需要的知识点有些多，本文的统计用户访问只是通过一个简单的静态变量获取，不考虑并发的问题</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+        <span class="k">public</span> <span class="n">FileResult</span> <span class="nf">GetCSDNImage</span><span class="p">()</span>
+        <span class="p">{</span>     
+        	<span class="n">Count</span><span class="p">++;</span>
+
+        	<span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"总共有</span><span class="p">{</span><span class="n">Count</span><span class="p">}</span><span class="s">访问"</span><span class="p">);</span>
+
+             
+            <span class="c1">// 忽略其他代码</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">Count</span> <span class="p">{</span> <span class="k">set</span><span class="p">;</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>这样就可以完成了统计用户的访问了，同时代码也很少。我还需要用户的 IP 和使用什么浏览器，于是需要添加一点代码</p>
+
+<p>我的网站是通过 frp 让用户访问，需要<a href="https://blog.lindexi.com/post/asp-dotnet-core-%E4%BB%8E-Frp-%E8%8E%B7%E5%8F%96%E7%94%A8%E6%88%B7%E7%9C%9F%E5%AE%9E-IP-%E5%9C%B0%E5%9D%80.html">从 Frp 获取用户真实 IP 地址</a>用法有点复杂</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="kt">bool</span> <span class="nf">TryGetUserIpFromFrp</span><span class="p">(</span><span class="n">HttpRequest</span> <span class="n">httpContextRequest</span><span class="p">,</span> <span class="k">out</span> <span class="n">StringValues</span> <span class="n">ip</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">return</span> <span class="n">httpContextRequest</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="s">"X-Forwarded-For"</span><span class="p">,</span> <span class="k">out</span> <span class="n">ip</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面这个方法就可以从 HttpRequest 拿到从 frp 获取的用户 ip 地址</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">FileResult</span> <span class="nf">GetCSDNImage</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略代码</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="nf">TryGetUserIpFromFrp</span><span class="p">(</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Request</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">ip</span><span class="p">))</span>
+            <span class="p">{</span>
+               
+            <span class="p">}</span>
+
+        	<span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>获取用户的浏览器使用 Headers 里面的 <code class="language-plaintext highlighter-rouge">User-Agent</code> 可以拿到</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">FileResult</span> <span class="nf">GetCSDNImage</span><span class="p">()</span>
+        <span class="p">{</span>
+        	<span class="c1">// 忽略代码</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="s">"User-Agent"</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">userAgent</span><span class="p">))</span>
+            <span class="p">{</span>
+               
+            <span class="p">}</span>
+
+        	<span class="c1">// 忽略代码</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>将这些值合并输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="p">[</span><span class="nf">Route</span><span class="p">(</span><span class="s">"csdn/Image.png"</span><span class="p">)]</span>
+        <span class="p">[</span><span class="n">HttpGet</span><span class="p">]</span>
+        <span class="k">public</span> <span class="n">FileResult</span> <span class="nf">GetCSDNImage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">Count</span><span class="p">++;</span>
+
+            <span class="n">StringBuilder</span> <span class="n">str</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">();</span>
+            <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">DateTime</span><span class="p">.</span><span class="n">Now</span><span class="p">);</span>
+            <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">" "</span><span class="p">);</span>
+            <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"用户访问 "</span><span class="p">);</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="nf">GetUserId</span><span class="p">());</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"用户id ="</span> <span class="p">+</span> <span class="n">HttpContextAccessor</span><span class="p">.</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Session</span><span class="p">.</span><span class="n">Id</span><span class="p">);</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="nf">TryGetUserIpFromFrp</span><span class="p">(</span><span class="n">HttpContextAccessor</span><span class="p">.</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Request</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">ip</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"用户Ip="</span><span class="p">);</span>
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">ip</span><span class="p">);</span>
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">" "</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">$"总共有</span><span class="p">{</span><span class="n">Count</span><span class="p">}</span><span class="s">访问"</span><span class="p">);</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">HttpContext</span><span class="p">.</span><span class="n">Request</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="nf">TryGetValue</span><span class="p">(</span><span class="s">"User-Agent"</span><span class="p">,</span> <span class="k">out</span> <span class="kt">var</span> <span class="n">userAgent</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"\r\n"</span><span class="p">);</span>
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="s">"当前用户浏览器"</span><span class="p">);</span>
+                <span class="n">str</span><span class="p">.</span><span class="nf">Append</span><span class="p">(</span><span class="n">userAgent</span><span class="p">);</span>
+            <span class="p">}</span>
+
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="n">_cache</span><span class="p">.</span><span class="nf">GetOrCreate</span><span class="p">(</span><span class="s">"Image"</span><span class="p">,</span> <span class="n">entry</span> <span class="p">=&gt;</span> <span class="nf">GetImage</span><span class="p">());</span>
+
+            <span class="k">return</span> <span class="nf">File</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s">"image/png"</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我将这个图片放在 csdn 的博客，运行服务在用户访问的时候可以看到下面的输出</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="m">2019</span><span class="p">/</span><span class="m">5</span><span class="p">/</span><span class="m">26</span> <span class="m">11</span><span class="p">:</span><span class="m">39</span><span class="p">:</span><span class="m">24</span> <span class="err">用户访问</span> <span class="err">用户</span><span class="n">Ip</span><span class="p">=</span><span class="m">58.209</span><span class="p">.</span><span class="m">53.254</span> <span class="err">总共有</span><span class="m">13</span><span class="err">访问</span>
+<span class="err">当前用户浏览器</span><span class="n">Mozilla</span><span class="p">/</span><span class="m">5.0</span> <span class="p">(</span><span class="n">Windows</span> <span class="n">NT</span> <span class="m">10.0</span><span class="p">;</span> <span class="n">Win64</span><span class="p">;</span> <span class="n">x64</span><span class="p">)</span> <span class="n">AppleWebKit</span><span class="p">/</span><span class="m">537.36</span> <span class="p">(</span><span class="n">KHTML</span><span class="p">,</span> <span class="n">like</span> <span class="n">Gecko</span><span class="p">)</span> <span class="n">Chrome</span><span class="p">/</span><span class="m">74.0</span><span class="p">.</span><span class="m">3729.157</span> <span class="n">Safari</span><span class="p">/</span><span class="m">537.36</span>
+</code></pre></div></div>
+
+<p>如果要分析什么时候的用户访问有多少，就需要添加数据库，这些需要的知识有点多，本文就不告诉大家</p>
+
+<p>代码很简单，都放在 <a href="https://github.com/lindexi/lindexi_gd/tree/aec484bd2aa169ed31ef4a90dd462e72c2e32064/FayawlerjiraywereNiharjeechel">github</a></p>
+
+<p><a href="https://blog.lindexi.com/post/dotnet-%E8%8E%B7%E5%8F%96%E7%A8%8B%E5%BA%8F%E6%89%80%E5%9C%A8%E8%B7%AF%E5%BE%84%E7%9A%84%E6%96%B9%E6%B3%95.html">dotnet 获取程序所在路径的方法</a></p>
+
+<p><a href="https://blog.lindexi.com/post/asp-dotnet-core-%E4%BB%8E-Frp-%E8%8E%B7%E5%8F%96%E7%94%A8%E6%88%B7%E7%9C%9F%E5%AE%9E-IP-%E5%9C%B0%E5%9D%80.html">asp dotnet core 从 Frp 获取用户真实 IP 地址</a></p>
+
+<p><a href="https://blog.lindexi.com/post/asp-dotnet-core-%E5%9B%BE%E7%89%87%E5%9C%A8%E6%B5%8F%E8%A7%88%E5%99%A8%E6%B2%A1%E8%AE%BF%E9%97%AE%E5%8F%AF%E8%83%BD%E5%8E%9F%E5%9B%A0.html">asp dotnet core 图片在浏览器没访问可能原因</a></p>
+
+:ET

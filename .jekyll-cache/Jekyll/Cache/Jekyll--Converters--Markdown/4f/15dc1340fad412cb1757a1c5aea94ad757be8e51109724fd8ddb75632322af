@@ -1,0 +1,112 @@
+I"t2<p>在收到了反馈说有一份课件，打开解析就发现替换的元素不对，原因是这个课件里面的 Slide Master 里面存在一个元素的 id 和某个页面的元素 id 是相同的，这不符合 ECMA 376 的规范。通过读取文档的内容，发现这是 WPS 制作出来的 PPT 文件。本文做一个存档，用来告诉大家有这个坑</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/12/18 15:23:12 -->
+
+<!-- 发布 -->
+
+<p>在 Office 2016 和 Office 2019 的行为判断请看以下两篇博客</p>
+
+<p><a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E5%85%83%E7%B4%A0-cNvPr-NonVisual-Drawing-Properties-%E7%9A%84%E5%B1%9E%E6%80%A7%E4%BD%9C%E7%94%A8.html">dotnet OpenXML 元素 cNvPr NonVisual Drawing Properties 的属性作用</a></p>
+
+<p><a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E5%85%83%E7%B4%A0-cNvPr-NonVisual-Drawing-Properties-%E9%87%8D%E5%A4%8D-id-%E6%A0%87%E8%AF%86%E5%A4%84%E7%90%86.html">dotnet OpenXML 元素 cNvPr NonVisual Drawing Properties 重复 id 标识处理</a></p>
+
+<p>上面博客对于相同页面里面存在重复的 id 处理比较简单，但是对于在 Slide Master 里面存在一个元素的 id 和某个页面的元素 id 是相同的比较坑，但是做法就是将 Slide Master 里面存在相同 id 元素当成比较先发现的元素</p>
+
+<p>下面咱来看看这份有趣的课件，测试课件请点击 <a href="https://github.com/lindexi/lindexi_gd/blob/479eaa49de50116a3ea14641745e2b92fc51f4fb/%E6%96%87%E6%A1%A3/%E8%A7%A3%E6%9E%90%20WPS%20%E4%B8%8D%E8%A7%84%E8%8C%83%E7%9A%84%20PPT%20%E6%96%87%E4%BB%B6%E7%9A%84%20cNvPr%20%E9%87%8D%E5%A4%8D%20id%20%E9%97%AE%E9%A2%98.pptx">解析 WPS 不规范的 PPT 文件的 cNvPr 重复 id 问题.pptx</a> 下载</p>
+
+<p>在这份课件的 SlideMaster1.xml 文件里面，可以看到有如下定义</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="nt">&lt;p:sp&gt;</span>
+        <span class="nt">&lt;p:nvSpPr&gt;</span>
+          <span class="nt">&lt;p:cNvPr</span> <span class="na">id=</span><span class="s">"7"</span> <span class="na">name=</span><span class="s">"KSO_TEMPLATE"</span> <span class="na">hidden=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;p:cNvSpPr</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;p:nvPr</span> <span class="na">userDrawn=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;p:custDataLst&gt;</span>
+              <span class="nt">&lt;p:tags</span> <span class="na">r:id=</span><span class="s">"rId8"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;/p:custDataLst&gt;</span>
+          <span class="nt">&lt;/p:nvPr&gt;</span>
+        <span class="nt">&lt;/p:nvSpPr&gt;</span>
+        <span class="nt">&lt;p:spPr&gt;</span>
+          <span class="nt">&lt;a:xfrm&gt;</span>
+            <span class="nt">&lt;a:off</span> <span class="na">x=</span><span class="s">"0"</span> <span class="na">y=</span><span class="s">"0"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;a:ext</span> <span class="na">cx=</span><span class="s">"0"</span> <span class="na">cy=</span><span class="s">"0"</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;/a:xfrm&gt;</span>
+          <span class="nt">&lt;a:prstGeom</span> <span class="na">prst=</span><span class="s">"rect"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;a:avLst</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;/a:prstGeom&gt;</span>
+        <span class="nt">&lt;/p:spPr&gt;</span>
+        <span class="c">&lt;!-- 忽略代码 --&gt;</span>
+      <span class="nt">&lt;/p:sp&gt;</span>
+</code></pre></div></div>
+
+<p>根据 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E5%85%83%E7%B4%A0-cNvPr-NonVisual-Drawing-Properties-%E7%9A%84%E5%B1%9E%E6%80%A7%E4%BD%9C%E7%94%A8.html">dotnet OpenXML 元素 cNvPr NonVisual Drawing Properties 的属性作用</a> 可以了解到 <code class="language-plaintext highlighter-rouge">p:cNvPr</code> 的 id 就是元素的 id 属性</p>
+
+<p>这个元素的属性是 <code class="language-plaintext highlighter-rouge">7</code> 同时有趣的是 <code class="language-plaintext highlighter-rouge">name="KSO_TEMPLATE"</code> 表示了这是 KSO 金山的 Template 模版</p>
+
+<p>这个元素的 X 和 Y 和 宽度高度根据 <code class="language-plaintext highlighter-rouge">a:xfrm</code> 可以看到都是 0 没有宽度和高度，特别诡异</p>
+
+<p>在页面 Slide1.xml 文件里面，可以看到里面有一个元素，这个元素的 <code class="language-plaintext highlighter-rouge">p:cNvPr</code> 也是 <code class="language-plaintext highlighter-rouge">7</code> 如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      <span class="nt">&lt;p:sp&gt;</span>
+        <span class="nt">&lt;p:nvSpPr&gt;</span>
+          <span class="nt">&lt;p:cNvPr</span> <span class="na">id=</span><span class="s">"7"</span> <span class="na">name=</span><span class="s">"标题 6"</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;p:cNvSpPr</span> <span class="na">txBox=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+          <span class="nt">&lt;p:nvPr&gt;</span>
+            <span class="nt">&lt;p:custDataLst&gt;</span>
+              <span class="nt">&lt;p:tags</span> <span class="na">r:id=</span><span class="s">"rId2"</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;/p:custDataLst&gt;</span>
+          <span class="nt">&lt;/p:nvPr&gt;</span>
+        <span class="nt">&lt;/p:nvSpPr&gt;</span>
+        <span class="c">&lt;!-- 忽略代码 --&gt;</span>
+      <span class="nt">&lt;/p:sp&gt;</span>
+</code></pre></div></div>
+
+<p>这个元素有一个有趣的属性，那就是 <code class="language-plaintext highlighter-rouge">p:custDataLst</code> 的值，这里面包含了 WPS 无文档的内容，可以看到 <code class="language-plaintext highlighter-rouge">p:tags</code> 通过 <code class="language-plaintext highlighter-rouge">r:id</code> 属性指向 <code class="language-plaintext highlighter-rouge">rId2</code> 的资源。在 <code class="language-plaintext highlighter-rouge">Slide1.xml.rels</code> 文件里面，可以看到下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Relationship</span> <span class="na">Id=</span><span class="s">"rId2"</span> <span class="na">Type=</span><span class="s">"http://schemas.openxmlformats.org/officeDocument/2006/relationships/tags"</span> <span class="na">Target=</span><span class="s">"../tags/tag12.xml"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>也就是说加载了 tag12.xml 文件的内容，这个文件内容如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
+<span class="nt">&lt;p:tagLst</span> <span class="na">xmlns:a=</span><span class="s">"http://schemas.openxmlformats.org/drawingml/2006/main"</span> <span class="na">xmlns:r=</span><span class="s">"http://schemas.openxmlformats.org/officeDocument/2006/relationships"</span> <span class="na">xmlns:p=</span><span class="s">"http://schemas.openxmlformats.org/presentationml/2006/main"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_HIGHLIGHT"</span> <span class="na">val=</span><span class="s">"0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_COMPATIBLE"</span> <span class="na">val=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_DIAGRAM_ISNUMVISUAL"</span> <span class="na">val=</span><span class="s">"0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_DIAGRAM_ISREFERUNIT"</span> <span class="na">val=</span><span class="s">"0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_LAYERLEVEL"</span> <span class="na">val=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_TAG_VERSION"</span> <span class="na">val=</span><span class="s">"1.0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_BEAUTIFY_FLAG"</span> <span class="na">val=</span><span class="s">"#wm#"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_ISCONTENTSTITLE"</span> <span class="na">val=</span><span class="s">"0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_PRESET_TEXT"</span> <span class="na">val=</span><span class="s">"PART 01"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_NOCLEAR"</span> <span class="na">val=</span><span class="s">"0"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_VALUE"</span> <span class="na">val=</span><span class="s">"5"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_TYPE"</span> <span class="na">val=</span><span class="s">"e"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_INDEX"</span> <span class="na">val=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_TEMPLATE_CATEGORY"</span> <span class="na">val=</span><span class="s">"custom"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_TEMPLATE_INDEX"</span> <span class="na">val=</span><span class="s">"20204217"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;p:tag</span> <span class="na">name=</span><span class="s">"KSO_WM_UNIT_ID"</span> <span class="na">val=</span><span class="s">"custom20204217_7*e*1"</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/p:tagLst&gt;</span>
+</code></pre></div></div>
+
+<p>可以看到这些都是 WPS 自己定义的内容，这样的课件在 Office 打开还是可以认的，只是还原效果没有在 WPS 上好。而在我自己的软件上，就凉凉了</p>
+
+<p>这份课件可以通过 <code class="language-plaintext highlighter-rouge">docProps\custom.xml</code> 文件找到 WPS 应用的版本</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">&lt;?xml version="1.0" encoding="UTF-8" standalone="yes"?&gt;</span>
+<span class="nt">&lt;Properties</span> <span class="na">xmlns=</span><span class="s">"http://schemas.openxmlformats.org/officeDocument/2006/custom-properties"</span> <span class="na">xmlns:vt=</span><span class="s">"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;property</span> <span class="na">fmtid=</span><span class="s">"{D5CDD505-2E9C-101B-9397-08002B2CF9AE}"</span> <span class="na">pid=</span><span class="s">"2"</span> <span class="na">name=</span><span class="s">"KSOProductBuildVer"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;vt:lpwstr&gt;</span>2052-11.1.0.9198<span class="nt">&lt;/vt:lpwstr&gt;</span>
+  <span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/Properties&gt;</span>
+</code></pre></div></div>
+
+<p>这里的 KSOProductBuildVer 就是表示构建这份文档的 WPS 应用版本，而 <code class="language-plaintext highlighter-rouge">2052-11.1.0.9198</code> 是版本号</p>
+
+<p>本文的属性是依靠 <a href="https://blog.lindexi.com/post/dotnet-OpenXML-%E8%A7%A3%E5%8E%8B%E7%BC%A9%E6%96%87%E6%A1%A3%E4%B8%BA%E6%96%87%E4%BB%B6%E5%A4%B9%E5%B7%A5%E5%85%B7.html">dotnet OpenXML 解压缩文档为文件夹工具</a> 工具协助测试的，这个工具是开源免费的工具，欢迎小伙伴使用</p>
+
+<p>更多请看 <a href="https://blog.lindexi.com/post/Office-%E4%BD%BF%E7%94%A8-OpenXML-SDK-%E8%A7%A3%E6%9E%90%E6%96%87%E6%A1%A3%E5%8D%9A%E5%AE%A2%E7%9B%AE%E5%BD%95.html">Office 使用 OpenXML SDK 解析文档博客目录</a></p>
+
+:ET

@@ -1,0 +1,177 @@
+I"�D<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>今天在win10.me看到一个rss，不知道是什么东西，打开看到
+![这里写图片描述](http://img.blog.csdn.net/201602221RSS简易信息聚合(也叫聚合内容)是一种RSS基于XML标准，在互联网上被广泛采用的内容包装和投递协议。RSS(Really Simple Syndication)是一种描述和同步网站内容的格式，是使用最广泛的XML应用。RSS搭建了信息迅速传播的一个技术平台，使得每个人都成为潜在的信息提供者。发布一个RSS文件后，这个RSS Feed中包含的信息就能直接被其他站点调用，而且由于这些数据都是标准的XML格式，所以也能在其他的终端和服务中使用，是一种描述和同步网站内容的格式。RSS可以是以下三个解释的其中一个: Really Simple Syndication;RDF (Resource Description Framework) Site Summary; Rich Site Summary。但其实这三个解释都是指同一种Syndication的技术。</p>
+
+<!--more-->
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>今天在win10.me看到一个rss，不知道是什么东西，打开看到
+<img src="http://img.blog.csdn.net/20160222151447588" alt="这里写图片描述" /></p>
+
+<p>于是在网上查了RSS，又在微软官网看到https://msdn.microsoft.com/zh-cn/library/windows/apps/mt429379.aspx</p>
+
+<p>林政的书也有说过，不过他是用HttpWebRequest</p>
+
+<p>我的rss是使用SyndicationClient
+先创建SyndicationClient</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Syndication</span><span class="p">.</span><span class="n">SyndicationClient</span> <span class="n">client</span> <span class="p">=</span> <span class="k">new</span> <span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Syndication</span><span class="p">.</span><span class="nf">SyndicationClient</span><span class="p">();</span>
+            <span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Syndication</span><span class="p">.</span><span class="n">SyndicationFeed</span> <span class="n">feed</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>因为输URL可能是错的，所以微软就用try catch</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="c1">//uri写在外面，为了在try之外不会说找不到变量</span>
+            <span class="n">Uri</span> <span class="n">uri</span> <span class="p">=</span> <span class="k">null</span><span class="p">;</span>
+
+            <span class="c1">//uri字符串</span>
+            <span class="kt">string</span> <span class="n">uriString</span> <span class="p">=</span> <span class="s">"http://www.win10.me/?feed=rss2"</span><span class="p">;</span>
+
+            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="n">uri</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Uri</span><span class="p">(</span><span class="n">uriString</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="k">throw</span> <span class="n">ex</span><span class="p">;</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+<p>网络请求有很多异常，我们放在try</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">try</span>
+            <span class="p">{</span>
+                <span class="c1">//模拟http </span>
+                <span class="c1">// 如果没有设置可能出错</span>
+                <span class="n">client</span><span class="p">.</span><span class="nf">SetRequestHeader</span><span class="p">(</span><span class="s">"User-Agent"</span><span class="p">,</span> <span class="s">"Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; WOW64; Trident/6.0)"</span><span class="p">);</span>
+
+                <span class="n">feed</span> <span class="p">=</span> <span class="k">await</span> <span class="n">client</span><span class="p">.</span><span class="nf">RetrieveFeedAsync</span><span class="p">(</span><span class="n">uri</span><span class="p">);</span>
+
+                <span class="k">foreach</span> <span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Syndication</span><span class="p">.</span><span class="n">SyndicationItem</span> <span class="n">item</span> <span class="k">in</span> <span class="n">feed</span><span class="p">.</span><span class="n">Items</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nf">displayCurrentItem</span><span class="p">(</span><span class="n">item</span><span class="p">);</span>
+                <span class="p">}</span>
+
+            <span class="p">}</span>
+            <span class="k">catch</span> <span class="p">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// Handle the exception here.</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>我们写一个函数处理每个SyndicationItem</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">displayCurrentItem</span><span class="p">(</span><span class="n">Windows</span><span class="p">.</span><span class="n">Web</span><span class="p">.</span><span class="n">Syndication</span><span class="p">.</span><span class="n">SyndicationItem</span> <span class="n">item</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">string</span> <span class="n">itemTitle</span> <span class="p">=</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span> <span class="p">==</span> <span class="k">null</span> <span class="p">?</span> <span class="s">"No title"</span> <span class="p">:</span> <span class="n">item</span><span class="p">.</span><span class="n">Title</span><span class="p">.</span><span class="n">Text</span><span class="p">;</span>
+            <span class="kt">string</span> <span class="n">itemLink</span> <span class="p">=</span> <span class="n">item</span><span class="p">.</span><span class="n">Links</span> <span class="p">==</span> <span class="k">null</span> <span class="p">?</span> <span class="s">"No link"</span> <span class="p">:</span> <span class="n">item</span><span class="p">.</span><span class="n">Links</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">().</span><span class="nf">ToString</span><span class="p">();</span>
+            <span class="kt">string</span> <span class="n">itemContent</span> <span class="p">=</span> <span class="n">item</span><span class="p">.</span><span class="n">Content</span> <span class="p">==</span> <span class="k">null</span> <span class="p">?</span> <span class="s">"No content"</span> <span class="p">:</span> <span class="n">item</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">Text</span><span class="p">;</span>
+            <span class="kt">string</span> <span class="n">itemSummary</span> <span class="p">=</span> <span class="n">item</span><span class="p">.</span><span class="n">Summary</span><span class="p">.</span><span class="n">Text</span> <span class="p">+</span> <span class="s">""</span><span class="p">;</span>
+            <span class="n">reminder</span> <span class="p">=</span> <span class="n">itemTitle</span> <span class="p">+</span> <span class="s">"\n"</span> <span class="p">+</span> <span class="n">itemLink</span> <span class="p">+</span> <span class="s">"\n"</span> <span class="p">+</span> <span class="n">itemContent</span><span class="p">+</span><span class="s">"\n"</span><span class="p">+</span><span class="n">itemSummary</span><span class="p">+</span><span class="s">"\n"</span><span class="p">;</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>reminder是通知显示，把每个不为空的值放在StringBuilder
+<img src="http://img.blog.csdn.net/20160222152926727" alt="这里写图片描述" /></p>
+
+<p>看起来很多html，我们可以用WebUtility，Regex来得到文本</p>
+
+<p>我们可以做一个显示标题，然后点击显示内容</p>
+
+<p>建一个类rssstr，这个类存放rss标题和内容</p>
+
+<p>在viewModel 一个列表<code class="language-plaintext highlighter-rouge">ObservableCollection&lt;rssstr&gt;</code></p>
+
+<p>界面MainPage</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid</span> <span class="na">Background=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions</span> <span class="nt">&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="nt">&gt;</span>
+
+            <span class="nt">&lt;/RowDefinition&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"auto"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;ScrollViewer</span> <span class="na">Grid.Row=</span><span class="s">"0"</span>  <span class="na">VerticalScrollBarVisibility=</span><span class="s">"Auto"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;ListView</span> <span class="na">SelectionChanged=</span><span class="s">"select"</span> <span class="na">ItemsSource=</span><span class="s">"{x:Bind view.rsslist}"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;ListView.ItemTemplate&gt;</span>
+                    <span class="nt">&lt;DataTemplate&gt;</span>
+                        <span class="nt">&lt;Grid&gt;</span>
+                            <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+                                <span class="nt">&lt;RowDefinition/&gt;</span>
+                            <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+                            <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding title}"</span><span class="nt">/&gt;</span>
+                        <span class="nt">&lt;/Grid&gt;</span>
+                    <span class="nt">&lt;/DataTemplate&gt;</span>
+                <span class="nt">&lt;/ListView.ItemTemplate&gt;</span>
+            <span class="nt">&lt;/ListView&gt;</span>
+            <span class="c">&lt;!--&lt;TextBlock Grid.Row="0" Text="{x:Bind view.reminder,Mode=OneWay}" TextWrapping="Wrap"/&gt;--&gt;</span>
+        <span class="nt">&lt;/ScrollViewer&gt;</span>
+        <span class="nt">&lt;Button</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">Content=</span><span class="s">"确定"</span> <span class="na">Click=</span><span class="s">"Button_Click"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>新建一个页面rss_page</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Page.Resources&gt;</span>
+        <span class="nt">&lt;Style</span> <span class="na">x:Key=</span><span class="s">"TextBlockStyle1"</span> <span class="na">TargetType=</span><span class="s">"TextBlock"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Margin"</span> <span class="na">Value=</span><span class="s">"10,10,10,10"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Style&gt;</span>
+    <span class="nt">&lt;/Page.Resources&gt;</span>
+
+    <span class="nt">&lt;Grid</span> <span class="na">Background=</span><span class="s">"{ThemeResource ApplicationPageBackgroundThemeBrush}"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;Grid.RowDefinitions&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"auto"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="nt">/&gt;</span>
+            <span class="nt">&lt;RowDefinition</span> <span class="na">Height=</span><span class="s">"auto"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/Grid.RowDefinitions&gt;</span>
+        <span class="nt">&lt;TextBlock</span> <span class="na">Style=</span><span class="s">"{StaticResource TextBlockStyle1}"</span> <span class="na">Grid.Row=</span><span class="s">"0"</span> <span class="na">Text=</span><span class="s">"{x:Bind view.title}"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;TextBlock</span> <span class="na">Style=</span><span class="s">"{StaticResource TextBlockStyle1}"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">Text=</span><span class="s">"{x:Bind view.summary}"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;Button</span> <span class="na">Grid.Row=</span><span class="s">"2"</span> <span class="na">Content=</span><span class="s">"确定"</span> <span class="na">Click=</span><span class="s">"Button_Click"</span><span class="nt">/&gt;</span>
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>在列表被点击</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="k">select</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">SelectionChangedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">Frame</span> <span class="n">frame</span> <span class="p">=</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Content</span> <span class="k">as</span> <span class="n">Frame</span><span class="p">;</span>
+            <span class="n">frame</span><span class="p">.</span><span class="nf">Navigate</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">rss_page</span><span class="p">),</span> <span class="p">(</span><span class="n">ViewModel</span><span class="p">.</span><span class="n">rssstr</span><span class="p">)(</span><span class="n">sender</span> <span class="k">as</span> <span class="n">ListView</span><span class="p">).</span><span class="n">SelectedItem</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>rss_page viewModel使用rssstr</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">NavigationEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">view</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="n">Parameter</span> <span class="k">as</span> <span class="n">rssstr</span><span class="p">;</span>
+            <span class="k">base</span><span class="p">.</span><span class="nf">OnNavigatedTo</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+<p><img src="http://img.blog.csdn.net/20160222153520940" alt="这里写图片描述" /></p>
+
+<p><img src="http://img.blog.csdn.net/20160222153545766" alt="这里写图片描述" /></p>
+
+<p>rss_page不能滚动TextBlock，可以使用ScrollViewer</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ScrollViewer</span> <span class="na">Grid.Row=</span><span class="s">"1"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;TextBlock</span> <span class="na">Style=</span><span class="s">"{StaticResource TextBlockStyle1}"</span> <span class="na">Grid.Row=</span><span class="s">"1"</span> <span class="na">Text=</span><span class="s">"{x:Bind view.summary}"</span> <span class="na">TextWrapping=</span><span class="s">"Wrap"</span><span class="nt">/&gt;</span>
+        <span class="nt">&lt;/ScrollViewer&gt;</span>
+</code></pre></div></div>
+
+<p>源代码
+https://github.com/lindexi/lindexi_gd/tree/master/rss</p>
+
+<p>链接：http://pan.baidu.com/s/1sk7v6Zr 密码：dzfa</p>
+
+<p>Http://blog.csdn.net/lindexi_gd</p>
+
+<p><img src="http://img.blog.csdn.net/20160222155811716" alt="这里写图片描述" /></p>
+
+:ET

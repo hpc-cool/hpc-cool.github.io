@@ -1,0 +1,42 @@
+I"�<p>默认在列表以及字典哈希这些都会先看对象是否有自己实现的等于判断，如果有就调用对象的。因此对象可以做到两个不同的对象返回相等。而如果需要判断对象引用相等，也就是只有相同的对象才返回相等，此时需要用到 ReferenceEquals 方法。这个判断方法是最快的判断相等的方法，只有在传入的两个参数是相同的对象的时候才会返回 true 的值</p>
+
+<!--more-->
+
+<!-- CreateTime:6/20/2020 11:12:07 AM -->
+
+<p>那么如何将这个引用相等放在列表或字典哈希等的判断里面？可以看到字典等的构造函数都有重载方法，要求传入 IEqualityComparer 接口，于是可以做如下实现</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">class</span> <span class="nc">ReferenceEqualsComparer</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span> <span class="p">:</span> <span class="n">ReferenceEqualsComparer</span><span class="p">,</span> <span class="n">IEqualityComparer</span><span class="p">&lt;</span><span class="n">T</span><span class="p">&gt;</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="kt">bool</span> <span class="nf">Equals</span><span class="p">(</span><span class="n">T</span> <span class="n">x</span><span class="p">,</span> <span class="n">T</span> <span class="n">y</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">((</span><span class="n">IEqualityComparer</span><span class="p">)</span> <span class="k">this</span><span class="p">).</span><span class="nf">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="nf">GetHashCode</span><span class="p">(</span><span class="n">T</span> <span class="n">obj</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">obj</span><span class="p">.</span><span class="nf">GetHashCode</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">class</span> <span class="nc">ReferenceEqualsComparer</span> <span class="p">:</span> <span class="n">IEqualityComparer</span>
+    <span class="p">{</span>
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="kt">bool</span> <span class="n">IEqualityComparer</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="kt">object</span> <span class="n">x</span><span class="p">,</span> <span class="kt">object</span> <span class="n">y</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="nf">ReferenceEquals</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+
+        <span class="c1">/// &lt;inheritdoc /&gt;</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="nf">GetHashCode</span><span class="p">(</span><span class="kt">object</span> <span class="n">obj</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="n">obj</span><span class="p">?.</span><span class="nf">GetHashCode</span><span class="p">()??</span><span class="m">0</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>对于字典可以这样使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="n">Lindexi</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;</span> <span class="n">LindexiShiDoubi</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span>
+            <span class="c1">// 这里需要使用完全相等的判断，对象完全相等</span>
+            <span class="k">new</span> <span class="n">Dictionary</span><span class="p">&lt;</span><span class="n">Lindexi</span><span class="p">,</span> <span class="kt">string</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">ReferenceEqualsComparer</span><span class="p">&lt;</span><span class="n">Lindexi</span><span class="p">&gt;());</span>
+</code></pre></div></div>
+
+<p>对于哈希可以这样使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">private</span> <span class="n">HashSet</span><span class="p">&lt;</span><span class="n">Lindexi</span><span class="p">&gt;</span> <span class="n">Lindexi</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">HashSet</span><span class="p">&lt;</span><span class="n">Lindexi</span><span class="p">&gt;(</span><span class="k">new</span> <span class="n">ReferenceEqualsComparer</span><span class="p">&lt;</span><span class="n">Lindexi</span><span class="p">&gt;());</span>
+</code></pre></div></div>
+
+<p>这样所有进行判断的 Contains 或 ContainsKey 都使用对象引用判断，只有传入和内存里面存放相同的对象才能判断存在</p>
+
+:ET

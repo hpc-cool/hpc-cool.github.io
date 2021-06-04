@@ -1,0 +1,3 @@
+I"�<p>这是 dotnet core 的破坏性改动之一，在 dotnet framework 里面，可以使用 HandleProcessCorruptedStateExceptionsAttribute 接住非托管层抛出的异常，如 C++ 异常等。但是这个功能在 dotnet core 下存在行为的变更，从 .NET Core 1.0 开始，损坏进程状态异常无法由托管代码进行处理。 公共语言运行时不会将损坏进程状态异常传递给托管代码</p>
+
+:ET

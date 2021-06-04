@@ -1,0 +1,78 @@
+I"�<p>在默认的 VisualStudio 可以右击任意的文件，让这个文件在编译时复制到输出目录，但是这个选项将会在复制到输出目录时带上这个文件所在 VisualStudio 的文件夹结构。本文告诉大家几个方法让 VisualStudio 的文件可以在编译时输出到自定义的任意路径</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/1/19 18:08:07 -->
+
+<h2 id="文件夹到文件夹">文件夹到文件夹</h2>
+
+<p>将整个文件夹内容输出到自定义文件夹可以使用写一个 Target 的方法</p>
+
+<p>如我需要将 VisualStudio 的 <code class="language-plaintext highlighter-rouge">dll</code> 文件夹的内容全部输出到输出目录，而不是输出到 输出目录下的 Dll 文件夹，可以使用下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Target</span> <span class="na">Name=</span><span class="s">"CopyReferenceDll"</span> <span class="na">AfterTargets=</span><span class="s">"Build"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;ItemGroup&gt;</span>
+            <span class="nt">&lt;ReferenceDll</span> <span class="na">Include=</span><span class="s">"Dll\*.dll"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;/ReferenceDll&gt;</span>
+        <span class="nt">&lt;/ItemGroup&gt;</span>
+        <span class="nt">&lt;Copy</span> <span class="na">SourceFiles=</span><span class="s">"@(ReferenceDll)"</span> <span class="na">DestinationFolder=</span><span class="s">"$(OutputPath)"</span> <span class="na">SkipUnchangedFiles=</span><span class="s">"True"</span><span class="nt">&gt;&lt;/Copy&gt;</span>
+    <span class="nt">&lt;/Target&gt;</span>
+</code></pre></div></div>
+
+<p>将上面代码复制到 csproj 文件里面，放在 <code class="language-plaintext highlighter-rouge">&lt;/Project&gt;</code> 之前就可以做到将 VisualStudio 里面的 Dll 文件夹的 <code class="language-plaintext highlighter-rouge">dll</code> 文件复制到输出文件夹</p>
+
+<p>至于需要输出其他文件到其他文件夹的，看上面的代码修改就可以了，如果不知道如何修改请联系我</p>
+
+<h2 id="用-link-修改路径">用 Link 修改路径</h2>
+
+<p>通过修改文件链接的地址，这个方法只能输出到输出文件夹内某个文件夹下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+      <span class="nt">&lt;None</span> <span class="na">Update=</span><span class="s">"Dll\*.dll"</span> <span class="na">Link=</span><span class="s">"%(Filename)%(Extension)"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;CopyToOutputDirectory&gt;</span>PreserveNewest<span class="nt">&lt;/CopyToOutputDirectory&gt;</span>
+      <span class="nt">&lt;/None&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>此时的 Dll 文件夹的 dll 文件，将会重新链接到 <code class="language-plaintext highlighter-rouge">*.dll</code> 路径而不是 <code class="language-plaintext highlighter-rouge">Dll\*.dll</code> 但是此时会在 VisualStudio 看到项目的根文件夹存在很多 dll 文件</p>
+
+<p>如果不想看到这些文件通过 <code class="language-plaintext highlighter-rouge">Visible</code> 属性</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+      <span class="nt">&lt;None</span> <span class="na">Update=</span><span class="s">"Dll\*.dll"</span> <span class="na">Link=</span><span class="s">"%(Filename)%(Extension)"</span> <span class="na">Visible=</span><span class="s">"false"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;CopyToOutputDirectory&gt;</span>PreserveNewest<span class="nt">&lt;/CopyToOutputDirectory&gt;</span>
+      <span class="nt">&lt;/None&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<h2 id="通过-contentwithtargetpath-项">通过 ContentWithTargetPath 项</h2>
+
+<p>将原本的 None 替换为 ContentWithTargetPath 项，这个项提供 TargetPath 属性，设置输出的文件</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+        <span class="nt">&lt;ContentWithTargetPath</span> <span class="na">Include=</span><span class="s">"Dll\*.dll"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;CopyToOutputDirectory&gt;</span>PreserveNewest<span class="nt">&lt;/CopyToOutputDirectory&gt;</span>
+            <span class="nt">&lt;TargetPath&gt;</span>%(Filename)%(Extension)<span class="nt">&lt;/TargetPath&gt;</span>
+        <span class="nt">&lt;/ContentWithTargetPath&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>这个方法底层也是调用了 Copy 命令</p>
+
+<p>适合文件到文件的方式，将 <code class="language-plaintext highlighter-rouge">%(Filename)%(Extension)</code> 替换为具体文件，如将某个文件复制到指定的路径，这样写清真很多，请看代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;ItemGroup&gt;</span>
+        <span class="nt">&lt;ContentWithTargetPath</span> <span class="na">Include=</span><span class="s">"Dll\lindexi.dll"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;CopyToOutputDirectory&gt;</span>PreserveNewest<span class="nt">&lt;/CopyToOutputDirectory&gt;</span>
+            <span class="nt">&lt;TargetPath&gt;</span>lindexi.dll<span class="nt">&lt;/TargetPath&gt;</span>
+        <span class="nt">&lt;/ContentWithTargetPath&gt;</span>
+    <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>本文用到了 <code class="language-plaintext highlighter-rouge">%(Filename)</code> 以及 <code class="language-plaintext highlighter-rouge">Copy</code> 和 <code class="language-plaintext highlighter-rouge">Target</code> 等，这些可以在我博客看到如何使用</p>
+
+<p><a href="https://blog.lindexi.com/post/Roslyn-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8-MSBuild-Copy-%E5%A4%8D%E5%88%B6%E6%96%87%E4%BB%B6.html">Roslyn 如何使用 MSBuild Copy 复制文件</a></p>
+
+<p><a href="https://stackoverflow.com/questions/18743907/visual-studio-how-to-copy-to-output-directory-without-copying-the-folder-stru">c# - Visual Studio: How to “Copy to Output Directory” without copying the folder structure? - Stack Overflow</a></p>
+
+:ET

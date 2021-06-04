@@ -1,0 +1,173 @@
+I">C<p>本文告诉大家如何在 C# 里面使用汇编代码</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>请看</p>
+
+<p><a href="https://cloud.tencent.com/developer/article/1016850">C#嵌入x86汇编——一个GPIO接口的实现 - 云+社区 - 腾讯云</a></p>
+
+<p><a href="https://blog.csdn.net/u012395622/article/details/46801475">C# inline-asm / 嵌入x86汇编 - 苏璃 - CSDN博客</a></p>
+
+<p>通过这个方法在 dotnet core 获取 CPU 信息</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">[</span><span class="nf">StructLayout</span><span class="p">(</span><span class="n">LayoutKind</span><span class="p">.</span><span class="n">Sequential</span><span class="p">)]</span>
+<span class="k">internal</span> <span class="k">ref</span> <span class="k">struct</span> <span class="nc">CpuIdInfo</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="kt">uint</span> <span class="n">Eax</span><span class="p">;</span>
+    <span class="k">public</span> <span class="kt">uint</span> <span class="n">Ebx</span><span class="p">;</span>
+    <span class="k">public</span> <span class="kt">uint</span> <span class="n">Ecx</span><span class="p">;</span>
+    <span class="k">public</span> <span class="kt">uint</span> <span class="n">Edx</span><span class="p">;</span>
+
+
+    <span class="k">public</span> <span class="k">static</span> <span class="k">void</span> <span class="nf">AppendAsString</span><span class="p">(</span><span class="n">StringBuilder</span> <span class="n">builder</span><span class="p">,</span><span class="kt">uint</span> <span class="k">value</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">var</span> <span class="n">val</span> <span class="p">=</span> <span class="k">value</span><span class="p">;</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="n">val</span> <span class="p">!=</span> <span class="m">0</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">builder</span><span class="p">.</span><span class="nf">Append</span><span class="p">((</span><span class="kt">char</span><span class="p">)</span> <span class="p">(</span><span class="n">val</span> <span class="p">&amp;</span> <span class="m">0xFF</span><span class="p">));</span>
+            <span class="n">val</span> <span class="p">&gt;&gt;=</span> <span class="m">8</span><span class="p">;</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="kt">string</span> <span class="nf">GetString</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="n">StringBuilder</span> <span class="n">ret</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">StringBuilder</span><span class="p">(</span><span class="m">16</span><span class="p">);</span>
+        <span class="nf">AppendAsString</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span><span class="n">Ebx</span><span class="p">);</span>
+        <span class="nf">AppendAsString</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span><span class="n">Edx</span><span class="p">);</span>
+        <span class="nf">AppendAsString</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span><span class="n">Ecx</span><span class="p">);</span>
+
+        <span class="k">return</span> <span class="n">ret</span><span class="p">.</span><span class="nf">ToString</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="k">internal</span> <span class="k">sealed</span> <span class="k">class</span> <span class="nc">CpuIdAssemblyCode</span>
+    <span class="p">:</span> <span class="n">IDisposable</span>
+<span class="p">{</span>
+    <span class="p">[</span><span class="nf">UnmanagedFunctionPointer</span><span class="p">(</span><span class="n">CallingConvention</span><span class="p">.</span><span class="n">Cdecl</span><span class="p">)]</span>
+    <span class="k">private</span> <span class="k">delegate</span> <span class="k">void</span> <span class="nf">CpuIDDelegate</span><span class="p">(</span><span class="kt">int</span> <span class="n">level</span><span class="p">,</span> <span class="k">ref</span> <span class="n">CpuIdInfo</span> <span class="n">cpuId</span><span class="p">);</span>
+
+    <span class="k">private</span> <span class="n">IntPtr</span> <span class="n">_codePointer</span><span class="p">;</span>
+    <span class="k">private</span> <span class="kt">uint</span> <span class="n">_size</span><span class="p">;</span>
+    <span class="k">private</span> <span class="n">CpuIDDelegate</span> <span class="n">_delegate</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="nf">CpuIdAssemblyCode</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="kt">byte</span><span class="p">[]</span> <span class="n">codeBytes</span> <span class="p">=</span> <span class="p">(</span><span class="n">IntPtr</span><span class="p">.</span><span class="n">Size</span> <span class="p">==</span> <span class="m">4</span><span class="p">)</span> <span class="p">?</span> <span class="n">x86CodeBytes</span> <span class="p">:</span> <span class="n">x64CodeBytes</span><span class="p">;</span>
+
+        <span class="n">_size</span> <span class="p">=</span> <span class="p">(</span><span class="kt">uint</span><span class="p">)</span> <span class="n">codeBytes</span><span class="p">.</span><span class="n">Length</span><span class="p">;</span>
+        <span class="n">_codePointer</span> <span class="p">=</span> <span class="n">NativeMethods</span><span class="p">.</span><span class="n">Kernel32</span><span class="p">.</span><span class="nf">VirtualAlloc</span><span class="p">(</span>
+                <span class="n">IntPtr</span><span class="p">.</span><span class="n">Zero</span><span class="p">,</span>
+                <span class="k">new</span> <span class="nf">UIntPtr</span><span class="p">(</span><span class="n">_size</span><span class="p">),</span>
+                <span class="n">AllocationType</span><span class="p">.</span><span class="n">COMMIT</span> <span class="p">|</span> <span class="n">AllocationType</span><span class="p">.</span><span class="n">RESERVE</span><span class="p">,</span>
+                <span class="n">MemoryProtection</span><span class="p">.</span><span class="n">EXECUTE_READWRITE</span>
+            <span class="p">);</span>
+
+        <span class="n">Marshal</span><span class="p">.</span><span class="nf">Copy</span><span class="p">(</span><span class="n">codeBytes</span><span class="p">,</span> <span class="m">0</span><span class="p">,</span> <span class="n">_codePointer</span><span class="p">,</span> <span class="n">codeBytes</span><span class="p">.</span><span class="n">Length</span><span class="p">);</span>
+<span class="cp">#if NET40
+</span>        <span class="n">_delegate</span> <span class="p">=</span> <span class="p">(</span><span class="n">CpuIDDelegate</span><span class="p">)</span> <span class="n">Marshal</span><span class="p">.</span><span class="nf">GetDelegateForFunctionPointer</span><span class="p">(</span><span class="n">_codePointer</span><span class="p">,</span> <span class="k">typeof</span><span class="p">(</span><span class="n">CpuIDDelegate</span><span class="p">));</span>
+<span class="cp">#else
+</span>        <span class="n">_delegate</span> <span class="p">=</span> <span class="n">Marshal</span><span class="p">.</span><span class="n">GetDelegateForFunctionPointer</span><span class="p">&lt;</span><span class="n">CpuIDDelegate</span><span class="p">&gt;(</span><span class="n">_codePointer</span><span class="p">);</span>
+<span class="cp">#endif
+</span>
+    <span class="p">}</span>
+
+    <span class="p">~</span><span class="nf">CpuIdAssemblyCode</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nf">Dispose</span><span class="p">(</span><span class="k">false</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">Call</span><span class="p">(</span><span class="kt">int</span> <span class="n">level</span><span class="p">,</span> <span class="k">ref</span> <span class="n">CpuIdInfo</span> <span class="n">cpuInfo</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nf">_delegate</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="k">ref</span> <span class="n">cpuInfo</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nf">Dispose</span><span class="p">(</span><span class="k">true</span><span class="p">);</span>
+        <span class="n">GC</span><span class="p">.</span><span class="nf">SuppressFinalize</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Dispose</span><span class="p">(</span><span class="kt">bool</span> <span class="n">disposing</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">NativeMethods</span><span class="p">.</span><span class="n">Kernel32</span><span class="p">.</span><span class="nf">VirtualFree</span><span class="p">(</span><span class="n">_codePointer</span><span class="p">,</span> <span class="n">_size</span><span class="p">,</span> <span class="m">0x8000</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Basic ASM strategy --</span>
+    <span class="c1">// void x86CpuId(int level, byte* buffer) </span>
+    <span class="c1">// {</span>
+    <span class="c1">//    eax = level</span>
+    <span class="c1">//    cpuid</span>
+    <span class="c1">//    buffer[0] = eax</span>
+    <span class="c1">//    buffer[4] = ebx</span>
+    <span class="c1">//    buffer[8] = ecx</span>
+    <span class="c1">//    buffer[12] = edx</span>
+    <span class="c1">// }</span>
+
+    <span class="k">private</span> <span class="k">readonly</span> <span class="k">static</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">x86CodeBytes</span> <span class="p">=</span> 
+    <span class="p">{</span>
+    <span class="m">0x55</span><span class="p">,</span>                   <span class="c1">// push        ebp  </span>
+    <span class="m">0x8B</span><span class="p">,</span> <span class="m">0xEC</span><span class="p">,</span>             <span class="c1">// mov         ebp,esp</span>
+    <span class="m">0x53</span><span class="p">,</span>                   <span class="c1">// push        ebx  </span>
+    <span class="m">0x57</span><span class="p">,</span>                   <span class="c1">// push        edi</span>
+
+    <span class="m">0x8B</span><span class="p">,</span> <span class="m">0x45</span><span class="p">,</span> <span class="m">0x08</span><span class="p">,</span>       <span class="c1">// mov         eax, dword ptr [ebp+8] (move level into eax)</span>
+    <span class="m">0x0F</span><span class="p">,</span> <span class="m">0xA2</span><span class="p">,</span>              <span class="c1">// cpuid</span>
+
+    <span class="m">0x8B</span><span class="p">,</span> <span class="m">0x7D</span><span class="p">,</span> <span class="m">0x0C</span><span class="p">,</span>       <span class="c1">// mov         edi, dword ptr [ebp+12] (move address of buffer into edi)</span>
+    <span class="m">0x89</span><span class="p">,</span> <span class="m">0x07</span><span class="p">,</span>             <span class="c1">// mov         dword ptr [edi+0], eax  (write eax, ... to buffer)</span>
+    <span class="m">0x89</span><span class="p">,</span> <span class="m">0x5F</span><span class="p">,</span> <span class="m">0x04</span><span class="p">,</span>       <span class="c1">// mov         dword ptr [edi+4], ebx </span>
+    <span class="m">0x89</span><span class="p">,</span> <span class="m">0x4F</span><span class="p">,</span> <span class="m">0x08</span><span class="p">,</span>       <span class="c1">// mov         dword ptr [edi+8], ecx </span>
+    <span class="m">0x89</span><span class="p">,</span> <span class="m">0x57</span><span class="p">,</span> <span class="m">0x0C</span><span class="p">,</span>       <span class="c1">// mov         dword ptr [edi+12],edx </span>
+
+    <span class="m">0x5F</span><span class="p">,</span>                   <span class="c1">// pop         edi  </span>
+    <span class="m">0x5B</span><span class="p">,</span>                   <span class="c1">// pop         ebx  </span>
+    <span class="m">0x8B</span><span class="p">,</span> <span class="m">0xE5</span><span class="p">,</span>             <span class="c1">// mov         esp,ebp  </span>
+    <span class="m">0x5D</span><span class="p">,</span>                   <span class="c1">// pop         ebp </span>
+    <span class="m">0xc3</span>                    <span class="c1">// ret</span>
+    <span class="p">};</span>
+
+    <span class="k">private</span> <span class="k">readonly</span> <span class="k">static</span> <span class="kt">byte</span><span class="p">[]</span> <span class="n">x64CodeBytes</span> <span class="p">=</span> 
+    <span class="p">{</span>
+    <span class="m">0x53</span><span class="p">,</span>                       <span class="c1">// push rbx    this gets clobbered by cpuid</span>
+
+    <span class="c1">// rcx is level</span>
+    <span class="c1">// rdx is buffer.</span>
+    <span class="c1">// Need to save buffer elsewhere, cpuid overwrites rdx</span>
+    <span class="c1">// Put buffer in r8, use r8 to reference buffer later.</span>
+
+    <span class="c1">// Save rdx (buffer addy) to r8</span>
+    <span class="m">0x49</span><span class="p">,</span> <span class="m">0x89</span><span class="p">,</span> <span class="m">0xd0</span><span class="p">,</span>           <span class="c1">// mov r8,  rdx</span>
+
+    <span class="c1">// Move ecx (level) to eax to call cpuid, call cpuid</span>
+    <span class="m">0x89</span><span class="p">,</span> <span class="m">0xc8</span><span class="p">,</span>                 <span class="c1">// mov eax, ecx</span>
+    <span class="m">0x0F</span><span class="p">,</span> <span class="m">0xA2</span><span class="p">,</span>                 <span class="c1">// cpuid</span>
+
+    <span class="c1">// Write eax et al to buffer</span>
+    <span class="m">0x41</span><span class="p">,</span> <span class="m">0x89</span><span class="p">,</span> <span class="m">0x40</span><span class="p">,</span> <span class="m">0x00</span><span class="p">,</span>     <span class="c1">// mov    dword ptr [r8+0],  eax</span>
+    <span class="m">0x41</span><span class="p">,</span> <span class="m">0x89</span><span class="p">,</span> <span class="m">0x58</span><span class="p">,</span> <span class="m">0x04</span><span class="p">,</span>     <span class="c1">// mov    dword ptr [r8+4],  ebx</span>
+    <span class="m">0x41</span><span class="p">,</span> <span class="m">0x89</span><span class="p">,</span> <span class="m">0x48</span><span class="p">,</span> <span class="m">0x08</span><span class="p">,</span>     <span class="c1">// mov    dword ptr [r8+8],  ecx</span>
+    <span class="m">0x41</span><span class="p">,</span> <span class="m">0x89</span><span class="p">,</span> <span class="m">0x50</span><span class="p">,</span> <span class="m">0x0c</span><span class="p">,</span>     <span class="c1">// mov    dword ptr [r8+12], edx</span>
+
+    <span class="m">0x5b</span><span class="p">,</span>                       <span class="c1">// pop rbx</span>
+    <span class="m">0xc3</span>                        <span class="c1">// ret</span>
+    <span class="p">};</span>
+
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>使用方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">asmCode</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CpuIdAssemblyCode</span><span class="p">();</span>
+<span class="n">CpuIdInfo</span> <span class="n">info</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CpuIdInfo</span><span class="p">();</span>
+<span class="n">asmCode</span><span class="p">.</span><span class="nf">Call</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="k">ref</span> <span class="n">info</span><span class="p">);</span>
+<span class="n">asmCode</span><span class="p">.</span><span class="nf">Dispose</span><span class="p">();</span>
+<span class="kt">string</span> <span class="n">ret</span><span class="p">=</span> <span class="n">info</span><span class="p">.</span><span class="nf">GetString</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p><a href="https://stackoverflow.com/questions/47254573/how-can-i-get-cpu-name-in-net-core?rq=1">c# - How can I get CPU name in .NET Core? - Stack Overflow</a></p>
+
+:ET

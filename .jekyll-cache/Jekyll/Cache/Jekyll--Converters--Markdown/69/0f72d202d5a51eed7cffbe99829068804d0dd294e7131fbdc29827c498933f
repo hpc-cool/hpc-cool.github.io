@@ -1,0 +1,140 @@
+I"tZ<p>本文来告诉大家一个黑科技，通过 .suo 文件读取 VisualStudio 的启动项目。在 sln 项目里面，都会生成对应的 suo 文件，这个文件是 OLE 格式的文件，文件的格式没有公开，本文的方法适合用在 VisualStudio 2019 上，对于其他版本的 VisualStudio 也许会不适合</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/4/28 20:39:45 -->
+
+<!-- 发布 -->
+<!-- 标签：Roslyn,MSBuild,编译器 -->
+
+<p>感谢 <a href="https://github.com/SimonCropp">Simon Cropp</a> 大佬提供的方法</p>
+
+<p>默认在 sln 解决方案文件的相同文件夹里面，将会存放 <code class="language-plaintext highlighter-rouge">.vs\{解决方案名}\v{VS版本}\.suo</code> 文件，如解决方案文件名为 <code class="language-plaintext highlighter-rouge">HairhechallchujurKairbilairlem.sln</code> 在 VisualStudio 2019 下将会存放 <code class="language-plaintext highlighter-rouge">.vs\HairhechallchujurKairbilairlem\v16\.suo</code> 文件</p>
+
+<p>这个 <code class="language-plaintext highlighter-rouge">.suo</code> 文件是包含了 VisualStudio 解决方案的一些配置，如启动项目。关多关于此文件，请参阅 <a href="https://docs.microsoft.com/zh-cn/previous-versions/visualstudio/visual-studio-2015/extensibility/internals/solution-user-options-dot-suo-file?view=vs-2015&amp;WT.mc_id=WD-MVP-5003260">Solution User Options (.Suo) File 文档</a></p>
+
+<p>预计这个 suo 格式文件基本不会更改，在 1995 年的时候就开始使用这个格式</p>
+
+<p>读取 .suo 需要使用到 <a href="https://github.com/ironfede/openmcdf">Open MCDF</a> 库。这是一个完全由 C# 实现的读取 OLE 格式文档的库，我在做 OFFICE 组件也用到这个库</p>
+
+<p>在 suo 文件里面，通过 SolutionConfiguration 内容存放当前的启动项，这里面的内容是使用 UTF-16 编码的字符串，读取的方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">fileStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="n">suoFilePath</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Open</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">using</span> <span class="nn">CompoundFile</span> <span class="n">compoundFile</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CompoundFile</span><span class="p">(</span><span class="n">fileStream</span><span class="p">,</span> <span class="n">CFSUpdateMode</span><span class="p">.</span><span class="n">ReadOnly</span><span class="p">,</span> <span class="n">CFSConfiguration</span><span class="p">.</span><span class="n">SectorRecycle</span> <span class="p">|</span> <span class="n">CFSConfiguration</span><span class="p">.</span><span class="n">EraseFreeSectors</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">cfStream</span> <span class="p">=</span> <span class="n">compoundFile</span><span class="p">.</span><span class="n">RootStorage</span><span class="p">.</span><span class="nf">GetStream</span><span class="p">(</span><span class="s">"SolutionConfiguration"</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="n">cfStream</span><span class="p">.</span><span class="nf">GetData</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">encoding</span> <span class="p">=</span> <span class="n">Encoding</span><span class="p">.</span><span class="nf">GetEncodings</span><span class="p">()</span>
+                    <span class="p">.</span><span class="nf">Single</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span> <span class="s">"utf-16"</span><span class="p">,</span> <span class="n">StringComparison</span><span class="p">.</span><span class="n">OrdinalIgnoreCase</span><span class="p">));</span>
+                <span class="kt">var</span> <span class="n">text</span> <span class="p">=</span> <span class="n">encoding</span><span class="p">.</span><span class="nf">GetEncoding</span><span class="p">().</span><span class="nf">GetString</span><span class="p">(</span><span class="n">byteList</span><span class="p">);</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>这里的 text 的内容大概如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"\u0011\0MultiStartupProj\0=\u0003\0\0;4\0{45171CDC-EDAC-4D0B-BDF8-63DE2D4F947B}.dwStartupOpt\0=\u0003\0\0;\u000f\0StartupProject\0=\b&amp;\0{45171CDC-EDAC-4D0B-BDF8-63DE2D4F947B};A\0{45171CDC-EDAC-4D0B-BDF8-63DE2D4F947B}.Release|Any CPU.fBatchBld\0=\u0003\0\0;?\0{45171CDC-EDAC-4D0B-BDF8-63DE2D4F947B}.Debug|Any CPU.fBatchBld\0=\u0003\0\0;4\0{AE3577E5-5D4E-44F8-B181-88A31B92584A}.dwStartupOpt\0=\u0003\0\0;A\0{AE3577E5-5D4E-44F8-B181-88A31B92584A}.Release|Any CPU.fBatchBld\0=\u0003\0\0;?\0{AE3577E5-5D4E-44F8-B181-88A31B92584A}.Debug|Any CPU.fBatchBld\0=\u0003\0\0;4\0{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}.dwStartupOpt\0=\u0003\0\0;\n\0ActiveCfg\0=\b\r\0Debug|Any CPU;"
+</code></pre></div></div>
+
+<p>通过读取 StartupProject 后续的内容即可找到当前的启动项目的 GUID 值，以下是我写的正则</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="kt">var</span> <span class="n">text</span> <span class="p">=</span> <span class="n">encoding</span><span class="p">.</span><span class="nf">GetEncoding</span><span class="p">().</span><span class="nf">GetString</span><span class="p">(</span><span class="n">byteList</span><span class="p">);</span>
+
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">nul</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0000</span><span class="err">'</span><span class="p">;</span>
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">dc1</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0011</span><span class="err">'</span><span class="p">;</span>
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">etx</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0003</span><span class="err">'</span><span class="p">;</span>
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">soh</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0001</span><span class="err">'</span><span class="p">;</span>
+
+                <span class="kt">var</span> <span class="n">startupProjectRegex</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="err">@</span><span class="s">$"StartupProject</span><span class="p">{</span><span class="n">nul</span><span class="p">}</span><span class="s">=</span><span class="p">{</span><span class="sc">'\b'</span><span class="p">}</span><span class="s">&amp;</span><span class="p">{</span><span class="n">nul</span><span class="p">}</span><span class="s">(.</span><span class="p">{</span><span class="sc">'{'</span><span class="p">}{</span><span class="m">38</span><span class="p">}{</span><span class="sc">'}'</span><span class="p">}</span><span class="s">);A"</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">startupProjectMatch</span> <span class="p">=</span> <span class="n">startupProjectRegex</span><span class="p">.</span><span class="nf">Match</span><span class="p">(</span><span class="n">text</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">startupProjectMatch</span><span class="p">.</span><span class="n">Success</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">guid</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="n">startupProjectMatch</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">1</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span>
+                <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码拿到的 guid 就是启动项目的 guid 内容</p>
+
+<p>咱可以采用 <a href="https://github.com/SimonCropp">Simon Cropp</a> 大佬的开源项目 https://github.com/SimonCropp/SetStartupProjects 来辅助读取当前 sln 里面包含的 csproj 的 GUID 和路径</p>
+
+<p>代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">var</span> <span class="n">projectList</span> <span class="p">=</span> <span class="n">SetStartupProjects</span><span class="p">.</span><span class="n">SolutionProjectExtractor</span><span class="p">.</span><span class="nf">GetAllProjectFiles</span><span class="p">(</span><span class="n">solutionFile</span><span class="p">.</span><span class="n">FullName</span><span class="p">).</span><span class="nf">ToList</span><span class="p">();</span>
+</code></pre></div></div>
+
+<p>通过 guid 获取当前的 csproj 项目文件路径方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                    <span class="kt">var</span> <span class="n">guid</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="n">startupProjectMatch</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">1</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span>
+                    <span class="kt">var</span> <span class="n">project</span> <span class="p">=</span> <span class="n">projectList</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Guid</span><span class="p">(</span><span class="n">temp</span><span class="p">.</span><span class="n">Guid</span><span class="p">)</span> <span class="p">==</span> <span class="n">guid</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>我封装了方法，传入的是 sln 文件，返回启动项目的路径</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">static</span> <span class="n">FileInfo</span> <span class="nf">GetStartupProject</span><span class="p">(</span><span class="n">FileInfo</span> <span class="n">solutionFile</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">solutionFilePath</span> <span class="p">=</span> <span class="n">solutionFile</span><span class="p">.</span><span class="n">FullName</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">solutionDirectory</span> <span class="p">=</span> <span class="n">solutionFile</span><span class="p">.</span><span class="n">DirectoryName</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">solutionName</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">GetFileNameWithoutExtension</span><span class="p">(</span><span class="n">solutionFilePath</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">suoDirectoryPath</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">solutionDirectory</span><span class="p">,</span> <span class="s">".vs"</span><span class="p">,</span> <span class="n">solutionName</span><span class="p">,</span> <span class="s">"v16"</span><span class="p">);</span>
+            <span class="n">Directory</span><span class="p">.</span><span class="nf">CreateDirectory</span><span class="p">(</span><span class="n">suoDirectoryPath</span><span class="p">);</span>
+            <span class="kt">var</span> <span class="n">suoFilePath</span> <span class="p">=</span> <span class="n">Path</span><span class="p">.</span><span class="nf">Combine</span><span class="p">(</span><span class="n">suoDirectoryPath</span><span class="p">,</span> <span class="s">".suo"</span><span class="p">);</span>
+
+            <span class="kt">var</span> <span class="n">projectList</span> <span class="p">=</span> <span class="n">SetStartupProjects</span><span class="p">.</span><span class="n">SolutionProjectExtractor</span><span class="p">.</span><span class="nf">GetAllProjectFiles</span><span class="p">(</span><span class="n">solutionFile</span><span class="p">.</span><span class="n">FullName</span><span class="p">).</span><span class="nf">ToList</span><span class="p">();</span>
+            <span class="k">using</span> <span class="p">(</span><span class="kt">var</span> <span class="n">fileStream</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FileStream</span><span class="p">(</span><span class="n">suoFilePath</span><span class="p">,</span> <span class="n">FileMode</span><span class="p">.</span><span class="n">Open</span><span class="p">))</span>
+            <span class="p">{</span>
+                <span class="k">using</span> <span class="nn">CompoundFile</span> <span class="n">compoundFile</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">CompoundFile</span><span class="p">(</span><span class="n">fileStream</span><span class="p">,</span> <span class="n">CFSUpdateMode</span><span class="p">.</span><span class="n">ReadOnly</span><span class="p">,</span> <span class="n">CFSConfiguration</span><span class="p">.</span><span class="n">SectorRecycle</span> <span class="p">|</span> <span class="n">CFSConfiguration</span><span class="p">.</span><span class="n">EraseFreeSectors</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">cfStream</span> <span class="p">=</span> <span class="n">compoundFile</span><span class="p">.</span><span class="n">RootStorage</span><span class="p">.</span><span class="nf">GetStream</span><span class="p">(</span><span class="s">"SolutionConfiguration"</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">byteList</span> <span class="p">=</span> <span class="n">cfStream</span><span class="p">.</span><span class="nf">GetData</span><span class="p">();</span>
+                <span class="kt">var</span> <span class="n">encoding</span> <span class="p">=</span> <span class="n">Encoding</span><span class="p">.</span><span class="nf">GetEncodings</span><span class="p">()</span>
+                    <span class="p">.</span><span class="nf">Single</span><span class="p">(</span><span class="n">x</span> <span class="p">=&gt;</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Equals</span><span class="p">(</span><span class="n">x</span><span class="p">.</span><span class="n">Name</span><span class="p">,</span> <span class="s">"utf-16"</span><span class="p">,</span> <span class="n">StringComparison</span><span class="p">.</span><span class="n">OrdinalIgnoreCase</span><span class="p">));</span>
+                <span class="kt">var</span> <span class="n">text</span> <span class="p">=</span> <span class="n">encoding</span><span class="p">.</span><span class="nf">GetEncoding</span><span class="p">().</span><span class="nf">GetString</span><span class="p">(</span><span class="n">byteList</span><span class="p">);</span>
+
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">nul</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0000</span><span class="err">'</span><span class="p">;</span>
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">dc1</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0011</span><span class="err">'</span><span class="p">;</span>
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">etx</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0003</span><span class="err">'</span><span class="p">;</span>
+                <span class="k">const</span> <span class="kt">char</span> <span class="n">soh</span> <span class="p">=</span> <span class="err">'\</span><span class="n">u0001</span><span class="err">'</span><span class="p">;</span>
+
+                <span class="kt">var</span> <span class="n">startupProjectRegex</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">Regex</span><span class="p">(</span><span class="err">@</span><span class="s">$"StartupProject</span><span class="p">{</span><span class="n">nul</span><span class="p">}</span><span class="s">=</span><span class="p">{</span><span class="sc">'\b'</span><span class="p">}</span><span class="s">&amp;</span><span class="p">{</span><span class="n">nul</span><span class="p">}</span><span class="s">(.</span><span class="p">{</span><span class="sc">'{'</span><span class="p">}{</span><span class="m">38</span><span class="p">}{</span><span class="sc">'}'</span><span class="p">}</span><span class="s">);A"</span><span class="p">);</span>
+                <span class="kt">var</span> <span class="n">startupProjectMatch</span> <span class="p">=</span> <span class="n">startupProjectRegex</span><span class="p">.</span><span class="nf">Match</span><span class="p">(</span><span class="n">text</span><span class="p">);</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">startupProjectMatch</span><span class="p">.</span><span class="n">Success</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="kt">var</span> <span class="n">guid</span> <span class="p">=</span> <span class="n">Guid</span><span class="p">.</span><span class="nf">Parse</span><span class="p">(</span><span class="n">startupProjectMatch</span><span class="p">.</span><span class="n">Groups</span><span class="p">[</span><span class="m">1</span><span class="p">].</span><span class="n">Value</span><span class="p">);</span>
+                    <span class="kt">var</span> <span class="n">project</span> <span class="p">=</span> <span class="n">projectList</span><span class="p">.</span><span class="nf">FirstOrDefault</span><span class="p">(</span><span class="n">temp</span> <span class="p">=&gt;</span> <span class="k">new</span> <span class="nf">Guid</span><span class="p">(</span><span class="n">temp</span><span class="p">.</span><span class="n">Guid</span><span class="p">)</span> <span class="p">==</span> <span class="n">guid</span><span class="p">);</span>
+                    <span class="k">return</span> <span class="k">new</span> <span class="nf">FileInfo</span><span class="p">(</span><span class="n">project</span><span class="p">.</span><span class="n">FullPath</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="k">return</span> <span class="k">null</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>需要先在项目安装 <a href="https://www.nuget.org/packages/SetStartupProjects/">SetStartupProjects</a> 库，才能使用这个方法</p>
+
+<p>本文所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/8560b967e202124f78e2cb47c0279b48bffb1cb5/HairhechallchujurKairbilairlem">github</a> 和 <a href="https://gitee.com/lindexi/lindexi_gd/tree/8560b967e202124f78e2cb47c0279b48bffb1cb5/HairhechallchujurKairbilairlem">gitee</a> 欢迎小伙伴访问</p>
+
+<p>除了读取启动项目，还可以读取断点等内容，读取 suo 里面的所有内容的方法如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                <span class="n">compoundFile</span><span class="p">.</span><span class="n">RootStorage</span><span class="p">.</span><span class="nf">VisitEntries</span><span class="p">(</span><span class="n">item</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">IsStream</span><span class="p">)</span>
+                    <span class="p">{</span>
+                        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">item</span><span class="p">.</span><span class="n">Name</span><span class="p">);</span>
+
+                        <span class="kt">var</span> <span class="n">stream</span> <span class="p">=</span> <span class="n">item</span> <span class="k">as</span> <span class="n">CFStream</span><span class="p">;</span>
+                        <span class="n">byteList</span> <span class="p">=</span> <span class="n">stream</span><span class="p">.</span><span class="nf">GetData</span><span class="p">();</span>
+                        <span class="n">text</span> <span class="p">=</span> <span class="n">encoding</span><span class="p">.</span><span class="nf">GetEncoding</span><span class="p">().</span><span class="nf">GetString</span><span class="p">(</span><span class="n">byteList</span><span class="p">);</span>
+                    <span class="p">}</span>
+                <span class="p">},</span> <span class="k">true</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>当然了，获取到的内容不一定使用 UTF-16 编码格式，还需要自己尝试，里面的数据只是二进制而是，上面代码的转换字符串只是用来调试</p>
+
+<p>更多请看</p>
+
+<p><a href="https://github.com/SimonCropp/SetStartupProjects">SimonCropp/SetStartupProjects: Setting Visual Studio startup projects by hacking the suo</a></p>
+
+<p><a href="https://docs.microsoft.com/zh-cn/previous-versions/visualstudio/visual-studio-2015/extensibility/internals/solution-user-options-dot-suo-file?view=vs-2015&amp;WT.mc_id=WD-MVP-5003260">Solution User Options (.Suo) File</a></p>
+
+<p>更多编译相关请看<a href="https://blog.lindexi.com/post/roslyn.html">手把手教你写 Roslyn 修改编译</a></p>
+
+:ET

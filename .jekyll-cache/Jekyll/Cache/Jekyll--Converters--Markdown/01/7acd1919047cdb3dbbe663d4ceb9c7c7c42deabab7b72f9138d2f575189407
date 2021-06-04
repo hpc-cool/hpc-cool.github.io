@@ -1,0 +1,54 @@
+I"�<p>本文记录 WPF 用到的触摸的 COM 接口</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/5/22 14:53:19 -->
+
+<!-- 发布 -->
+
+<h2 id="消息">消息</h2>
+
+<p>用到了 <a href="https://docs.microsoft.com/en-us/windows/win32/tablet/wm-tablet-added?WT.mc_id=WD-MVP-5003260">WM_TABLET_ADDED</a> 和 <a href="https://docs.microsoft.com/en-us/windows/win32/tablet/wm-tablet-deleted?WT.mc_id=WD-MVP-5003260">WM_TABLET_DELETED</a> 消息</p>
+
+<p>使用的代码是 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\PresentationCore\System\Windows\Input\Stylus\Wisp\WispLogic.cs</code> 的 HandleMessage 方法</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">internal</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">HandleMessage</span><span class="p">(</span><span class="n">WindowMessage</span> <span class="n">msg</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">wParam</span><span class="p">,</span> <span class="n">IntPtr</span> <span class="n">lParam</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">switch</span> <span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="c1">// 忽略代码</span>
+                <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_TABLET_ADDED</span><span class="p">:</span>
+                    <span class="nf">OnTabletAdded</span><span class="p">((</span><span class="kt">uint</span><span class="p">)</span><span class="n">NativeMethods</span><span class="p">.</span><span class="nf">IntPtrToInt32</span><span class="p">(</span><span class="n">wParam</span><span class="p">));</span>
+                    <span class="k">break</span><span class="p">;</span>
+
+                <span class="k">case</span> <span class="n">WindowMessage</span><span class="p">.</span><span class="n">WM_TABLET_DELETED</span><span class="p">:</span>
+                    <span class="nf">OnTabletRemovedImpl</span><span class="p">((</span><span class="kt">uint</span><span class="p">)</span><span class="n">NativeMethods</span><span class="p">.</span><span class="nf">IntPtrToInt32</span><span class="p">(</span><span class="n">wParam</span><span class="p">),</span> <span class="n">isInternalCall</span><span class="p">:</span> <span class="k">true</span><span class="p">);</span>
+                    <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<h2 id="接口">接口</h2>
+
+<p>包括：</p>
+
+<ul>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itablet?WT.mc_id=WD-MVP-5003260">ITablet Interface</a></li>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itablet2?WT.mc_id=WD-MVP-5003260">ITablet2 Interface</a></li>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itablet3?WT.mc_id=WD-MVP-5003260">ITablet3 Interface</a></li>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itabletcontextp?WT.mc_id=WD-MVP-5003260">ITabletContextP Interface</a></li>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itabletcursor?WT.mc_id=WD-MVP-5003260">ITabletCursor Interface</a></li>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itabletcursorbutton?WT.mc_id=WD-MVP-5003260">ITabletCursorButton Interface</a></li>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itableteventsink?WT.mc_id=WD-MVP-5003260">ITabletEventSink Interface</a></li>
+  <li><a href="https://docs.microsoft.com/en-us/windows/win32/tablet/itabletmanager?WT.mc_id=WD-MVP-5003260">ITabletManager Interface</a></li>
+</ul>
+
+<p>基本引用代码在 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\PenImc\inc\tpcpen.h</code> 文件，这是 WPF 的 PenImc 层</p>
+
+<p>对此的封装是 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\PenImc\dll\PimcTablet.cpp</code> 和 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\PenImc\dll\PimcManager.cpp</code> 文件，封装依然作为 COM 方式提供</p>
+
+<p>在框架顶层，在 <code class="language-plaintext highlighter-rouge">src\Microsoft.DotNet.Wpf\src\PresentationCore\System\Windows\Input\Stylus\Wisp\PenImcRcw.cs</code> 文件通过 COM 方法拿到</p>
+
+<p>请看官方文档 <a href="https://docs.microsoft.com/en-us/windows/win32/tablet/com-apis-used-by-windows-presentation-foundation?WT.mc_id=WD-MVP-5003260">COM API Used by Windows Presentation Foundation - Win32 apps</a></p>
+
+:ET

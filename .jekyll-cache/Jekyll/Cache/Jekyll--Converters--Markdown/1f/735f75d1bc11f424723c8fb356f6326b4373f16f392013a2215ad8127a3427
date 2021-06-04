@@ -1,0 +1,185 @@
+I"D<p>We found two way that can make the main thread locked. And we can not write any code to solve it and it can only be circumvented.
+The easiest way to reproduce this issue is to wait for the window in the main thread to close in the stylus input thread.</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/1 9:32:42 -->
+
+<!-- csdn -->
+
+<p>We have found two ways, the first way always happens, and the second way is probabilistic.</p>
+
+<p>Before we tell you about it, we need to tell you something about the touch thread and why it can make the main thread wait forever.</p>
+
+<h2 id="theory">Theory</h2>
+
+<p>The stylus input thread gets the input event when the user touches the screen.</p>
+
+<p>There is a <code class="language-plaintext highlighter-rouge">ThreadProc</code> method running in the stylus input thread and this method has a loop inside which will never end until the application exists.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="nf">ThreadProc</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="c1">// The loop that never ends.</span>
+    <span class="k">while</span> <span class="p">(!</span><span class="n">__disposed</span><span class="p">)</span>
+    <span class="p">{</span>
+
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>There are nested two loops in the <code class="language-plaintext highlighter-rouge">ThreadProc</code> method. In the outside one, it adds and removes <code class="language-plaintext highlighter-rouge">PenContext</code> and in the inside one, it will be blocked by the <code class="language-plaintext highlighter-rouge">PENIMC</code> and can be continued when the user touches the screen.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="nf">ThreadProc</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">while</span> <span class="p">(!</span><span class="n">__disposed</span><span class="p">)</span>
+    <span class="p">{</span>
+    	<span class="c1">// The outside loop</span>
+    	<span class="c1">// To remove or add the PenContext</span>
+
+    	<span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+    	<span class="p">{</span>
+    		<span class="c1">// The inside loop</span>
+    		<span class="c1">// Tt will be blocked by the PENIMC</span>
+    		<span class="k">if</span><span class="p">(!</span><span class="n">Penimc</span><span class="p">.</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">GetPenEvent</span><span class="p">(</span><span class="cm">/*the thread locker*/</span><span class="p">))</span>
+    		<span class="p">{</span>
+    			<span class="c1">// If the `_pimcResetHandle` is released, this if branch will enter so the inside loop will end with the `break` and the code runs back to the outside loop.</span>
+    			<span class="k">break</span><span class="p">;</span>
+    		<span class="p">}</span>
+
+    		<span class="nf">FireEvent</span><span class="p">(</span><span class="cm">/*fire the touch events*/</span><span class="p">);</span>
+    	<span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>When a window is closed, it calls <code class="language-plaintext highlighter-rouge">HwndSource.DisposeStylusInputProvider</code> and this causes the <code class="language-plaintext highlighter-rouge">PenContext.Disable</code> be calling with the calling stack trace showing below.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>System.Windows.Input.PenThreadWorker.WorkerRemovePenContext(System.Windows.Input.PenContext penContext) 
+System.Windows.Input.PenContext.Disable(bool shutdownWorkerThread) 
+System.Windows.Input.PenContexts.Disable(bool shutdownWorkerThread) 
+System.Windows.Input.StylusWisp.WispLogic.UnRegisterHwndForInput(System.Windows.Interop.HwndSource hwndSource) 
+System.Windows.Interop.HwndStylusInputProvider.Dispose() 
+</code></pre></div></div>
+
+<p>Let us see the <code class="language-plaintext highlighter-rouge">PenThreadWorker.WorkerRemovePenContext</code> that run in the main thread.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">internal</span> <span class="kt">bool</span> <span class="nf">WorkerRemovePenContext</span><span class="p">(</span><span class="n">PenContext</span> <span class="n">penContext</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">var</span> <span class="n">operationRemoveContext</span> <span class="p">=</span> <span class="k">new</span> <span class="n">PenThreadWorker</span><span class="p">.</span><span class="nf">WorkerOperationRemoveContext</span><span class="p">(</span><span class="n">penContext</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+
+    <span class="n">_workerOperation</span><span class="p">.</span><span class="nf">Add</span><span class="p">((</span><span class="n">PenThreadWorker</span><span class="p">.</span><span class="n">WorkerOperation</span><span class="p">)</span> <span class="n">operationRemoveContext</span><span class="p">);</span>
+    <span class="c1">// Release the _pimcResetHandle lock </span>
+    <span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">RaiseResetEvent</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="n">_pimcResetHandle</span><span class="p">.</span><span class="n">Value</span><span class="p">);</span>
+    <span class="c1">// Wait for the operationRemoveContext to finish</span>
+    <span class="n">operationRemoveContext</span><span class="p">.</span><span class="n">DoneEvent</span><span class="p">.</span><span class="nf">WaitOne</span><span class="p">();</span>
+    <span class="n">operationRemoveContext</span><span class="p">.</span><span class="n">DoneEvent</span><span class="p">.</span><span class="nf">Close</span><span class="p">();</span>
+    <span class="k">return</span> <span class="n">operationRemoveContext</span><span class="p">.</span><span class="n">Result</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>From the code above we can learn that the main thread releases the <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> and it makes the <code class="language-plaintext highlighter-rouge">ThreadProc</code> breaking the inside loop and go back to the outside one to remove the <code class="language-plaintext highlighter-rouge">PenContext</code>.</p>
+
+<p>Normally we should run the code in the stylus input thread to remove the <code class="language-plaintext highlighter-rouge">PenContext</code> and keep the main thread waiting for the <code class="language-plaintext highlighter-rouge">operationRemoveContext</code> to finish. But if the stylus input thread never remove the <code class="language-plaintext highlighter-rouge">PenContext</code> and the main thread waits for it, the main thread will never continue.</p>
+
+<h2 id="the-first-way">The first way</h2>
+
+<p>The first way is to write a custom class implementing <code class="language-plaintext highlighter-rouge">StylusPlugIn</code> and wait for a window to close in the <code class="language-plaintext highlighter-rouge">OnStylusUp</code> method.</p>
+
+<p>Let’s create a new empty window named <code class="language-plaintext highlighter-rouge">FooWindow</code>.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">FooWindow</span> <span class="p">:</span> <span class="n">Window</span>
+<span class="p">{</span>
+
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Then we create a <code class="language-plaintext highlighter-rouge">FooStylusPlugIn</code> class to implement the <code class="language-plaintext highlighter-rouge">StylusPlugIn</code> with overriding the <code class="language-plaintext highlighter-rouge">OnStylusUp</code> method. We add some code to wait for the window to close by calling <code class="language-plaintext highlighter-rouge">Invoke</code> which will wait by pumping a new message loop.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">class</span> <span class="nc">FooStylusPlugIn</span> <span class="p">:</span> <span class="n">StylusPlugIn</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="nf">FooStylusPlugIn</span><span class="p">(</span><span class="n">FooWindow</span> <span class="n">fooWindow</span><span class="p">)</span>
+    <span class="p">{</span>
+    	<span class="n">FooWindow</span> <span class="p">=</span> <span class="n">fooWindow</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">public</span> <span class="n">FooWindow</span> <span class="n">FooWindow</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span>
+
+    <span class="c1">/// &lt;inheritdoc /&gt;</span>
+    <span class="k">protected</span> <span class="k">override</span> <span class="k">void</span> <span class="nf">OnStylusUp</span><span class="p">(</span><span class="n">RawStylusInput</span> <span class="n">rawStylusInput</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">FooWindow</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">Invoke</span><span class="p">(()</span> <span class="p">=&gt;</span> <span class="n">FooWindow</span><span class="p">.</span><span class="nf">Close</span><span class="p">());</span>
+        <span class="k">base</span><span class="p">.</span><span class="nf">OnStylusUp</span><span class="p">(</span><span class="n">rawStylusInput</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>To combine both the critical codes above, we write some codes in the <code class="language-plaintext highlighter-rouge">MainWindow</code>. The <code class="language-plaintext highlighter-rouge">FooWindow</code> is instanced in the constructor and the <code class="language-plaintext highlighter-rouge">StylusPlugIn</code> is plugged in it. We also make a button in the XAML that can let us know whether the main thread is still running or not.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">public</span> <span class="k">partial</span> <span class="k">class</span> <span class="nc">MainWindow</span> <span class="p">:</span> <span class="n">Window</span>
+<span class="p">{</span>
+    <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="nf">InitializeComponent</span><span class="p">();</span>
+        <span class="n">_fooWindow</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">FooWindow</span><span class="p">();</span>
+        <span class="n">StylusPlugIns</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">FooStylusPlugIn</span><span class="p">(</span><span class="n">_fooWindow</span><span class="p">));</span>
+        <span class="n">_fooWindow</span><span class="p">.</span><span class="nf">Show</span><span class="p">();</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="k">void</span> <span class="nf">Button_OnClick</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">RoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+    <span class="p">{</span>
+    <span class="p">}</span>
+
+    <span class="k">private</span> <span class="n">FooWindow</span> <span class="n">_fooWindow</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Run the project, touch the main window, and you’ll find that the main window never responds to your interaction. Try to click the button to view the responding and you’ll soon verify what I’m talking.</p>
+
+<p>The reason is that the <code class="language-plaintext highlighter-rouge">OnStylusUp</code> in <code class="language-plaintext highlighter-rouge">FooStylusPlugIn</code> is running in the stylus input thread which is also running the inside loop of the <code class="language-plaintext highlighter-rouge">ThreadProc</code> method. It needs to go back to the outside loop to remove the <code class="language-plaintext highlighter-rouge">PenContext</code> when a window is closed. The stylus input thread is waiting for the main thread to close a window and the main thread is also waiting for the stylus input thread remove PenContext. Thus, the deadlock occurred.</p>
+
+<p>The demo in <a href="https://github.com/dotnet-campus/wpf-issues/tree/master/MainThreadDeadlockWithStylusInputThread/MainThreadDeadlockWhenTouchThreadWaitForWindowClosed">github</a></p>
+
+<h2 id="the-second-way">The second way</h2>
+
+<p>If a touch happens exactly during a window closing, the main thread will enter a lock.</p>
+
+<p>The difference between the first method and the second method is that the first one will lock both the main thread and the stylus input thread but the second one will only lock the main thread.</p>
+
+<p>From the theory, we know that the <code class="language-plaintext highlighter-rouge">PenContext</code> should be removed correctly in the outside loop. But in the second way, the stylus input thread is firing the touch event exactly when we run the code to remove the <code class="language-plaintext highlighter-rouge">PenContext</code> in the stylus input thread. As you can see we need to run the code to remove <code class="language-plaintext highlighter-rouge">PenContext</code> in the outside loop but at this moment the code is firing the touch event in the second loop.</p>
+
+<p>The firing of the touch event means the <code class="language-plaintext highlighter-rouge">_pimcResetHandle</code> is released. Although the main thread has also released the lock the code cannot run to the outside loop to remove the <code class="language-plaintext highlighter-rouge">PenContext</code> and the main thread can no longer wait for the moment when the <code class="language-plaintext highlighter-rouge">PenContext</code> removal is finished.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">void</span> <span class="nf">ThreadProc</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="k">while</span> <span class="p">(!</span><span class="n">__disposed</span><span class="p">)</span>
+    <span class="p">{</span>
+      	<span class="c1">// The outside loop</span>
+    	<span class="c1">// To remove or add the PenContext</span>
+    	<span class="c1">// The main thread is waiting for its finishing.</span>
+    	<span class="nf">RemovePenContext</span><span class="p">();</span>
+
+    	<span class="k">while</span> <span class="p">(</span><span class="k">true</span><span class="p">)</span>
+    	<span class="p">{</span>
+    		<span class="c1">// The inside loop</span>
+    		<span class="c1">// Tt will be blocked by the PENIMC</span>
+    		<span class="k">if</span><span class="p">(!</span><span class="n">Penimc</span><span class="p">.</span><span class="n">UnsafeNativeMethods</span><span class="p">.</span><span class="nf">GetPenEvent</span><span class="p">(</span><span class="cm">/*wait the lock*/</span><span class="p">))</span>
+    		<span class="p">{</span>
+    			<span class="c1">// If the `_pimcResetHandle` is released, this if branch will enter so the inside loop will end with the `break` and the code runs back to the outside loop.</span>
+    			<span class="k">break</span><span class="p">;</span>
+    		<span class="p">}</span>
+
+    		<span class="nf">FireEvent</span><span class="p">(</span><span class="cm">/*fire the touch events*/</span><span class="p">);</span> <span class="c1">// the code is running in this line</span>
+    		<span class="c1">// and the `_pimcResetHandle` is released.</span>
+    		<span class="c1">// the main thread release the `_pimcResetHandle` but the code can not go to RemovePenContext for it will no longer break. </span>
+    	<span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The main thread has released the lock but the stylus input thread doesn’t need to wait for the lock. The stylus input thread cannot go back to the outside loop to remove the <code class="language-plaintext highlighter-rouge">PenContext</code> and main thread can no longer wait for the moment when the <code class="language-plaintext highlighter-rouge">PenContext</code> removal is finished.</p>
+
+<p>Thanks to <a href="https://blog.walterlv.com/">walterlv</a> for proofreading the English translation of this post.</p>
+
+<p>感谢 <a href="https://blog.walterlv.com/">吕毅</a> 对本文的英文翻译进行校对。</p>
+
+:ET

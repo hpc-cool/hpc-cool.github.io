@@ -1,0 +1,19 @@
+I"�<p>如果在 git 准备下载仓库的时候，出现下面的错误
+cannot lock ref ‘refs/remotes/origin/xx’:’refs/remotes/origin/xx/xx’ exists cannot create ‘ref/remotes/origin/xx’
+那么请看本文，本文提供了一个解决方法。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<p>请使用下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">git</span> <span class="n">update</span><span class="p">-</span><span class="k">ref</span> <span class="p">-</span><span class="n">d</span> <span class="n">refs</span><span class="p">/</span><span class="n">remotes</span> 
+<span class="n">git</span> <span class="n">fetch</span>
+</code></pre></div></div>
+
+<p>使用了之后就可以了。</p>
+
+<p>https://stackoverflow.com/questions/43533473/error-cannot-lock-ref-refs-tags-exists-cannot-create-refs-tags</p>
+
+:ET

@@ -1,0 +1,48 @@
+I"�<p>现在是 2020.08.23 当前这个技术依然是预览版，使用 WebView2 只需要通过 NuGet 安装库，可以支持 Win7 和 Win8 和 Win10 系统，无 IE 依赖。内核使用 Chromium 内核，顶层技术是 Microsoft Edge 封装</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/8/25 8:54:05 -->
+
+<p>创建一个 WPF 项目，项目框架要求最低版本是 .NET Framework 4.6.2 或以上， 或 .NET Core 3.0 以上版本</p>
+
+<p>使用 NuGet 搜 Microsoft.Web.WebView2 勾选预览版</p>
+
+<p><img src="https://docs.microsoft.com/zh-cn/microsoft-edge/WebView2/gettingstarted/media/installnuget.png" alt="" /></p>
+
+<p>打开 MainWindow.xaml 添加命名空间</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+</code></pre></div></div>
+
+<p>添加之后的 MainWindow.xaml 文件内容大概如下</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Window</span> <span class="na">x:Class=</span><span class="s">"Lindexi.MainWindow"</span>
+        <span class="na">xmlns=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml/presentation"</span>
+        <span class="na">xmlns:x=</span><span class="s">"http://schemas.microsoft.com/winfx/2006/xaml"</span>
+        <span class="na">xmlns:d=</span><span class="s">"http://schemas.microsoft.com/expression/blend/2008"</span>
+        <span class="na">xmlns:mc=</span><span class="s">"http://schemas.openxmlformats.org/markup-compatibility/2006"</span>
+        <span class="na">xmlns:wv2=</span><span class="s">"clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"</span>
+        <span class="na">mc:Ignorable=</span><span class="s">"d"</span>
+        <span class="na">Title=</span><span class="s">"LindexiDoubi"</span>
+        <span class="na">Height=</span><span class="s">"450"</span> <span class="na">Width=</span><span class="s">"800"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;Grid&gt;</span>
+
+    <span class="nt">&lt;/Grid&gt;</span>
+<span class="nt">&lt;/Window&gt;</span>
+</code></pre></div></div>
+
+<p>在 Grid 添加 WebView2 控件，如下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;Grid&gt;</span>
+    <span class="nt">&lt;wv2:WebView2</span> <span class="na">Name=</span><span class="s">"webView"</span>
+                  <span class="na">Source=</span><span class="s">"http://blog.lindexi.com/"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>此时运行项目，即可看到打开了内嵌的浏览器以及自动跳转我的博客</p>
+
+<p>更多使用方法请看官方文档 <a href="https://docs.microsoft.com/zh-cn/microsoft-edge/WebView2/gettingstarted/wpf">适用于 WPF 应用的 Microsoft Edge Web 视图2 - Microsoft Edge Development</a></p>
+
+:ET

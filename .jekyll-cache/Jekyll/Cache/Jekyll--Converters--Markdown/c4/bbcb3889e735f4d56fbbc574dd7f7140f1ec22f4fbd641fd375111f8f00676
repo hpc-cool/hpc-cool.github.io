@@ -1,0 +1,73 @@
+I"„<p>The touch width can help us to make a gorgeous application. This article tells you how to get the touch width from the PointEvent in UWP.</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/11/15 18:49:12 -->
+
+<!-- csdn -->
+
+<p>Opening the VisualStudio and create an empty UWP application.</p>
+
+<p>We should open the MainPage.xaml and add the background in the Grid to make the Grid can get the PointMove event.</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Grid</span> <span class="na">Background=</span><span class="s">"Transparent"</span><span class="nt">&gt;</span>
+
+    <span class="nt">&lt;/Grid&gt;</span>
+</code></pre></div></div>
+
+<p>Then we can open the MainPage.xaml.cs to write the code to get the PointerMove event.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="n">Content</span><span class="p">.</span><span class="n">PointerMoved</span> <span class="p">+=</span> <span class="n">MainPage_PointerMoved</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainPage_PointerMoved</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>We can use GetCurrentPoint to get the PointerPoint.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainPage_PointerMoved</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">point</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>And we can find the <a href="https://docs.microsoft.com/en-us/uwp/api/windows.ui.input.pointerpointproperties.contactrect">ContactRect</a> in Properties. We can get the touch width from ContactRect.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainPage_PointerMoved</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">point</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="n">Rect</span> <span class="n">rect</span> <span class="p">=</span> <span class="n">point</span><span class="p">.</span><span class="n">Properties</span><span class="p">.</span><span class="n">ContactRect</span><span class="p">;</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>To get the touch width.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainPage_PointerMoved</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">point</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="n">Rect</span> <span class="n">rect</span> <span class="p">=</span> <span class="n">point</span><span class="p">.</span><span class="n">Properties</span><span class="p">.</span><span class="n">ContactRect</span><span class="p">;</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"Touch rect width=</span><span class="p">{</span><span class="n">rect</span><span class="p">.</span><span class="n">Width</span><span class="p">}</span><span class="s">,height=</span><span class="p">{</span><span class="n">rect</span><span class="p">.</span><span class="n">Height</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>We also can use ContactRectRaw in Properties.</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">MainPage_PointerMoved</span><span class="p">(</span><span class="kt">object</span> <span class="n">sender</span><span class="p">,</span> <span class="n">PointerRoutedEventArgs</span> <span class="n">e</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">point</span> <span class="p">=</span> <span class="n">e</span><span class="p">.</span><span class="nf">GetCurrentPoint</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+            <span class="n">Rect</span> <span class="n">rect</span> <span class="p">=</span> <span class="n">point</span><span class="p">.</span><span class="n">Properties</span><span class="p">.</span><span class="n">ContactRect</span><span class="p">;</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"Touch rect width=</span><span class="p">{</span><span class="n">rect</span><span class="p">.</span><span class="n">Width</span><span class="p">}</span><span class="s">,height=</span><span class="p">{</span><span class="n">rect</span><span class="p">.</span><span class="n">Height</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+            <span class="n">rect</span> <span class="p">=</span> <span class="n">point</span><span class="p">.</span><span class="n">Properties</span><span class="p">.</span><span class="n">ContactRectRaw</span><span class="p">;</span>
+            <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">$"Touch raw rect width=</span><span class="p">{</span><span class="n">rect</span><span class="p">.</span><span class="n">Width</span><span class="p">}</span><span class="s">,height=</span><span class="p">{</span><span class="n">rect</span><span class="p">.</span><span class="n">Height</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>Try to run the code and touch the application and you can watch the output windows that prints the touch width.</p>
+:ET

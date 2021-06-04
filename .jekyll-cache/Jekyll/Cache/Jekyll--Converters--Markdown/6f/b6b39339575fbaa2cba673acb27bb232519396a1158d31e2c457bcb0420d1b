@@ -1,0 +1,150 @@
+I"�%<!--more-->
+
+<!-- CreateTime:2019/9/2 12:57:38 -->
+
+<div id="toc"></div>
+<!-- csdn -->
+
+<h2 id="安装mvvmlight">安装MvvmLight</h2>
+
+<p>我们安装的是MvvmLightLib。</p>
+
+<p>右击项目，管理Nuget，搜索MVVM</p>
+
+<p><img src="http://image.acmx.xyz/bb831a25-a924-4819-aa80-5b273267c5a120161127165650.jpg" alt="" /></p>
+
+<p>安装第二个。他包含了运行的类库，我们将会使用里面的一些类。关于lib包含的库，参见：http://www.cnblogs.com/manupstairs/p/4890300.html</p>
+
+<h2 id="新建viewmodel文件夹">新建ViewModel文件夹</h2>
+
+<p>右击项目，新建文件夹ViewModel和View、Model三个文件夹。</p>
+
+<p>在ViewModel文件夹新建类ViewModelLocator。</p>
+
+<p>打开App.xaml</p>
+
+<p>添加命名空间<code class="language-plaintext highlighter-rouge">xmlns:viewModel="using:项目.ViewModel"</code></p>
+
+<p>其中项目为你新建项目的名称</p>
+
+<p>添加资源作为全局的ViewModel管理</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Application.Resources&gt;</span>
+        <span class="nt">&lt;ResourceDictionary&gt;</span>
+            <span class="nt">&lt;viewModel:ViewModelLocator</span> <span class="na">x:Key =</span><span class="s">"ViewModelLocator"</span><span class="nt">&gt;&lt;/viewModel:ViewModelLocator&gt;</span>
+        <span class="nt">&lt;/ResourceDictionary&gt;</span>
+    <span class="nt">&lt;/Application.Resources&gt;</span>
+
+</code></pre></div></div>
+
+<p>接着假如我们有两个页面，一个是MainPage，一个是ChangeControlPage，那么我们就在ViewModel文件夹新建两个类MainModel和ChangeControlModel</p>
+
+<p>他们继承ViewModelBase</p>
+
+<p>接着在ViewModelLocator添加属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="k">public</span> <span class="n">ViewModel</span> <span class="n">ViewModel</span> <span class="p">=&gt;</span> <span class="n">ServiceLocator</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">GetInstance</span><span class="p">&lt;</span><span class="n">ViewModel</span><span class="p">&gt;();</span>
+
+</code></pre></div></div>
+
+<p>注意，ViewModel 是多个ViewModel，也就是MainModel和ChangeControlModel，写法就是代换ViewModel为你的ViewModel</p>
+
+<p>我们需要在ViewModelLocator的构造上用<code class="language-plaintext highlighter-rouge">SimpleIoc.Default.Register</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">ViewModelLocator</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="n">ServiceLocator</span><span class="p">.</span><span class="nf">SetLocatorProvider</span><span class="p">(()=&gt;</span><span class="n">SimpleIoc</span><span class="p">.</span><span class="n">Default</span><span class="p">);</span>
+
+            <span class="n">SimpleIoc</span><span class="p">.</span><span class="n">Default</span><span class="p">.</span><span class="n">Register</span><span class="p">&lt;</span><span class="n">ViewModel</span><span class="p">&gt;();</span>
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接着打开MainPage.xaml，原来是在cs写我们的ViewModel实例，现在我们可以直接在xaml</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Page.DataContext&gt;</span>
+        <span class="nt">&lt;Binding</span> <span class="na">Source=</span><span class="s">"{StaticResource ViewModelLocator}"</span> <span class="na">Path=</span><span class="s">"ViewModel"</span><span class="nt">&gt;&lt;/Binding&gt;</span>
+    <span class="nt">&lt;/Page.DataContext&gt;</span>
+</code></pre></div></div>
+
+<p>当然我们可以换个方式</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">DataContext</span><span class="p">=</span><span class="s">"{Binding Source={StaticResource ViewModelLocator}，Path=ViewModel}"</span>
+
+
+</code></pre></div></div>
+
+<h2 id="绑定">绑定</h2>
+
+<p>我们先在ViewModel中新建字段<code class="language-plaintext highlighter-rouge">_str</code>，我们绑定到xaml</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="kt">string</span> <span class="n">Str</span>
+        <span class="p">{</span>
+            <span class="k">set</span>
+            <span class="p">{</span>
+                <span class="nf">Set</span><span class="p">(</span><span class="k">ref</span> <span class="n">_str</span><span class="p">,</span> <span class="k">value</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">get</span>
+            <span class="p">{</span>
+                <span class="k">return</span> <span class="n">_str</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="kt">string</span> <span class="n">_str</span><span class="p">;</span>
+
+</code></pre></div></div>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;TextBlock</span> <span class="na">Text=</span><span class="s">"{Binding Path=Str,Mode=OneWay}"</span>
+                   <span class="na">HorizontalAlignment=</span><span class="s">"Center"</span> <span class="na">VerticalAlignment=</span><span class="s">"Center"</span><span class="nt">&gt;&lt;/TextBlock&gt;</span>
+
+</code></pre></div></div>
+
+<p>我们可以把命令绑定到ViewModel，写法垃圾</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">ViewModel</span><span class="p">(</span><span class="n">INavigationService</span> <span class="n">navigationService</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="n">_navigationService</span> <span class="p">=</span> <span class="n">navigationService</span><span class="p">;</span>
+            <span class="n">Navigate</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">RelayCommand</span><span class="p">(</span><span class="n">NavigateHigPage</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="k">public</span> <span class="n">ICommand</span> <span class="n">Navigate</span>
+        <span class="p">{</span>
+            <span class="k">set</span><span class="p">;</span>
+            <span class="k">get</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">private</span> <span class="k">void</span> <span class="nf">NavigateHigPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>我们继续做从Main跳到第二页面，第二页面叫HigPage</p>
+
+<p>首先打开ViewModelLocator，在构造写一个帮我们传页面信息NavigationService</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">navigationService</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">NavigationService</span><span class="p">();</span>
+            <span class="n">navigationService</span><span class="p">.</span><span class="nf">Configure</span><span class="p">(</span><span class="s">"main"</span><span class="p">,</span><span class="k">typeof</span><span class="p">(</span><span class="n">MainPage</span><span class="p">));</span>
+            <span class="n">navigationService</span><span class="p">.</span><span class="nf">Configure</span><span class="p">(</span><span class="s">"hig"</span><span class="p">,</span><span class="k">typeof</span><span class="p">(</span><span class="n">HightClipPage</span><span class="p">));</span>
+            <span class="n">SimpleIoc</span><span class="p">.</span><span class="n">Default</span><span class="p">.</span><span class="n">Register</span><span class="p">&lt;</span><span class="n">INavigationService</span><span class="p">&gt;(()</span> <span class="p">=&gt;</span> <span class="n">navigationService</span><span class="p">);</span>
+
+
+</code></pre></div></div>
+
+<p>在需要跳转的函数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">private</span> <span class="k">void</span> <span class="nf">NavigateHigPage</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="kt">var</span> <span class="n">navigateService</span> <span class="p">=</span> <span class="n">ServiceLocator</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">GetInstance</span><span class="p">&lt;</span><span class="n">INavigationService</span><span class="p">&gt;();</span>
+            <span class="n">navigateService</span><span class="p">.</span><span class="nf">NavigateTo</span><span class="p">(</span><span class="s">"hig"</span><span class="p">,</span><span class="s">"hellow"</span><span class="p">);</span>
+        <span class="p">}</span>
+
+</code></pre></div></div>
+
+<p>我跳转到第二页面，然后给他参数hellow</p>
+
+<h2 id="参考">参考</h2>
+
+<p>http://www.cnblogs.com/manupstairs/</p>
+
+:ET

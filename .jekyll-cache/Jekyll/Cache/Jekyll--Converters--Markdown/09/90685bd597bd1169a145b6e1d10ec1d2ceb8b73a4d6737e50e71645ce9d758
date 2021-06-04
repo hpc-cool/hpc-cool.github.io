@@ -1,0 +1,106 @@
+I"{-<p>本文将使用 C# 8.0 写一个相对比较省内存和性能不差的将文件长度从 Bytes 转换为单位使用 KB 或 MB 或 GB 等单位的字符串的方法</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/7/13 8:59:36 -->
+
+<p>代码可以复制在你的实际软件中使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">static</span> <span class="k">class</span> <span class="nc">FileSizeFormatter</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">static</span> <span class="kt">string</span> <span class="nf">FormatSize</span><span class="p">(</span><span class="kt">long</span> <span class="n">bytes</span><span class="p">,</span> <span class="kt">string</span> <span class="n">formatString</span> <span class="p">=</span> <span class="s">"{0:0.00}"</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">counter</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span>
+            <span class="kt">double</span> <span class="n">number</span> <span class="p">=</span> <span class="n">bytes</span><span class="p">;</span>
+
+            <span class="c1">// 最大单位就是 PB 了，而 PB 是第 5 级，从 0 开始数</span>
+            <span class="c1">// "Bytes", "KB", "MB", "GB", "TB", "PB"</span>
+            <span class="k">const</span> <span class="kt">int</span> <span class="n">maxCount</span> <span class="p">=</span> <span class="m">5</span><span class="p">;</span>
+
+            <span class="k">while</span> <span class="p">(</span><span class="n">Math</span><span class="p">.</span><span class="nf">Round</span><span class="p">(</span><span class="n">number</span> <span class="p">/</span> <span class="m">1024</span><span class="p">)</span> <span class="p">&gt;=</span> <span class="m">1</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="n">number</span> <span class="p">=</span> <span class="n">number</span> <span class="p">/</span> <span class="m">1024</span><span class="p">;</span>
+                <span class="n">counter</span><span class="p">++;</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="n">counter</span> <span class="p">&gt;=</span> <span class="n">maxCount</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="k">break</span><span class="p">;</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+
+            <span class="kt">var</span> <span class="n">suffix</span> <span class="p">=</span> <span class="n">counter</span> <span class="k">switch</span>
+            <span class="p">{</span>
+                <span class="m">0</span> <span class="p">=&gt;</span> <span class="s">"B"</span><span class="p">,</span>
+                <span class="m">1</span> <span class="p">=&gt;</span> <span class="s">"KB"</span><span class="p">,</span>
+                <span class="m">2</span> <span class="p">=&gt;</span> <span class="s">"MB"</span><span class="p">,</span>
+                <span class="m">3</span> <span class="p">=&gt;</span> <span class="s">"GB"</span><span class="p">,</span>
+                <span class="m">4</span> <span class="p">=&gt;</span> <span class="s">"TB"</span><span class="p">,</span>
+                <span class="m">5</span> <span class="p">=&gt;</span> <span class="s">"PB"</span><span class="p">,</span>
+                <span class="c1">// 通过 maxCount 限制了最大的值就是 5 了</span>
+                <span class="n">_</span> <span class="p">=&gt;</span> <span class="k">throw</span> <span class="k">new</span> <span class="nf">ArgumentException</span><span class="p">(</span><span class="s">"骚年，你是不是忘了更新 maxCount 等级了"</span><span class="p">)</span>
+            <span class="p">};</span>
+
+            <span class="k">return</span> <span class="s">$"</span><span class="p">{</span><span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="n">formatString</span><span class="p">,</span> <span class="n">number</span><span class="p">)}{</span><span class="n">suffix</span><span class="p">}</span><span class="s">"</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>上面代码使用的 switch 根据 counter 返回对应的单位，对比使用数组的优势在于不需要创建数组对象，能省一点内存。同时进行的计算也比较少，相对性能也不差</p>
+
+<p>上面代码的 ArgumentException 在没有更改代码逻辑是不会进入的，因为通过 maxCount 限制了单位最大就是 PB 了</p>
+
+<p>试试以下测试代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">Debug</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="n">FileSizeFormatter</span><span class="p">.</span><span class="nf">FormatSize</span><span class="p">((</span><span class="kt">long</span><span class="p">)</span><span class="n">Math</span><span class="p">.</span><span class="nf">Pow</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">i</span><span class="p">)));</span>
+            <span class="p">}</span>
+</code></pre></div></div>
+
+<p>可以看到控制台的输出如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="m">1.00</span><span class="n">B</span>
+<span class="m">10.00</span><span class="n">Bytes</span>
+<span class="m">100.00</span><span class="n">Bytes</span>
+<span class="m">0.98</span><span class="n">KB</span>
+<span class="m">9.77</span><span class="n">KB</span>
+<span class="m">97.66</span><span class="n">KB</span>
+<span class="m">0.95</span><span class="n">MB</span>
+<span class="m">9.54</span><span class="n">MB</span>
+<span class="m">95.37</span><span class="n">MB</span>
+<span class="m">0.93</span><span class="n">GB</span>
+</code></pre></div></div>
+
+<p>其他小伙伴的实现如下</p>
+
+<p><a href="https://blog.csdn.net/weixin_34405925/article/details/92420420">c# 字节单位转换_weixin_34405925的博客-CSDN博客_c# 单位转换</a></p>
+
+<p><a href="https://blog.csdn.net/xiaochenXIHUA/article/details/106720746">C#实现获取文件大小进行单位转换与文件大小比较_xiaochenXIHUA的博客-CSDN博客_c# 文件大小单位</a></p>
+
+<p>也有更快计算当前的数值对应的单位的等级的方法，就是通过 Math.Log 的方法，我没有测试性能对比，但是看起来相差很小，因为循环也就是最多 5 次</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="kt">var</span> <span class="n">mag</span> <span class="p">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">Math</span><span class="p">.</span><span class="nf">Max</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Log</span><span class="p">(</span><span class="k">value</span><span class="p">,</span> <span class="m">1024</span><span class="p">));</span>
+    <span class="kt">var</span> <span class="n">adjustedSize</span> <span class="p">=</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Round</span><span class="p">(</span><span class="k">value</span> <span class="p">/</span> <span class="n">Math</span><span class="p">.</span><span class="nf">Pow</span><span class="p">(</span><span class="m">1024</span><span class="p">,</span> <span class="n">mag</span><span class="p">),</span> <span class="n">decimalPlaces</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>当然，也有更快的方法，就是通过判断大小</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">private</span> <span class="kt">string</span> <span class="nf">GetFileSize</span><span class="p">(</span><span class="kt">double</span> <span class="n">byteCount</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="kt">string</span> <span class="n">size</span> <span class="p">=</span> <span class="s">"0 B"</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">byteCount</span> <span class="p">&gt;=</span> <span class="m">1073741824.0</span><span class="p">)</span>
+            <span class="n">size</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="s">"{0:##.##}"</span><span class="p">,</span> <span class="n">byteCount</span> <span class="p">/</span> <span class="m">1073741824.0</span><span class="p">)</span> <span class="p">+</span> <span class="s">" GB"</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">byteCount</span> <span class="p">&gt;=</span> <span class="m">1048576.0</span><span class="p">)</span>
+            <span class="n">size</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="s">"{0:##.##}"</span><span class="p">,</span> <span class="n">byteCount</span> <span class="p">/</span> <span class="m">1048576.0</span><span class="p">)</span> <span class="p">+</span> <span class="s">" MB"</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">byteCount</span> <span class="p">&gt;=</span> <span class="m">1024.0</span><span class="p">)</span>
+            <span class="n">size</span> <span class="p">=</span> <span class="kt">string</span><span class="p">.</span><span class="nf">Format</span><span class="p">(</span><span class="s">"{0:##.##}"</span><span class="p">,</span> <span class="n">byteCount</span> <span class="p">/</span> <span class="m">1024.0</span><span class="p">)</span> <span class="p">+</span> <span class="s">" KB"</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">byteCount</span> <span class="p">&gt;</span> <span class="m">0</span> <span class="p">&amp;&amp;</span> <span class="n">byteCount</span> <span class="p">&lt;</span> <span class="m">1024.0</span><span class="p">)</span>
+            <span class="n">size</span> <span class="p">=</span> <span class="n">byteCount</span><span class="p">.</span><span class="nf">ToString</span><span class="p">()</span> <span class="p">+</span> <span class="s">" B"</span><span class="p">;</span>
+
+        <span class="k">return</span> <span class="n">size</span><span class="p">;</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>只是判断大小的代码没有用到 C# 8.0 因此依然推荐小伙伴使用本文开始的代码</p>
+
+:ET

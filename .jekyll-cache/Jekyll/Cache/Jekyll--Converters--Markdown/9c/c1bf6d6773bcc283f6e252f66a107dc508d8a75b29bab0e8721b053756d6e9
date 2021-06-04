@@ -1,0 +1,124 @@
+I"�F<p>本文告诉大家如何离线下载 VisualStudio 2019 离线安装</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:38:13 -->
+
+<!-- csdn -->
+
+<p>微软就给 VisualStudio 2019 一个在线安装工具，需要通过命令行输入参数才可以离线下载</p>
+
+<p>先从<a href="https://docs.microsoft.com/en-us/visualstudio/install/create-an-offline-installation-of-visual-studio?view=vs-2019">官网</a>选择自己需要下载的 VisualStudio 版本，可以选择社区版、专业版和企业版。只有社区版是免费的</p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20194394145961" alt="" /></p>
+
+<p>如我选择 Visual Studio Community 社区版，于是下载的 exe 就是 vs_community.exe 如果下载的是 Visual Studio Professional 对应的 exe 就是 vs_professional.exe 请替换本文的代码里面用到的程序为你下载的版本</p>
+
+<h2 id="存放的路径">存放的路径</h2>
+
+<p>离线下载需要指定一个文件夹，用于存放下载的文件，通过 <code class="language-plaintext highlighter-rouge">--layout</code> 加上绝对路径可以下载到输入的文件夹</p>
+
+<p>如下面代码设置下载到 <code class="language-plaintext highlighter-rouge">C</code> 盘的文件夹，请将这个文件夹修改为一个普通的文件夹，注意这个文件夹需要在当前的 User 有写入权限</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">--</span><span class="n">layout</span> <span class="n">c</span><span class="p">:</span><span class="err">\</span><span class="n">vslayout</span>
+</code></pre></div></div>
+
+<h2 id="添加功能">添加功能</h2>
+
+<p>可选的功能通过 <code class="language-plaintext highlighter-rouge">--add</code> 添加功能</p>
+
+<ul>
+  <li>Microsoft.VisualStudio.Workload.Azure Azure development</li>
+  <li>Microsoft.VisualStudio.Workload.ManagedDesktop 桌面端开发</li>
+  <li>Microsoft.VisualStudio.Workload.NetWeb ASP.NET Core 开发</li>
+  <li>Microsoft.VisualStudio.Workload.NetCoreTools .NET Core 开发</li>
+  <li>Microsoft.VisualStudio.Workload.Universal UWP 开发</li>
+</ul>
+
+<p>在这个页面可以找到更多的功能 <a href="https://docs.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2019#aspnet-and-web-development">Visual Studio Community workload and component IDs</a></p>
+
+<p>多个功能通过多个 <code class="language-plaintext highlighter-rouge">--add</code> 添加，如我需要选择 .NET Core 开发、桌面端开发和 ASP.NET Core 开发同时需要 UWP 开发等，我可以这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">ManagedDesktop</span>
+<span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetWeb</span>
+<span class="p">--</span><span class="k">add</span> <span class="n">Component</span><span class="p">.</span><span class="n">GitHub</span><span class="p">.</span><span class="n">VisualStudio</span>
+<span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Office</span> 
+<span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetCoreTools</span> 
+<span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Universal</span>
+<span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">VisualStudioExtension</span>
+</code></pre></div></div>
+
+<p>注意在命令行是不能有空格的，上面代码为了方便理解加了换行</p>
+
+<p>如果还需要某个功能里面的选项，如我需要 UWP 里面的 17763 的 SDK 可以从<a href="https://docs.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2019#aspnet-and-web-development">Visual Studio Community workload and component IDs</a>找到对应的功能，也通过 <code class="language-plaintext highlighter-rouge">--add</code> 添加</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Component</span><span class="p">.</span><span class="n">Windows10SDK</span><span class="p">.</span><span class="m">17763</span>
+</code></pre></div></div>
+
+<h2 id="多语言">多语言</h2>
+
+<p>通过 <code class="language-plaintext highlighter-rouge">--lang</code> 可以添加多语言</p>
+
+<p>如添加中文是 <code class="language-plaintext highlighter-rouge">zh-CN</code> 英文是 <code class="language-plaintext highlighter-rouge">en-US</code> 可以通过 <code class="language-plaintext highlighter-rouge">--addProductLang</code> 多添加语言</p>
+
+<p>下面代码就是添加中文作为主要语言，同时添加英文</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">--</span><span class="n">lang</span> <span class="n">zh</span><span class="p">-</span><span class="n">CN</span> <span class="p">--</span><span class="n">addProductLang</span> <span class="n">en</span><span class="p">-</span><span class="n">US</span>
+</code></pre></div></div>
+
+<p>如果同时添加多个语言可以在 <code class="language-plaintext highlighter-rouge">--lang</code> 后面添加多个</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">--</span><span class="n">lang</span> <span class="n">zh</span><span class="p">-</span><span class="n">CN</span> <span class="n">en</span><span class="p">-</span><span class="n">US</span>
+</code></pre></div></div>
+
+<p>于是一个下载.NET Core 开发、桌面端开发和 ASP.NET Core 开发和 UWP 开发等，下载到 <code class="language-plaintext highlighter-rouge">F:\下载\vs\vslayout</code> 的命令可以这样写</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vs_community</span><span class="p">.</span><span class="n">exe</span> <span class="p">--</span><span class="n">layout</span> <span class="n">F</span><span class="p">:</span><span class="err">\下载\</span><span class="n">vs</span><span class="err">\</span><span class="n">vslayout</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">ManagedDesktop</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetWeb</span> <span class="p">--</span><span class="k">add</span> <span class="n">Component</span><span class="p">.</span><span class="n">GitHub</span><span class="p">.</span><span class="n">VisualStudio</span>  <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Office</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetCoreTools</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Universal</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Component</span><span class="p">.</span><span class="n">Windows10SDK</span><span class="p">.</span><span class="m">17763</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">VisualStudioExtension</span> <span class="p">--</span><span class="n">includeOptional</span> <span class="p">--</span><span class="n">lang</span> <span class="n">zh</span><span class="p">-</span><span class="n">CN</span> <span class="p">--</span><span class="n">addProductLang</span> <span class="n">en</span><span class="p">-</span><span class="n">US</span>
+</code></pre></div></div>
+
+<p>其他语言请看 <a href="https://docs.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2019#list-of-language-locales">Use command-line parameters to install Visual Studio</a></p>
+
+<h2 id="添加所有功能">添加所有功能</h2>
+
+<p>如果想要添加所有的功能，那么去掉 <code class="language-plaintext highlighter-rouge">--includeOptional</code> 请看代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vs_community</span><span class="p">.</span><span class="n">exe</span> <span class="p">--</span><span class="n">layout</span> <span class="n">c</span><span class="p">:</span><span class="err">\</span><span class="n">vslayout</span> <span class="p">--</span><span class="n">lang</span> <span class="n">en</span><span class="p">-</span><span class="n">US</span>
+</code></pre></div></div>
+
+<p>下载英文版的全功能的 VisualStudio 放在 <code class="language-plaintext highlighter-rouge">c:\vslayout</code> 这句命令需要等很久</p>
+
+<h2 id="下载恢复">下载恢复</h2>
+
+<p>如果下载了一半然后关机，需要恢复，可以尝试使用 <code class="language-plaintext highlighter-rouge">--fix</code> 修复，用法是输入下载离线的相同命令在命令后面添加 <code class="language-plaintext highlighter-rouge">--fix</code> 就可以</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">vs_community</span><span class="p">.</span><span class="n">exe</span> <span class="p">--</span><span class="n">layout</span> <span class="n">F</span><span class="p">:</span><span class="err">\下载\</span><span class="n">vs</span><span class="err">\</span><span class="n">vslayout</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">ManagedDesktop</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetWeb</span> <span class="p">--</span><span class="k">add</span> <span class="n">Component</span><span class="p">.</span><span class="n">GitHub</span><span class="p">.</span><span class="n">VisualStudio</span>  <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Office</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetCoreTools</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Universal</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Component</span><span class="p">.</span><span class="n">Windows10SDK</span><span class="p">.</span><span class="m">17763</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">VisualStudioExtension</span> <span class="p">--</span><span class="n">includeOptional</span> <span class="p">--</span><span class="n">lang</span> <span class="n">zh</span><span class="p">-</span><span class="n">CN</span> <span class="p">--</span><span class="n">addProductLang</span> <span class="n">en</span><span class="p">-</span><span class="n">US</span> <span class="p">--</span><span class="n">fix</span>
+</code></pre></div></div>
+
+<h2 id="安装离线下载">安装离线下载</h2>
+
+<p>通过命令行打开离线下载的文件夹里面的对应的安装文件，如我使用的是社区版，下载到 <code class="language-plaintext highlighter-rouge">F:\下载\vs\vslayout</code> 可以通过下面命令安装</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">F</span><span class="p">:</span><span class="err">\下载\</span><span class="n">vs</span><span class="err">\</span><span class="n">vslayout</span><span class="err">\</span><span class="n">vs_community</span><span class="p">.</span><span class="n">exe</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">ManagedDesktop</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetWeb</span> <span class="p">--</span><span class="k">add</span> <span class="n">Component</span><span class="p">.</span><span class="n">GitHub</span><span class="p">.</span><span class="n">VisualStudio</span>  <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Office</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">NetCoreTools</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">Universal</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Component</span><span class="p">.</span><span class="n">Windows10SDK</span><span class="p">.</span><span class="m">17763</span> <span class="p">--</span><span class="k">add</span> <span class="n">Microsoft</span><span class="p">.</span><span class="n">VisualStudio</span><span class="p">.</span><span class="n">Workload</span><span class="p">.</span><span class="n">VisualStudioExtension</span> <span class="p">--</span><span class="n">includeOptional</span>
+</code></pre></div></div>
+
+<p>注意这里添加的 <code class="language-plaintext highlighter-rouge">--add</code> 需要和上面下载的时候输入的相同</p>
+
+<p>关于 VisualStudio 2019 新功能请看 <a href="https://blog.lindexi.com/post/VisualStudio-2019-%E6%96%B0%E7%89%B9%E6%80%A7.html">VisualStudio 2019 新特性</a></p>
+
+<p><a href="https://visualstudio.microsoft.com/zh-hans/vs2019-launch/?rr=https%3A%2F%2Fwww.baidu.com%2Flink%3Furl%3D54dGgZyPCZ0eQDyOjhrxFSjIslKmN5iGZ0EHDN672ecSriXESCrcVM9jCtpMBOCk%26wd%3D%26eqid%3D830caa27000393af000000065ca40ad5">Visual Studio 2019 发布活动 - Visual Studio</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=vs-2019">Use command-line parameters to install Visual Studio</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/visualstudio/install/workload-component-id-vs-community?view=vs-2019#aspnet-and-web-development">Visual Studio Community workload and component IDs</a></p>
+
+<p>激活码，激活码只用于尝试 VisualStudio 的使用，请不要在商业环境使用</p>
+
+<p>Visual Studio 2019 Enterprise</p>
+
+<p>BF8Y8-GN2QH-T84XB-QVY3B-RC4DF</p>
+
+<p>Visual Studio 2019 Professional</p>
+
+<p>NYWVH-HT4XC-R2WYW-9Y3CM-X4V3Y</p>
+
+:ET

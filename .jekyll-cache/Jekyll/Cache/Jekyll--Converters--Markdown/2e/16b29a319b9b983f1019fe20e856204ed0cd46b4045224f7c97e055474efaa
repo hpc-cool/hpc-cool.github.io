@@ -1,0 +1,147 @@
+I"�5<p>本文将来安利大家一个很好用的 UI 控件库，著名的 HandyControl 库。在想要给 ListView 添加一个表头，同时想要这个 ListView 在没有美工小姐姐的帮助下也能看起来比较好看，此时就特别适合使用 HandyControl 库</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/7/13 8:59:36 -->
+
+<p>大概做出来的效果如下</p>
+
+<!-- ![](image/WPF 使用 HandyControl 给 ListView 添加漂亮的表头效果/WPF 使用 HandyControl 给 ListView 添加漂亮的表头效果0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F20207111635465.jpg" alt="" /></p>
+
+<p>完成上面的效果很简单，让我一步步告诉大家如何做</p>
+
+<p>第一步是通过 NuGet 安装 <a href="https://www.nuget.org/packages/HandyControl">HandyControl</a> 库，这是一个在 <a href="https://github.com/HandyOrg/HandyControl">GitHub 完全开源</a>的项目</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Install</span><span class="p">-</span><span class="n">Package</span> <span class="n">HandyControl</span> 
+</code></pre></div></div>
+
+<p>如果是 SDK Style 格式的 csproj 项目文件，可以添加下面代码安装</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="nt">&lt;ItemGroup&gt;</span>
+    <span class="nt">&lt;PackageReference</span> <span class="na">Include=</span><span class="s">"HandyControl"</span> <span class="na">Version=</span><span class="s">"2.5.0.2"</span> <span class="nt">/&gt;</span>
+  <span class="nt">&lt;/ItemGroup&gt;</span>
+</code></pre></div></div>
+
+<p>安装完成之后打开 App.xaml 文件添加引用</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nt">&lt;Application.Resources&gt;</span>
+        <span class="nt">&lt;ResourceDictionary&gt;</span>
+            <span class="nt">&lt;ResourceDictionary.MergedDictionaries&gt;</span>
+                <span class="nt">&lt;ResourceDictionary</span> <span class="na">Source=</span><span class="s">"pack://application:,,,/HandyControl;component/Themes/SkinDefault.xaml"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;ResourceDictionary</span> <span class="na">Source=</span><span class="s">"pack://application:,,,/HandyControl;component/Themes/Theme.xaml"</span><span class="nt">/&gt;</span>
+            <span class="nt">&lt;/ResourceDictionary.MergedDictionaries&gt;</span>
+        <span class="nt">&lt;/ResourceDictionary&gt;</span>
+    <span class="nt">&lt;/Application.Resources&gt;</span>
+</code></pre></div></div>
+
+<p>添加了上面代码将会给全局添加足够的样式，因此很多控件的默认的样式也就被更改了，如本文的 ListView 控件</p>
+
+<p>完成了第一步的安装库了，下一步就是创建虚拟的数据</p>
+
+<p>我想要在界面显示一个 ListView 加上内容，此时我就需要一些虚拟的数据用来做界面显示。如果小伙伴有自己的数据，那么这一步也可以跳过</p>
+
+<p>先创建一个用来测试的类，如下面代码的 Foo 类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">class</span> <span class="nc">Foo</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="kt">int</span> <span class="n">Index</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Name</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+
+        <span class="k">public</span> <span class="kt">string</span> <span class="n">Remark</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="k">set</span><span class="p">;</span> <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>接下来在 MainWindow 里面创建 <code class="language-plaintext highlighter-rouge">ObservableCollection&lt;Foo&gt;</code> 的一个属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;</span> <span class="n">DataList</span> <span class="p">{</span> <span class="k">get</span><span class="p">;</span> <span class="p">}</span> <span class="p">=</span> <span class="k">new</span> <span class="n">ObservableCollection</span><span class="p">&lt;</span><span class="n">Foo</span><span class="p">&gt;();</span>
+</code></pre></div></div>
+
+<p>注意访问权限哦，想要在界面绑定可需要使用 <code class="language-plaintext highlighter-rouge">public</code> 等关键词而不能使用 <code class="language-plaintext highlighter-rouge">private</code> 哦</p>
+
+<p>接着添加测试使用的数据，下面代码放在 MainWindow 的构造函数</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="k">public</span> <span class="nf">MainWindow</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nf">InitializeComponent</span><span class="p">();</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="p">=</span> <span class="m">0</span><span class="p">;</span> <span class="n">i</span> <span class="p">&lt;</span> <span class="m">10</span><span class="p">;</span> <span class="n">i</span><span class="p">++)</span>
+            <span class="p">{</span>
+                <span class="n">DataList</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="k">new</span> <span class="nf">Foo</span><span class="p">()</span>
+                <span class="p">{</span>
+                    <span class="n">Index</span> <span class="p">=</span> <span class="n">i</span><span class="p">,</span>
+                    <span class="n">Name</span> <span class="p">=</span> <span class="s">"lindexi"</span><span class="p">,</span>
+                    <span class="n">Remark</span> <span class="p">=</span> <span class="s">"doubi"</span>
+                <span class="p">});</span>
+            <span class="p">}</span>
+
+        <span class="p">}</span>
+</code></pre></div></div>
+
+<p>添加测试数据的最后一步是设置 <code class="language-plaintext highlighter-rouge">DataContext</code> 为 MainWindow 自身，因为咱没有创建一个 ViewModel 而是在 MainWindow 里面创建一个属性。设置 <code class="language-plaintext highlighter-rouge">DataContext</code> 为 MainWindow 将可以绑定 MainWindow 定义的属性</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">DataContext</span> <span class="p">=</span> <span class="k">this</span><span class="p">;</span>
+</code></pre></div></div>
+
+<p>最后一步就是界面啦</p>
+
+<p>打开 MainWindow.xaml 文件，添加下面代码</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ListView</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">ItemsSource=</span><span class="s">"{Binding DataList}"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;ListView.View&gt;</span>
+                <span class="nt">&lt;GridView&gt;</span>
+                    <span class="nt">&lt;GridViewColumn</span> <span class="na">Width=</span><span class="s">"80"</span> <span class="na">Header=</span><span class="s">"Index"</span> <span class="na">DisplayMemberBinding=</span><span class="s">"{Binding Index}"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;GridViewColumn</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Header=</span><span class="s">"Name"</span> <span class="na">DisplayMemberBinding=</span><span class="s">"{Binding Name}"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;GridViewColumn</span> <span class="na">Width=</span><span class="s">"200"</span> <span class="na">Header=</span><span class="s">"Remark"</span> <span class="na">DisplayMemberBinding=</span><span class="s">"{Binding Remark}"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;/GridView&gt;</span>
+            <span class="nt">&lt;/ListView.View&gt;</span>
+        <span class="nt">&lt;/ListView&gt;</span>
+</code></pre></div></div>
+
+<p>此时可以尝试运行一下应用，如果和我写得一样，那么可以看到上图的界面</p>
+
+<p>上面代码使用 GridView 和 GridViewColumn 的方式定义了 ListView 的表头</p>
+
+<p>而 Header 里面的内容就是表头显示的文本，可以进行后台代码设置，也可以绑定等</p>
+
+<p>而 DisplayMemberBinding 的值就是实际上期望绑定的元素的属性名</p>
+
+<p>如果想要显示更复杂的内容， 那么仅使用 DisplayMemberBinding 是不够的，这个属性仅可以设置文本，复杂的内容需要用到 CellTemplate 属性。这部分请看 <a href="https://blog.csdn.net/xpj8888/article/details/83210669">WPF 控件【L】ListView(三) ListView+GridView+GridViewColumn+DisplayMemberBinding多列绑定数据的用法_xpj8888的博客-CSDN博客_wpf gridview</a></p>
+
+<p>如果只是需要简单的定制，如修改颜色等，可以通过重写资源字典的方式更改</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        <span class="nt">&lt;ListView</span> <span class="na">Margin=</span><span class="s">"10,10,10,10"</span> <span class="na">ItemsSource=</span><span class="s">"{Binding DataList}"</span> <span class="na">Background=</span><span class="s">"#565656"</span><span class="nt">&gt;</span>
+            <span class="nt">&lt;ListView.Resources&gt;</span>
+                <span class="c">&lt;!-- 列表项颜色 --&gt;</span>
+                <span class="nt">&lt;SolidColorBrush</span> <span class="na">x:Key=</span><span class="s">"RegionBrush"</span> <span class="na">Color=</span><span class="s">"#02A2A3"</span><span class="nt">&gt;&lt;/SolidColorBrush&gt;</span>
+
+                <span class="c">&lt;!-- 列表文本颜色 --&gt;</span>
+                <span class="nt">&lt;SolidColorBrush</span> <span class="na">x:Key=</span><span class="s">"PrimaryTextBrush"</span> <span class="na">Color=</span><span class="s">"White"</span><span class="nt">&gt;&lt;/SolidColorBrush&gt;</span>
+
+                <span class="c">&lt;!-- 选中颜色 --&gt;</span>
+                <span class="nt">&lt;SolidColorBrush</span> <span class="na">x:Key=</span><span class="s">"PrimaryBrush"</span> <span class="na">Color=</span><span class="s">"#A602A5"</span><span class="nt">&gt;&lt;/SolidColorBrush&gt;</span>
+            <span class="nt">&lt;/ListView.Resources&gt;</span>
+            <span class="nt">&lt;ListView.View</span> <span class="nt">&gt;</span>
+                <span class="nt">&lt;GridView</span> <span class="nt">&gt;</span>
+                    <span class="nt">&lt;GridViewColumn</span> <span class="na">Width=</span><span class="s">"80"</span> <span class="na">Header=</span><span class="s">"Index"</span> <span class="na">DisplayMemberBinding=</span><span class="s">"{Binding Index}"</span> <span class="nt">/&gt;</span>
+                    <span class="nt">&lt;GridViewColumn</span> <span class="na">Width=</span><span class="s">"100"</span> <span class="na">Header=</span><span class="s">"Name"</span> <span class="na">DisplayMemberBinding=</span><span class="s">"{Binding Name}"</span><span class="nt">/&gt;</span>
+                    <span class="nt">&lt;GridViewColumn</span> <span class="na">Width=</span><span class="s">"200"</span> <span class="na">Header=</span><span class="s">"Remark"</span> <span class="na">DisplayMemberBinding=</span><span class="s">"{Binding Remark}"</span><span class="nt">/&gt;</span>
+                <span class="nt">&lt;/GridView&gt;</span>
+            <span class="nt">&lt;/ListView.View&gt;</span>
+        <span class="nt">&lt;/ListView&gt;</span>
+</code></pre></div></div>
+
+<p>在 ListView 定义资源名是 RegionBrush 就可以更改列表项的颜色，而通过定义 PrimaryTextBrush 就可以更改列表项目的文本颜色</p>
+
+<p>上面代码我使用的是纯色的 SolidColorBrush 画刷，其实在 HC 里面支持任意的画刷，因此小伙伴可以定义为图片画刷</p>
+
+<p>为什么这样定义就有效果？原因是使用了 WPF 的资源覆盖机制，越靠近控件的资源定义优先级越高，将会覆盖原先定义的资源。而在 HC 里面默认样式使用的资源的 Key 和在 ListView 里面定义的相同，此时将会被 ListView 定义的资源覆盖</p>
+
+<p>简单的方法就是抄上面的代码，修改 Color 的值。或者将 SolidColorBrush 更换一下</p>
+
+<p>关于 ListView 在 HC 控件里面的定义的代码，放在 <code class="language-plaintext highlighter-rouge">src\Shared\HandyControl_Shared\Themes\Styles\ListView.xaml</code> 这里，代码是完全开源的，小伙伴也可以自己去拷贝代码</p>
+
+<p>这个项目所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/6c56865e43a6621111586ced2c93ea3099b00ae2/WaicheardeaharjereCiyallyerekelhear">github</a> 欢迎小伙伴访问</p>
+
+:ET

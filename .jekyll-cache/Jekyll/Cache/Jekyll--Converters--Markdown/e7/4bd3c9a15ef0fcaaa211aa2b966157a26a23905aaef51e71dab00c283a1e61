@@ -1,0 +1,21 @@
+I"F<p>在将原本的 dotnet framework 版本的 WPF 项目迁到 dotnet core 版本，在进行单元测试，发现在 XmlSerializer 抛出了 System.Private.CoreLib.XmlSerializers.dll 找不到的异常，其实这个只是在 XmlSerializer 的内部异常，可以忽略</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/9/24 20:27:49 -->
+
+<p>在 dotnet core 下，使用如下代码进行 xml 序列化，其中 Foo 是我定义的类</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>   <span class="kt">var</span> <span class="n">xmlSerializer</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">XmlSerializer</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="n">Foo</span><span class="p">));</span>
+</code></pre></div></div>
+
+<p>应用将会在 VS 打开所有异常的时候，可以看到如下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>System.IO.FileNotFoundException:“Could not load file or assembly 'C:\Users\lindexi\.nuget\packages\microsoft.testplatform.testhost\16.5.0\build\netcoreapp2.1\x64\System.Private.CoreLib.XmlSerializers.dll'. 系统找不到指定的文件。”
+</code></pre></div></div>
+
+<p>也就是 <code class="language-plaintext highlighter-rouge">System.Private.CoreLib.XmlSerializers.dll</code> 找不到的异常，其实在 .NET Core 的这个异常只是在 XmlSerializer 内部抛出，会被 XML 框架接住，上层啥都不需要做</p>
+
+<p>因此，只需要忽略就可以</p>
+
+:ET

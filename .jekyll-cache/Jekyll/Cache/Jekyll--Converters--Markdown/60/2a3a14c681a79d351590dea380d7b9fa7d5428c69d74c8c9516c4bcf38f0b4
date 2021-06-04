@@ -1,0 +1,89 @@
+I"h<p>在 sdk style 的项目格式支持使用多框架开发，此时需要在代码里面通过宏判断，在编译的时候执行不同的代码。本文告诉大家在框架里面对应的预定义的条件编译符有哪些</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/8/31 16:55:58 -->
+
+<p>在<a href="https://blog.walterlv.com/post/configure-projects-to-target-multiple-platforms.html">让一个 csproj 项目指定多个开发框架 - walterlv</a>告诉大家如何在 sdk style 项目格式如何定义多框架开发，在使用多框架开发的时候，有时会使用到特定的平台框架提供的方法，此时就需要使用预定义的宏通过条件判断编译符号的方法，在不同的框架编译不同的代码</p>
+
+<p>例如下面代码根据在不同的平台输出不同的代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">static</span> <span class="k">void</span> <span class="nf">Main</span><span class="p">()</span>
+    <span class="p">{</span>
+<span class="cp">#if NET40
+</span>        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Target framework: .NET Framework 4.0"</span><span class="p">);</span>
+<span class="cp">#elif NET45  
+</span>        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Target framework: .NET Framework 4.5"</span><span class="p">);</span>
+<span class="cp">#else
+</span>        <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="s">"Target framework: .NET Standard 2.0"</span><span class="p">);</span>
+<span class="cp">#endif
+</span>    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>以上写法是通过条件编译符，将会在不同条件满足的时候编译出不同的 IL 代码，关于条件编译符请看官方文档<a href="https://docs.microsoft.com/zh-cn/dotnet/csharp/language-reference/preprocessor-directives/preprocessor-if">#if 预处理器指令</a></p>
+
+<p>此时需要知道在 sdk style 的项目文件里面给不同的平台添加了哪些条件编译符可以使用</p>
+
+<p>以下是预定义的宏</p>
+
+<h2 id="net-framework">.NET Framework</h2>
+
+<p>所有 .NET Framework 都定义 <code class="language-plaintext highlighter-rouge">NETFRAMEWORK</code> 宏，此外对应不同的版本使用不同的宏</p>
+
+<ul>
+  <li>NET20</li>
+  <li>NET35</li>
+  <li>NET40</li>
+  <li>NET45</li>
+  <li>NET451</li>
+  <li>NET452</li>
+  <li>NET46</li>
+  <li>NET461</li>
+  <li>NET462</li>
+  <li>NET47</li>
+  <li>NET471</li>
+  <li>NET472</li>
+  <li>NET48</li>
+</ul>
+
+<h2 id="net-standard">.NET Standard</h2>
+
+<p>所有 .NET Standard 都定义 <code class="language-plaintext highlighter-rouge">NETSTANDARD</code> 宏，此外对应不同的版本使用不同的宏</p>
+
+<ul>
+  <li>NETSTANDARD1_0</li>
+  <li>NETSTANDARD1_1</li>
+  <li>NETSTANDARD1_2</li>
+  <li>NETSTANDARD1_3</li>
+  <li>NETSTANDARD1_4</li>
+  <li>NETSTANDARD1_5</li>
+  <li>NETSTANDARD1_6</li>
+  <li>NETSTANDARD2_0</li>
+</ul>
+
+<h2 id="net-core">.NET Core</h2>
+
+<p>所有 .NET Core 都定义 <code class="language-plaintext highlighter-rouge">NETCOREAPP</code> 宏，此外对应不同的版本使用不同的宏</p>
+
+<ul>
+  <li>NETCOREAPP1_0</li>
+  <li>NETCOREAPP1_1</li>
+  <li>NETCOREAPP2_0</li>
+  <li>NETCOREAPP2_1</li>
+  <li>NETCOREAPP2_2</li>
+</ul>
+
+<p>本文说到的宏是古老的词汇，在官方用语里面叫条件编译符，也叫预处理符号(preprocessor symbols) 在 Roslyn 的语法分析中，就是这样写的</p>
+
+<p>在 csproj 或 Target 中可以采用下面代码判断宏是否包含</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">Condition</span><span class="p">=</span><span class="s">"$(DefineConstants.Contains(NET30))"</span>
+</code></pre></div></div>
+
+<p><a href="https://blog.walterlv.com/post/how-to-define-preprocessor-symbols.html">.NET/C# 项目如何优雅地设置条件编译符号？ - walterlv</a></p>
+
+<p><a href="https://blog.walterlv.com/post/roslyn-syntax-tree-supporting-preprocessor-symbols.html">在 Roslyn 分析语法树时添加条件编译符号的支持 - walterlv</a></p>
+
+<p><a href="https://docs.microsoft.com/en-us/dotnet/standard/frameworks">Target frameworks</a></p>
+
+:ET

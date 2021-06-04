@@ -1,0 +1,43 @@
+I"9<p>在使用 curl 时，可以采用 -u 加上用户名和密码，这个对应在 C# 里面也是两句话的事情。只是在 curl 里面封装好了，我通过工具人协助解决，于是就在这里记录一下</p>
+
+<!--more-->
+
+<!-- CreateTime:2021/1/15 19:33:26 -->
+
+<!-- 发布 -->
+
+<p>假定使用 curl 输入的是如下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>curl -ulindexi:FD7doYUzM7WApXobRb7X9qgURCF -T "E:\lindexi\doubi.exe" "https://blog.lindexi.com/artifactory/doubi.exe"
+</code></pre></div></div>
+
+<p>通过上面代码可以给我的存储服务上传文件，而如果使用 dotnet 编写，其实逻辑也十分简单</p>
+
+<p>在账号密码这里，假定有变量 userName 和 key 分别是账号和密码，那么构建上传文件使用的账号密码将放在 Http 的 Header 里面，代码如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">encodedAuthString</span> <span class="p">=</span> <span class="n">Convert</span><span class="p">.</span><span class="nf">ToBase64String</span><span class="p">(</span><span class="n">Encoding</span><span class="p">.</span><span class="n">ASCII</span><span class="p">.</span><span class="nf">GetBytes</span><span class="p">(</span><span class="s">$"</span><span class="p">{</span><span class="n">userName</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">key</span><span class="p">}</span><span class="s">"</span><span class="p">));</span>
+
+            <span class="n">httpClient</span><span class="p">.</span><span class="n">DefaultRequestHeaders</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"Authorization"</span><span class="p">,</span> <span class="s">$"Basic </span><span class="p">{</span><span class="n">encodedAuthString</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>而上传文件调用的是 Put 接口，整体逻辑如下</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="kt">var</span> <span class="n">url</span> <span class="p">=</span> <span class="s">"https://blog.lindexi.com/artifactory/doubi.exeg"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">file</span> <span class="p">=</span> <span class="s">@"E:\lindexi\doubi.exe"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">userName</span> <span class="p">=</span> <span class="s">"lindexi"</span><span class="p">;</span>
+            <span class="kt">var</span> <span class="n">key</span> <span class="p">=</span> <span class="s">"FD7doYUzM7WApXobRb7X9qgURCF"</span><span class="p">;</span>
+
+            <span class="kt">var</span> <span class="n">encodedAuthString</span> <span class="p">=</span> <span class="n">Convert</span><span class="p">.</span><span class="nf">ToBase64String</span><span class="p">(</span><span class="n">Encoding</span><span class="p">.</span><span class="n">ASCII</span><span class="p">.</span><span class="nf">GetBytes</span><span class="p">(</span><span class="s">$"</span><span class="p">{</span><span class="n">userName</span><span class="p">}</span><span class="s">:</span><span class="p">{</span><span class="n">key</span><span class="p">}</span><span class="s">"</span><span class="p">));</span>
+
+            <span class="kt">var</span> <span class="n">httpClient</span> <span class="p">=</span> <span class="k">new</span> <span class="nf">HttpClient</span><span class="p">();</span>
+            <span class="n">httpClient</span><span class="p">.</span><span class="n">DefaultRequestHeaders</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="s">"Authorization"</span><span class="p">,</span> <span class="s">$"Basic </span><span class="p">{</span><span class="n">encodedAuthString</span><span class="p">}</span><span class="s">"</span><span class="p">);</span>
+
+            <span class="k">await</span> <span class="n">httpClient</span><span class="p">.</span><span class="nf">PutAsync</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="k">new</span> <span class="nf">StreamContent</span><span class="p">(</span><span class="n">File</span><span class="p">.</span><span class="nf">OpenRead</span><span class="p">(</span><span class="n">file</span><span class="p">)));</span>
+</code></pre></div></div>
+
+<p>看起来代码还是十分简单的，于是我就使用这个方法，在 GitHub 的 Action 上帮忙下载外网的内容，然后发送到我的国内服务器上</p>
+
+<p>感谢工具人 <a href="https://blog.sdlsj.net/">lsj</a> 提供的方法</p>
+
+:ET

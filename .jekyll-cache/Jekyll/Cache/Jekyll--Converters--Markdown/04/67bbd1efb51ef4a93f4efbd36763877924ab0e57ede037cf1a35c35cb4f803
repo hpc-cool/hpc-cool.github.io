@@ -1,0 +1,66 @@
+I"�<p>在 C# 8.0 的时候提供了可空字符串的判断，但是可空字符串和字符串的类型是不是不同的？</p>
+
+<!--more-->
+
+<!-- CreateTime:2019/11/29 8:59:00 -->
+
+<p>打开 VisualStudio 2019 这时就不能再使用 VisualStudio 2017 因为不支持</p>
+
+<p>然后创建一个 dotnet core 项目，打开项目文件添加下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">&lt;</span><span class="n">Project</span> <span class="n">Sdk</span><span class="p">=</span><span class="s">"Microsoft.NET.Sdk"</span><span class="p">&gt;</span>
+
+    <span class="p">&lt;</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">OutputType</span><span class="p">&gt;</span><span class="n">Exe</span><span class="p">&lt;/</span><span class="n">OutputType</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">TargetFramework</span><span class="p">&gt;</span><span class="n">netcoreapp3</span><span class="p">.</span><span class="m">0</span><span class="p">&lt;/</span><span class="n">TargetFramework</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">LangVersion</span><span class="p">&gt;</span><span class="m">8.0</span><span class="p">&lt;/</span><span class="n">LangVersion</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="n">NullableReferenceTypes</span><span class="p">&gt;</span><span class="k">true</span><span class="p">&lt;/</span><span class="n">NullableReferenceTypes</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="n">PropertyGroup</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="n">Project</span><span class="p">&gt;</span>
+
+</code></pre></div></div>
+
+<p>先详细介绍每一句话的意思</p>
+
+<p>第一句 OutputType 的意思是输出是什么，这里选 Exe 就是输出控制台</p>
+
+<p>通过 TargetFramework 可以设置平台，更多可以设置请看 <a href="https://blog.lindexi.com/post/%E4%BB%8E%E4%BB%A5%E5%89%8D%E7%9A%84%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F%E8%BF%81%E7%A7%BB%E5%88%B0-VS2017-%E6%96%B0%E9%A1%B9%E7%9B%AE%E6%A0%BC%E5%BC%8F.html">从以前的项目格式迁移到 VS2017 新项目格式</a></p>
+
+<p>在 LangVersion 设置使用的语言版本，详细请看 <a href="https://lindexi.gitee.io/post/VisualStudio-%E4%BD%BF%E7%94%A8%E4%B8%89%E4%B8%AA%E6%96%B9%E6%B3%95%E5%90%AF%E5%8A%A8%E6%9C%80%E6%96%B0-C-%E5%8A%9F%E8%83%BD.html">VisualStudio 使用三个方法启动最新 C# 功能</a></p>
+
+<p>最后通过 NullableReferenceTypes 开启可空类型的判断</p>
+
+<p>现在开始试试之前的其他可空的方法，如下面代码</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">).</span><span class="n">FullName</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="kt">int</span><span class="p">?).</span><span class="n">FullName</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>小伙伴都知道输出的 int 和 <code class="language-plaintext highlighter-rouge">int?</code> 是不同的</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">Int32</span>
+<span class="n">System</span><span class="p">.</span><span class="n">Nullable</span><span class="err">`</span><span class="m">1</span><span class="p">[[</span><span class="n">System</span><span class="p">.</span><span class="n">Int32</span><span class="p">,</span> <span class="n">System</span><span class="p">.</span><span class="n">Private</span><span class="p">.</span><span class="n">CoreLib</span><span class="p">,</span> <span class="n">Version</span><span class="p">=</span><span class="m">4.0</span><span class="p">.</span><span class="m">0.0</span><span class="p">,</span> <span class="n">Culture</span><span class="p">=</span><span class="n">neutral</span><span class="p">,</span> <span class="n">PublicKeyToken</span><span class="p">=</span><span class="m">7</span><span class="n">cec85d7bea7798e</span><span class="p">]]</span>
+</code></pre></div></div>
+
+<p>但是如果是 string 和 <code class="language-plaintext highlighter-rouge">string?</code> 的比较呢？</p>
+
+<p>判断 <code class="language-plaintext highlighter-rouge">typeof(string) == typeof(string?)</code> 是不是相同的？</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="n">System</span><span class="p">.</span><span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">).</span><span class="n">FullName</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">?).</span><span class="n">FullName</span><span class="p">);</span>
+            <span class="n">Console</span><span class="p">.</span><span class="nf">WriteLine</span><span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">)</span> <span class="p">==</span> <span class="k">typeof</span><span class="p">(</span><span class="kt">string</span><span class="p">?));</span>
+</code></pre></div></div>
+
+<p>其实在 C# 8.0 的 <code class="language-plaintext highlighter-rouge">string?</code> 是糖也就是实际不存在的，对于 <code class="language-plaintext highlighter-rouge">string?</code> 的类和 string 相同</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">System</span><span class="p">.</span><span class="n">String</span>
+<span class="n">System</span><span class="p">.</span><span class="n">String</span>
+<span class="n">True</span>
+</code></pre></div></div>
+
+<p><a href="https://blog.lindexi.com/post/VisualStudio-2019-%E5%B0%9D%E8%AF%95%E4%BD%BF%E7%94%A8-C-8.0-%E6%96%B0%E7%9A%84%E6%96%B9%E5%BC%8F.html">VisualStudio 2019 尝试使用 C# 8.0 新的方式</a></p>
+
+<p><img src="http://image.acmx.xyz/lindexi%2F2019416101647227" alt="" /></p>
+
+:ET

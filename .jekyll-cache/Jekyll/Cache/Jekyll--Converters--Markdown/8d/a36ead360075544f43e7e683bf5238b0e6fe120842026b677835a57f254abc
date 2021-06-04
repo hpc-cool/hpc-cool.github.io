@@ -1,0 +1,65 @@
+I"�<p>在 Xamarin 中可以通过 CornerRadius 设置按钮使用圆角</p>
+
+<!--more-->
+
+<!-- CreateTime:2020/3/1 10:35:13 -->
+<!-- 标签：Xamarin -->
+
+<p>在 Xamarin 中可以方便进行样式定义或不进行定义样式只修改属性而改变外观，如按钮的圆角可以通过 CornerRadius 属性设置</p>
+
+<p>按钮使用圆角时，如果更改边框的颜色建议同时更改边框的宽度和边框颜色，在不同的平台下默认的样式不相同的，如果想要保持各个平台统一的外观，虽然这样不是好主意，那么请设置固定的值，而不是采用默认值</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;Button</span> <span class="na">Font=</span><span class="s">"Large"</span> <span class="na">Text=</span><span class="s">"选取PPT文件"</span> <span class="na">HorizontalOptions=</span><span class="s">"Center"</span>
+                    <span class="na">CornerRadius=</span><span class="s">"5"</span>
+                    <span class="na">BackgroundColor=</span><span class="s">"Transparent"</span>
+                    <span class="na">BorderColor=</span><span class="s">"Aquamarine"</span> 
+                    <span class="na">BorderWidth=</span><span class="s">"2"</span><span class="nt">/&gt;</span>
+</code></pre></div></div>
+
+<p>此时就创建了一个圆角的按钮，注意需要设置边框时同时设置 BorderColor 和 BorderWidth 两个值。因为在 UWP 中 BorderWidth 是 2 而在 Android 中是 0 也就是此时如果干掉了背景颜色，将看不到按钮的圆角</p>
+
+<!-- ![](image/Xamarin.Forms 按钮样式 圆角按钮/Xamarin.Forms 按钮样式 圆角按钮0.png) -->
+
+<p><img src="http://image.acmx.xyz/lindexi%2F202022318525421.jpg" alt="" /></p>
+
+<p>设置按钮背景透明可以通过设置 BackgroundColor 为 Transparent 属性</p>
+
+<p>如果需要让按钮点击时呈现有趣的效果，可以通过 VisualStateManager 的方式定义</p>
+
+<div class="language-xml highlighter-rouge"><div class="highlight"><pre class="highlight"><code>            <span class="nt">&lt;Button</span> <span class="na">Font=</span><span class="s">"Large"</span> <span class="na">Text=</span><span class="s">"选取PPT文件"</span> <span class="na">HorizontalOptions=</span><span class="s">"Center"</span>
+                    <span class="na">CornerRadius=</span><span class="s">"5"</span>
+                    <span class="na">BackgroundColor=</span><span class="s">"Transparent"</span>
+                    <span class="na">BorderColor=</span><span class="s">"Aquamarine"</span> 
+                    <span class="na">BorderWidth=</span><span class="s">"2"</span><span class="nt">&gt;</span>
+                <span class="nt">&lt;VisualStateManager.VisualStateGroups&gt;</span>
+                    <span class="nt">&lt;VisualStateGroup</span> <span class="na">x:Name=</span><span class="s">"CommonStates"</span><span class="nt">&gt;</span>
+                        <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Normal"</span><span class="nt">&gt;</span>
+                            <span class="nt">&lt;VisualState.Setters&gt;</span>
+                                <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Scale"</span>
+                                        <span class="na">Value=</span><span class="s">"1"</span> <span class="nt">/&gt;</span>
+                            <span class="nt">&lt;/VisualState.Setters&gt;</span>
+                        <span class="nt">&lt;/VisualState&gt;</span>
+
+                        <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Pressed"</span><span class="nt">&gt;</span>
+                            <span class="nt">&lt;VisualState.Setters&gt;</span>
+                                <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Scale"</span>
+                                        <span class="na">Value=</span><span class="s">"0.6"</span> <span class="nt">/&gt;</span>
+                            <span class="nt">&lt;/VisualState.Setters&gt;</span>
+                        <span class="nt">&lt;/VisualState&gt;</span>
+
+                        <span class="nt">&lt;VisualState</span> <span class="na">x:Name=</span><span class="s">"Released"</span><span class="nt">&gt;</span>
+                            <span class="nt">&lt;VisualState.Setters&gt;</span>
+                                <span class="nt">&lt;Setter</span> <span class="na">Property=</span><span class="s">"Scale"</span>
+                                        <span class="na">Value=</span><span class="s">"2"</span> <span class="nt">/&gt;</span>
+                            <span class="nt">&lt;/VisualState.Setters&gt;</span>
+                        <span class="nt">&lt;/VisualState&gt;</span>
+                    <span class="nt">&lt;/VisualStateGroup&gt;</span>
+                <span class="nt">&lt;/VisualStateManager.VisualStateGroups&gt;</span>
+            <span class="nt">&lt;/Button&gt;</span>
+</code></pre></div></div>
+
+<p>这个项目所有代码放在 <a href="https://github.com/lindexi/lindexi_gd/tree/9fdafab123302ae7d7a2c9aecb590109218c4e72/JardalllojoHayeajemjuli">github</a> 欢迎小伙伴访问</p>
+
+<p>另外推荐小伙伴的系列博客：<a href="https://www.cnblogs.com/peterYong/p/11589553.html">Xamarin移动开发之路 - peterYong - 博客园</a></p>
+
+:ET

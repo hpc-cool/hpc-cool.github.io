@@ -1,0 +1,28 @@
+I"?<h2 id="bitlocker">bitlocker</h2>
+<p>Windows BitLocker驱动器加密通过加密Windows操作系统卷上存储的所有数据可以更好地保护计算机中的数据。BitLocker使用TPM帮助保护Windows操作系统和用户数据，并帮助确保计算机即使在无人参与、丢失或被盗的情况下也不会被篡改。 BitLocker还可以在没有TPM的情况下使用。</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/2/13 17:23:03 -->
+
+<div id="toc"></div>
+
+<p>win10有新的方法，我们可以使用新的。</p>
+
+<p>我们可以在计算机管理，压缩磁盘，分区一个几百M的分区，然后使用Bitlocker锁。</p>
+
+<p>但是在我们解锁后，直到重启才可以锁上。</p>
+
+<p>那么在我们离开的时候如何锁上。</p>
+
+<h2 id="手动锁">手动锁</h2>
+
+<p>自动锁Bitlocker是不能的，但是我们可以有简单方法去锁</p>
+
+<p>建立<code class="language-plaintext highlighter-rouge">*.bat</code></p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">manage</span><span class="p">-</span><span class="n">bde</span><span class="p">.</span><span class="n">exe</span> <span class="err">盘符</span><span class="p">:</span> <span class="p">-</span><span class="k">lock</span>
+</code></pre></div></div>
+<p>管理员运行</p>
+
+:ET

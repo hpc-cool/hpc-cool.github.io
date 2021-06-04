@@ -1,0 +1,47 @@
+I"�<p>本文说的是进行网络中异步界面出现的错误，可能带有一定的主观性和局限性，说的东西可能不对或者不符合每个人的预期。如果觉得我有讲的不对的，就多多包含，或者直接关掉这篇文章，但是请勿生气或者发怒吐槽，可以在我博客评论 http://blog.csdn.net/lindexi_gd</p>
+
+<!--more-->
+
+<!-- CreateTime:2018/8/10 19:16:53 -->
+
+<div id="toc"></div>
+
+<p>我们可以在修改属性使用</p>
+
+<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="k">public</span> <span class="k">abstract</span> <span class="k">class</span> <span class="nc">NotifyPropertyChangedBase</span> <span class="p">:</span> <span class="n">INotifyPropertyChanged</span>
+    <span class="p">{</span>
+        <span class="k">public</span> <span class="k">event</span> <span class="n">PropertyChangedEventHandler</span> <span class="n">PropertyChanged</span><span class="p">;</span>
+
+        <span class="k">protected</span> <span class="k">async</span> <span class="k">void</span> <span class="nf">OnPropertyChanged</span><span class="p">([</span><span class="n">CallerMemberName</span><span class="p">]</span> <span class="kt">string</span> <span class="n">propName</span> <span class="p">=</span> <span class="s">""</span><span class="p">)</span>
+        <span class="p">{</span>
+            <span class="k">await</span> <span class="n">Window</span><span class="p">.</span><span class="n">Current</span><span class="p">.</span><span class="n">Dispatcher</span><span class="p">.</span><span class="nf">RunAsync</span><span class="p">(</span><span class="n">CoreDispatcherPriority</span><span class="p">.</span><span class="n">High</span><span class="p">,</span>
+                <span class="p">()</span> <span class="p">=&gt;</span>
+                <span class="p">{</span>
+                    <span class="n">PropertyChanged</span><span class="p">?.</span><span class="nf">Invoke</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="k">new</span> <span class="nf">PropertyChangedEventArgs</span><span class="p">(</span><span class="n">propName</span><span class="p">));</span>
+                <span class="p">});</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+</code></pre></div></div>
+
+<p>在老周博客：http://www.cnblogs.com/tcjiaan/p/5511419.html</p>
+
+<p>但是我发现在 HttpRequest 中的函数出发了 OnPropertyChanged，这时发现 Current is null</p>
+
+<p>并且：public event PropertyChangedEventHandler PropertyChanged;中 PropertyChanged 也是null</p>
+
+<p>老周：由于线程出现嵌套，在Get请求回调的时候，窗口线程已由系统调整。就按你的做法，用主视图层上的调度对象来调用，应用程序级别的视图线程一般不会改变。</p>
+
+<p>要么改用HttpClient类的异步方法来请求，是Windows.Web.Http下面的类，非.net core类型</p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017718194348.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F201771819441.jpg" alt="" /></p>
+
+<p><img src="http://image.acmx.xyz/34fdad35-5dfe-a75b-2b4b-8c5e313038e2%2F2017718194411.jpg" alt="" /></p>
+
+<p>简单方法：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =&gt; {  });
+</code></pre></div></div>
+
+:ET

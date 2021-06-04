@@ -1,0 +1,3 @@
+I"<p>win10 可以全屏软件或窗口，窗口有一般、最小化、最大化。我们有新的API设置我们软件是全屏，是窗口。我们可以使用<code class="language-plaintext highlighter-rouge">ApplicationView</code>让我们软件全屏或取消。</p>
+
+:ET

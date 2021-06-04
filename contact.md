@@ -6,3 +6,5 @@ permalink: /contact
 ---
 
 ## 联系我们
+
+liuyao@cc.ecnu.edu.cn

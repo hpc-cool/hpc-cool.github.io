@@ -53,7 +53,7 @@ permalink: /members
 
 <center><h2><strong>团队成员</strong></h2></center>
 
-<center>焦鹏龙：实验室学术担当，擅长并行计算程序性能建模与调优。<center>
+<center>焦鹏龙：实验室学术担当，擅长并行计算程序性能建模与调优。</center>
 
 <center>赵景元：实验室颜值担当，擅长并行计算程序性能测量与建模。</center>
 
@@ -63,7 +63,7 @@ permalink: /members
 
 <center>苏巨亮：稳重大气，擅长Git技术与异构计算。</center>
 
-<center>徐柴迪：<center>
+<center>徐柴迪：</center>
 
 <center>姜云桥：</center>
 

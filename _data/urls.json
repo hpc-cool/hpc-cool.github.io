@@ -6,22 +6,17 @@
     "layout": "post"
   },
   {
-    "text": "导师介绍",
-    "url": "/teacher",
-    "icon": "fa-commenting"
-  },
-  {
-    "text": "成员介绍",
+    "text": "团队介绍",
     "url": "/members",
     "icon": "fa-group"
   },
   {
-    "text": "科研展示",
+    "text": "成果展示",
     "url": "/research",
     "icon": "fa-github"
   },
   {
-    "text": "实验室剪影",
+    "text": "活动剪影",
     "url": "/photo",
     "icon": "fa-info"
   },

@@ -31,7 +31,8 @@ permalink: /research
 - Xin Liu, Jingyuan Zhao, Lin Zheng, Liying Li, Li Liu, Penglong Jiao, **Yao Liu\***. Improving NSGA-II for Multi-constrained QoS Routing[J]. Journal of Circuits, Systems, and Computers, 2021 (Accepted). (SCI)
 - **Yao Liu**, Li Liu, Mengtao Hu, Wei Wang, Wei Xue, Qingting Zhu. Performance Modeling of Stencil Computation on SW26010 Processors[C]. ICA3PP 2020. Springer, 2020:386-400.（CCF C）
 - Mengtao Hu, Li Liu, Wei Wang, **Yao Liu\***, APENAS: An Asynchronous Parallel Evolution Based Multi-objective Neural Architecture Search[C]. ISPA 2020. IEEE, 2020:153-159.（CCF C）
-- **刘垚**, 郑琳, 郑凯. 基于申威众核处理器的NSGA-Ⅱ并行和优化方法[J]. 计算机应用研究, 2020, 37(1):96-101.（CSCD）·**Yao Liu**, Penglong Jiao, Wei Wang, Qingting Zhu. An Exploration of the Ecosystem of General Education in Programming[C]. FICC 2020. Springer, 2020:404-416. (EI)
+- **刘垚**, 郑琳, 郑凯. 基于申威众核处理器的NSGA-Ⅱ并行和优化方法[J]. 计算机应用研究, 2020, 37(1):96-101.（CSCD）
+- **Yao Liu**, Penglong Jiao, Wei Wang, Qingting Zhu. An Exploration of the Ecosystem of General Education in Programming[C]. FICC 2020. Springer, 2020:404-416. (EI)
 - **Yao Liu**, Qidan Liao, Jun Sun, Mengtao Hu, Li Liu, Lin Zheng. A Heterogeneous Parallel Genetic Algorithm Based on SW26010 Processors[C]. HPCC 2019. IEEE, 2019:54-61.（CCF C）
 - **Yao Liu**, Jun Sun, Qing Yao, Su Wang, Kai Zheng, Yan Liu. A Scalable Heterogeneous Parallel SOM Based on MPI/CUDA[C]. ACML 2018. PMLR, 2018:264-279.（CCF C）
 - **Yao Liu**, Ruixiang Zhao, Kai Zheng, Su Wang, Yan Liu, Huanxue Shen, Qianhao Zhou, A Hybrid Parallel Genetic Algorithm with Dynamic Migration Strategy Based on Sunway Many-Core Processor[C]. HPCCWS 2017. IEEE, 2017:9-15.（EI）

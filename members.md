@@ -11,7 +11,7 @@ permalink: /members
 
 <h3><strong>个人简介</strong></h3>
 
-&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; 现为数据科学与工程学院高级工程师、硕士生导师，CCF高级会员；研究方向为并行计算、计算机网络技术；主持及参与了国家级、省部级项目20余项；在并行计算领域顶级学术期刊和CCF推荐重要学术会议和期刊上发表论文30余篇，申请发明专利10余项，取得软件著作权20余项，编写教材10余部；积极指导竞赛，数十次取得国家级、省部级大奖；曾被评为中国计算机设计大赛优秀指导教师、华东师范大学优秀任课教师、华东师范大学实践创新优秀指导教师。
+&nbsp; &nbsp;&nbsp;&nbsp; &nbsp; 刘垚老师为华东师范大学数据科学与工程学院高级工程师、硕士生导师，CCF高级会员；研究方向包括了并行计算、计算教育学、计算机网络技术等；主持及参与了国家级、省部级项目20余项；在并行计算领域顶级学术期刊和CCF推荐重要学术会议和期刊上发表论文30余篇，申请发明专利10余项，取得软件著作权20余项，编写教材10余部；积极指导竞赛，数十次取得国家级、省部级大奖；曾被评为中国计算机设计大赛优秀指导教师、华东师范大学优秀任课教师、华东师范大学实践创新优秀指导教师。
 
 <br/>
 
@@ -51,25 +51,31 @@ permalink: /members
 
 <br/>
 
-<center><h2><strong>在读学生</strong></h2></center>
+<center><h2><strong>团队成员</strong></h2></center>
 
-<center><h3><strong>2019级</strong></h3></center>
+<center>焦鹏龙：实验室学术担当，擅长并行计算程序性能建模与调优。<center>
 
-<center>焦鹏龙<center>
+<center>赵景元：实验室颜值担当，擅长并行计算程序性能测量与建模。</center>
 
-<center>赵景元</center>
+<center>张忆莲：实验室小公主，擅长性能建模与网站开发。</center>
 
-<br/>
+<center>樊树伟：自信开朗，擅长Git技术与网站开发。</center>
 
-<center><h3><strong>2020级</strong></h3></center>
+<center>苏巨亮：稳重大气，擅长Git技术与异构计算。</center>
 
-<center>张忆莲</center>
+<center>徐柴迪：<center>
 
-<center>樊树伟</center>
+<center>姜云桥：</center>
 
-<center>苏巨亮</center>
+<center>徐燚：</center>
 
+<center>周成义：</center>
 
+<center>汪家伟：</center>
+
+<center>罗昌：</center>
+
+<center>胡尊斌：</center>
 
 <br/>
 <br/>

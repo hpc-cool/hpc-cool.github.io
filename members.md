@@ -31,6 +31,8 @@ permalink: /members
 
 - 并行计算
 
+- 计算教育学
+
 - 计算机网络技术 
 
 <br/>
@@ -52,6 +54,8 @@ permalink: /members
 <br/>
 
 <center><h2><strong>团队成员</strong></h2></center>
+
+<br/>
 
 - 焦鹏龙：实验室学术担当，擅长并行程序性能建模与调优。
 

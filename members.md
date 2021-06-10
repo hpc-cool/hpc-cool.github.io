@@ -53,29 +53,29 @@ permalink: /members
 
 <center><h2><strong>团队成员</strong></h2></center>
 
-<center>焦鹏龙：实验室学术担当，擅长并行计算程序性能建模与调优。</center>
+- 焦鹏龙：实验室学术担当，擅长并行计算程序性能建模与调优。
 
-<center>赵景元：实验室颜值担当，擅长并行计算程序性能测量与建模。</center>
+- 赵景元：实验室颜值担当，擅长并行计算程序性能测量与建模。
 
-<center>张忆莲：实验室小公主，擅长性能建模与网站开发。</center>
+- 张忆莲：实验室小公主，擅长性能建模与网站开发。
 
-<center>樊树伟：自信开朗，擅长Git技术与网站开发。</center>
+- 樊树伟：自信开朗，擅长Git技术与网站开发。
 
-<center>苏巨亮：稳重大气，擅长Git技术与异构计算。</center>
+- 苏巨亮：稳重大气，擅长Git技术与异构计算。
 
-<center>徐柴迪：</center>
+- 徐柴迪：
 
-<center>姜云桥：</center>
+- 姜云桥：
 
-<center>徐燚：</center>
+- 徐燚：
 
-<center>周成义：</center>
+- 周成义：
 
-<center>汪家伟：</center>
+- 汪家伟：
 
-<center>罗昌：</center>
+- 罗昌：
 
-<center>胡尊斌：</center>
+- 胡尊斌：
 
 <br/>
 <br/>

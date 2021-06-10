@@ -5,6 +5,14 @@ display_title: Cool-Lab
 permalink: /contact
 ---
 
-## 联系我们
+<center><h2><strong>联系我们</strong></h2></center>
 
-liuyao@cc.ecnu.edu.cn
+- **联系电话：**021-62233794
+
+  <br/>
+
+- **电子邮箱：**liuyao@cc.ecnu.edu.cn
+
+  <br/>
+
+- **实验室地址：**上海市中山北路3663号华东师范大学中北校区

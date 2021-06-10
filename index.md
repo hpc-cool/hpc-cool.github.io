@@ -5,6 +5,6 @@ display_title: Cool-Lab
 permalink: /index
 ---
 
-# 首页
+<center><h1>欢迎来到COOL-LAB实验室！</h1></center>
 
-这里是首页...
+<center><h2>Welcome to the Cool Lab ~</h2></center>

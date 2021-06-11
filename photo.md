@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 照片展示
-display_title: Cool-LAB
+display_title: Cool-Lab
 permalink: /photo
 ---
 

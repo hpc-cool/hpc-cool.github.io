@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 首页
-display_title: Cool-LAB
+display_title: Cool-Lab
 permalink: /index
 ---
 

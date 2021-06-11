@@ -7,6 +7,8 @@ permalink: /research
 
 <center><h2><strong>近年主要科研项目</strong></h2></center>
 
+<br/>
+
 - 科技部，国家重点专项，2020YFA0607902，发展通用的地球系统模式高效并行计算框架，2020-11至2025-3。
 - 无锡恒鼎超级计算中心有限公司，企业横向，15903-412312-20138，不确定性分析子系统项目，2020-08至2021-06。
 - 教育部，产学合作协同育人-新工科建设项目（A类），201902146019，人工智能时代基于鲲鹏生态的并行计算系统课程体系建设与实践，2020-04至2021-02。
@@ -20,6 +22,8 @@ permalink: /research
 <br/>
 
 <center><h2><strong>近年主要学术论文</strong></h2></center>
+
+<br/>
 
 - Xin Liu, Jun Sun, Lin Zheng,Su Wang, Yao Liu\*, Tongquan Wei*. Parallelization and Optimization of NSGA-II on Sunway TaihuLight System[J]. IEEE Transactions on Parallel and Distributed Systems, 2021, 32(4):975-987.（CCF A）
 - Xin Liu, Jingyuan Zhao, Lin Zheng, Liying Li, Li Liu, Penglong Jiao, Yao Liu\*. Improving NSGA-II for Multi-constrained QoS Routing[J]. Journal of Circuits, Systems, and Computers, 2021 (Accepted). (SCI)
@@ -41,6 +45,8 @@ permalink: /research
 
 <center><h2><strong>近年主要教材书籍</strong></h2></center>
 
+<br/>
+
 - 刘垚，宋沂鹏，费媛等，人工智能基础，华东师范大学出版社，2021.2
 
 - 王伟，刘垚，数据科学与工程导论，华东师范大学出版社，2021.1
@@ -59,6 +65,7 @@ permalink: /research
 
 <center><h2><strong>近年主要发明专利</strong></h2></center>
 
+<br/>
 
 - 刘垚，赵景元，薛巍等，一种应用于并行科学计算程序的函数运行时间测量方法，2021.2，202110141179.2，实质审查
 
@@ -84,6 +91,7 @@ permalink: /research
 
 <center><h2><strong>近年主要软件著作权</strong></h2></center>
 
+<br/>
 
 - 基于神威系统的深度神经网络自动学习软件v1.0，2019SR1404831
 

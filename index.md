@@ -13,7 +13,7 @@ permalink: /index
 
 - 基于国产众核平台，团队开展了诸多国产众核适应性、人工智能应用等方面的研究，研制的多套异构并行软件具有理想的加速和扩展性，在多约束路径规划、热带气旋强度评估等多个实际应用中取得了良好效果。
 <div align=center>
-<img src="https://user-images.githubusercontent.com/85250295/121676168-e8165a80-cae6-11eb-98fa-8c0b64727cec.png" width = "500" height = "300"/>
+<img src="https://user-images.githubusercontent.com/85250295/121687448-f23f5580-caf4-11eb-8552-3d586f4d3519.png" width = "500" height = "300"/>
 </div>
 <br/>
 
@@ -21,8 +21,9 @@ permalink: /index
 
 - 面向大规模科学计算应用，团队开展了性能建模和性能调优的研究，研制的自动性能建模和调优工具对预测和改善大规模科学计算应用的运行性能具有显著效果。
 <div align=center>
-<img src="https://user-images.githubusercontent.com/85250295/121676943-d6818280-cae7-11eb-8b88-aec5806d1fcc.png" width = "300" height = "300"/>
+<img src="https://user-images.githubusercontent.com/85250295/121687915-7a255f80-caf5-11eb-87e2-220934429e8a.png" width = "300" height = "300"/>
 </div>
+
 <br/>
 
 ****

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 成果展示
-display_title: Cool-LAB
+display_title: Cool-Lab
 permalink: /research
 ---
 

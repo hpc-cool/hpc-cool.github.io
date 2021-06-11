@@ -17,5 +17,7 @@ permalink: /index
 
 - 面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="http://gitea.shuishan.net.cn" target="_blank">水杉码园</a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。
 
-
-
+<br />
+<br />
+欢迎加盟Cool-Lab团队、欢迎与Cool-Lab合作。
+<br />

@@ -15,18 +15,25 @@ permalink: /index
 <div align=center>
 <img src="https://user-images.githubusercontent.com/85250295/121676168-e8165a80-cae6-11eb-98fa-8c0b64727cec.png" width = "500" height = "300"/>
 </div>
+<br/>
+
+****
 
 - 面向大规模科学计算应用，团队开展了性能建模和性能调优的研究，研制的自动性能建模和调优工具对预测和改善大规模科学计算应用的运行性能具有显著效果。
 <div align=center>
 <img src="https://user-images.githubusercontent.com/85250295/121676943-d6818280-cae7-11eb-8b88-aec5806d1fcc.png" width = "300" height = "300"/>
 </div>
+<br/>
+
+****
 
 - 面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="http://gitea.shuishan.net.cn" target="_blank">水杉码园</a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。
 ![image](https://user-images.githubusercontent.com/85250295/121675995-b0a7ae00-cae6-11eb-97d6-dec7e9cd4638.png)
 
+<br/>
 
-
-<br />
-<br />
+****
 欢迎加盟Cool-Lab团队、欢迎与Cool-Lab合作。
+<br />
+<br />
 <br />

@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 联系我们
-display_title: Cool-LAB
+display_title: Cool-Lab
 permalink: /contact
 ---
 

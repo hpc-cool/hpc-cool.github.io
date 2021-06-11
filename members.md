@@ -46,7 +46,6 @@ permalink: /members
 - 胡尊斌：
 
 <br/>
-<br/>
 
 <center><h2><strong>校友</strong></h2></center>
 

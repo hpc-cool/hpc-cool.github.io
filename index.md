@@ -1,4 +1,3 @@
-![微信图片_20210611205005](https://user-images.githubusercontent.com/85250295/121762115-7d0c6880-cb66-11eb-9e57-1bf06950c4fa.jpg)
 ---
 layout: page
 title: 首页

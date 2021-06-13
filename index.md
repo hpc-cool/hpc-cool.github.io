@@ -25,9 +25,6 @@ permalink: /index
 </tr>
 </table>
 
-![微信图片_20210613212954](https://user-images.githubusercontent.com/85250295/121809613-0a97a780-cc90-11eb-9886-44d853f5b23f.png)
-
-
 
 <br />
 

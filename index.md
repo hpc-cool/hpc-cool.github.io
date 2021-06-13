@@ -8,11 +8,11 @@ permalink: /index
 <center><h1>欢迎来到Cool-Lab</h1></center>
 
 <br />
-Cool-Lab 团队长期从事并行计算、异构计算、智能计算及相关教育领域的研究，在高性能计算与计算教育学方面有着坚实的基础。
+<strong>Cool-Lab 团队长期从事并行计算、异构计算、智能计算及相关教育领域的研究，在高性能计算与计算教育学方面有着坚实的基础。</strong>
 
 <table frame=void >
 <tr style="border: 0px; margin: 0; padding: 0px 0px;">
-	<td bgcolor="#FFFFFF" style="border: 0px; margin: 0; padding: 0px 0px;" width=100px height=100px ><img src="https://user-images.githubusercontent.com/85250295/121808219-0b2d3f80-cc8a-11eb-9a4d-6e1fe6211cb2.jpg" width=100px height=100px /></td>
+	<td bgcolor="#FFFFFF" style="border: 0px; margin: 0; padding: 0px 0px;" width=100px height=100px ><img src="https://user-images.githubusercontent.com/85250295/121809214-855fc300-cc8e-11eb-844d-3caf01ba4841.png" width=100px height=100px /></td>
 	<td bgcolor="#FFFFFF"  style="border: 0px; "> &nbsp; &nbsp; &nbsp; &nbsp; 基于众核/多核平台，团队开展了国产众核适应性、人工智能应用等方面的研究，研制的多套异构并行软件具有理想的加速和扩展性，在多约束路径规划、热带气旋强度评估等多个实际应用中取得了良好效果。</td>
 </tr>
 <tr style="border: 0px; margin: 0; padding: 0px 0px;">
@@ -25,10 +25,11 @@ Cool-Lab 团队长期从事并行计算、异构计算、智能计算及相关�
 </tr>
 </table>
 
+
 <br />
 
 ****
-欢迎加入Cool-Lab
+<strong>欢迎加入Cool-Lab~</strong>
 <br />
 <br />
 <br />

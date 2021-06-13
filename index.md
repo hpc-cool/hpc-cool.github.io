@@ -12,7 +12,7 @@ Cool-Lab 团队长期从事并行计算、异构计算、智能计算及相关�
 
 <table frame=void >
 <tr style="border: 0px; margin: 0; padding: 0px 0px;">
-	<td bgcolor="#FFFFFF" style="border: 0px; margin: 0; padding: 0px 0px;"><img src="https://user-images.githubusercontent.com/85250295/121808219-0b2d3f80-cc8a-11eb-9a4d-6e1fe6211cb2.jpg" width=100px height=100px /></td>
+	<td bgcolor="#FFFFFF" style="border: 0px; margin: 0; padding: 0px 0px;" width=100px height=100px ><img src="https://user-images.githubusercontent.com/85250295/121808219-0b2d3f80-cc8a-11eb-9a4d-6e1fe6211cb2.jpg" width=100px height=100px /></td>
 	<td bgcolor="#FFFFFF"  style="border: 0px; "> &nbsp; &nbsp; &nbsp; &nbsp; 基于众核/多核平台，团队开展了国产众核适应性、人工智能应用等方面的研究，研制的多套异构并行软件具有理想的加速和扩展性，在多约束路径规划、热带气旋强度评估等多个实际应用中取得了良好效果。</td>
 </tr>
 <tr style="border: 0px; margin: 0; padding: 0px 0px;">
@@ -24,16 +24,6 @@ Cool-Lab 团队长期从事并行计算、异构计算、智能计算及相关�
 	<td bgcolor="#FFFFFF"  style="border: 0px; "> &nbsp; &nbsp; &nbsp; &nbsp; 面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="http://gitea.shuishan.net.cn" target="_blank">水杉码园</a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。</td>
 </tr>
 </table>
-
-
-
-<br />
-
-
-<br />
-
----
-
 
 <br />
 

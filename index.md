@@ -12,7 +12,7 @@ permalink: /index
 
 <table frame=void >
 <tr style="border: 0px; margin: 0; padding: 0px 0px;">
-	<td bgcolor="#FFFFFF" style="border: 0px; margin: 0; padding: 0px 0px;" width=100px height=100px ><img src="https://user-images.githubusercontent.com/85250295/121809214-855fc300-cc8e-11eb-844d-3caf01ba4841.png" width=100px height=100px /></td>
+	<td bgcolor="#FFFFFF" style="border: 0px; margin: 0; padding: 0px 0px;" width=100px height=100px ><img src="https://user-images.githubusercontent.com/85250295/121809541-c1dfee80-cc8f-11eb-97d9-71d4afb0f5bd.png" width=100px height=100px /></td>
 	<td bgcolor="#FFFFFF"  style="border: 0px; "> &nbsp; &nbsp; &nbsp; &nbsp; 基于众核/多核平台，团队开展了国产众核适应性、人工智能应用等方面的研究，研制的多套异构并行软件具有理想的加速和扩展性，在多约束路径规划、热带气旋强度评估等多个实际应用中取得了良好效果。</td>
 </tr>
 <tr style="border: 0px; margin: 0; padding: 0px 0px;">

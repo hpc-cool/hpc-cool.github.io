@@ -11,6 +11,8 @@ permalink: /index
 
 <strong>Cool-Lab 团队长期从事并行计算、异构计算、智能计算及相关教育领域的研究，在高性能计算与计算教育学方面有着坚实的基础。</strong>
 
+****
+
 <table frame=void >
 <tr style="border: 0px;">
 	<td bgcolor="#FFFFFF" style="border: 0px; margin: 0; padding: 0px 0px;" width=100px height=100px ><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/taihulight.jpg" width=100px height=100px /></td>
@@ -32,9 +34,7 @@ permalink: /index
 </tr>
 </table>
 
-
-<br />
-
 ****
+
 <strong>欢迎加入Cool-Lab~</strong>
 <br />

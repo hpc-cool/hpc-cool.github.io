@@ -4,8 +4,8 @@ title: 照片展示
 display_title: Cool-Lab
 permalink: /photo
 ---
-
-<center><strong>2021年春实验室全体成员研讨&团建</strong></center>
+</br>
+<center><h2>2021年春实验室全体成员研讨&团建</h2></center>
 <img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/sharezhao.png" align="center" />
 <center><strong>图：毕业学生赵黎阳分享学习心得</strong></center>
 <img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/shareliu.png" align="center" />

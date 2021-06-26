@@ -45,6 +45,7 @@ defaults:
       path: "_photos"
       type: "photos"
     values:
+      layout: "post"
       author: "shuwei"
       permalink: "/photos/:title.html"
   - scope:

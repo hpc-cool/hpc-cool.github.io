@@ -5,6 +5,9 @@ display_title: Cool-Lab
 permalink: /photo
 ---
 <br/>
+
+<a href="/photo/hello.html">试验链接</a>
+
 <center><h2>2021年春实验室全体成员研讨&团建</h2></center>
 <br/>
 <img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/sharezhao.png" align="center" />

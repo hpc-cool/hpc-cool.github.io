@@ -10,7 +10,7 @@ permalink: /photo
 <br/>
 <img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/heyin.jpg" align="center" />
 
-<a href="photos/20210620.html"  style='float:right; text-align: right;'>>>>活动详情</a>
+<a href="photos/20210620.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 <br/>
 <br/>
 <br/>

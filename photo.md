@@ -25,7 +25,7 @@ permalink: /photo
 
 <a href="/photo/hello.html">试验链接2</a>
 
-[Name of Link]({% post_url /photo/2010-07-21-test.md %})
+[Name of Link]({% post_url /photo/2010-07-21-test %})
 
 <br/>
 <br/>

@@ -27,8 +27,6 @@ permalink: /photo
 
 [Link to a post]({% link _photos/hello.md})
 
-{% link _posts/2018-07-24-hello.md %}
-
 <br/>
 <br/>
 <br/>

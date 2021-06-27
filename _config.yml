@@ -42,13 +42,6 @@ collections:
 # Content Template
 defaults:
   - scope:
-      path: "_photos"
-      type: "photos"
-    values:
-      layout: "post"
-      author: "shuwei"
-      permalink: "/photos/:title.html"
-  - scope:
       path: "_posts"
       type: "posts"
     values:

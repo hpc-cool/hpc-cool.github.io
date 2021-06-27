@@ -55,3 +55,10 @@ defaults:
       layout: "post"
       author: "DaSE_HPC"
       permalink: "/article/:title.html"
+  - scope:
+      path: "_photos"
+      type: "photos"
+    values:
+      layout: "post"
+      author: "DaSE_HPC"
+      permalink: "/photo/:title.html"

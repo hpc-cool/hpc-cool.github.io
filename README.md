@@ -11,4 +11,4 @@
 
 参考实验室网站：http://lsi.zju.edu.cn/25623/list.htm
 
-jekyllrb文档：https://jekyllrb.com/docs/
+jekyllrb静态网页生成说明文档：https://jekyllrb.com/docs/

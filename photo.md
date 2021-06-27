@@ -21,7 +21,7 @@ permalink: /photo
 <img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/jucan2.jpg" align="center" />
 <center><strong>图：秋林阁聚餐</strong></center>
 
-<a href="/photos/hello.html">试验链接</a>
+<a href="/posts/hello.html">试验链接</a>
 
 
 <br/>

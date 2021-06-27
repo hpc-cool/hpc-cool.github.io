@@ -10,3 +10,5 @@
 模板来源：https://gitee.com/lindexi/lindexi
 
 参考实验室网站：http://lsi.zju.edu.cn/25623/list.htm
+
+jekyllrb文档：https://jekyllrb.com/docs/

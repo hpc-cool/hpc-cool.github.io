@@ -1,7 +1,7 @@
 ---
-layout: posts_by_category
-category: SharpDX
-title: SharpDX 系列
+layout: page
+title: 活动展示
+display_title: Cool-Lab
 permalink: /post/sharpdx
 
 ---

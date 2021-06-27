@@ -23,6 +23,7 @@ permalink: /photo
 
 <a href="/post/hello.html">试验链接</a>
 
+<a href="/photo/hello.html">试验链接2</a>
 
 <br/>
 <br/>

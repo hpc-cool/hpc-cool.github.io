@@ -2,7 +2,6 @@
 layout: page
 title: 照片展示
 display_title: Cool-Lab
-permalink: /photo
 ---
 <br/>
 
@@ -22,6 +21,8 @@ permalink: /photo
 <center><strong>图：秋林阁聚餐</strong></center>
 
 <a href="/post/hello.html">试验链接</a>
+
+<a href="/photo/hello.html">试验链接2</a>
 
 <br/>
 <br/>

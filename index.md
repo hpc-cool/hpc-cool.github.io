@@ -29,7 +29,7 @@ permalink: /index
 <tr style="border: 0px;">
 	<td bgcolor="#FFFFFF"  style="border: 0px; margin: 0; padding: 0px 0px;"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/gitea.png" width=100px height=100px/></td>
 	<td bgcolor="#FFFFFF"  style="border: 0px; margin: 10; padding: 10px 10px; text-indent: 2em;"> 
-		面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="http://gitea.shuishan.net.cn" target="_blank"><strong>水杉码园</strong></a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。
+		面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="https://gitea.shuishan.net.cn" target="_blank"><strong>水杉码园</strong></a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。
 	</td>
 </tr>
 </table>

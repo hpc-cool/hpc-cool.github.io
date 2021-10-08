@@ -52,8 +52,8 @@ permalink: /index
 </div>
 
 <div>
-	<div style="width:100px"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/gitea.png" width="100" height="100"/></div>
-	<div style="width:400px float:left"> 
+	<div style="width:120px;float:left;display:inline;"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/gitea.png" width="100" height="100"/></div>
+	<div style="width:400px;float:left;display:inline;"> 
 		面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="https://gitea.shuishan.net.cn" target="_blank"><strong>水杉码园</strong></a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。
 	</div>
 </div>

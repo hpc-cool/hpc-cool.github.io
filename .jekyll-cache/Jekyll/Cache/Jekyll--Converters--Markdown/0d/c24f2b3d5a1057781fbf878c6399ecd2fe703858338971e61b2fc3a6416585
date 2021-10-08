@@ -1,4 +1,0 @@
-I"v<p>在 win2d 可以通过 CanvasCommandList 定义很多命令，这些命令不是直接渲染到 Canvas 上，而是作为一个缓存。可以将 CanvasCommandList 作为输入，输入到其他的特效或参与其他的渲染。
-特别在用 Win2d 写一个渲染框架的时候，通过 CanvasCommandList 可以实现内部元素容器的偏移和统一的效果</p>
-
-:ET

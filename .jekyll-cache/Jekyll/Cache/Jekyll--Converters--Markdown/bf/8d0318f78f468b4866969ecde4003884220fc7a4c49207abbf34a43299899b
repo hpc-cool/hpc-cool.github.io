@@ -1,3 +1,0 @@
-I"%<p>在 2017 我在社区问了一个问题，如何让 .NET Framework 的 WPF 等程序使用 .NET Native 构建以提升速度。在 2019.06 的时候，强大的微软提供了一个好用的库，支持将 .NET Framework 的桌面应用构建时添加 native images 本机映像支持</p>
-
-:ET

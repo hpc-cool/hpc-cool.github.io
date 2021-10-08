@@ -1,3 +1,0 @@
-I"<p>在 WPF 中，如果在没有开启 Dispatcher 的后台线程里面创建 WriteableBitmap 对象，在 WriteableBitmap 构造函数传入在主线程创建的 BitmapSource 也许就会锁住主线程。本文将通过 WPF 框架源代码告诉大家为什么会锁住主线程</p>
-
-:ET

@@ -1,4 +1,0 @@
-I"�<p>最近看到<a href="https://lindexi.github.io/lindexi/post/WPF-%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%AE%89%E5%85%A8%E4%BB%A3%E7%A0%81%E5%BF%AB%E9%80%9F%E4%BB%8E%E6%95%B0%E7%BB%84%E8%BD%AC-WriteableBitmap.html">WPF 使用不安全代码快速从数组转 WriteableBitmap </a>可以快速从数组转 WriteableBitmap 所以就让他画一些元素，但是发现元素有文字就没法了。
-本文告诉大家如何在 WriteableBitmap 把文字画上去。</p>
-
-:ET

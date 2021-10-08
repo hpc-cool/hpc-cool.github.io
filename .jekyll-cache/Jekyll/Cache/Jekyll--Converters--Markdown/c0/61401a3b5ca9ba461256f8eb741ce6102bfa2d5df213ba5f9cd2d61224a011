@@ -1,3 +1,0 @@
-I"�<p>在使用 Xamarin 开发 Linux 应用的时候，刚开始如果没有弄好 libglib-2.0-0.dll 的依赖库，那么将会在运行的时候，在 Gtk.Application.Init() 这句代码提示找不到这个库</p>
-
-:ET

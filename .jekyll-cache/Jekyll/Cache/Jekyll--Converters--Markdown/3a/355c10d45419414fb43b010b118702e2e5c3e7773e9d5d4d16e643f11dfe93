@@ -1,3 +1,0 @@
-I"<p>在 Unity3d 中会用到从一个游戏对象复制出一个新的游戏物体的方式，如制作射击游戏的子弹等。在 Unity3d 中可以使用 GameObject.Instantiate 的方式从一个 GameObject 里面创建一个和这个 GameObject 一样的对象</p>
-
-:ET

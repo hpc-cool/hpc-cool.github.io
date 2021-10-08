@@ -1,3 +1,0 @@
-I"!<p>在 WPF 里面，默认标题栏的交互相对复杂，如按钮没有设置 WindowChrome.IsHitTestVisibleInChrome 属性为 True 那按钮是拿不到点击事件的。本文来告诉大家按钮 Button 的 IsEnabled 属性对 WindowChrome 的 IsHitTestVisibleInChrome 的影响</p>
-
-:ET

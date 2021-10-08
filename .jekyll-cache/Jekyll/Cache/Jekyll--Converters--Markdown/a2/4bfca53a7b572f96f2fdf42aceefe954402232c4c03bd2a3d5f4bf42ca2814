@@ -1,4 +1,0 @@
-I"�<p>在 2018 年 10 月 13 号参加了 <a href="http://www.csharpkit.com/">张队长</a> 的 <a href="https://www.cnblogs.com/adalovelacer/archive/2018/09/16/9657143.html">Office 365 训练营</a> 学习如何开发 Office 365 插件和 OAuth 2.0 开发，于是我就使用 UWP 尝试使用 Microsoft.Graph 经过了一天的测试终于成功使用发送邮件
-本文告诉大家如何在 UWP 调用 Microsoft.Graph 发送邮件</p>
-
-:ET

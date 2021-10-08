@@ -1,3 +1,0 @@
-I"�<p>在 dotnet framework 4.8 的时候支持调用 GC.GetAllocatedBytesForCurrentThread 获取当前线程分配过的内存大小</p>
-
-:ET

@@ -1,3 +1,0 @@
-I"�<p>在 Win10 下，没有 WISPTIS 服务进程，和 win7 不相同。但是 WPF 依然通过 PENIMC 从 COM 获取实时触摸消息，那么 WPF 是从哪里获取</p>
-
-:ET

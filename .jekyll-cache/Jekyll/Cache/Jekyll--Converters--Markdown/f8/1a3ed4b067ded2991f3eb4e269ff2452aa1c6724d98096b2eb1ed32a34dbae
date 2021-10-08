@@ -1,5 +1,0 @@
-I"<p>如果在 git 准备下载仓库的时候，出现下面的错误
-cannot lock ref ‘refs/remotes/origin/xx’:’refs/remotes/origin/xx/xx’ exists cannot create ‘ref/remotes/origin/xx’
-那么请看本文，本文提供了一个解决方法。</p>
-
-:ET

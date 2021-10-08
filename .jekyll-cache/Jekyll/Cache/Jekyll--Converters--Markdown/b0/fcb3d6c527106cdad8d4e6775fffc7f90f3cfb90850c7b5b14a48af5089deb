@@ -1,4 +1,0 @@
-I"=<p>有一些库的设计是需要传入一个 BitmapImage 图片，但是我需要从界面代码创建图片，我没有文件，如何通过 DrawingVisual 画出的控件转换 BitmapImage 传给库？
-需要将 DrawingVisual 转为 RenderTargetBitmap 然后将 RenderTargetBitmap 转为 BitmapImage 才可以</p>
-
-:ET

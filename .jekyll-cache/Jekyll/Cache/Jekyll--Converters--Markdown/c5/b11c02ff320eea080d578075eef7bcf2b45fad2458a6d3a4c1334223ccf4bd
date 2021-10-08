@@ -1,7 +1,0 @@
-I"<p>zhxilin大神在<a href="http://www.cnblogs.com/zhxilin/p/4819372.html">文章</a>说到了使用<code class="language-plaintext highlighter-rouge">await Windows.System.Launcher.LaunchUriAsync(new Uri(uri));</code>打开应用商店
-我想到了装机必备的一个软件，就是通过上面的代码来推荐应用给大家
-大概界面请看下面
-<img src="http://img.blog.csdn.net/20151203201502839" alt="这里写图片描述" />
-界面不好看求轻喷，毕竟只是这个界面只是告诉大家这个功能如何做</p>
-
-:ET

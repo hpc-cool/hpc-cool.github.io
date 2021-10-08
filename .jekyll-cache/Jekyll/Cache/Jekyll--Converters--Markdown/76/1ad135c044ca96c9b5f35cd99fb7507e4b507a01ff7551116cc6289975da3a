@@ -1,4 +1,0 @@
-I"c<p>在找了很久的团队交流工具，发现了 Mattermost 最好用，但是还需要做一些定制化的功能，于是就找到了 Mattermost 插件开发，还找到了如何自己写服务集成到 Mattermost 里面
-本文告诉大家，通过写一个 ASP .NET Core 程序集成到 Mattermost 里面，在里面添加很多有趣的功能</p>
-
-:ET

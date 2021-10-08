@@ -1,3 +1,0 @@
-I"�<p>我在写一个 WinForms 程序用来读取 Word 里面的图片显示，在解析 Word 等 Office 文档，会看到一些 ole object 元素，而有些 ole object 会有 Fallback 图片，用这些备用的图片可以显示 ole 元素</p>
-
-:ET

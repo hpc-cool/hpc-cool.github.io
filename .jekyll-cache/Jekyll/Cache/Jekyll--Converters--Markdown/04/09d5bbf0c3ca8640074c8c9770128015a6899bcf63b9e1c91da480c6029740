@@ -1,3 +1,0 @@
-I"�<p>在 dotnet 里面可以使用 NamedPipeClientStream 作为命名管道，此时的命名有长度限制，要求在 256 字符之内</p>
-
-:ET

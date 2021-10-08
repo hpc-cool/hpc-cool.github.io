@@ -1,4 +1,0 @@
-I"Y<p>最近在做离线渲染就发现了 CanvasRenderTarget 和 CanvasBitmap 不知道为什么需要 CanvasBitmap 感觉 CanvasRenderTarget 和 CanvasBitmap 是重复的。
-我在网上找了很多发现了大神的回复，于是我就把他翻译，希望大家看到就知道垃圾微软做 CanvasRenderTarget 和 CanvasBitmap 的区别</p>
-
-:ET

@@ -1,4 +1,0 @@
-I"�<p>在网上有很多图片都是gif，那么如何在 wpf 解析 gif？
-本文告诉大家如何使用  GifBitmapDecoder 把gif分开为一张一张，获得他的信息。</p>
-
-:ET

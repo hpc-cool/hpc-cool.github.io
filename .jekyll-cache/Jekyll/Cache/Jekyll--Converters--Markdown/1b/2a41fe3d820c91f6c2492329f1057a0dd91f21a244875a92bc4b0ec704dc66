@@ -1,3 +1,0 @@
-I" <p>如果使用<code class="language-plaintext highlighter-rouge">Dispatcher.Invoke</code>实际上会有一个坑，在执行<code class="language-plaintext highlighter-rouge">Dispatcher.Invoke</code>刚好拖动窗口就会出现窗口冻结，这时使用 Alt+Tab 可以解决。</p>
-
-:ET

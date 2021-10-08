@@ -1,3 +1,0 @@
-I"�<p>在 WPF 中可以通过 StylusPlugIn 的方式快速从触摸线程拿到触摸数据，而 WinForms 没有这个机制，但是可以通过 Microsoft.Ink 组件和 WPF 相同在 RealTimeStylus 服务拿到触摸点</p>
-
-:ET

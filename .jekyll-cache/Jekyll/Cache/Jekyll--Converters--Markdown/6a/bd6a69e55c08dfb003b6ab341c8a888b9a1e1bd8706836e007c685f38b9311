@@ -1,5 +1,0 @@
-I"q<p>把WPF程序输出改为类库，报错</p>
-<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="err">库项目文件无法指定</span> <span class="n">ApplicationDefinition</span> <span class="err">元素</span> <span class="err">项目文件包含无效的属性值</span>
-</code></pre></div></div>
-
-:ET

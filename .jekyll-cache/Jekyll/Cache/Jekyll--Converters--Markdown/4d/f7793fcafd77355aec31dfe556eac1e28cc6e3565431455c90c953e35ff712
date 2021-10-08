@@ -1,3 +1,0 @@
-I"�<p>本文将告诉大家在拿到了 D3D11 的 Device 也就是 D3DDevice 之后，如何去获取 DXGI.Device 以及 DXGI.Factory 的方法</p>
-
-:ET

@@ -1,3 +1,0 @@
-I"ª<p>We can trigger the GitHub Action by Git tag pushed and we can read the Git tag name as the version. And then we can generate the NuGet package with this version.</p>
-
-:ET

@@ -1,3 +1,0 @@
-I"-<p>在 WPF 中按钮 Button 将会吃掉路由事件，此时的 EventTrigger 如果通过 RoutedEvent 是 MouseLeftButtonDown 那么将会拿不到路由事件，也就触发不了，因此样式将不会变更。简单的解决方法就是通过 VisualStateManager 配合 VisualState 来实现</p>
-
-:ET

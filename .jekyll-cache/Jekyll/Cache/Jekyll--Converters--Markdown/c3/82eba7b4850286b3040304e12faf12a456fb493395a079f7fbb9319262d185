@@ -1,3 +1,0 @@
-I"�<p>这是一个 wpf 的bug，在弹出Popup之后，如果 Popup 里面有 TextBox ，这时无法在里面输入文字。</p>
-
-:ET

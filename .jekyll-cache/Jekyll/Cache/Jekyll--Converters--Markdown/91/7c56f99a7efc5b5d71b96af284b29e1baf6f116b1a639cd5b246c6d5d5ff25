@@ -1,3 +1,0 @@
-I"�<p>这是我在开始部署其他小伙伴的 Xamarin 项目时，在 VS 上提示的失败如下： Failed to register bundle identifier: The app identifier “com.walterlv.CloudKeyboard” cannot be registered to your development team because it is not available. Change your bundle identifier to a unique string to try again 。 这个提示的提示就是 Bundle Identifier 不对，原因有很多个，本文将一一告诉你</p>
-
-:ET

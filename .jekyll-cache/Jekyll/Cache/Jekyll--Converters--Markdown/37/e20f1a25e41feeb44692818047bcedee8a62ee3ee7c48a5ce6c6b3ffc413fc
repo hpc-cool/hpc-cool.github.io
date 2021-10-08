@@ -1,4 +1,0 @@
-I"�<p>如果在执行一段卡UI的代码，这时如何让UI响应。如果存在代码需要获得依赖属性，那么代码就需要在UI线程执行，但是这时就会卡UI，为了让UI响应，所以就需要使用<code class="language-plaintext highlighter-rouge">DoEvents</code>来让UI响应。
-首先需要知道，<code class="language-plaintext highlighter-rouge">DoEvents</code>是在 WinForm 有的，在 WPF 没有这个函数，但是可以自己写出来。</p>
-
-:ET

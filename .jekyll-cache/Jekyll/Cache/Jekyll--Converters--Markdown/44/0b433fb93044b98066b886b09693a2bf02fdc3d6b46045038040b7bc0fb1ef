@@ -1,3 +1,0 @@
-I"�<p>我昨天和头像大人在解决一个坑，发现调用了 InvalidateVisual 的时候，不会触发 OnRender 方法。那么在什么时候会触发 OnRender 方法，在什么时候不会触发</p>
-
-:ET

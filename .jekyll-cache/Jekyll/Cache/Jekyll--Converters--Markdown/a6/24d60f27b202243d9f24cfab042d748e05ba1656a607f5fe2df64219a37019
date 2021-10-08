@@ -1,7 +1,0 @@
-I"�<p>今天在打码出现了vs无法调试，我在网上查了很久没有发现一个方法。
-vs点击启动时，出现了一下提示</p>
-<div class="language-csharp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  <span class="err">程序“</span><span class="p">[</span><span class="m">12648</span><span class="p">]</span> <span class="p">*.</span><span class="n">vshost</span><span class="p">.</span><span class="n">exe</span><span class="p">:</span> <span class="err">程序跟踪”已退出，返回值为</span> <span class="m">0</span> <span class="p">(</span><span class="m">0x0</span><span class="p">)</span><span class="err">。</span>
-  <span class="err">程序“</span><span class="p">[</span><span class="m">12648</span><span class="p">]</span> <span class="p">*.</span><span class="n">vshost</span><span class="p">.</span><span class="n">exe</span><span class="err">”已退出，返回值为</span> <span class="p">-</span><span class="m">1073741819</span> <span class="p">(</span><span class="m">0xc0000005</span><span class="p">)</span> <span class="err">'</span><span class="n">Access</span> <span class="n">violation</span><span class="err">'。</span>
-</code></pre></div></div>
-
-:ET

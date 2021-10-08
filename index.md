@@ -45,7 +45,7 @@ permalink: /index
         
 </div>
 
-<div style="width:90%;margin-top:24px;margin-left:6%;">
+<div style="width:90%;margin-top:36px;margin-left:6%;">
 	<div style="width:36%;float:right;display:inline-block;"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/esm.jpg" width="100" height="100" style="display:inline;margin-left:24px;"/></div>
 	<div style="width:60%;display:inline-block;">
 		面向大规模科学计算应用，团队开展了性能建模和性能调优的研究，研制的<strong>自动性能建模和调优工具</strong>对预测和改善大规模科学计算应用的运行性能具有显著效果。
@@ -53,7 +53,7 @@ permalink: /index
         
 </div>
 
-<div style="width:90%;margin-top:24px;margin-left:6%;">
+<div style="width:90%;margin-top:36px;margin-left:6%;">
         <div style="width:36%;float:right;display:inline-block;"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/gitea.png" width="100" height="100" style="display:inline;margin-left:24px;"/></div>
 	<div style="width:60%;display:inline-block;"> 
 		面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="https://gitea.shuishan.net.cn" target="_blank"><strong>水杉码园</strong></a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。

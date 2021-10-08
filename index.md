@@ -68,7 +68,7 @@ permalink: /index
 <br/>
 
 ****
-
+update
 
 <strong>欢迎加入Cool-Lab~</strong>
 <br />

@@ -44,8 +44,8 @@ permalink: /index
 	</div>
 </div>
 <div>
-	<div><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/esm.jpg" width="100" height="100"/></div>
-	<div style="width:500px;float:left">
+	<div style="width:100px"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/esm.jpg" width="100" height="100"/></div>
+	<div style="width:500px; float:left">
 		面向大规模科学计算应用，团队开展了性能建模和性能调优的研究，研制的<strong>自动性能建模和调优工具</strong>对预测和改善大规模科学计算应用的运行性能具有显著效果。
 	</div>
 </div>

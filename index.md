@@ -43,13 +43,13 @@ permalink: /index
 </div>
 <div>
 	<div><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/esm.jpg" width="100" height="100"/></div>
-	<div max-width="500">
+	<div style="width:500px;float:left">
 		面向大规模科学计算应用，团队开展了性能建模和性能调优的研究，研制的<strong>自动性能建模和调优工具</strong>对预测和改善大规模科学计算应用的运行性能具有显著效果。
 	</div>
 </div>
 <div style="display:inline">
 	<div style="width:100px"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/gitea.png" width="100" height="100"/></div>
-	<div style="width:500px float:right"> 
+	<div style="width:500px;float:right"> 
 		面对在线教育和混合式教育，团队开发了智能代码托管与项目协作平台——<a href="https://gitea.shuishan.net.cn" target="_blank"><strong>水杉码园</strong></a>，实现了教育与项目协作相结合、教育与激励相结合、教育与数据相结合。
 	</div>
 </div>

@@ -37,6 +37,7 @@ permalink: /index
 </table>
 
 
+<!--
 <div>
 <div style="width:90%;margin-left:6%;">
 	<div style="width:36%;float:right;display:inline-block;"><img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/taihulight.jpg" width="100" height="100" style="display:inline;margin-left:24px;"/></div>
@@ -62,6 +63,7 @@ permalink: /index
         
 </div>
 </div>
+-->
 
 <br/>
 

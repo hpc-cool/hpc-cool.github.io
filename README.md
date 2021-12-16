@@ -1,7 +1,7 @@
 # Cool-Lab
 华东师范大学数据学院高性能实验室
 
-实验室访问地址：https://lab.hpc.cool/
+实验室访问地址：http://lab.hpc.cool/
 
 欢迎来到Cool-Lab~
 

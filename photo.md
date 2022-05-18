@@ -8,7 +8,7 @@ permalink: /photo
 
 <center><h2>第五届“神威杯”国产CPU并行应用挑战赛总决赛</h2></center>
 <br/>
-<img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/cpc2021/bisaixianchang.jpg" align="center" />
+<img src="imgs/cpc2021/bisaixianchang.jpg" align="center" />
 <a href="photos/20211001.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
 
@@ -16,7 +16,7 @@ permalink: /photo
 <br/>
 <center><h2>2021年春实验室全体成员研讨&团建</h2></center>
 <br/>
-<img src="https://gitee.com/hpc-cool/github_pages/raw/master/imgs/heyin.jpg" align="center" />
+<img src="imgs/heyin.jpg" align="center" />
 <a href="photos/20210620.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
 <br/>

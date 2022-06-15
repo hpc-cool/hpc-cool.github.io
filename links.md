@@ -10,7 +10,7 @@ permalink: /links
 
 <a href="https://www.hpc.cool" targe="_blank"> NextCloud文件库 </a>
 
-<a href="http://gitea.shuishan.net.cn" targe="_blank"> 水杉码园 </a>
+<a href="https://gitea.shuishan.net.cn" targe="_blank"> 水杉码园 </a>
 
 <a href="http://dase.ecnu.edu.cn" targe="_blank"> 数据科学与工程学院 </a>
 

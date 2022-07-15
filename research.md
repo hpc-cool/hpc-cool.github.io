@@ -27,8 +27,8 @@ permalink: /research
 
 <br/>
 
-- X Liu, J Sun, L Zheng, S Wang, Y Liu\*, T Wei\*. Parallelization and Optimization of NSGA-II on Sunway TaihuLight System[J]. IEEE Transactions on Parallel and Distributed Systems, 2021, 32(4):975-987.（CCF A）
-- J Zhao, X Liu, Y Liu\*, P Jiao, J Liu, W Xue\*. Profiling HPC Applications with Low Overhead and High Accuracy[C]. ISPA 2021. IEEE, 2021: 1311-1319.（CCF C）
+- X Liu, J Sun, L Zheng, S Wang, Y Liu\*, T Wei. Parallelization and Optimization of NSGA-II on Sunway TaihuLight System[J]. IEEE Transactions on Parallel and Distributed Systems, 2021, 32(4):975-987. （CCF A)
+- J Zhao, X Liu, Y Liu\*, P Jiao, J Liu, W Xue. Profiling HPC Applications with Low Overhead and High Accuracy[C]. ISPA 2021. IEEE, 2021: 1311-1319. (CCF C)
 - X Liu, J Zhao, L Zheng, L Li, L Liu, P Jiao, Y Liu*. Improving NSGA-II for Multi-constrained QoS Routing[J]. Journal of Circuits, Systems, and Computers, 2021. (SCI)
 - Y Liu, L Liu, M Hu, W Wang, W Xue, Q Zhu. Performance Modeling of Stencil Computation on SW26010 Processors[C]. ICA3PP 2020. Springer, 2020:386-400.（CCF C）
 - M Hu, L Liu, W Wang, Y Liu*, APENAS: An Asynchronous Parallel Evolution Based Multi-objective Neural Architecture Search[C]. ISPA 2020. IEEE, 2020:153-159.（CCF C）
@@ -38,7 +38,7 @@ permalink: /research
 - Y Liu, J Sun, Q Yao, S Wang, K Zheng, Y Liu. A Scalable Heterogeneous Parallel SOM Based on MPI/CUDA[C]. ACML 2018. PMLR, 2018:264-279.（CCF C）
 - Y Liu, R Zhao, K Zheng, S Wang, Y Liu, H Shen, Q Zhou, A Hybrid Parallel Genetic Algorithm with Dynamic Migration Strategy Based on Sunway Many-Core Processor[C]. HPCCWS 2017. IEEE, 2017:9-15.（EI）
 - Y Liu, G Lu, W Zhang, F Cai, Q Kong, G Lu, A DSCP-based Method of QoS Class Mapping between WLAN and EPS Network[C]. ICA3PP 2014. Springer, 2014:204-213.(CCF C)
-- Y Liu, G Lu, W Zhang, F Cai，The QoS class mapping in WLAN and 3GPP LTE Interworking Network[C]. ICCSNT 2013. IEEE, 2013:898-901.(EI)
+- Y Liu, G Lu, W Zhang, F Cai. The QoS class mapping in WLAN and 3GPP LTE Interworking Network[C]. ICCSNT 2013. IEEE, 2013:898-901.(EI)
 
 <br/>
 
@@ -74,11 +74,11 @@ permalink: /research
 
 - 刘垚，焦鹏龙，薛巍等，一种并行科学计算程序的性能建模方法，2021.1，202110115720.2，实质审查
 
-- 刘垚，郑琳，王肃等，一种基于维修记录的设备故障预警方法，2020.11，中国，CN2017114763878，授权
-
-- 刘垚，廖启丹，段燕红等，基于申威众核处理器的NSGA-II的主从增强式运行方法及装置， 2018.11，中国，201811334124.8，实质审查
-
 - 刘垚，刘力，段燕红等，一种基于深度度量学习的行人重识别方法及装置，2019.11，中国，201911151659.6，实质审查
+
+- 刘垚，廖启丹，段燕红等，基于申威众核处理器的NSGA-II的主从增强式运行方法及装置， 2021.11，中国，CN201811334124.8，授权
+
+- 刘垚，郑琳，王肃等，一种基于维修记录的设备故障预警方法，2020.11，中国，CN2017114763878，授权
 
 - 蔡丰令，刘垚，陆刚等，一种EPS系统中PCC规则的调度方法，2017.1，中国，CN2014101486784，授权
 
@@ -95,6 +95,8 @@ permalink: /research
 <center><h2><strong>近年主要软件著作权</strong></h2></center>
 
 <br/>
+
+- 水杉码园用户和课程系统v1.0，2021SR1356582.
 
 - 基于神威系统的深度神经网络自动学习软件v1.0，2019SR1404831
 

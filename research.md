@@ -27,7 +27,7 @@ permalink: /research
 
 <br/>
 
-- X Liu, J Sun, L Zheng,S Wang, Y Liu\*, T Wei\*. Parallelization and Optimization of NSGA-II on Sunway TaihuLight System[J]. IEEE Transactions on Parallel and Distributed Systems, 2021, 32(4):975-987.（CCF A）
+- X Liu, J Sun, L Zheng, S Wang, Y Liu\*, T Wei\*. Parallelization and Optimization of NSGA-II on Sunway TaihuLight System[J]. IEEE Transactions on Parallel and Distributed Systems, 2021, 32(4):975-987.（CCF A）
 - J Zhao, X Liu, Y Liu\*, P Jiao, J Liu, W Xue\*. Profiling HPC Applications with Low Overhead and High Accuracy[C]. ISPA 2021. IEEE, 2021: 1311-1319.（CCF C）
 - X Liu, J Zhao, L Zheng, L Li, L Liu, P Jiao, Y Liu*. Improving NSGA-II for Multi-constrained QoS Routing[J]. Journal of Circuits, Systems, and Computers, 2021. (SCI)
 - Y Liu, L Liu, M Hu, W Wang, W Xue, Q Zhu. Performance Modeling of Stencil Computation on SW26010 Processors[C]. ICA3PP 2020. Springer, 2020:386-400.（CCF C）

@@ -10,12 +10,12 @@ permalink: /research
 <br/>
 
 - 科技部，国家重点专项，发展通用的地球系统模式高效并行计算框架，在研，子课题负责人。
-- 教育部，产学合作协同育人项目，面向开源平台的程序设计与人工智能基础类课程体系建设与实践，在研，主持。
-- 上海市多维度信息处理重点实验室，面向地球系统模式的并行计算程序性能建模研究，在研，主持.
-- 教育部，产学合作协同育人-新工科建设项目（A类），人工智能时代基于鲲鹏生态的并行计算系统课程体系建设与实践，已结题，主持。
-- 无锡超算中心，不确定性分析子系统项目，已结题，主持。
-- 江南计算技术研究所，基于神威系统的深度神经网络自动学习的研究，已结题，主持。
-- 数学工程与先进计算国家重点实验室，遗传算法的众核适应性研究，已结题，主持。
+- 教育部，产学合作协同育人项目，面向开源平台的程序设计与人工智能基础类课程体系建设与实践，结题（2022教育部-腾讯产学合作协同育人杰出案例），主持。
+- 上海市多维度信息处理重点实验室，面向地球系统模式的并行计算程序性能建模研究，结题，主持.
+- 教育部，产学合作协同育人-新工科建设项目（A类），人工智能时代基于鲲鹏生态的并行计算系统课程体系建设与实践，结题，主持。
+- 无锡超算中心，不确定性分析子系统项目，结题，主持。
+- 江南计算技术研究所，基于神威系统的深度神经网络自动学习的研究，结题，主持。
+- 数学工程与先进计算国家重点实验室，遗传算法的众核适应性研究，结题，主持。
 
 <br/>
 
@@ -27,6 +27,7 @@ permalink: /research
 
 <br/>
 
+- S Fan, Y Liu*, J Su, X Wu, Q Jiang. Mixed Precision Based Parallel Optimization of Tensor Mathematical Operations on a New-generation Sunway Processor[C]//CCGRID 2023. IEEE/ACM, 2023.（Accepted）（CCF C）
 - X Liu, J Sun, L Zheng, S Wang, Y Liu\*, T Wei. Parallelization and Optimization of NSGA-II on Sunway TaihuLight System[J]. IEEE Transactions on Parallel and Distributed Systems, 2021, 32(4):975-987. （CCF A)
 - J Zhao, X Liu, Y Liu\*, P Jiao, J Liu, W Xue. Profiling HPC Applications with Low Overhead and High Accuracy[C]. ISPA 2021. IEEE, 2021: 1311-1319. (CCF C)
 - X Liu, J Zhao, L Zheng, L Li, L Liu, P Jiao, Y Liu*. Improving NSGA-II for Multi-constrained QoS Routing[J]. Journal of Circuits, Systems, and Computers, 2021. (SCI)
@@ -70,9 +71,9 @@ permalink: /research
 
 <br/>
 
-- 刘垚，赵景元，薛巍等，一种应用于并行科学计算程序的函数运行时间测量方法，2021.2，202110141179.2，实质审查
+- 刘垚，赵景元，薛巍等，一种应用于并行科学计算程序的函数运行时间测量方法，2021.2，202110141179.2，授权
 
-- 刘垚，焦鹏龙，薛巍等，一种并行科学计算程序的性能建模方法，2021.1，202110115720.2，实质审查
+- 刘垚，焦鹏龙，薛巍等，一种并行科学计算程序的性能建模方法，2021.1，202110115720.2，授权
 
 - 刘垚，刘力，段燕红等，一种基于深度度量学习的行人重识别方法及装置，2019.11，中国，201911151659.6，实质审查
 

@@ -21,5 +21,13 @@ permalink: /photo
 
 <br/>
 <br/>
+<center><h2>2023年春实验室聚餐</h2></center>
+<br/>
+<img src="imgs/20230326img1.jpg" align="center" />
+<a href="photos/20230326.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+
+
+<br/>
+<br/>
 <br/>
 

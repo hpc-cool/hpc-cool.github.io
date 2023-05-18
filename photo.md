@@ -29,5 +29,12 @@ permalink: /photo
 
 <br/>
 <br/>
+<center><h2>学术报告 | 并行程序的性能分析与建模</h2></center>
+<br/>
+<img src="imgs/20230518/20230518img2.jpg" align="center" />
+<a href="photos/20230518.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+
+<br/>
+<br/>
 <br/>
 

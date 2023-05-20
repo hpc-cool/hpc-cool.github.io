@@ -5,19 +5,12 @@ display_title: Cool-Lab
 permalink: /photo
 ---
 <br/>
+<br/>
+<center><h2>学术报告 | 并行程序的性能分析与建模</h2></center>
+<br/>
+<img src="imgs/20230518/20230518img2.jpg" align="center" />
+<a href="photos/20230518.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
-<center><h2>第五届“神威杯”国产CPU并行应用挑战赛总决赛</h2></center>
-<br/>
-<img src="imgs/cpc2021/bisaixianchang.jpg" align="center" />
-<a href="photos/20211001.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
-
-
-<br/>
-<br/>
-<center><h2>2021年春实验室全体成员研讨&团建</h2></center>
-<br/>
-<img src="imgs/heyin.jpg" align="center" />
-<a href="photos/20210620.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
 <br/>
 <br/>
@@ -29,10 +22,19 @@ permalink: /photo
 
 <br/>
 <br/>
-<center><h2>学术报告 | 并行程序的性能分析与建模</h2></center>
+<center><h2>2021年春实验室全体成员研讨&团建</h2></center>
 <br/>
-<img src="imgs/20230518/20230518img2.jpg" align="center" />
-<a href="photos/20230518.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+<img src="imgs/heyin.jpg" align="center" />
+<a href="photos/20210620.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+
+
+<br/>
+<br/>
+<center><h2>第五届“神威杯”国产CPU并行应用挑战赛总决赛</h2></center>
+<br/>
+<img src="imgs/cpc2021/bisaixianchang.jpg" align="center" />
+<a href="photos/20211001.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+
 
 <br/>
 <br/>

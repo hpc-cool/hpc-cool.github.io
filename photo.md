@@ -6,6 +6,14 @@ permalink: /photo
 ---
 <br/>
 <br/>
+<center><h2>学术报告 | 雾计算中计算迁移的组合优化</h2></center>
+<br/>
+<img src="imgs/20230626/20230626img1.jpg" align="center" />
+<a href="photos/20230626.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+
+
+<br/>
+<br/>
 <center><h2>学术报告 | 并行程序的性能分析与建模</h2></center>
 <br/>
 <img src="imgs/20230518/20230518img2.jpg" align="center" />

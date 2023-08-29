@@ -6,6 +6,14 @@ permalink: /photo
 ---
 <br/>
 <br/>
+<center><h2>第七届“神威杯”国产CPU并行应用挑战赛总决赛</h2></center>
+<br/>
+<img src="imgs/cpc2023/duiwuhezhao.jpg" align="center" />
+<a href="photos/20230827.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+
+
+<br/>
+<br/>
 <center><h2>学术报告 | 雾计算中计算迁移的组合优化</h2></center>
 <br/>
 <img src="imgs/20230626/20230626img1.jpg" align="center" />

@@ -17,9 +17,11 @@ permalink: /courses
 <img src="imgs/course_imgs/202310-计算机与程序设计基础-生环班-合影-small.jpg" align="center" />
 </a>
 
+<br/>
+
 #### （2）2023秋心院班
 
-</br>
+<br/>
 
 ## 研究生：
 

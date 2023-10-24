@@ -5,4 +5,4 @@ display_title: Cool-Lab
 permalink: /teacher
 ---
 
-# 导师介绍
+导师介绍

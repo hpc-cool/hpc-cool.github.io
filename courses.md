@@ -29,20 +29,3 @@ permalink: /courses
 
 ### 2. 无线网与互联网应用
 
-<!-- Default Statcounter code for elab.hpc.cool
-https://hpc-cool.gitee.io -->
-<script type="text/javascript">
-var sc_project=12850236; 
-var sc_invisible=1; 
-var sc_security="6a3bb7ef"; 
-</script>
-<script type="text/javascript"
-src="https://www.statcounter.com/counter/counter.js"
-async></script>
-<noscript><div class="statcounter"><a title="Web Analytics"
-href="https://statcounter.com/" target="_blank"><img
-class="statcounter"
-src="https://c.statcounter.com/12850236/0/6a3bb7ef/1/"
-alt="Web Analytics"
-referrerPolicy="no-referrer-when-downgrade"></a></div></noscript>
-<!-- End of Statcounter Code -->

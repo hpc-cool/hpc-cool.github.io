@@ -17,7 +17,9 @@ permalink: /courses
 <a href="imgs/course_imgs/202310-计算机与程序设计基础-生环班-合影.jpg"  style='float:right; text-align: right;'>
 <img src="imgs/course_imgs/202310-计算机与程序设计基础-生环班-合影-small.jpg" align="center" />
 </a> 
+
 <br>
+
 <br>
 
 ####  **（2）2023秋心院班** 
@@ -25,7 +27,9 @@ permalink: /courses
 <a href="imgs/course_imgs/202310-计算机与程序设计基础-心院班-合影.jpg"  style='float:right; text-align: right;'>
 <img src="imgs/course_imgs/202310-计算机与程序设计基础-心院班-合影-small.jpg" align="center" />
 </a> 
+
 <br>
+
 <br>
 
 ## 研究生：

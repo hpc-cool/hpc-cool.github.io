@@ -6,6 +6,13 @@ permalink: /photo
 ---
 <br/>
 <br/>
+<center><h2>2023秋实验室聚餐</h2></center>
+<br/>
+<img src="imgs/20231118img1.jpg" align="center" />
+
+
+<br/>
+<br/>
 <center><h2>第七届“神威杯”国产CPU并行应用挑战赛总决赛</h2></center>
 <br/>
 <img src="imgs/cpc2023/duiwuhezhao.jpg" align="center" />

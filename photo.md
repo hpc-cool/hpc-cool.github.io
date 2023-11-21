@@ -8,7 +8,7 @@ permalink: /photo
 <br/>
 <center><h2>2023秋实验室聚餐</h2></center>
 <br/>
-<img src="imgs/20231118/20231118img1.jpg" align="center" />
+<img src="imgs/20231118/20231118img2.jpg" align="center" />
 <a href="photos/20231118.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
 

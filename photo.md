@@ -6,6 +6,16 @@ permalink: /photo
 ---
 <br/>
 <br/>
+<center><h2>2023冬实验室聚餐</h2></center>
+<br/>
+<a href="imgs/20240126full.jpg"  style='float:right; text-align: right;'>
+<img src="imgs/20240126.jpg" align="center" />
+<br/>
+<br/>
+
+
+<br/>
+<br/>
 <center><h2>2023秋实验室聚餐</h2></center>
 <br/>
 <a href="imgs/20231118/20231118full.jpg"  style='float:right; text-align: right;'>

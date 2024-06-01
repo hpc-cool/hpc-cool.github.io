@@ -1,33 +1,33 @@
 [
   {
     "text": "首页",
-    "url": "/hpc-cool/index",
+    "url": "/index",
     "icon": "fa-book",
     "layout": "post"
   },
   {
     "text": "团队介绍",
-    "url": "/hpc-cool/members",
+    "url": "/members",
     "icon": "fa-group"
   },
   {
     "text": "成果展示",
-    "url": "/hpc-cool/research",
+    "url": "/research",
     "icon": "fa-github"
   },
   {
     "text": "活动剪影",
-    "url": "/hpc-cool/photo",
+    "url": "/photo",
     "icon": "fa-info"
   },
   {
     "text": "常用链接",
-    "url": "/hpc-cool/links",
+    "url": "/links",
     "icon": "fa-commenting"
   },
   {
     "text": "联系我们",
-    "url": "/hpc-cool/contact",
+    "url": "/contact",
     "icon": "fa-feed",
   }
 ]

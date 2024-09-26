@@ -6,6 +6,16 @@ permalink: /photo
 ---
 <br/>
 <br/>
+<center><h2>2024秋学术分享</h2></center>
+<br/>
+<a href="imgs/img2.jpg"  style='float:right; text-align: right;'>
+<img src="imgs/img1.jpg" align="center" />
+<br/>
+<br/>
+
+
+<br/>
+<br/>
 <center><h2>2023冬实验室聚餐</h2></center>
 <br/>
 <a href="imgs/20240126full.jpg"  style='float:right; text-align: right;'>

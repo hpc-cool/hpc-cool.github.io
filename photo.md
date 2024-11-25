@@ -4,6 +4,17 @@ title: 活动剪影
 display_title: Cool-Lab
 permalink: /photo
 ---
+
+<br/>
+<br/>
+<center><h2>2024冬实验室聚餐</h2></center>
+<br/>
+<a href="imgs/20241125small.jpg"  style='float:right; text-align: right;'>
+<img src="imgs/20241125full.jpg" align="center" />
+<br/>
+<br/>
+
+  
 <br/>
 <br/>
 <center><h2>2024秋学术分享</h2></center>

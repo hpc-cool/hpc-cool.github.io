@@ -9,8 +9,8 @@ permalink: /photo
 <br/>
 <center><h2>2024冬实验室聚餐</h2></center>
 <br/>
-<a href="imgs/20241125small.jpg"  style='float:right; text-align: right;'>
-<img src="imgs/20241125full.jpg" align="center" />
+<a href="imgs/20241125full.jpg"  style='float:right; text-align: right;'>
+<img src="imgs/20241125small.jpg" align="center" />
 <br/>
 <br/>
 

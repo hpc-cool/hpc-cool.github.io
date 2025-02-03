@@ -7,6 +7,16 @@ permalink: /photo
 
 <br/>
 <br/>
+<center><h2>2025新年实验室聚餐</h2></center>
+<br/>
+<a href="imgs/20250117.jpg"  style='float:right; text-align: right;'>
+<img src="imgs/20250117.jpg" align="center" />
+<br/>
+<br/>
+
+  
+<br/>
+<br/>
 <center><h2>2024冬实验室聚餐</h2></center>
 <br/>
 <a href="imgs/20241125full.jpg"  style='float:right; text-align: right;'>

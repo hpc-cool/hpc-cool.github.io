@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 常用链接
-display_title: Cool-Lab
+display_title: 并行智算（Parallel & Intelligent Computing）
 permalink: /links
 ---
 ## 常用链接

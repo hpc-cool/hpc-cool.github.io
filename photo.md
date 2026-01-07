@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 活动剪影
-display_title: Cool-Lab
+display_title: 并行智算（Parallel & Intelligent Computing）
 permalink: /photo
 ---
 

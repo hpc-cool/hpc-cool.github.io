@@ -71,5 +71,5 @@ permalink: /index
 ****
 
 
-<strong>欢迎加入Cool-Lab~</strong>
+<strong>欢迎加入并行智算实验室（PI Computing）~</strong>
 <br />

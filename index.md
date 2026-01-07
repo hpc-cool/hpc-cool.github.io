@@ -5,11 +5,11 @@ display_title: Cool-Lab
 permalink: /index
 ---
 
-<center><h1>欢迎来到Cool-Lab</h1></center>
+<center><h1>欢迎来到并行智算实验室（PI Computing）</h1></center>
 
 <br />
 
-<strong>Cool-Lab 团队长期从事并行计算、异构计算、智能计算及相关教育领域的研究，在高性能计算与计算教育学方面有着坚实的基础。</strong>
+<strong>并行智算实验室长期从事并行计算、异构计算、智能计算及相关教育领域的研究，在高性能计算与计算教育学方面有着坚实的基础。</strong>
 
 ****
 

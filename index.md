@@ -1,7 +1,7 @@
 ---
 layout: page
 title: 首页
-display_title: PI Computing
+display_title: 并行智算（Parallel & Intelligent Computing）
 permalink: /index
 ---
 

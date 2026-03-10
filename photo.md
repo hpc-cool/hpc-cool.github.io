@@ -5,6 +5,13 @@ display_title: 并行智算（Parallel & Intelligent Computing）
 permalink: /photo
 ---
 
+<br/>
+<br/>
+<center><h2>卓越工程师学院人工智能领域学生赴国家超算无锡中心参观交流</h2></center>
+<br/>
+<img src="imgs/202511181.png" style="display: block; margin: 0 auto;" />
+<a href="photos/20251118.html" style="float: right; text-align: right; margin-top: -40px;">>>>活动详情</a>
+
 
 <br/>
 <br/>

@@ -13,12 +13,7 @@ permalink: /photo
 <a href="photos/20251116.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
 
-<br/>
-<br/>
-<center><h2>第十二届并行应用挑战赛(PAC2025)</h2></center>
-<br/>
-<img src="imgs/202508151.jpg" align="center" />
-<a href="photos/20250815.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
+
 
 
 <br/>

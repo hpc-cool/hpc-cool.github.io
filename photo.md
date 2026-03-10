@@ -9,7 +9,7 @@ permalink: /photo
 <br/>
 <center><h2>2025全国大学生计算机系统能力大赛(先导杯)</h2></center>
 <br/>
-<img src="imgs_lowrl/202511161low.png" align="center" />
+<img src="imgs/202511161.png" align="center" />
 <a href="photos/20251116.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
 <br/>

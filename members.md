@@ -107,7 +107,7 @@ permalink: /members
 
 - 张晨辉：待更新。
 
-- 马磊：待更新。
+- 马磊：高通senior engineer。
 
 - 郭东方：待更新。
 

@@ -7,10 +7,10 @@ permalink: /photo
 
 <br/>
 <br/>
-<center><h2>卓越工程师学院人工智能领域学生赴国家超算无锡中心参观交流</h2></center>
+<center><h2>卓越工程师学院人工智能领域学生赴国家超算无锡中心交流</h2></center>
 <br/>
-<img src="imgs/202511181.jpg" style="display: block; margin: 0 auto;" />
-<a href="photos/20251118.html" style="float: right; text-align: right; margin-top: -40px;">>>>活动详情</a>
+<img src="imgs/202511181.jpg" align="center"  />
+<a href="photos/20251118.html" style='float:right; text-align: right;'>>>>活动详情</a>
 
 
 <br/>

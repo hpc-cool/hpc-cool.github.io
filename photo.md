@@ -9,7 +9,7 @@ permalink: /photo
 <br/>
 <center><h2>2025学术研讨</h2></center>
 <br/>
-<img src="imgs/2025071.jpg" align="center" />
+<img src="imgs_lowrl/2025071low.jpg" align="center" />
 <a href="photos/20250708.html"  style='float:right; text-align: right;'>\>>>活动详情</a>
 
 

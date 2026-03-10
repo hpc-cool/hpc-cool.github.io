@@ -4,20 +4,15 @@ title: 活动剪影
 display_title: 并行智算（Parallel & Intelligent Computing）
 permalink: /photo
 ---
+
+
+<br/>
+<br/>
 <center><h2>2025全国大学生计算机系统能力大赛(先导杯)</h2></center>
 <br/>
-<!-- 去掉 align="center"，改为用 style 控制 -->
 <img src="imgs_lowrl/202511161slow.png" style="display: block; margin: 0 auto;" />
 <a href="photos/20251116.html" style="float: right; text-align: right; margin-top: -40px;">>>>活动详情</a>
 
-
-
-<br/>
-<br/>
-<center><h2>2025全国大学生计算机系统能力大赛(先导杯)</h2></center>
-<br/>
-<img src="imgs_lowrl/202511161slow.png" align="center" />
-<a href="photos/20251116.html"  style='float:right; text-align: right;'>>>>活动详情</a>
 
 <br/>
 <br/>

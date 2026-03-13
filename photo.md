@@ -8,7 +8,7 @@ permalink: /photo
 
 <br/>
 <br/>
-<center><h2>学姐国奖庆祝局</h2></center>
+<center><h2>祝贺姜琼同学荣获国家奖学金</h2></center>
 <br/>
 <img src="imgs_lowrl/202601061low.jpeg" align="center"  />
 <a href="photos/20260106.html" style='float:right; text-align: right;'>>>>活动详情</a>
